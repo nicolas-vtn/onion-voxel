@@ -1,0 +1,33 @@
+# Top-most EditorConfig file
+root = true
+
+# Global settings
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# C / C++
+[*.{cpp,cxx,cc,c,hpp,hxx,hh,inl}]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+# CMake files
+[*.cmake]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+[CMakeLists.txt]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+# Markdown (do not trim trailing whitespace)
+[*.md]
+trim_trailing_whitespace = false
+indent_style = tab
+indent_size = 4
+tab_width = 4

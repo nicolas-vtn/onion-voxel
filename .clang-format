@@ -1,0 +1,64 @@
+Language:        Cpp
+BasedOnStyle:    LLVM
+
+# Indentation
+UseTab:          Always
+IndentWidth:     4
+TabWidth:        4
+ContinuationIndentWidth: 4
+
+# Braces (clean and readable)
+BreakBeforeBraces: Allman
+BraceWrapping:
+  AfterClass:      true
+  AfterControlStatement: true
+  AfterEnum:       true
+  AfterFunction:   true
+  AfterNamespace:  true
+  AfterStruct:     true
+  AfterUnion:      true
+  BeforeElse:      true
+  BeforeCatch:     true
+
+# Line length (not too strict)
+ColumnLimit:     120
+
+# Wrapping behavior (not aggressive)
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+
+# Function parameters
+BinPackParameters: false
+BinPackArguments:  false
+
+# Includes
+SortIncludes:     true
+IncludeBlocks:    Preserve
+
+# Pointers & references (common embedded preference)
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+# Spaces
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceAfterCStyleCast: true
+
+# Namespaces
+CompactNamespaces: false
+NamespaceIndentation: All
+
+# Keep formatting stable
+ReflowComments: false
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignOperands:   false
+
+# C++ specific
+Standard:        c++20
+Cpp11BracedListStyle: true
+IndentCaseLabels: true
+IndentCaseBlocks: true
