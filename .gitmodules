@@ -1,0 +1,12 @@
+[submodule "deps/onion-datetime"]
+	path = deps/onion-datetime
+	url = https://github.com/nicolas-vtn/onion-datetime.git
+[submodule "deps/onion-event"]
+	path = deps/onion-event
+	url = https://github.com/nicolas-vtn/onion-event.git
+[submodule "deps/onion-logger"]
+	path = deps/onion-logger
+	url = https://github.com/nicolas-vtn/onion-logger.git
+[submodule "deps/onion-timer"]
+	path = deps/onion-timer
+	url = https://github.com/nicolas-vtn/onion-timer.git
