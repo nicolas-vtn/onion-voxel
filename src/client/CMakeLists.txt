@@ -27,7 +27,7 @@ add_executable(OnionVoxel
 	"src/renderer/gui/controls/sprite/Sprite.cpp"
 )
 
-target_link_libraries(onion_voxel
+target_link_libraries(OnionVoxel
     PUBLIC
         glfw
         glad
@@ -38,9 +38,9 @@ target_link_libraries(onion_voxel
         onion_voxel_server
 )
 
-target_compile_features(onion_voxel PRIVATE cxx_std_20)
+target_compile_features(OnionVoxel PRIVATE cxx_std_20)
 
-target_include_directories(onion_voxel
+target_include_directories(OnionVoxel
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
