@@ -6,8 +6,8 @@ namespace onion::voxel
 	DemoPanel::DemoPanel(const std::string& name)
 		: GuiElement(name), m_Button("DemoButton"), m_Sprite("DemoSprite", m_SpritePath), m_Button2("DemoButton2")
 	{
-		m_Button.SetPosition(0, 0);
-		m_Button.SetSize({400.f, 40.f});
+		m_Button.SetPosition(400, 400);
+		m_Button.SetSize({700.f, 70.f});
 		m_Button.SetText(".");
 		m_Button.SetEnabled(true);
 		m_Button.SetScaleUpOnHover(false);
@@ -28,10 +28,10 @@ namespace onion::voxel
 
 		const glm::vec2 buttonPos{s_ScreenWidth * buttonXRatio, s_ScreenHeight * buttonYRatio};
 		float buttonHeight = s_ScreenHeight * buttonScaleFactorY;
-		const glm::vec2 buttonSize{400, 80};
+		const glm::vec2 buttonSize{200, 40};
 
-		m_Button.SetPosition(buttonPos);
-		m_Button.SetSize(buttonSize);
+		//m_Button.SetPosition(buttonPos);
+		//m_Button.SetSize(buttonSize);
 		m_Button.Render();
 
 		//// ---- Render Sprite ----

@@ -1,5 +1,7 @@
 #include "Button.hpp"
 
+#include <imgui.h>
+
 #include <iostream>
 
 #include "../../../Variables.hpp"
@@ -110,6 +112,14 @@ namespace onion::voxel
 		//glBindVertexArray(m_VAO);
 		//glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(s_Indices.size()), GL_UNSIGNED_INT, 0);
 		//glBindVertexArray(0);
+
+		// Debug ImGui pannel
+		ImGui::Begin(("Button: " + GetName()).c_str());
+		ImGui::Text("Hovered: %s", isCurrentlyHovered ? "Yes" : "No");
+		ImGui::Text("Clicked: %s", isClicked ? "Yes" : "No");
+		ImGui::SliderFloat2("Position", &m_Position.x, 0, static_cast<float>(s_ScreenWidth));
+		ImGui::SliderFloat2("Size", &m_Size.x, 20, 1500);
+		ImGui::End();
 
 		m_NineSliceSprite.SetPosition(m_Position);
 		m_NineSliceSprite.SetSize(m_Size);
