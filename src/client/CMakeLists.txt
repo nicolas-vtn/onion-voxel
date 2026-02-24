@@ -34,6 +34,7 @@ target_link_libraries(OnionVoxel
         glm
         stb
 		nlohmann_json::nlohmann_json
+		imgui::imgui
 		onion_event
     PRIVATE
         onion_voxel_server

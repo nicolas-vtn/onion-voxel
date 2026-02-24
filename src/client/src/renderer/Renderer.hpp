@@ -4,6 +4,10 @@
 
 #include <GLFW/glfw3.h>
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 #include <atomic>
 #include <memory>
 #include <stop_token>
@@ -64,6 +68,13 @@ namespace onion::voxel
 		//int m_InputIdSpeedUp = -1;
 		int m_InputIdUnfocus = -1;
 		int m_InputIdFocus = -1;
+
+		// ----- ImGui -----
+	  private:
+		void InitImGui();
+		void BeginImGuiFrame();
+		void RenderDebugPanel();
+		void EndImGuiFrame();
 	};
 
 }; // namespace onion::voxel

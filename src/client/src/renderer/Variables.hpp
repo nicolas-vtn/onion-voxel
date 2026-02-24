@@ -21,7 +21,7 @@ namespace onion::voxel
 	inline std::filesystem::path GetMinecraftAssetsPath()
 	{
 		std::filesystem::path currentPath = std::filesystem::current_path();
-		std::filesystem::path minecraftAssetsPath = currentPath / "assets" / "minecraft_32";
+		std::filesystem::path minecraftAssetsPath = currentPath / "assets" / "minecraft_16";
 		if (!std::filesystem::exists(minecraftAssetsPath))
 		{
 			std::cerr << "WARNING: Minecraft assets directory not found at: " << minecraftAssetsPath << std::endl;

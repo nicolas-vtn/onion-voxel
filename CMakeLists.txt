@@ -16,6 +16,7 @@ include(FetchGLFW)
 include(FetchGLM)
 include(FetchSTB)
 include(FetchNlohmannJson)
+include(FetchImGui)
 
 add_subdirectory(external/glad)
 

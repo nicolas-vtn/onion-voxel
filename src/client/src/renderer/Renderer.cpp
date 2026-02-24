@@ -79,6 +79,9 @@ namespace onion::voxel
 		m_InputsManager.Init(m_Window);
 		m_InputsManager.SetMouseCaptureEnabled(false);
 		RegisterInputs();
+
+		// Init ImGui
+		InitImGui();
 	}
 
 	void Renderer::InitOpenGlState()
@@ -112,6 +115,9 @@ namespace onion::voxel
 
 		while (!st.stop_requested() && !glfwWindowShouldClose(m_Window))
 		{
+			// Start ImGui Frame
+			BeginImGuiFrame();
+
 			// Pool inputs
 			m_InputsManager.PoolInputs();
 			m_InputsSnapshot = m_InputsManager.GetInputsSnapshot();
@@ -130,6 +136,9 @@ namespace onion::voxel
 
 			demoPanel.Render();
 
+			// Render Debug Panel
+			RenderDebugPanel();
+
 			//// Process Camera Movement
 			//ProcessCameraMovement(m_InputsSnapshot);
 
@@ -141,6 +150,9 @@ namespace onion::voxel
 			//// ------ TESTS MODELS ------
 			//UpdateShaderModel();
 			//DrawAppleModel();
+
+			// End ImGui Frame
+			EndImGuiFrame();
 
 			glfwSwapBuffers(m_Window);
 			glfwPollEvents();
@@ -189,6 +201,48 @@ namespace onion::voxel
 		}
 
 		GuiElement::SetInputsSnapshot(inputs);
+	}
+
+	void Renderer::InitImGui()
+	{
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+
+		ImGuiIO& io = ImGui::GetIO();
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+		ImGui::StyleColorsDark();
+
+		ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
+		ImGui_ImplOpenGL3_Init("#version 330");
+	}
+
+	void Renderer::BeginImGuiFrame()
+	{
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+	}
+
+	void Renderer::RenderDebugPanel()
+	{
+		ImGui::Begin("Debug Panel");
+
+		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+
+		static bool showWireframe = false;
+		ImGui::Checkbox("Wireframe", &showWireframe);
+
+		static float exposure = 1.0f;
+		ImGui::SliderFloat("Exposure", &exposure, 0.1f, 5.0f);
+
+		ImGui::End();
+	}
+
+	void Renderer::EndImGuiFrame()
+	{
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
 
 	void Renderer::CleanupOpenGl() {}

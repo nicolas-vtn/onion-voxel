@@ -92,6 +92,11 @@ namespace onion::voxel
 			}
 
 			m_Texture.Bind();
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
 			s_ShaderNineSliceSprites.Use();
 			s_ShaderNineSliceSprites.setInt("uTexture", 0);
 
@@ -297,6 +302,7 @@ namespace onion::voxel
 			const float y3 = m_Size.y;
 
 			// UV splits are based on the SOURCE texture (metadata width/height)
+			// UV splits are based on the SOURCE texture (meta width/height)
 			const float u0 = 0.0f;
 			const float u1 = static_cast<float>(meta.LeftBorder) / static_cast<float>(meta.Width);
 			const float u2 = 1.0f - static_cast<float>(meta.RightBorder) / static_cast<float>(meta.Width);
@@ -307,10 +313,58 @@ namespace onion::voxel
 			const float v2 = 1.0f - static_cast<float>(meta.BottomBorder) / static_cast<float>(meta.Height);
 			const float v3 = 1.0f;
 
+			// --- CROP CENTER UVs when the target center is smaller than the "native scaled" center ---
+
+			// Center size in SOURCE pixels
+			const float srcCenterW = static_cast<float>(meta.Width - meta.LeftBorder - meta.RightBorder);
+			const float srcCenterH = static_cast<float>(meta.Height - meta.TopBorder - meta.BottomBorder);
+
+			// Center size in DEST pixels (geometry)
+			const float dstCenterW = std::max(0.0f, (m_Size.x - L - R));
+			const float dstCenterH = std::max(0.0f, (m_Size.y - T - B));
+
+			// "Native" (non-minified) center size on screen if you scaled the source by `scale`
+			const float nativeCenterW = srcCenterW * scale;
+			const float nativeCenterH = srcCenterH * scale;
+
+			// How much of the center UV span we should use.
+			// If dst < native => use a fraction (<1) to crop instead of minify.
+			float fracU = 1.0f;
+			float fracV = 1.0f;
+
+			if (nativeCenterW > 0.0f)
+				fracU = std::min(1.0f, dstCenterW / nativeCenterW);
+			if (nativeCenterH > 0.0f)
+				fracV = std::min(1.0f, dstCenterH / nativeCenterH);
+
+			// Center UV span
+			const float duCenter = (u2 - u1);
+			const float dvCenter = (v2 - v1);
+
+			// Crop symmetrically around the center of the center-region (optional but looks nicer)
+			const float uCenterMid = 0.5f * (u1 + u2);
+			const float vCenterMid = 0.5f * (v1 + v2);
+
+			const float uHalfSpan = 0.5f * duCenter * fracU;
+			const float vHalfSpan = 0.5f * dvCenter * fracV;
+
+			const float u1c = uCenterMid - uHalfSpan;
+			const float u2c = uCenterMid + uHalfSpan;
+
+			const float v1c = vCenterMid - vHalfSpan;
+			const float v2c = vCenterMid + vHalfSpan;
+
+			// IMPORTANT: only the center column/row uses the cropped UVs
+			const float us[4] = {u0, u1, u2, u3}; // left/center/right UV boundaries for columns (default)
+			const float vs[4] = {v0, v1, v2, v3}; // top/center/bottom UV boundaries for rows (default)
+
+			// But we want column 1..2 (center) and row 1..2 (center) to use u1c/u2c and v1c/v2c.
+			// Easiest is to build arrays that already reflect this:
+			const float us2[4] = {u0, u1c, u2c, u3};
+			const float vs2[4] = {v0, v1c, v2c, v3};
+
 			const float xs[4] = {x0, x1, x2, x3};
 			const float ys[4] = {y0, y1, y2, y3};
-			const float us[4] = {u0, u1, u2, u3};
-			const float vs[4] = {v0, v1, v2, v3};
 
 			// Convert from local top-left space to world pixel space using topLeft
 			glm::vec2 topLeft = m_Position - m_Size * 0.5f;
