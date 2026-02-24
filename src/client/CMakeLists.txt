@@ -33,6 +33,7 @@ target_link_libraries(OnionVoxel
         glad
         glm
         stb
+		nlohmann_json::nlohmann_json
 		onion_event
     PRIVATE
         onion_voxel_server

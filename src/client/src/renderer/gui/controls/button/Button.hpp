@@ -2,6 +2,7 @@
 
 #include "../../../texture/texture.hpp"
 #include "../../GuiElement.hpp"
+#include "../../nine_slice_sprite/NineSliceSprite.hpp"
 
 #include <onion/Event.hpp>
 
@@ -90,5 +91,9 @@ namespace onion::voxel
 		// ----- Internal States -----
 		bool m_WasHovered = false;
 		bool m_WasClicked = false;
+
+		// ----- NineSliceTests -----
+	  private:
+		NineSliceSprite m_NineSliceSprite;
 	};
 } // namespace onion::voxel

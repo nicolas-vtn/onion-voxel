@@ -38,6 +38,7 @@ namespace onion::voxel
 
 	  protected:
 		static Shader s_ShaderSprites;
+		static Shader s_ShaderNineSliceSprites;
 		static glm::mat4 s_ProjectionMatrix;
 		static int s_ScreenWidth;
 		static int s_ScreenHeight;

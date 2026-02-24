@@ -13,7 +13,10 @@ namespace onion::voxel
 	Shader GuiElement::s_ShaderSprites(GetAssetsPath() / "shaders/sprite.vert",
 									   GetAssetsPath() / "shaders/sprite.frag");
 
-	Font GuiElement::s_TextFont{(GetAssetsPath() / "minecraft/textures/font/ascii.png").string(), 16, 16};
+	Shader GuiElement::s_ShaderNineSliceSprites(GetAssetsPath() / "shaders/nine_slice_sprite.vert",
+												GetAssetsPath() / "shaders/nine_slice_sprite.frag");
+
+	Font GuiElement::s_TextFont{(GetMinecraftAssetsPath() / "textures/font/ascii.png").string(), 16, 16};
 
 	glm::mat4 GuiElement::s_ProjectionMatrix{1.0f};
 	int GuiElement::s_ScreenWidth = 800;
@@ -61,6 +64,9 @@ namespace onion::voxel
 
 		s_ShaderSprites.Use();
 		s_ShaderSprites.setMat4("uProjection", s_ProjectionMatrix);
+
+		s_ShaderNineSliceSprites.Use();
+		s_ShaderNineSliceSprites.setMat4("uProjection", s_ProjectionMatrix);
 	}
 
 	void GuiElement::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)

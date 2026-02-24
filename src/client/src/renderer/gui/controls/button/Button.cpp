@@ -14,15 +14,18 @@ namespace onion::voxel
 
 	std::vector<unsigned int> Button::s_Indices = {0, 1, 2, 2, 3, 0};
 
-	Texture Button::s_Texture((GetAssetsPath() / "minecraft/textures/gui/sprites/widget/button.png").string().c_str());
+	Texture Button::s_Texture((GetMinecraftAssetsPath() / "textures/gui/sprites/widget/button.png").string().c_str());
 	Texture Button::s_TextureDisabled(
-		(GetAssetsPath() / "minecraft/textures/gui/sprites/widget/button_disabled.png").string().c_str());
+		(GetMinecraftAssetsPath() / "textures/gui/sprites/widget/button_disabled.png").string().c_str());
 	Texture Button::s_TextureHighlighted(
-		(GetAssetsPath() / "minecraft/textures/gui/sprites/widget/button_highlighted.png").string().c_str());
+		(GetMinecraftAssetsPath() / "textures/gui/sprites/widget/button_highlighted.png").string().c_str());
 
 	// -------- Constructor --------
 
-	Button::Button(const std::string& name) : GuiElement(name) {}
+	Button::Button(const std::string& name)
+		: GuiElement(name), m_NineSliceSprite(GetMinecraftAssetsPath() / "textures/gui/sprites/widget/button.png")
+	{
+	}
 
 	Button::~Button() {}
 
@@ -83,30 +86,34 @@ namespace onion::voxel
 		glm::vec2 topLeft = m_Position - updatedSize * 0.5f;
 
 		// ----- Render Button -----
-		s_ShaderSprites.Use();
-		s_ShaderSprites.setVec2("uPos", topLeft.x, topLeft.y);
-		s_ShaderSprites.setVec2("uSize", updatedSize.x, updatedSize.y);
-		s_ShaderSprites.setInt("uTexture", 0);
+		//s_ShaderSprites.Use();
+		//s_ShaderSprites.setVec2("uPos", topLeft.x, topLeft.y);
+		//s_ShaderSprites.setVec2("uSize", updatedSize.x, updatedSize.y);
+		//s_ShaderSprites.setInt("uTexture", 0);
 
-		glActiveTexture(GL_TEXTURE0);
+		//glActiveTexture(GL_TEXTURE0);
 
-		// Bind correct texture based on state
-		if (!m_IsEnabled)
-		{
-			s_TextureDisabled.Bind();
-		}
-		else if (isCurrentlyHovered)
-		{
-			s_TextureHighlighted.Bind();
-		}
-		else
-		{
-			s_Texture.Bind();
-		}
+		//// Bind correct texture based on state
+		//if (!m_IsEnabled)
+		//{
+		//	s_TextureDisabled.Bind();
+		//}
+		//else if (isCurrentlyHovered)
+		//{
+		//	s_TextureHighlighted.Bind();
+		//}
+		//else
+		//{
+		//	s_Texture.Bind();
+		//}
 
-		glBindVertexArray(m_VAO);
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(s_Indices.size()), GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
+		//glBindVertexArray(m_VAO);
+		//glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(s_Indices.size()), GL_UNSIGNED_INT, 0);
+		//glBindVertexArray(0);
+
+		m_NineSliceSprite.SetPosition(m_Position);
+		m_NineSliceSprite.SetSize(m_Size);
+		m_NineSliceSprite.Render();
 
 		// ----- Render Text -----
 		if (!m_Text.empty())
@@ -131,12 +138,15 @@ namespace onion::voxel
 		GenerateBuffers();
 		InitBuffers();
 
+		m_NineSliceSprite.Initialize();
+
 		SetInitState(true);
 	}
 
 	void Button::Delete()
 	{
 		DeleteBuffers();
+		m_NineSliceSprite.Delete();
 		SetDeletedState(true);
 	}
 
