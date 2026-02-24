@@ -2,12 +2,12 @@
 
 namespace onion::voxel
 {
-
 	enum class Key : int
 	{
 		Unknown = GLFW_KEY_UNKNOWN,
 
 		// Printable keys
+
 		Space = GLFW_KEY_SPACE,
 		Apostrophe = GLFW_KEY_APOSTROPHE, // '
 		Comma = GLFW_KEY_COMMA,			  // ,
@@ -60,6 +60,7 @@ namespace onion::voxel
 		World2 = GLFW_KEY_WORLD_2,			   // non-US #2
 
 		// Function keys
+
 		Escape = GLFW_KEY_ESCAPE,
 		Enter = GLFW_KEY_ENTER,
 		Tab = GLFW_KEY_TAB,
@@ -106,6 +107,7 @@ namespace onion::voxel
 		F25 = GLFW_KEY_F25,
 
 		// Keypad
+
 		KP0 = GLFW_KEY_KP_0,
 		KP1 = GLFW_KEY_KP_1,
 		KP2 = GLFW_KEY_KP_2,
@@ -125,6 +127,7 @@ namespace onion::voxel
 		KPEqual = GLFW_KEY_KP_EQUAL,
 
 		// Modifiers & system keys
+
 		LeftShift = GLFW_KEY_LEFT_SHIFT,
 		LeftControl = GLFW_KEY_LEFT_CONTROL,
 		LeftAlt = GLFW_KEY_LEFT_ALT,

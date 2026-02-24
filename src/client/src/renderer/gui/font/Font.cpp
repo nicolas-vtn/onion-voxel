@@ -6,14 +6,13 @@ using namespace onion::voxel;
 
 // -------- Static Member Definitions --------
 
-Shader Font::m_ShaderFont((GetAssetsPath() / "shaders/font.vert").string().c_str(),
-						  (GetAssetsPath() / "shaders/font.frag").string().c_str());
+Shader Font::m_ShaderFont(GetAssetsPath() / "shaders/font.vert", GetAssetsPath() / "shaders/font.frag");
 
 glm::mat4 Font::s_ProjectionMatrix{1.0f};
 
 // -------- Constructor / Destructor --------
 
-Font::Font(const std::string& fontFilePath, int atlasCols, int atlasRows)
+Font::Font(const std::filesystem::path& fontFilePath, int atlasCols, int atlasRows)
 	: m_FontFilePath(fontFilePath), m_TextureAtlas(fontFilePath), m_AtlasCols(atlasCols), m_AtlasRows(atlasRows)
 {
 	InitializeGlyphs();
@@ -30,7 +29,7 @@ void Font::Load()
 {
 	m_TextureAtlas.Bind(); // Upload texture
 	m_ShaderFont.Use();
-	m_ShaderFont.setInt("uTexture", m_TextureAtlas.GetTextureID());
+	m_ShaderFont.setInt("uTexture", m_TextureAtlas.TextureID());
 	GenerateBuffers();
 }
 
@@ -66,11 +65,11 @@ void Font::RenderText(const std::string& text, float x, float y, float scale, co
 	float cursorX = x;
 	float cursorY = y;
 
-	int texWidth = m_TextureAtlas.GetWidth();
-	int texHeight = m_TextureAtlas.GetHeight();
+	int texWidth = m_TextureAtlas.Width();
+	int texHeight = m_TextureAtlas.Height();
 
-	float glyphPixelWidth = texWidth / m_AtlasCols;
-	float glyphPixelHeight = texHeight / m_AtlasRows;
+	float glyphPixelWidth = (float) texWidth / m_AtlasCols;
+	float glyphPixelHeight = (float) texHeight / m_AtlasRows;
 
 	float glyphSizeX = glyphPixelWidth * scale;
 	float glyphSizeY = glyphPixelHeight * scale;
@@ -122,7 +121,7 @@ glm::vec2 Font::MeasureText(const std::string& text, float scale) const
 	if (text.empty())
 		return {0.f, 0.f};
 
-	float glyphPixelHeight = m_TextureAtlas.GetHeight() / m_AtlasRows;
+	float glyphPixelHeight = m_TextureAtlas.Height() / m_AtlasRows;
 
 	float width = 0.f;
 	for (int i = 0; i < text.size(); i++)
@@ -219,9 +218,9 @@ float GetGlyphAdvance(
 void onion::voxel::Font::InitializeGlyphs()
 {
 	auto data = m_TextureAtlas.GetData();
-	int width = m_TextureAtlas.GetWidth();
-	int height = m_TextureAtlas.GetHeight();
-	int nrChannels = m_TextureAtlas.GetNrChannels();
+	int width = m_TextureAtlas.Width();
+	int height = m_TextureAtlas.Height();
+	int nrChannels = m_TextureAtlas.Channels();
 
 	int glyphPixelWidth = width / m_AtlasCols;
 	int glyphPixelHeight = height / m_AtlasRows;

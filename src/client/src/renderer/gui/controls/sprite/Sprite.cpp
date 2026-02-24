@@ -68,12 +68,12 @@ glm::vec2 Sprite::GetPosition() const
 
 int Sprite::GetTextureWidth() const
 {
-	return m_Texture.GetWidth();
+	return m_Texture.Width();
 }
 
 int Sprite::GetTextureHeight() const
 {
-	return m_Texture.GetHeight();
+	return m_Texture.Height();
 }
 
 void Sprite::GenerateBuffers()

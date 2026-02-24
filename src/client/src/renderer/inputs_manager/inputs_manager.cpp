@@ -185,11 +185,10 @@ bool InputsManager::IsMouseCaptureEnabled() const
 	return m_MouseCaptureEnabled;
 }
 
-void InputsManager::GetFramebufferSize(int& width, int& height)
+FramebufferState InputsManager::GetFramebufferState()
 {
 	std::unique_lock<std::mutex> lock(m_MutexFramebuffer);
-	width = m_FramebufferState.Width;
-	height = m_FramebufferState.Height;
+	return m_FramebufferState;
 }
 
 int InputsManager::RegisterInput(const Key key, InputConfig config)
@@ -200,9 +199,9 @@ int InputsManager::RegisterInput(const Key key, InputConfig config)
 
 	KeyInputControl keyControl;
 	keyControl.key = key;
-	keyControl.EnableControlledKeyRepeat = config.EnableControlledKeyRepeatWhenHold;
-	keyControl.KeyRepeatDelay = config.KeyRepeatDelayWhenHold;
-	keyControl.KeyRepeatInterval = config.KeyRepeatIntervalWhenHold;
+	keyControl.EnableControlledKeyRepeat = config.EnableKeyRepeat;
+	keyControl.KeyRepeatDelay = config.KeyRepeatDelay;
+	keyControl.KeyRepeatInterval = config.KeyRepeatInterval;
 	keyControl.DoublePressDelay = config.DoublePressDelay;
 
 	m_RegisteredInputs[inputId] = keyControl;

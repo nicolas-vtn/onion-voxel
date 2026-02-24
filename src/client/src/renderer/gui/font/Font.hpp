@@ -5,6 +5,8 @@
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -13,7 +15,7 @@ namespace onion::voxel
 	class Font
 	{
 	  public:
-		Font(const std::string& fontFilePath, int atlasCols, int atlasRows);
+		Font(const std::filesystem::path& fontFilePath, int atlasCols, int atlasRows);
 		~Font();
 
 		void Load();
@@ -44,7 +46,7 @@ namespace onion::voxel
 		};
 
 	  private:
-		std::string m_FontFilePath;
+		std::filesystem::path m_FontFilePath;
 		Texture m_TextureAtlas;
 		int m_AtlasCols = 16;
 		int m_AtlasRows = 16;

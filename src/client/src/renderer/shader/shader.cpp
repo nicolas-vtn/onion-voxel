@@ -1,5 +1,6 @@
 #include "shader.hpp"
 
+#include <cassert>
 #include <fstream>
 #include <glad/glad.h>
 #include <iostream>
@@ -7,9 +8,25 @@
 
 using namespace onion::voxel;
 
-Shader::Shader(const char* vertexPath, const char* fragmentPath)
+Shader::Shader(const std::filesystem::path& vertexPath, const std::filesystem::path& fragmentPath)
 	: m_FragmentPath(fragmentPath), m_VertexPath(vertexPath)
 {
+	if (!std::filesystem::exists(vertexPath))
+	{
+		std::cerr << "[SHADER] [ERROR] : Vertex shader file does not exist: " << vertexPath << std::endl;
+		throw std::runtime_error("Vertex shader file does not exist: " + vertexPath.string());
+	}
+	if (!std::filesystem::exists(fragmentPath))
+	{
+		std::cerr << "[SHADER] [ERROR] : Fragment shader file does not exist: " << fragmentPath << std::endl;
+		throw std::runtime_error("Fragment shader file does not exist: " + fragmentPath.string());
+	}
+}
+
+onion::voxel::Shader::Shader(Shader&& other) noexcept : m_ProgramID(other.m_ProgramID)
+{
+	other.m_ProgramID = 0;
+	m_HasBeenCompiled = other.m_HasBeenCompiled;
 }
 
 Shader& Shader::operator=(Shader&& other) noexcept
@@ -42,11 +59,14 @@ void Shader::Compile() const
 		// Check if actually opened (warns about missing file)
 		if (!vShaderFile.is_open())
 		{
-			std::cout << "WARNING: Failed to open vertex shader file: " << m_VertexPath << std::endl;
+			std::cerr << "[SHADER] [ERROR] : Failed to open vertex shader file: '" << m_VertexPath << "'" << std::endl;
+			throw std::runtime_error("Shader file " + m_VertexPath.string() + " read error");
 		}
 		if (!fShaderFile.is_open())
 		{
-			std::cout << "WARNING: Failed to open fragment shader file: " << m_FragmentPath << std::endl;
+			std::cerr << "[SHADER] [ERROR] : Failed to open fragment shader file: '" << m_FragmentPath << "'"
+					  << std::endl;
+			throw std::runtime_error("Shader file " + m_FragmentPath.string() + " read error");
 		}
 
 		// Read file content into streams
@@ -64,7 +84,8 @@ void Shader::Compile() const
 	}
 	catch (std::ifstream::failure& e)
 	{
-		std::cout << "ERROR: Shader file not successfully read: " << e.what() << std::endl;
+		std::cerr << "[SHADER] [ERROR] : Shader file '" << m_VertexPath << "' or '" << m_FragmentPath
+				  << "' not successfully read: " << e.what() << std::endl;
 		throw std::runtime_error("Shader file read error");
 	}
 
@@ -84,8 +105,9 @@ void Shader::Compile() const
 	if (!success)
 	{
 		glGetShaderInfoLog(vertex, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-		throw std::runtime_error("Vertex shader compilation failed");
+		std::cerr << "[SHADER] [ERROR] : Vertex shader '" << m_VertexPath << "' compilation failed :" << infoLog
+				  << std::endl;
+		throw std::runtime_error("Vertex shader '" + m_VertexPath.string() + "' compilation failed");
 	}
 
 	// Fragment Shader
@@ -96,8 +118,9 @@ void Shader::Compile() const
 	if (!success)
 	{
 		glGetShaderInfoLog(fragment, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-		throw std::runtime_error("Fragment shader compilation failed");
+		std::cerr << "[SHADER] [ERROR] : Fragment shader '" << m_FragmentPath << "' compilation failed :" << infoLog
+				  << std::endl;
+		throw std::runtime_error("Fragment shader '" + m_FragmentPath.string() + "' compilation failed");
 	}
 
 	// Shader Program
@@ -109,7 +132,9 @@ void Shader::Compile() const
 	if (!success)
 	{
 		glGetProgramInfoLog(m_ProgramID, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+		std::cerr << "[SHADER] [ERROR] : Shader program '" << m_ProgramID << "' from '" << m_VertexPath << "' and '"
+				  << m_FragmentPath << "' linking failed :" << infoLog << std::endl;
+		throw std::runtime_error("Shader program '" + std::to_string(m_ProgramID) + "' linking failed");
 	}
 
 	glDeleteShader(vertex);
@@ -122,7 +147,8 @@ Shader::~Shader()
 {
 	if (m_ProgramID != 0)
 	{
-		std::cout << "[SHADER] [WARNING] : Shader not deleted before destruction. There is a memory leak." << std::endl;
+		std::cerr << "[SHADER] [ERROR] : Shaders '" << m_VertexPath << "' and '" << m_FragmentPath
+				  << "' not deleted before destruction. There is a memory leak." << std::endl;
 	}
 }
 

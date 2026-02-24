@@ -10,8 +10,8 @@ namespace onion::voxel
 
 	// -------- Static Member Definitions --------
 
-	Shader GuiElement::s_ShaderSprites((GetAssetsPath() / "shaders/sprite.vert").string().c_str(),
-									   (GetAssetsPath() / "shaders/sprite.frag").string().c_str());
+	Shader GuiElement::s_ShaderSprites(GetAssetsPath() / "shaders/sprite.vert",
+									   GetAssetsPath() / "shaders/sprite.frag");
 
 	Font GuiElement::s_TextFont{(GetAssetsPath() / "minecraft/textures/font/ascii.png").string(), 16, 16};
 
