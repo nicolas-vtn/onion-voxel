@@ -55,7 +55,7 @@ namespace onion::voxel
 		if (!m_Text.empty())
 		{
 			glm::ivec2 size = GetSize();
-			if (m_IsPressed)
+			if (m_IsPressed && m_IsEnabled)
 			{
 				size = glm::ivec2(glm::vec2(size) * m_ScaleFactorOnClick);
 			}
@@ -111,6 +111,9 @@ namespace onion::voxel
 
 	void Button::SetText(const std::string& text)
 	{
+		if (text == m_Text)
+			return;
+
 		m_Text = text;
 	}
 
@@ -121,6 +124,9 @@ namespace onion::voxel
 
 	void Button::SetSize(const glm::ivec2& size)
 	{
+		if (size == m_Size)
+			return;
+
 		m_Size = size;
 		m_NineSliceSprite_Basic.SetSize(size);
 		m_NineSliceSprite_Disabled.SetSize(size);
@@ -134,6 +140,9 @@ namespace onion::voxel
 
 	void Button::SetPosition(const glm::ivec2& pos)
 	{
+		if (pos == m_Position)
+			return;
+
 		m_Position = pos;
 		m_NineSliceSprite_Basic.SetPosition(pos);
 		m_NineSliceSprite_Disabled.SetPosition(pos);
@@ -181,9 +190,12 @@ namespace onion::voxel
 		m_IsPressed = true;
 		glm::ivec2 updatedSize = glm::ivec2(glm::vec2(m_Size) * m_ScaleFactorOnClick);
 
-		m_NineSliceSprite_Basic.SetSize(updatedSize);
-		m_NineSliceSprite_Disabled.SetSize(updatedSize);
-		m_NineSliceSprite_Highlighted.SetSize(updatedSize);
+		if (m_IsEnabled)
+		{
+			m_NineSliceSprite_Basic.SetSize(updatedSize);
+			m_NineSliceSprite_Disabled.SetSize(updatedSize);
+			m_NineSliceSprite_Highlighted.SetSize(updatedSize);
+		}
 	}
 
 	void Button::HandleMouseUp(const NineSliceSprite& sprite)
