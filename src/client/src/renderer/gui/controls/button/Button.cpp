@@ -70,13 +70,24 @@ namespace onion::voxel
 			float textX = topLeft.x + (size.x - textSize.x) * 0.5f;
 			float textY = topLeft.y + (size.y - textSize.y) * 0.5f;
 
+			textX = std::ceil(textX);
+			textY = std::ceil(textY);
+
 			// Render shadow
-			float shadowOffset = size.y * 0.06f;
-			glm::vec3 shadowColor = {0.247f, 0.247f, 0.247f};
-			s_TextFont.RenderText(m_Text, textX + shadowOffset, textY + shadowOffset, textScale, shadowColor);
+			if (m_IsEnabled)
+			{
+				float shadowOffset = size.y * 0.06f;
+				glm::vec3 shadowColor = {0.246f, 0.246f, 0.246f};
+				s_TextFont.RenderText(m_Text, textX + shadowOffset, textY + shadowOffset, textScale, shadowColor);
+			}
 
 			// Render main text
-			s_TextFont.RenderText(m_Text, textX, textY, textScale, {1, 1, 1});
+			glm::vec3 textColor = {1.f, 1.f, 1.f};
+			if (!m_IsEnabled)
+			{
+				textColor = {0.625f, 0.625f, 0.625f};
+			}
+			s_TextFont.RenderText(m_Text, textX, textY, textScale, textColor);
 		}
 	}
 

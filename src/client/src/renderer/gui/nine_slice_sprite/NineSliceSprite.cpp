@@ -638,8 +638,9 @@ namespace onion::voxel
 		};
 
 		// Top Texture (repeat horizontally, no crop vertically)
-		float u0 = 0.0f;
-		float u1 = static_cast<float>(centerWidth) / meta.Width / s_GUI_SCALE;
+		float repeatU = static_cast<float>(centerWidth) / (meta.Width * s_GUI_SCALE);
+		float u0 = 0.5f - repeatU * 0.5f;
+		float u1 = 0.5f + repeatU * 0.5f;
 		float v0 = 0.0f;
 		float v1 = 1.0f;
 		m_Vertices_Top = {
@@ -658,10 +659,11 @@ namespace onion::voxel
 		};
 
 		// Left Texture (no repeat horizontally, repeat vertically)
+		float repeatV = static_cast<float>(centerHeight) / (meta.Height * s_GUI_SCALE);
 		u0 = 0.0f;
 		u1 = 1.0f;
-		v0 = 0.0f;
-		v1 = static_cast<float>(centerHeight) / meta.Height / s_GUI_SCALE;
+		v0 = 0.5f - repeatV * 0.5f;
+		v1 = 0.5f + repeatV * 0.5f;
 		m_Vertices_Left = {
 			{xs[0], ys[1], 0.0f, u0, v0}, // Top Left
 			{xs[1], ys[1], 0.0f, u1, v0}, // Top Right
@@ -670,10 +672,10 @@ namespace onion::voxel
 		};
 
 		// Center Texture (repeat both horizontally and vertically)
-		u0 = 0.0f;
-		u1 = static_cast<float>(centerWidth) / meta.Width / s_GUI_SCALE;
-		v0 = 0.0f;
-		v1 = static_cast<float>(centerHeight) / meta.Height / s_GUI_SCALE;
+		u0 = 0.5f - repeatU * 0.5f;
+		u1 = 0.5f + repeatU * 0.5f;
+		v0 = 0.5f - repeatV * 0.5f;
+		v1 = 0.5f + repeatV * 0.5f;
 		m_Vertices_Center = {
 			{xs[1], ys[1], 0.0f, u0, v0}, // Top Left
 			{xs[2], ys[1], 0.0f, u1, v0}, // Top Right
@@ -684,8 +686,8 @@ namespace onion::voxel
 		// Right Texture (no repeat horizontally, repeat vertically)
 		u0 = 0.0f;
 		u1 = 1.0f;
-		v0 = 0.0f;
-		v1 = static_cast<float>(centerHeight) / meta.Height / s_GUI_SCALE;
+		v0 = 0.5f - repeatV * 0.5f;
+		v1 = 0.5f + repeatV * 0.5f;
 		m_Vertices_Right = {
 			{xs[2], ys[1], 0.0f, u0, v0}, // Top Left
 			{xs[3], ys[1], 0.0f, u1, v0}, // Top Right
@@ -702,8 +704,8 @@ namespace onion::voxel
 		};
 
 		// Bottom Texture (repeat horizontally, no crop vertically)
-		u0 = 0.0f;
-		u1 = static_cast<float>(centerWidth) / meta.Width / s_GUI_SCALE;
+		u0 = 0.5f - repeatU * 0.5f;
+		u1 = 0.5f + repeatU * 0.5f;
 		v0 = 0.0f;
 		v1 = 1.0f;
 		m_Vertices_Bottom = {
