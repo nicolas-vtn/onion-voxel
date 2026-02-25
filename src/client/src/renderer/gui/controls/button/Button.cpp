@@ -1,6 +1,7 @@
 #include "Button.hpp"
 
 #include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 #include <iostream>
 
@@ -8,25 +9,14 @@
 
 namespace onion::voxel
 {
-
-	// -------- Static Data --------
-
-	std::vector<Button::Vertex> Button::s_Vertices = {
-		{0.f, 0.f, 0.f, 0.f, 0.f}, {1.f, 0.f, 0.f, 1.f, 0.f}, {1.f, 1.f, 0.f, 1.f, 1.f}, {0.f, 1.f, 0.f, 0.f, 1.f}};
-
-	std::vector<unsigned int> Button::s_Indices = {0, 1, 2, 2, 3, 0};
-
-	Texture Button::s_Texture((GetMinecraftAssetsPath() / "textures/gui/sprites/widget/button.png").string().c_str());
-	Texture Button::s_TextureDisabled(
-		(GetMinecraftAssetsPath() / "textures/gui/sprites/widget/button_disabled.png").string().c_str());
-	Texture Button::s_TextureHighlighted(
-		(GetMinecraftAssetsPath() / "textures/gui/sprites/widget/button_highlighted.png").string().c_str());
-
 	// -------- Constructor --------
 
 	Button::Button(const std::string& name)
-		: GuiElement(name), m_NineSliceSprite(name, GetMinecraftAssetsPath() / "textures/gui/sprites/widget/button.png")
+		: GuiElement(name), m_NineSliceSprite_Basic(name + "_9Slice_Basic", GetSpritePath_Basic()),
+		  m_NineSliceSprite_Disabled(name + "_9Slice_Disabled", GetSpritePath_Disabled()),
+		  m_NineSliceSprite_Highlighted(name + "_9Slice_Highlighted", GetSpritePath_Highlighted())
 	{
+		SubscribeToSpriteEvents();
 	}
 
 	Button::~Button() {}
@@ -41,123 +31,70 @@ namespace onion::voxel
 			return;
 		}
 
-		bool isCurrentlyHovered = IsHovered();
-		bool isClicked = s_InputsSnapshot->Mouse.LeftButtonPressed;
+		// DEBUG
+		RenderImGuiDebug();
 
-		// ----- Hover Logic -----
-		if (isCurrentlyHovered)
+		// Pulls events
+		m_NineSliceSprite_Basic.PullEvents();
+
+		// Render the appropriate sprite based on the button's state
+		if (m_IsEnabled)
 		{
-			if (!m_WasHovered)
-			{
-				std::cout << "Button '" << GetName() << "' hovered." << std::endl;
-				OnHover.Trigger(*this);
-			}
+			bool isCurrentlyHovered = m_NineSliceSprite_Basic.IsHovered();
+			if (isCurrentlyHovered)
+				m_NineSliceSprite_Highlighted.Render();
+			else
+				m_NineSliceSprite_Basic.Render();
 		}
 		else
 		{
-			if (m_WasHovered)
-			{
-				std::cout << "Button '" << GetName() << "' unhovered." << std::endl;
-				OnUnhover.Trigger(*this);
-			}
+			m_NineSliceSprite_Disabled.Render();
 		}
-
-		// ----- Click Logic -----
-		if (m_IsEnabled && isCurrentlyHovered && !isClicked && m_WasClicked)
-		{
-			std::cout << "Button '" << GetName() << "' clicked." << std::endl;
-			OnClick.Trigger(*this);
-		}
-
-		// ----- Update States ----
-		m_WasHovered = isCurrentlyHovered;
-		m_WasClicked = isClicked;
-
-		float scaleFactor = 1.0f;
-
-		// ----- Scale Up on Hover -----
-		if (m_IsEnabled && m_ScaleUpOnHover && isCurrentlyHovered)
-			scaleFactor *= 1.05f;
-
-		// ----- Scale Down on Click -----
-		if (m_IsEnabled && isCurrentlyHovered && isClicked)
-			scaleFactor *= 0.95f;
-
-		glm::vec2 updatedSize = m_Size * scaleFactor;
-
-		glm::vec2 topLeft = m_Position - updatedSize * 0.5f;
-
-		// ----- Render Button -----
-		//s_ShaderSprites.Use();
-		//s_ShaderSprites.setVec2("uPos", topLeft.x, topLeft.y);
-		//s_ShaderSprites.setVec2("uSize", updatedSize.x, updatedSize.y);
-		//s_ShaderSprites.setInt("uTexture", 0);
-
-		//glActiveTexture(GL_TEXTURE0);
-
-		//// Bind correct texture based on state
-		//if (!m_IsEnabled)
-		//{
-		//	s_TextureDisabled.Bind();
-		//}
-		//else if (isCurrentlyHovered)
-		//{
-		//	s_TextureHighlighted.Bind();
-		//}
-		//else
-		//{
-		//	s_Texture.Bind();
-		//}
-
-		//glBindVertexArray(m_VAO);
-		//glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(s_Indices.size()), GL_UNSIGNED_INT, 0);
-		//glBindVertexArray(0);
-
-		// Debug ImGui pannel
-		ImGui::Begin(("Button: " + GetName()).c_str());
-		ImGui::Text("Hovered: %s", isCurrentlyHovered ? "Yes" : "No");
-		ImGui::Text("Clicked: %s", isClicked ? "Yes" : "No");
-		ImGui::SliderFloat2("Position", &m_Position.x, 0, static_cast<float>(s_ScreenWidth));
-		ImGui::SliderFloat2("Size", &m_Size.x, 20, 1500);
-		ImGui::SliderInt("GuiScale", &GuiElement::s_GUI_SCALE, 1, 16);
-		ImGui::End();
-
-		m_NineSliceSprite.SetPosition(m_Position);
-		m_NineSliceSprite.SetSize(m_Size);
-		m_NineSliceSprite.Render();
 
 		// ----- Render Text -----
 		if (!m_Text.empty())
 		{
-			float textScale = m_Size.y / 19.f;
-			textScale *= scaleFactor;
+			glm::ivec2 size = GetSize();
+			if (m_IsPressed)
+			{
+				size = glm::ivec2(glm::vec2(size) * m_ScaleFactorOnClick);
+			}
+
+			glm::vec2 topLeft_f = glm::vec2(GetPosition()) - glm::vec2(size) * 0.5f;
+			glm::ivec2 topLeft = glm::ivec2(topLeft_f);
+
+			float textScale = size.y / 19.f;
 
 			glm::vec2 textSize = s_TextFont.MeasureText(m_Text, textScale);
 
-			float textX = topLeft.x + (updatedSize.x - textSize.x) * 0.5f;
-			float textY = topLeft.y + (updatedSize.y - textSize.y) * 0.5f;
+			float textX = topLeft.x + (size.x - textSize.x) * 0.5f;
+			float textY = topLeft.y + (size.y - textSize.y) * 0.5f;
 
-			float shadowOffset = m_Size.y * 0.06f;
-			s_TextFont.RenderText(
-				m_Text, textX + shadowOffset, textY + shadowOffset, textScale, {0.247f, 0.247f, 0.247f});
+			// Render shadow
+			float shadowOffset = size.y * 0.06f;
+			glm::vec3 shadowColor = {0.247f, 0.247f, 0.247f};
+			s_TextFont.RenderText(m_Text, textX + shadowOffset, textY + shadowOffset, textScale, shadowColor);
+
+			// Render main text
 			s_TextFont.RenderText(m_Text, textX, textY, textScale, {1, 1, 1});
 		}
 	}
 
 	void Button::Initialize()
 	{
-		GenerateBuffers();
-		InitBuffers();
-
-		m_NineSliceSprite.Initialize();
+		m_NineSliceSprite_Basic.Initialize();
+		m_NineSliceSprite_Disabled.Initialize();
+		m_NineSliceSprite_Highlighted.Initialize();
 
 		SetInitState(true);
 	}
 
 	void Button::Delete()
 	{
-		DeleteBuffers();
-		m_NineSliceSprite.Delete();
+		m_NineSliceSprite_Basic.Delete();
+		m_NineSliceSprite_Disabled.Delete();
+		m_NineSliceSprite_Highlighted.Delete();
+
 		SetDeletedState(true);
 	}
 
@@ -171,27 +108,28 @@ namespace onion::voxel
 		return m_Text;
 	}
 
-	void Button::SetSize(const glm::vec2& size)
+	void Button::SetSize(const glm::ivec2& size)
 	{
 		m_Size = size;
+		m_NineSliceSprite_Basic.SetSize(size);
+		m_NineSliceSprite_Disabled.SetSize(size);
+		m_NineSliceSprite_Highlighted.SetSize(size);
 	}
 
-	glm::vec2 Button::GetSize() const
+	glm::ivec2 Button::GetSize() const
 	{
 		return m_Size;
 	}
 
-	void Button::SetPosition(double posX, double posY)
-	{
-		m_Position = {static_cast<float>(posX), static_cast<float>(posY)};
-	}
-
-	void Button::SetPosition(const glm::vec2& pos)
+	void Button::SetPosition(const glm::ivec2& pos)
 	{
 		m_Position = pos;
+		m_NineSliceSprite_Basic.SetPosition(pos);
+		m_NineSliceSprite_Disabled.SetPosition(pos);
+		m_NineSliceSprite_Highlighted.SetPosition(pos);
 	}
 
-	glm::vec2 Button::GetPosition() const
+	glm::ivec2 Button::GetPosition() const
 	{
 		return m_Position;
 	}
@@ -206,69 +144,112 @@ namespace onion::voxel
 		m_IsEnabled = enabled;
 	}
 
-	void Button::SetScaleUpOnHover(bool scaleUp)
+	void Button::SubscribeToSpriteEvents()
 	{
-		m_ScaleUpOnHover = scaleUp;
+
+		// We subscribe to only ONE sprite, since they all share the same position and size, so their hovered state will always be the same.
+
+		m_HandleMouseDown = m_NineSliceSprite_Basic.OnMouseDown.Subscribe([this](const NineSliceSprite& sprite)
+																		  { HandleMouseDown(sprite); });
+
+		m_HandleMouseUp = m_NineSliceSprite_Basic.OnMouseUp.Subscribe([this](const NineSliceSprite& sprite)
+																	  { HandleMouseUp(sprite); });
+
+		m_HandleSpriteClick = m_NineSliceSprite_Basic.OnClick.Subscribe([this](const NineSliceSprite& sprite)
+																		{ HandleSpriteClick(sprite); });
+
+		m_HandleSpriteHoverEnter = m_NineSliceSprite_Basic.OnHoverEnter.Subscribe([this](const NineSliceSprite& sprite)
+																				  { HandleSpriteHoverEnter(sprite); });
+
+		m_HandleSpriteHoverLeave = m_NineSliceSprite_Basic.OnHoverLeave.Subscribe([this](const NineSliceSprite& sprite)
+																				  { HandleSpriteHoverLeave(sprite); });
 	}
 
-	// -------- Hover Logic --------
-
-	bool Button::IsHovered() const
+	void Button::HandleMouseDown(const NineSliceSprite& sprite)
 	{
-		if (!s_InputsSnapshot)
+		m_IsPressed = true;
+		glm::ivec2 updatedSize = glm::ivec2(glm::vec2(m_Size) * m_ScaleFactorOnClick);
+
+		m_NineSliceSprite_Basic.SetSize(updatedSize);
+		m_NineSliceSprite_Disabled.SetSize(updatedSize);
+		m_NineSliceSprite_Highlighted.SetSize(updatedSize);
+	}
+
+	void Button::HandleMouseUp(const NineSliceSprite& sprite)
+	{
+		m_IsPressed = false;
+		m_NineSliceSprite_Basic.SetSize(m_Size);
+		m_NineSliceSprite_Disabled.SetSize(m_Size);
+		m_NineSliceSprite_Highlighted.SetSize(m_Size);
+	}
+
+	void Button::HandleSpriteClick(const NineSliceSprite& sprite)
+	{
+		if (m_IsEnabled)
+			OnClick.Trigger(*this);
+	}
+
+	void Button::HandleSpriteHoverEnter(const NineSliceSprite& sprite)
+	{
+		OnHoverEnter.Trigger(*this);
+	}
+
+	void Button::HandleSpriteHoverLeave(const NineSliceSprite& sprite)
+	{
+		OnHoverLeave.Trigger(*this);
+	}
+
+	std::filesystem::path Button::GetSpritePath_Basic()
+	{
+		return GetMinecraftAssetsPath() / "textures" / "gui" / "sprites" / "widget" / "button.png";
+	}
+
+	std::filesystem::path Button::GetSpritePath_Disabled()
+	{
+		return GetMinecraftAssetsPath() / "textures" / "gui" / "sprites" / "widget" / "button_disabled.png";
+	}
+
+	std::filesystem::path Button::GetSpritePath_Highlighted()
+	{
+		return GetMinecraftAssetsPath() / "textures" / "gui" / "sprites" / "widget" / "button_highlighted.png";
+	}
+
+	void Button::RenderImGuiDebug()
+	{
+		// Debug ImGui pannel
+		ImGui::Begin(("Button: " + GetName()).c_str());
+
+		ImGui::Text("Hovered: %s", m_NineSliceSprite_Basic.IsHovered() ? "Yes" : "No");
+
+		std::string text = GetText();
+		if (ImGui::InputText("Text", &text))
 		{
-			return false;
+			SetText(text);
 		}
 
-		int mouseX = s_InputsSnapshot->Mouse.Xpos;
-		int mouseY = s_InputsSnapshot->Mouse.Ypos;
+		bool isEnabled = IsEnabled();
+		if (ImGui::Checkbox("Enabled", &isEnabled))
+		{
+			SetEnabled(isEnabled);
+		}
 
-		glm::vec2 topLeft = m_Position - (m_Size * 0.5f);
+		ImGui::SliderFloat("Scale On Click", &m_ScaleFactorOnClick, 0.2f, 1.f);
 
-		bool hovered = mouseX >= topLeft.x && mouseX <= topLeft.x + m_Size.x && mouseY >= topLeft.y &&
-			mouseY <= topLeft.y + m_Size.y;
+		glm::ivec2 position = GetPosition();
+		if (ImGui::SliderInt2("Position", &position.x, 0, s_ScreenWidth))
+		{
+			SetPosition(position);
+		}
 
-		return hovered;
-	}
+		glm::ivec2 size = GetSize();
+		if (ImGui::SliderInt2("Size", &size.x, 20, 1500))
+		{
+			SetSize(size);
+		}
 
-	// -------- OpenGL Buffer Setup --------
+		ImGui::SliderInt("GuiScale", &GuiElement::s_GUI_SCALE, 1, 16);
 
-	void Button::GenerateBuffers()
-	{
-		glGenVertexArrays(1, &m_VAO);
-		glGenBuffers(1, &m_VBO);
-		glGenBuffers(1, &m_EBO);
-	}
-
-	void Button::DeleteBuffers()
-	{
-		glDeleteVertexArrays(1, &m_VAO);
-		glDeleteBuffers(1, &m_VBO);
-		glDeleteBuffers(1, &m_EBO);
-
-		m_VAO = 0;
-		m_VBO = 0;
-		m_EBO = 0;
-	}
-
-	void Button::InitBuffers()
-	{
-		glBindVertexArray(m_VAO);
-
-		glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-		glBufferData(GL_ARRAY_BUFFER, s_Vertices.size() * sizeof(Vertex), s_Vertices.data(), GL_STATIC_DRAW);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
-		glBufferData(
-			GL_ELEMENT_ARRAY_BUFFER, s_Indices.size() * sizeof(unsigned int), s_Indices.data(), GL_STATIC_DRAW);
-
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, posX));
-		glEnableVertexAttribArray(0);
-
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
-		glEnableVertexAttribArray(1);
-
-		glBindVertexArray(0);
+		ImGui::End();
 	}
 
 } // namespace onion::voxel

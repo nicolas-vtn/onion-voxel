@@ -22,78 +22,68 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		void Render();
-
-		void Initialize();
-		void Delete();
+		void Initialize() override;
+		void Render() override;
+		void Delete() override;
 
 		// ----- Getters / Setters -----
 	  public:
 		void SetText(const std::string& text);
 		std::string GetText() const;
 
-		void SetSize(const glm::vec2& size);
-		glm::vec2 GetSize() const;
+		void SetSize(const glm::ivec2& size);
+		glm::ivec2 GetSize() const;
 
-		void SetPosition(double posX, double posY);
-		void SetPosition(const glm::vec2& pos);
-		glm::vec2 GetPosition() const;
+		void SetPosition(const glm::ivec2& pos);
+		glm::ivec2 GetPosition() const;
 
 		bool IsEnabled() const;
 		void SetEnabled(bool enabled);
 
-		void SetScaleUpOnHover(bool scaleUp);
-
 		// ----- Events -----
 	  public:
 		Event<const Button&> OnClick;
-		Event<const Button&> OnHover;
-		Event<const Button&> OnUnhover;
+		Event<const Button&> OnHoverEnter;
+		Event<const Button&> OnHoverLeave;
 
-		// ----- Internal Helpers -----
 	  private:
-		bool IsHovered() const;
+		void SubscribeToSpriteEvents();
+
+		EventHandle m_HandleMouseDown;
+		void HandleMouseDown(const NineSliceSprite& sprite);
+		EventHandle m_HandleMouseUp;
+		void HandleMouseUp(const NineSliceSprite& sprite);
+		EventHandle m_HandleSpriteClick;
+		void HandleSpriteClick(const NineSliceSprite& sprite);
+		EventHandle m_HandleSpriteHoverEnter;
+		void HandleSpriteHoverEnter(const NineSliceSprite& sprite);
+		EventHandle m_HandleSpriteHoverLeave;
+		void HandleSpriteHoverLeave(const NineSliceSprite& sprite);
 
 		// ----- Properties -----
 	  private:
 		std::string m_Text;
 		bool m_IsEnabled = true;
-		bool m_ScaleUpOnHover = true;
 
-		glm::vec2 m_Position{0, 0};
-		glm::vec2 m_Size{1, 1};
+		glm::ivec2 m_Position{0, 0};
+		glm::ivec2 m_Size{1, 1};
+		bool m_IsPressed = false;
+		float m_ScaleFactorOnClick = 0.95f;
 
-		// ----- Textures -----
+		// ----- NineSliceSprites -----
 	  private:
-		static Texture s_Texture;
-		static Texture s_TextureDisabled;
-		static Texture s_TextureHighlighted;
+		NineSliceSprite m_NineSliceSprite_Basic;
+		NineSliceSprite m_NineSliceSprite_Disabled;
+		NineSliceSprite m_NineSliceSprite_Highlighted;
 
-		// ----- OPEN GL -----
+		// ----- Static Helpers -----
 	  private:
-		struct Vertex
-		{
-			float posX, posY, posZ;
-			float texX, texY;
-		};
+		static std::filesystem::path GetSpritePath_Basic();
+		static std::filesystem::path GetSpritePath_Disabled();
+		static std::filesystem::path GetSpritePath_Highlighted();
 
-		static std::vector<Vertex> s_Vertices;
-		static std::vector<unsigned int> s_Indices;
-
-		GLuint m_VAO = 0;
-		GLuint m_VBO = 0;
-		GLuint m_EBO = 0;
-
-		void GenerateBuffers();
-		void DeleteBuffers();
-		void InitBuffers();
-
-		// ----- Internal States -----
-		bool m_WasHovered = false;
-		bool m_WasClicked = false;
-
-		// ----- NineSliceTests -----
+		// ----- DEBUG -----
 	  private:
-		NineSliceSprite m_NineSliceSprite;
+		void RenderImGuiDebug();
 	};
 } // namespace onion::voxel

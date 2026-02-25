@@ -88,8 +88,6 @@ namespace onion::voxel
 			UploadMesh();
 		}
 
-		DispatchEvents();
-
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -207,18 +205,18 @@ namespace onion::voxel
 		m_MeshDirty = true;
 	}
 
-	void NineSliceSprite::DispatchEvents()
+	void NineSliceSprite::PullEvents()
 	{
 
 		// ------------------- Hover Events ------------------
 		bool hovered = IsHovered();
 		if (hovered && !m_WasHovered)
 		{
-			OnHoverIn.Trigger(*this);
+			OnHoverEnter.Trigger(*this);
 		}
 		else if (!hovered && m_WasHovered)
 		{
-			OnHoverOut.Trigger(*this);
+			OnHoverLeave.Trigger(*this);
 		}
 
 		m_WasHovered = hovered;

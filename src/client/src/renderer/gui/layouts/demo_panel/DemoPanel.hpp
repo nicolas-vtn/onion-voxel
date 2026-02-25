@@ -22,6 +22,14 @@ namespace onion::voxel
 		Button m_Button;
 		Button m_Button2;
 
+	  private:
+		EventHandle m_HandleButtonClick;
+		void HandleButtonClick(const Button& button);
+		EventHandle m_HandleButtonHoverEnter;
+		void HandleButtonHoverEnter(const Button& button);
+		EventHandle m_HandleButtonHoverLeave;
+		void HandleButtonHoverLeave(const Button& button);
+
 		std::string m_SpritePath = (GetAssetsPath() / "textures" / "OnionVoxelTitle.png").string();
 		Sprite m_Sprite;
 	};

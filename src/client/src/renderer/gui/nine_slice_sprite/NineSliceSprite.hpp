@@ -37,6 +37,7 @@ namespace onion::voxel
 
 		// ----- Constructor & Destructor -----
 	  public:
+		NineSliceSprite() = delete;
 		NineSliceSprite(const std::string& name, const std::filesystem::path& spritePath);
 		~NineSliceSprite();
 
@@ -48,6 +49,8 @@ namespace onion::voxel
 		void Render() override;
 		void Delete() override;
 
+		void PullEvents();
+
 		bool IsHovered() const;
 
 		// ----- Events -----
@@ -56,8 +59,8 @@ namespace onion::voxel
 		Event<const NineSliceSprite&> OnMouseUp;
 		Event<const NineSliceSprite&> OnClick;
 
-		Event<const NineSliceSprite&> OnHoverIn;
-		Event<const NineSliceSprite&> OnHoverOut;
+		Event<const NineSliceSprite&> OnHoverEnter;
+		Event<const NineSliceSprite&> OnHoverLeave;
 
 		// ----- Getters / Setters -----
 	  public:
@@ -85,8 +88,6 @@ namespace onion::voxel
 
 		// ----- Event State -----
 	  private:
-		void DispatchEvents();
-
 		bool m_WasHovered = false;
 		bool m_WasMouseDown = false;
 

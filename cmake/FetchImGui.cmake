@@ -28,6 +28,7 @@ add_library(imgui STATIC
     ${IMGUI_DIR}/imgui_draw.cpp
     ${IMGUI_DIR}/imgui_tables.cpp
     ${IMGUI_DIR}/imgui_widgets.cpp
+	${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp
 
     # Optional extras
     ${IMGUI_DIR}/imgui_demo.cpp
