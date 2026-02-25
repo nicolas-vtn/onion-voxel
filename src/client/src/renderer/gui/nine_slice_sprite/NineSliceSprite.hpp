@@ -121,16 +121,58 @@ namespace onion::voxel
 
 			glActiveTexture(GL_TEXTURE0);
 
-			// Top Left Texture
+			// Top Left
 			glBindVertexArray(m_VAO_TopLeft);
 			m_TextureTopLeft.Bind();
 			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_TopLeft);
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_Indices.size()), GL_UNSIGNED_INT, 0);
 
-			// Top Texture
+			// Top
 			glBindVertexArray(m_VAO_Top);
 			m_TextureTop.Bind();
 			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Top);
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_Indices.size()), GL_UNSIGNED_INT, 0);
+
+			// Top Right
+			glBindVertexArray(m_VAO_TopRight);
+			m_TextureTopRight.Bind();
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_TopRight);
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_Indices.size()), GL_UNSIGNED_INT, 0);
+
+			// Left
+			glBindVertexArray(m_VAO_Left);
+			m_TextureLeft.Bind();
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Left);
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_Indices.size()), GL_UNSIGNED_INT, 0);
+
+			// Center
+			glBindVertexArray(m_VAO_Center);
+			m_TextureCenter.Bind();
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Center);
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_Indices.size()), GL_UNSIGNED_INT, 0);
+
+			// Right
+			glBindVertexArray(m_VAO_Right);
+			m_TextureRight.Bind();
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Right);
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_Indices.size()), GL_UNSIGNED_INT, 0);
+
+			// Bottom Left
+			glBindVertexArray(m_VAO_BottomLeft);
+			m_TextureBottomLeft.Bind();
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_BottomLeft);
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_Indices.size()), GL_UNSIGNED_INT, 0);
+
+			// Bottom
+			glBindVertexArray(m_VAO_Bottom);
+			m_TextureBottom.Bind();
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Bottom);
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_Indices.size()), GL_UNSIGNED_INT, 0);
+
+			// Bottom Right
+			glBindVertexArray(m_VAO_BottomRight);
+			m_TextureBottomRight.Bind();
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_BottomRight);
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_Indices.size()), GL_UNSIGNED_INT, 0);
 
 			glBindVertexArray(0);
@@ -172,6 +214,7 @@ namespace onion::voxel
 		Texture m_Texture;
 		NineSliceMetadata m_NineSliceMetadata;
 
+	  public:
 		static inline int s_GUI_SCALE = 8;
 
 		// ----- Nine Slice Textures -----
@@ -283,29 +326,103 @@ namespace onion::voxel
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
 
-			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_TopRight);
-			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+			// ------------------ TOP RIGHT ------------------
+			glBindVertexArray(m_VAO_TopRight);
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_TopRight);
+			glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
 
-			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Left);
-			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glEnableVertexAttribArray(0);
 
-			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Center);
-			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, u));
+			glEnableVertexAttribArray(1);
 
-			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Right);
-			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
 
-			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_BottomLeft);
-			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+			// ------------------ LEFT ------------------
+			glBindVertexArray(m_VAO_Left);
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Left);
+			glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
 
-			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Bottom);
-			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glEnableVertexAttribArray(0);
 
-			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_BottomRight);
-			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, u));
+			glEnableVertexAttribArray(1);
 
-			//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
-			//glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
+
+			// ------------------ CENTER ------------------
+			glBindVertexArray(m_VAO_Center);
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Center);
+			glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glEnableVertexAttribArray(0);
+
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, u));
+			glEnableVertexAttribArray(1);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
+
+			// ------------------ RIGHT ------------------
+			glBindVertexArray(m_VAO_Right);
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Right);
+			glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glEnableVertexAttribArray(0);
+
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, u));
+			glEnableVertexAttribArray(1);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
+
+			// ------------------ BOTTOM LEFT ------------------
+			glBindVertexArray(m_VAO_BottomLeft);
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_BottomLeft);
+			glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glEnableVertexAttribArray(0);
+
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, u));
+			glEnableVertexAttribArray(1);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
+
+			// ------------------ BOTTOM ------------------
+			glBindVertexArray(m_VAO_Bottom);
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Bottom);
+			glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glEnableVertexAttribArray(0);
+
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, u));
+			glEnableVertexAttribArray(1);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
+
+			// ------------------ BOTTOM RIGHT ------------------
+			glBindVertexArray(m_VAO_BottomRight);
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_BottomRight);
+			glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glEnableVertexAttribArray(0);
+
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, u));
+			glEnableVertexAttribArray(1);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
 
 			glBindVertexArray(0);
 		}
@@ -355,11 +472,11 @@ namespace onion::voxel
 
 			m_EBO = 0;
 		}
+
 		void UploadMesh()
 		{
 			// ------------------- TOP LEFT ------------------
 			glBindVertexArray(m_VAO_TopLeft);
-
 			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_TopLeft);
 			glBufferData(GL_ARRAY_BUFFER,
 						 m_Vertices_TopLeft.size() * sizeof(Vertex),
@@ -368,7 +485,6 @@ namespace onion::voxel
 
 			// ------------------- TOP ------------------
 			glBindVertexArray(m_VAO_Top);
-
 			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Top);
 			glBufferData(
 				GL_ARRAY_BUFFER, m_Vertices_Top.size() * sizeof(Vertex), m_Vertices_Top.data(), GL_DYNAMIC_DRAW);
@@ -381,38 +497,47 @@ namespace onion::voxel
 						 m_Vertices_TopRight.data(),
 						 GL_DYNAMIC_DRAW);
 
+			// ------------------- LEFT ------------------
+			glBindVertexArray(m_VAO_Left);
 			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Left);
 			glBufferData(
 				GL_ARRAY_BUFFER, m_Vertices_Left.size() * sizeof(Vertex), m_Vertices_Left.data(), GL_DYNAMIC_DRAW);
 
+			// ------------------- CENTER ------------------
+			glBindVertexArray(m_VAO_Center);
 			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Center);
 			glBufferData(
 				GL_ARRAY_BUFFER, m_Vertices_Center.size() * sizeof(Vertex), m_Vertices_Center.data(), GL_DYNAMIC_DRAW);
 
+			// ------------------- RIGHT ------------------
+			glBindVertexArray(m_VAO_Right);
 			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Right);
 			glBufferData(
 				GL_ARRAY_BUFFER, m_Vertices_Right.size() * sizeof(Vertex), m_Vertices_Right.data(), GL_DYNAMIC_DRAW);
 
+			// ------------------- BOTTOM LEFT ------------------
+			glBindVertexArray(m_VAO_BottomLeft);
 			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_BottomLeft);
 			glBufferData(GL_ARRAY_BUFFER,
 						 m_Vertices_BottomLeft.size() * sizeof(Vertex),
 						 m_Vertices_BottomLeft.data(),
 						 GL_DYNAMIC_DRAW);
 
+			// ------------------- BOTTOM ------------------
+			glBindVertexArray(m_VAO_Bottom);
 			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Bottom);
 			glBufferData(
 				GL_ARRAY_BUFFER, m_Vertices_Bottom.size() * sizeof(Vertex), m_Vertices_Bottom.data(), GL_DYNAMIC_DRAW);
 
+			// ------------------- BOTTOM RIGHT ------------------
+			glBindVertexArray(m_VAO_BottomRight);
 			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_BottomRight);
 			glBufferData(GL_ARRAY_BUFFER,
 						 m_Vertices_BottomRight.size() * sizeof(Vertex),
 						 m_Vertices_BottomRight.data(),
 						 GL_DYNAMIC_DRAW);
 
-			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Top);
-			glBufferData(
-				GL_ARRAY_BUFFER, m_Vertices_Top.size() * sizeof(Vertex), m_Vertices_Top.data(), GL_DYNAMIC_DRAW);
-
+			// ------------------- EBO ------------------
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
 			glBufferData(
 				GL_ELEMENT_ARRAY_BUFFER, m_Indices.size() * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
@@ -548,6 +673,78 @@ namespace onion::voxel
 				{xs[2], ys[0], 0.0f, u1, v0}, // Top Right
 				{xs[2], ys[1], 0.0f, u1, v1}, // Bottom Right
 				{xs[1], ys[1], 0.0f, u0, v1}  // Bottom Left
+			};
+
+			// TopRight Texture (no repeat / no crop)
+			m_Vertices_TopRight = {
+				{xs[2], ys[0], 0.0f, 0.0f, 0.0f}, // Top Left
+				{xs[3], ys[0], 0.0f, 1.0f, 0.0f}, // Top Right
+				{xs[3], ys[1], 0.0f, 1.0f, 1.0f}, // Bottom Right
+				{xs[2], ys[1], 0.0f, 0.0f, 1.0f}  // Bottom Left
+			};
+
+			// Left Texture (no repeat horizontally, repeat vertically)
+			u0 = 0.0f;
+			u1 = 1.0f;
+			v0 = 0.0f;
+			v1 = static_cast<float>(centerHeight) / meta.Height / s_GUI_SCALE;
+			m_Vertices_Left = {
+				{xs[0], ys[1], 0.0f, u0, v0}, // Top Left
+				{xs[1], ys[1], 0.0f, u1, v0}, // Top Right
+				{xs[1], ys[2], 0.0f, u1, v1}, // Bottom Right
+				{xs[0], ys[2], 0.0f, u0, v1}  // Bottom Left
+			};
+
+			// Center Texture (repeat both horizontally and vertically)
+			u0 = 0.0f;
+			u1 = static_cast<float>(centerWidth) / meta.Width / s_GUI_SCALE;
+			v0 = 0.0f;
+			v1 = static_cast<float>(centerHeight) / meta.Height / s_GUI_SCALE;
+			m_Vertices_Center = {
+				{xs[1], ys[1], 0.0f, u0, v0}, // Top Left
+				{xs[2], ys[1], 0.0f, u1, v0}, // Top Right
+				{xs[2], ys[2], 0.0f, u1, v1}, // Bottom Right
+				{xs[1], ys[2], 0.0f, u0, v1}  // Bottom Left
+			};
+
+			// Right Texture (no repeat horizontally, repeat vertically)
+			u0 = 0.0f;
+			u1 = 1.0f;
+			v0 = 0.0f;
+			v1 = static_cast<float>(centerHeight) / meta.Height / s_GUI_SCALE;
+			m_Vertices_Right = {
+				{xs[2], ys[1], 0.0f, u0, v0}, // Top Left
+				{xs[3], ys[1], 0.0f, u1, v0}, // Top Right
+				{xs[3], ys[2], 0.0f, u1, v1}, // Bottom Right
+				{xs[2], ys[2], 0.0f, u0, v1}  // Bottom Left
+			};
+
+			// Bottom Left Texture (no repeat / no crop)
+			m_Vertices_BottomLeft = {
+				{xs[0], ys[2], 0.0f, 0.0f, 0.0f}, // Top Left
+				{xs[1], ys[2], 0.0f, 1.0f, 0.0f}, // Top Right
+				{xs[1], ys[3], 0.0f, 1.0f, 1.0f}, // Bottom Right
+				{xs[0], ys[3], 0.0f, 0.0f, 1.0f}  // Bottom Left
+			};
+
+			// Bottom Texture (repeat horizontally, no crop vertically)
+			u0 = 0.0f;
+			u1 = static_cast<float>(centerWidth) / meta.Width / s_GUI_SCALE;
+			v0 = 0.0f;
+			v1 = 1.0f;
+			m_Vertices_Bottom = {
+				{xs[1], ys[2], 0.0f, u0, v0}, // Top Left
+				{xs[2], ys[2], 0.0f, u1, v0}, // Top Right
+				{xs[2], ys[3], 0.0f, u1, v1}, // Bottom Right
+				{xs[1], ys[3], 0.0f, u0, v1}  // Bottom Left
+			};
+
+			// Bottom Right Texture (no repeat / no crop)
+			m_Vertices_BottomRight = {
+				{xs[2], ys[2], 0.0f, 0.0f, 0.0f}, // Top Left
+				{xs[3], ys[2], 0.0f, 1.0f, 0.0f}, // Top Right
+				{xs[3], ys[3], 0.0f, 1.0f, 1.0f}, // Bottom Right
+				{xs[2], ys[3], 0.0f, 0.0f, 1.0f}  // Bottom Left
 			};
 		}
 
