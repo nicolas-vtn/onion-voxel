@@ -4,17 +4,6 @@
 
 #include <glad/glad.h>
 
-namespace
-{
-	void FreePixels(unsigned char* ptr)
-	{
-		if (ptr)
-		{
-			stbi_image_free(ptr);
-		}
-	}
-} // namespace
-
 namespace onion::voxel
 {
 	Texture::Texture() {}
@@ -38,8 +27,7 @@ namespace onion::voxel
 	{
 		if (m_Data)
 		{
-			stbi_image_free(m_Data);
-			m_Data = nullptr;
+			m_Data.reset(); // Free raw data if it hasn't been uploaded to GPU
 		}
 
 		if (m_TextureID != 0)
@@ -72,7 +60,7 @@ namespace onion::voxel
 		m_NbrChannels = nrChannels;
 
 		// Saves the raw data, it will be freed after uploading to GPU
-		m_Data = data;
+		m_Data = std::unique_ptr<unsigned char[], PixelDeleter>(data, FreePixels);
 
 		return true;
 	}
@@ -128,13 +116,12 @@ namespace onion::voxel
 			return;
 		}
 
-		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_Width, m_Height, 0, srcFormat, GL_UNSIGNED_BYTE, m_Data);
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_Width, m_Height, 0, srcFormat, GL_UNSIGNED_BYTE, m_Data.get());
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-		stbi_image_free(m_Data);
-		m_Data = nullptr;
+		m_Data.reset();
 
 		m_HasBeenUploadedToGPU = true;
 	}
@@ -184,6 +171,53 @@ namespace onion::voxel
 		}
 
 		return std::unique_ptr<unsigned char[], PixelDeleter>(data, FreePixels);
+	}
+
+	Texture::Texture(const std::filesystem::path& filePath,
+					 std::unique_ptr<unsigned char[], PixelDeleter> data,
+					 int width,
+					 int height,
+					 int channels)
+		: m_FilePath(filePath), m_Data(std::move(data)), m_Width(width), m_Height(height), m_NbrChannels(channels)
+	{
+	}
+
+	Texture Texture::SubTexture(int x, int y, int width, int height) const
+	{
+		if (x < 0 || y < 0 || width <= 0 || height <= 0 || x + width > m_Width || y + height > m_Height)
+		{
+			std::string errorMessage = "Invalid sub-texture dimensions for texture: " + m_FilePath.string() +
+				" Requested: (" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(width) + ", " +
+				std::to_string(height) + ") Original: (" + std::to_string(m_Width) + ", " + std::to_string(m_Height) +
+				")";
+			std::cerr << "[TEXTURE] [ERROR] : " << errorMessage << std::endl;
+			throw std::runtime_error(errorMessage);
+		}
+
+		// Warning : Not Optimized, for tesing only.
+		auto data = GetData();
+
+		int bytesPerPixel = m_NbrChannels;
+		int rowSize = m_Width * bytesPerPixel;
+
+		size_t size = width * height * bytesPerPixel;
+		unsigned char* subBuffer = new unsigned char[size];
+
+		for (int j = 0; j < height; j++)
+		{
+			int srcOffset = ((y + j) * rowSize) + (x * bytesPerPixel);
+			int dstOffset = j * width * bytesPerPixel;
+
+			std::memcpy(subBuffer + dstOffset, data.get() + srcOffset, width * bytesPerPixel);
+		}
+
+		auto deleter = [](unsigned char* p) { delete[] p; };
+		std::unique_ptr<unsigned char[], PixelDeleter> ptr(subBuffer, deleter);
+
+		std::filesystem::path subTexturePath = m_FilePath.string() + "_sub_" + std::to_string(x) + "_" +
+			std::to_string(y) + "_" + std::to_string(width) + "_" + std::to_string(height);
+
+		return Texture(subTexturePath, std::move(ptr), width, height, m_NbrChannels);
 	}
 
 	unsigned int Texture::TextureID() const

@@ -44,10 +44,10 @@ namespace onion::voxel
 		NineSliceSprite(const std::filesystem::path& spritePath)
 			: GuiElement("NineSliceSprite"), m_PathSprite(spritePath)
 		{
-			LoadTexture(spritePath);
+			LoadTextures(spritePath);
 		}
 
-		void LoadTexture(const std::filesystem::path& spritePath)
+		void LoadTextures(const std::filesystem::path& spritePath)
 		{
 			m_PathSprite = spritePath;
 
@@ -65,15 +65,35 @@ namespace onion::voxel
 			m_PathSpriteMetadata = spritePath.parent_path() / (spritePath.filename().string() + ".mcmeta");
 			m_NineSliceMetadata = ReadMetadataFromFile(m_PathSpriteMetadata);
 
-			m_NineSliceMetadata.Height = m_Texture.Height();
-			m_NineSliceMetadata.Width = m_Texture.Width();
+			// Get the pixel coordinates of the borders in the original texture
+			int x0 = 0;
+			int x1 = m_NineSliceMetadata.LeftBorder;
+			int x2 = m_Texture.Width() - m_NineSliceMetadata.RightBorder;
+			int x3 = m_Texture.Width();
+
+			int y0 = 0;
+			int y1 = m_NineSliceMetadata.TopBorder;
+			int y2 = m_Texture.Height() - m_NineSliceMetadata.BottomBorder;
+			int y3 = m_Texture.Height();
+
+			// Create the 9 sub-textures
+			m_TextureTopLeft = std::move(m_Texture.SubTexture(x0, y0, x1 - x0, y1 - y0));
+			m_TextureTop = std::move(m_Texture.SubTexture(x1, y0, x2 - x1, y1 - y0));
+			m_TextureTopRight = std::move(m_Texture.SubTexture(x2, y0, x3 - x2, y1 - y0));
+			m_TextureLeft = std::move(m_Texture.SubTexture(x0, y1, x1 - x0, y2 - y1));
+			m_TextureCenter = std::move(m_Texture.SubTexture(x1, y1, x2 - x1, y2 - y1));
+			m_TextureRight = std::move(m_Texture.SubTexture(x2, y1, x3 - x2, y2 - y1));
+			m_TextureBottomLeft = std::move(m_Texture.SubTexture(x0, y2, x1 - x0, y3 - y2));
+			m_TextureBottom = std::move(m_Texture.SubTexture(x1, y2, x2 - x1, y3 - y2));
+			m_TextureBottomRight = std::move(m_Texture.SubTexture(x2, y2, x3 - x2, y3 - y2));
 
 			m_MeshDirty = true;
 		}
 
 		~NineSliceSprite()
 		{
-			if (m_VAO || m_VBO || m_EBO)
+			if (m_VAO_TopLeft || m_VAO_Top || m_VAO_TopRight || m_VAO_Left || m_VAO_Center || m_VAO_Right ||
+				m_VBO_BottomLeft || m_VBO_Bottom || m_VBO_BottomRight || m_EBO)
 			{
 				std::cerr << "Warning: NineSliceSprite destructor called but OpenGL buffers were not deleted. There is "
 							 "a memory leak."
@@ -91,18 +111,28 @@ namespace onion::voxel
 				UploadMesh();
 			}
 
-			m_Texture.Bind();
+			//m_Texture.Bind();
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 			s_ShaderNineSliceSprites.Use();
 			s_ShaderNineSliceSprites.setInt("uTexture", 0);
 
 			glActiveTexture(GL_TEXTURE0);
-			glBindVertexArray(m_VAO);
+
+			// Top Left Texture
+			glBindVertexArray(m_VAO_TopLeft);
+			m_TextureTopLeft.Bind();
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_TopLeft);
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_Indices.size()), GL_UNSIGNED_INT, 0);
+
+			// Top Texture
+			glBindVertexArray(m_VAO_Top);
+			m_TextureTop.Bind();
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Top);
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_Indices.size()), GL_UNSIGNED_INT, 0);
+
 			glBindVertexArray(0);
 		}
 		void Initialize() override
@@ -133,41 +163,102 @@ namespace onion::voxel
 		std::filesystem::path m_PathSprite;
 		std::filesystem::path m_PathSpriteMetadata;
 
-		glm::vec2 m_Position{0, 0};
-		glm::vec2 m_Size{1, 1};
+		glm::ivec2 m_Position{0, 0};
+		glm::ivec2 m_Size{1, 1};
 
 		bool m_MeshDirty = true;
-		glm::vec2 m_LastBuiltSize{-1.0f, -1.0f};
+		glm::ivec2 m_LastBuiltSize{-1, -1};
 
 		Texture m_Texture;
 		NineSliceMetadata m_NineSliceMetadata;
 
+		static inline int s_GUI_SCALE = 8;
+
+		// ----- Nine Slice Textures -----
+	  private:
+		Texture m_TextureTopLeft;
+		Texture m_TextureTop;
+		Texture m_TextureTopRight;
+		Texture m_TextureLeft;
+		Texture m_TextureCenter;
+		Texture m_TextureRight;
+		Texture m_TextureBottomLeft;
+		Texture m_TextureBottom;
+		Texture m_TextureBottomRight;
+
 		// ----- Open GL -----
 	  private:
-		std::vector<Vertex> m_Vertices{};
+		std::vector<Vertex> m_Vertices_TopLeft{};
+		std::vector<Vertex> m_Vertices_Top{};
+		std::vector<Vertex> m_Vertices_TopRight{};
+		std::vector<Vertex> m_Vertices_Left{};
+		std::vector<Vertex> m_Vertices_Center{};
+		std::vector<Vertex> m_Vertices_Right{};
+		std::vector<Vertex> m_Vertices_BottomLeft{};
+		std::vector<Vertex> m_Vertices_Bottom{};
+		std::vector<Vertex> m_Vertices_BottomRight{};
+
 		std::vector<uint32_t> m_Indices{};
 
 	  private:
-		GLuint m_VAO = 0;
-		GLuint m_VBO = 0;
+		GLuint m_VAO_TopLeft = 0;
+		GLuint m_VBO_TopLeft = 0;
+
+		GLuint m_VAO_Top = 0;
+		GLuint m_VBO_Top = 0;
+
+		GLuint m_VAO_TopRight = 0;
+		GLuint m_VBO_TopRight = 0;
+
+		GLuint m_VAO_Left = 0;
+		GLuint m_VBO_Left = 0;
+
+		GLuint m_VAO_Center = 0;
+		GLuint m_VBO_Center = 0;
+
+		GLuint m_VAO_Right = 0;
+		GLuint m_VBO_Right = 0;
+
+		GLuint m_VAO_BottomLeft = 0;
+		GLuint m_VBO_BottomLeft = 0;
+
+		GLuint m_VAO_Bottom = 0;
+		GLuint m_VBO_Bottom = 0;
+
+		GLuint m_VAO_BottomRight = 0;
+		GLuint m_VBO_BottomRight = 0;
+
 		GLuint m_EBO = 0;
 
 		void GenerateBuffers()
 		{
-			glGenVertexArrays(1, &m_VAO);
-			glGenBuffers(1, &m_VBO);
+			glGenVertexArrays(1, &m_VAO_TopLeft);
+			glGenVertexArrays(1, &m_VAO_Top);
+			glGenVertexArrays(1, &m_VAO_TopRight);
+			glGenVertexArrays(1, &m_VAO_Left);
+			glGenVertexArrays(1, &m_VAO_Center);
+			glGenVertexArrays(1, &m_VAO_Right);
+			glGenVertexArrays(1, &m_VAO_BottomLeft);
+			glGenVertexArrays(1, &m_VAO_Bottom);
+			glGenVertexArrays(1, &m_VAO_BottomRight);
+
+			glGenBuffers(1, &m_VBO_TopLeft);
+			glGenBuffers(1, &m_VBO_Top);
+			glGenBuffers(1, &m_VBO_TopRight);
+			glGenBuffers(1, &m_VBO_Left);
+			glGenBuffers(1, &m_VBO_Center);
+			glGenBuffers(1, &m_VBO_Right);
+			glGenBuffers(1, &m_VBO_BottomLeft);
+			glGenBuffers(1, &m_VBO_Bottom);
+			glGenBuffers(1, &m_VBO_BottomRight);
 			glGenBuffers(1, &m_EBO);
 		}
 		void InitBuffers()
 		{
-			glBindVertexArray(m_VAO);
-
-			glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-			glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
-
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
-			glBufferData(
-				GL_ELEMENT_ARRAY_BUFFER, m_Indices.size() * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
+			// ------------------ TOP LEFT ------------------
+			glBindVertexArray(m_VAO_TopLeft);
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_TopLeft);
+			glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
 
 			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
 			glEnableVertexAttribArray(0);
@@ -175,24 +266,152 @@ namespace onion::voxel
 			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, u));
 			glEnableVertexAttribArray(1);
 
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
+
+			// ------------------ TOP ------------------
+			glBindVertexArray(m_VAO_Top);
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Top);
+			glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glEnableVertexAttribArray(0);
+
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, u));
+			glEnableVertexAttribArray(1);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
+
+			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_TopRight);
+			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Left);
+			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Center);
+			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Right);
+			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_BottomLeft);
+			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Bottom);
+			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+			//glBindBuffer(GL_ARRAY_BUFFER, m_VBO_BottomRight);
+			//glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+			//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+			//glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
+
 			glBindVertexArray(0);
 		}
 		void DeleteBuffers()
 		{
-			glDeleteVertexArrays(1, &m_VAO);
-			glDeleteBuffers(1, &m_VBO);
+			glDeleteVertexArrays(1, &m_VAO_TopLeft);
+			glDeleteVertexArrays(1, &m_VAO_Top);
+			glDeleteVertexArrays(1, &m_VAO_TopRight);
+			glDeleteVertexArrays(1, &m_VAO_Left);
+			glDeleteVertexArrays(1, &m_VAO_Center);
+			glDeleteVertexArrays(1, &m_VAO_Right);
+			glDeleteVertexArrays(1, &m_VAO_BottomLeft);
+			glDeleteVertexArrays(1, &m_VAO_Bottom);
+			glDeleteVertexArrays(1, &m_VAO_BottomRight);
+
+			glDeleteBuffers(1, &m_VBO_TopLeft);
+			glDeleteBuffers(1, &m_VBO_Top);
+			glDeleteBuffers(1, &m_VBO_TopRight);
+			glDeleteBuffers(1, &m_VBO_Left);
+			glDeleteBuffers(1, &m_VBO_Center);
+			glDeleteBuffers(1, &m_VBO_Right);
+			glDeleteBuffers(1, &m_VBO_BottomLeft);
+			glDeleteBuffers(1, &m_VBO_Bottom);
+			glDeleteBuffers(1, &m_VBO_BottomRight);
+
 			glDeleteBuffers(1, &m_EBO);
 
-			m_VAO = 0;
-			m_VBO = 0;
+			m_VAO_TopLeft = 0;
+			m_VAO_Top = 0;
+			m_VAO_TopRight = 0;
+			m_VAO_Left = 0;
+			m_VAO_Center = 0;
+			m_VAO_Right = 0;
+			m_VAO_BottomLeft = 0;
+			m_VAO_Bottom = 0;
+			m_VAO_BottomRight = 0;
+
+			m_VBO_TopLeft = 0;
+			m_VBO_Top = 0;
+			m_VBO_TopRight = 0;
+			m_VBO_Left = 0;
+			m_VBO_Center = 0;
+			m_VBO_Right = 0;
+			m_VBO_BottomLeft = 0;
+			m_VBO_Bottom = 0;
+			m_VBO_BottomRight = 0;
+
 			m_EBO = 0;
 		}
 		void UploadMesh()
 		{
-			glBindVertexArray(m_VAO);
+			// ------------------- TOP LEFT ------------------
+			glBindVertexArray(m_VAO_TopLeft);
 
-			glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-			glBufferData(GL_ARRAY_BUFFER, m_Vertices.size() * sizeof(Vertex), m_Vertices.data(), GL_DYNAMIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_TopLeft);
+			glBufferData(GL_ARRAY_BUFFER,
+						 m_Vertices_TopLeft.size() * sizeof(Vertex),
+						 m_Vertices_TopLeft.data(),
+						 GL_DYNAMIC_DRAW);
+
+			// ------------------- TOP ------------------
+			glBindVertexArray(m_VAO_Top);
+
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Top);
+			glBufferData(
+				GL_ARRAY_BUFFER, m_Vertices_Top.size() * sizeof(Vertex), m_Vertices_Top.data(), GL_DYNAMIC_DRAW);
+
+			// ------------------- TOP RIGHT ------------------
+			glBindVertexArray(m_VAO_TopRight);
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_TopRight);
+			glBufferData(GL_ARRAY_BUFFER,
+						 m_Vertices_TopRight.size() * sizeof(Vertex),
+						 m_Vertices_TopRight.data(),
+						 GL_DYNAMIC_DRAW);
+
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Left);
+			glBufferData(
+				GL_ARRAY_BUFFER, m_Vertices_Left.size() * sizeof(Vertex), m_Vertices_Left.data(), GL_DYNAMIC_DRAW);
+
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Center);
+			glBufferData(
+				GL_ARRAY_BUFFER, m_Vertices_Center.size() * sizeof(Vertex), m_Vertices_Center.data(), GL_DYNAMIC_DRAW);
+
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Right);
+			glBufferData(
+				GL_ARRAY_BUFFER, m_Vertices_Right.size() * sizeof(Vertex), m_Vertices_Right.data(), GL_DYNAMIC_DRAW);
+
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_BottomLeft);
+			glBufferData(GL_ARRAY_BUFFER,
+						 m_Vertices_BottomLeft.size() * sizeof(Vertex),
+						 m_Vertices_BottomLeft.data(),
+						 GL_DYNAMIC_DRAW);
+
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Bottom);
+			glBufferData(
+				GL_ARRAY_BUFFER, m_Vertices_Bottom.size() * sizeof(Vertex), m_Vertices_Bottom.data(), GL_DYNAMIC_DRAW);
+
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_BottomRight);
+			glBufferData(GL_ARRAY_BUFFER,
+						 m_Vertices_BottomRight.size() * sizeof(Vertex),
+						 m_Vertices_BottomRight.data(),
+						 GL_DYNAMIC_DRAW);
+
+			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Top);
+			glBufferData(
+				GL_ARRAY_BUFFER, m_Vertices_Top.size() * sizeof(Vertex), m_Vertices_Top.data(), GL_DYNAMIC_DRAW);
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
 			glBufferData(
@@ -266,120 +485,73 @@ namespace onion::voxel
 
 		void BuildNineSliceMesh()
 		{
+			BuildVertices();
+
+			// Indices are constant; build once
+			if (m_Indices.empty())
+			{
+				BuildIndices();
+			}
+
+			m_LastBuiltSize = m_Size;
+			m_MeshDirty = false;
+		}
+
+		void BuildVertices()
+		{
 			const auto& meta = m_NineSliceMetadata;
 
 			// If size is invalid, don't build
 			if (m_Size.x <= 0.0f || m_Size.y <= 0.0f)
 				return;
 
-			const float scaleX = m_Size.x / static_cast<float>(meta.Width);
-			const float scaleY = m_Size.y / static_cast<float>(meta.Height);
+			int leftBorderPx = meta.LeftBorder * s_GUI_SCALE;
+			int rightBorderPx = meta.RightBorder * s_GUI_SCALE;
+			int topBorderPx = meta.TopBorder * s_GUI_SCALE;
+			int bottomBorderPx = meta.BottomBorder * s_GUI_SCALE;
 
-			// Uniform scale
-			const float scale = std::max(scaleX, scaleY);
+			int centerWidth = std::max(0, m_Size.x - leftBorderPx - rightBorderPx);
+			int centerHeight = std::max(0, m_Size.y - topBorderPx - bottomBorderPx);
 
-			float L = meta.LeftBorder * scale;
-			float R = meta.RightBorder * scale;
-			float T = meta.TopBorder * scale;
-			float B = meta.BottomBorder * scale;
+			// Geometry (in Pixel Coordinates relative to the top-left corner of the sprite)
+			int x0 = 0;
+			int x1 = leftBorderPx;
+			int x2 = leftBorderPx + centerWidth;
+			int x3 = leftBorderPx + centerWidth + rightBorderPx;
 
-			// Clamp so borders never exceed half the final size
-			L = std::min(L, m_Size.x * 0.5f);
-			R = std::min(R, m_Size.x * 0.5f);
-			T = std::min(T, m_Size.y * 0.5f);
-			B = std::min(B, m_Size.y * 0.5f);
-
-			// Geometry
-			const float x0 = 0.0f;
-			const float x1 = L;
-			const float x2 = m_Size.x - R;
-			const float x3 = m_Size.x;
-
-			const float y0 = 0.0f;
-			const float y1 = T;
-			const float y2 = m_Size.y - B;
-			const float y3 = m_Size.y;
-
-			const float xs[4] = {x0, x1, x2, x3};
-			const float ys[4] = {y0, y1, y2, y3};
-
-			// UVs (Crop and Repeat)
-			float repeatX = m_Size.x / static_cast<float>(meta.Width);
-			float repeatY = m_Size.y / static_cast<float>(meta.Height);
-
-			// The lowest imposes its state to the other
-			float repeat = std::max(repeatX, repeatY);
-
-			// Base slice UVs (single tile)
-			float u0 = 0.0f;
-			float u1 = meta.LeftBorder / (float) meta.Width;
-			float u2 = 1.0f - (meta.RightBorder / (float) meta.Width);
-			float u3 = 1.0f;
-
-			float v0 = 0.0f;
-			float v1 = meta.TopBorder / (float) meta.Height;
-			float v2 = 1.0f - (meta.BottomBorder / (float) meta.Height);
-			float v3 = 1.0f;
-
-			float stretchU = (u2 - u1) * repeat;
-			float stretchV = (v2 - v1) * repeat;
-
-			float us[4] = {u0, u1, u1 + stretchU, u1 + stretchU + (u3 - u2)};
-
-			float vs[4] = {v0, v1, v1 + stretchV, v1 + stretchV + (v3 - v2)};
+			int y0 = 0;
+			int y1 = topBorderPx;
+			int y2 = topBorderPx + centerHeight;
+			int y3 = topBorderPx + centerHeight + bottomBorderPx;
 
 			// Convert from local top-left space to world pixel space using topLeft
-			glm::vec2 topLeft = m_Position - m_Size * 0.5f;
+			glm::ivec2 topLeft = m_Position - glm::ivec2(std::ceil(m_Size.x * 0.5f), std::ceil(m_Size.y * 0.5f));
 
-			// snap top-left to pixel grid
-			topLeft.x = std::round(topLeft.x);
-			topLeft.y = std::round(topLeft.y);
+			float xs[4] = {x0 + topLeft.x, x1 + topLeft.x, x2 + topLeft.x, x3 + topLeft.x};
+			float ys[4] = {y0 + topLeft.y, y1 + topLeft.y, y2 + topLeft.y, y3 + topLeft.y};
 
-			m_Vertices.clear();
-			m_Vertices.reserve(16);
+			// TopLeft Texture (no repeat / no crop)
+			m_Vertices_TopLeft = {
+				{xs[0], ys[0], 0.0f, 0.0f, 0.0f}, // Top Left
+				{xs[1], ys[0], 0.0f, 1.0f, 0.0f}, // Top Right
+				{xs[1], ys[1], 0.0f, 1.0f, 1.0f}, // Bottom Right
+				{xs[0], ys[1], 0.0f, 0.0f, 1.0f}  // Bottom Left
+			};
 
-			for (int j = 0; j < 4; ++j)
-			{
-				for (int i = 0; i < 4; ++i)
-				{
-					Vertex v{};
-					v.x = topLeft.x + xs[i];
-					v.y = topLeft.y + ys[j];
-					v.z = 0.0f;
-
-					v.u = us[i];
-					v.v = vs[j];
-
-					m_Vertices.push_back(v);
-				}
-			}
-
-			// Indices are constant; build once
-			if (m_Indices.empty())
-			{
-				m_Indices.reserve(54);
-				for (int row = 0; row < 3; ++row)
-				{
-					for (int col = 0; col < 3; ++col)
-					{
-						uint32_t tl = row * 4 + col;
-						uint32_t tr = tl + 1;
-						uint32_t bl = (row + 1) * 4 + col;
-						uint32_t br = bl + 1;
-
-						m_Indices.push_back(tl);
-						m_Indices.push_back(bl);
-						m_Indices.push_back(tr);
-						m_Indices.push_back(tr);
-						m_Indices.push_back(bl);
-						m_Indices.push_back(br);
-					}
-				}
-			}
-
-			m_LastBuiltSize = m_Size;
-			m_MeshDirty = false;
+			// Top Texture (repeat horizontally, no crop vertically)
+			float u0 = 0.0f;
+			float u1 = static_cast<float>(centerWidth) / meta.Width / s_GUI_SCALE;
+			float v0 = 0.0f;
+			float v1 = 1.0f;
+			m_Vertices_Top = {
+				{xs[1], ys[0], 0.0f, u0, v0}, // Top Left
+				{xs[2], ys[0], 0.0f, u1, v0}, // Top Right
+				{xs[2], ys[1], 0.0f, u1, v1}, // Bottom Right
+				{xs[1], ys[1], 0.0f, u0, v1}  // Bottom Left
+			};
 		}
+
+		void BuildIndices() { m_Indices = {0, 1, 2, 2, 3, 0}; }
 	};
 
 } // namespace onion::voxel
