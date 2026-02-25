@@ -25,6 +25,8 @@ add_executable(OnionVoxel
 
 	"src/renderer/gui/font/Font.cpp"
 	"src/renderer/gui/controls/sprite/Sprite.cpp"
+	"src/renderer/gui/nine_slice_sprite/NineSliceSprite.cpp"
+
 )
 
 target_link_libraries(OnionVoxel

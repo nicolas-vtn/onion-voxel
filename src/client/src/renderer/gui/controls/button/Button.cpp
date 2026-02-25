@@ -25,7 +25,7 @@ namespace onion::voxel
 	// -------- Constructor --------
 
 	Button::Button(const std::string& name)
-		: GuiElement(name), m_NineSliceSprite(GetMinecraftAssetsPath() / "textures/gui/sprites/widget/button.png")
+		: GuiElement(name), m_NineSliceSprite(name, GetMinecraftAssetsPath() / "textures/gui/sprites/widget/button.png")
 	{
 	}
 
@@ -119,7 +119,7 @@ namespace onion::voxel
 		ImGui::Text("Clicked: %s", isClicked ? "Yes" : "No");
 		ImGui::SliderFloat2("Position", &m_Position.x, 0, static_cast<float>(s_ScreenWidth));
 		ImGui::SliderFloat2("Size", &m_Size.x, 20, 1500);
-		ImGui::SliderInt("GuiScale", &NineSliceSprite::s_GUI_SCALE, 1, 16);
+		ImGui::SliderInt("GuiScale", &GuiElement::s_GUI_SCALE, 1, 16);
 		ImGui::End();
 
 		m_NineSliceSprite.SetPosition(m_Position);
