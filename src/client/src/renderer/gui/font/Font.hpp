@@ -18,6 +18,9 @@ namespace onion::voxel
 		Font(const std::filesystem::path& fontFilePath, int atlasCols, int atlasRows);
 		~Font();
 
+		static void StaticInitialize();
+		static void StaticShutdown();
+
 		void Load();
 		void Unload();
 
@@ -62,6 +65,6 @@ namespace onion::voxel
 		std::vector<Vertex> m_Vertices;
 
 	  private:
-		static Shader m_ShaderFont;
+		static Shader s_ShaderFont;
 	};
 } // namespace onion::voxel

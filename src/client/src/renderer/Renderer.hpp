@@ -69,6 +69,10 @@ namespace onion::voxel
 		int m_InputIdUnfocus = -1;
 		int m_InputIdFocus = -1;
 
+		// ------ GUI ------
+	  private:
+		Gui m_Gui;
+
 		// ----- ImGui -----
 	  private:
 		void InitImGui();

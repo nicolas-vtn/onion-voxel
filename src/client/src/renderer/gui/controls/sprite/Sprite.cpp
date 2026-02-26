@@ -42,6 +42,7 @@ void Sprite::Initialize()
 
 void Sprite::Delete()
 {
+	m_Texture.Delete();
 	DeleteBuffers();
 	SetDeletedState(true);
 }

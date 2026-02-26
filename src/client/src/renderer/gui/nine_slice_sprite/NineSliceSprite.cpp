@@ -156,6 +156,16 @@ namespace onion::voxel
 
 	void NineSliceSprite::Delete()
 	{
+		m_TextureTopLeft.Delete();
+		m_TextureTop.Delete();
+		m_TextureTopRight.Delete();
+		m_TextureLeft.Delete();
+		m_TextureCenter.Delete();
+		m_TextureRight.Delete();
+		m_TextureBottomLeft.Delete();
+		m_TextureBottom.Delete();
+		m_TextureBottomRight.Delete();
+
 		DeleteBuffers();
 	}
 

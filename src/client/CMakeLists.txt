@@ -19,6 +19,7 @@ add_executable(OnionVoxel
 	"src/renderer/inputs_manager/inputs.hpp"
 	"src/renderer/inputs_manager/inputs_manager.cpp"
 
+	"src/renderer/gui/Gui.cpp"
 	"src/renderer/gui/GuiElement.cpp"
 	"src/renderer/gui/controls/button/Button.cpp"
 	"src/renderer/gui/layouts/demo_panel/DemoPanel.cpp"

@@ -6,7 +6,7 @@ using namespace onion::voxel;
 
 // -------- Static Member Definitions --------
 
-Shader Font::m_ShaderFont(GetAssetsPath() / "shaders/font.vert", GetAssetsPath() / "shaders/font.frag");
+Shader Font::s_ShaderFont(GetAssetsPath() / "shaders" / "font.vert", GetAssetsPath() / "shaders" / "font.frag");
 
 glm::mat4 Font::s_ProjectionMatrix{1.0f};
 
@@ -18,31 +18,36 @@ Font::Font(const std::filesystem::path& fontFilePath, int atlasCols, int atlasRo
 	InitializeGlyphs();
 }
 
-Font::~Font()
-{
-	Unload();
-}
+Font::~Font() {}
 
 // -------- Public API --------
 
 void Font::Load()
 {
 	m_TextureAtlas.Bind(); // Upload texture
-	m_ShaderFont.Use();
-	m_ShaderFont.setInt("uTexture", m_TextureAtlas.TextureID());
+	s_ShaderFont.Use();
+	s_ShaderFont.setInt("uTexture", m_TextureAtlas.TextureID());
 	GenerateBuffers();
 }
 
 void Font::Unload()
 {
+	m_TextureAtlas.Delete();
 	DeleteBuffers();
+}
+
+void Font::StaticInitialize() {}
+
+void Font::StaticShutdown()
+{
+	s_ShaderFont.Delete();
 }
 
 void Font::SetProjectionMatrix(const glm::mat4& projection)
 {
 	s_ProjectionMatrix = projection;
-	m_ShaderFont.Use();
-	m_ShaderFont.setMat4("uProjection", s_ProjectionMatrix);
+	s_ShaderFont.Use();
+	s_ShaderFont.setMat4("uProjection", s_ProjectionMatrix);
 }
 
 void Font::RenderText(const std::string& text, float x, float y, float scale, const glm::vec3& color)
@@ -104,9 +109,9 @@ void Font::RenderText(const std::string& text, float x, float y, float scale, co
 	glActiveTexture(GL_TEXTURE0);
 	m_TextureAtlas.Bind();
 
-	m_ShaderFont.Use();
-	m_ShaderFont.setVec3("uTextColor", color);
-	m_ShaderFont.setInt("uTexture", 0);
+	s_ShaderFont.Use();
+	s_ShaderFont.setVec3("uTextColor", color);
+	s_ShaderFont.setInt("uTexture", 0);
 
 	glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m_Vertices.size()));
 

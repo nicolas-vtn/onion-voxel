@@ -76,12 +76,20 @@ namespace onion::voxel
 
 	void GuiElement::Load()
 	{
+		Font::StaticInitialize();
 		s_TextFont.Load();
 	}
 
 	void GuiElement::Unload()
 	{
+		// Delete Textures
 		s_TextFont.Unload();
+
+		// Delete Shaders
+		s_ShaderSprites.Delete();
+		s_ShaderNineSliceSprites.Delete();
+
+		Font::StaticShutdown();
 	}
 
 	// -------- Protected --------

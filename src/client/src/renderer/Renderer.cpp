@@ -107,11 +107,12 @@ namespace onion::voxel
 
 		InitOpenGlState();
 
-		Gui::Initialize();
-		GuiElement::SetScreenSize(m_WindowWidth, m_WindowHeight);
+		Gui::StaticInitialize();
 
-		DemoPanel demoPanel("DemoPanel");
-		demoPanel.Initialize();
+		Gui::SetScreenSize(m_WindowWidth, m_WindowHeight);
+
+		m_Gui.Initialize();
+		m_Gui.SetActiveMenu(Gui::eMenu::DemoPanel);
 
 		while (!st.stop_requested() && !glfwWindowShouldClose(m_Window))
 		{
@@ -134,7 +135,7 @@ namespace onion::voxel
 			m_DeltaTime = currentFrame - m_LastFrame;
 			m_LastFrame = currentFrame;
 
-			demoPanel.Render();
+			m_Gui.Render();
 
 			// Render Debug Panel
 			RenderDebugPanel();
@@ -158,11 +159,12 @@ namespace onion::voxel
 			glfwPollEvents();
 		}
 
-		demoPanel.Delete();
-
 		// Cleanup
 		CleanupOpenGl();
-		Gui::Shutdown();
+
+		m_Gui.Shutdown();
+
+		Gui::StaticShutdown();
 
 		m_IsRunning.store(false);
 	}
