@@ -10,12 +10,13 @@ Create a proper Gui class to handle all the UI elements and interactions
 - Options Menu (Ressource Packs, Back button)
 - Background
 - Uniform Naming (Load / Initialize / ...)
+- Implement a Ressource Manager to handle loading and unloading of textures, and passing the ressource manager to UI elements
 
  
 ## Sounds
 Add sound effects and background music.
 
-- Sound Effect Button Click
+- Sound Effect Button Click  
 - Background Music
 
 

@@ -62,8 +62,6 @@ void Font::RenderText(const std::string& text, float x, float y, float scale, co
 	if (text.empty())
 		return;
 
-	m_Vertices.clear();
-
 	float uvStepX = 1.0f / m_AtlasCols;
 	float uvStepY = 1.0f / m_AtlasRows;
 
@@ -119,6 +117,8 @@ void Font::RenderText(const std::string& text, float x, float y, float scale, co
 
 	if (depthTestEnabled)
 		glEnable(GL_DEPTH_TEST);
+
+	m_Vertices.clear();
 }
 
 glm::vec2 Font::MeasureText(const std::string& text, float scale) const

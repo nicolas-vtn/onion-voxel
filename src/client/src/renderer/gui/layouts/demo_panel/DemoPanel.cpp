@@ -6,6 +6,9 @@ namespace onion::voxel
 	DemoPanel::DemoPanel(const std::string& name)
 		: GuiElement(name), m_Button("DemoButton"), m_Sprite("DemoSprite", m_SpritePath), m_Button2("DemoButton2")
 	{
+
+		SubscribeToControlEvents();
+
 		m_Button.SetPosition({400, 400});
 		m_Button.SetSize({200.f, 70.f});
 		m_Button.SetText("Singleplayer");
@@ -15,12 +18,6 @@ namespace onion::voxel
 		m_Button2.SetSize({200.f, 40.f});
 		m_Button2.SetText("Multiplayer");
 		m_Button2.SetEnabled(true);
-
-		m_HandleButtonClick = m_Button.OnClick.Subscribe([this](const Button& button) { HandleButtonClick(button); });
-		m_HandleButtonHoverEnter =
-			m_Button.OnHoverEnter.Subscribe([this](const Button& button) { HandleButtonHoverEnter(button); });
-		m_HandleButtonHoverLeave =
-			m_Button.OnHoverLeave.Subscribe([this](const Button& button) { HandleButtonHoverLeave(button); });
 	}
 
 	void DemoPanel::Render()
@@ -72,6 +69,7 @@ namespace onion::voxel
 		m_Button.Initialize();
 		m_Button2.Initialize();
 		m_Sprite.Initialize();
+
 		SetInitState(true);
 	}
 
@@ -80,7 +78,17 @@ namespace onion::voxel
 		m_Button.Delete();
 		m_Button2.Delete();
 		m_Sprite.Delete();
+
 		SetDeletedState(true);
+	}
+
+	void DemoPanel::SubscribeToControlEvents()
+	{
+		m_HandleButtonClick = m_Button.OnClick.Subscribe([this](const Button& button) { HandleButtonClick(button); });
+		m_HandleButtonHoverEnter =
+			m_Button.OnHoverEnter.Subscribe([this](const Button& button) { HandleButtonHoverEnter(button); });
+		m_HandleButtonHoverLeave =
+			m_Button.OnHoverLeave.Subscribe([this](const Button& button) { HandleButtonHoverLeave(button); });
 	}
 
 	void DemoPanel::HandleButtonClick(const Button& button)
