@@ -10,6 +10,7 @@
 #include <glm/glm.hpp>
 
 #include <filesystem>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -75,6 +76,7 @@ namespace onion::voxel
 		std::filesystem::path m_PathSprite;
 		std::filesystem::path m_PathSpriteMetadata;
 
+		mutable std::mutex m_Mutex;
 		glm::ivec2 m_Position{0, 0};
 		glm::ivec2 m_Size{1, 1};
 

@@ -31,6 +31,9 @@ namespace onion::voxel
 
 	void NineSliceSprite::LoadTextures(const std::filesystem::path& spritePath)
 	{
+		// Lock Mutex while loading textures.
+		std::lock_guard<std::mutex> lock(m_Mutex);
+
 		m_PathSprite = spritePath;
 
 		if (!std::filesystem::exists(spritePath))
@@ -171,6 +174,8 @@ namespace onion::voxel
 
 	bool voxel::NineSliceSprite::IsHovered() const
 	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+
 		if (!s_InputsSnapshot)
 		{
 			return false;
@@ -189,12 +194,15 @@ namespace onion::voxel
 
 	const glm::ivec2& NineSliceSprite::GetPosition() const
 	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
 		return m_Position;
 	}
 
 	void NineSliceSprite::SetPosition(const glm::ivec2& position)
 	{
-		if (position == m_LastBuiltPosition)
+		std::lock_guard<std::mutex> lock(m_Mutex);
+
+		if (position == m_Position)
 			return;
 
 		m_Position = position;
@@ -203,12 +211,15 @@ namespace onion::voxel
 
 	const glm::ivec2& NineSliceSprite::GetSize() const
 	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
 		return m_Size;
 	}
 
 	void NineSliceSprite::SetSize(const glm::ivec2& size)
 	{
-		if (size == m_LastBuiltSize)
+		std::lock_guard<std::mutex> lock(m_Mutex);
+
+		if (size == m_Size)
 			return;
 
 		m_Size = size;
@@ -229,8 +240,6 @@ namespace onion::voxel
 			OnHoverLeave.Trigger(*this);
 		}
 
-		m_WasHovered = hovered;
-
 		// ------------------- Click Events ------------------
 		if (hovered && s_InputsSnapshot->Mouse.LeftButtonPressed && !m_WasMouseDown)
 		{
@@ -247,6 +256,8 @@ namespace onion::voxel
 				OnClick.Trigger(*this);
 			}
 		}
+
+		m_WasHovered = hovered;
 	}
 
 	void NineSliceSprite::GenerateBuffers()
@@ -591,6 +602,8 @@ namespace onion::voxel
 
 	void NineSliceSprite::BuildNineSliceMesh()
 	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+
 		BuildVertices();
 
 		// Indices are constant; build once
