@@ -5,7 +5,16 @@ project(onion_voxel_client LANGUAGES CXX)
 # Copy assets to build directory
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../../assets" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
+set(ICON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../assets/app_icons/Vox_Client_Title.ico")
+
+configure_file(
+    app_icon.rc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc
+    @ONLY
+)
+
 add_executable(OnionVoxel
+
     "main.cpp"
     "src/Client.cpp"
 
@@ -29,6 +38,10 @@ add_executable(OnionVoxel
 	"src/renderer/gui/nine_slice_sprite/NineSliceSprite.cpp"
 
 )
+
+if (WIN32)
+    target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)
+endif()
 
 target_link_libraries(OnionVoxel
     PUBLIC

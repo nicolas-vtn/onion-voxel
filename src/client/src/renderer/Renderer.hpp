@@ -45,6 +45,8 @@ namespace onion::voxel
 		int m_WindowWidth = 800;
 		int m_WindowHeight = 600;
 		std::string m_WindowTitle = "Onion Voxel";
+		std::filesystem::path m_WindowIconPath = GetAssetsPath() / "app_icons" / "Vox_Client_Title.png";
+		void SetupWindowIcon();
 
 		void FramebufferSizeCallback(int width, int height);
 

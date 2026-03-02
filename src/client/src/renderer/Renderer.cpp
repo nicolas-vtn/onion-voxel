@@ -75,6 +75,9 @@ namespace onion::voxel
 			throw std::runtime_error("GLAD initialization failed");
 		}
 
+		// Set up window icon
+		SetupWindowIcon();
+
 		// Initialize Inputs Manager
 		m_InputsManager.Init(m_Window);
 		m_InputsManager.SetMouseCaptureEnabled(false);
@@ -167,6 +170,37 @@ namespace onion::voxel
 		Gui::StaticShutdown();
 
 		m_IsRunning.store(false);
+	}
+
+	void Renderer::SetupWindowIcon()
+	{
+		if (!std::filesystem::exists(m_WindowIconPath))
+		{
+			std::cerr << "Window icon not found at path: " << m_WindowIconPath << std::endl;
+			return;
+		}
+
+		// Load the icon image using stb_image
+		int width, height, channels;
+
+		unsigned char* pixels = stbi_load(m_WindowIconPath.string().c_str(), &width, &height, &channels, 4);
+
+		if (!pixels)
+		{
+			std::cerr << "Failed to load icon\n";
+		}
+
+		// Set up the GLFWimage structure
+		GLFWimage image;
+		image.width = width;
+		image.height = height;
+		image.pixels = pixels;
+
+		// Set the window icon
+		glfwSetWindowIcon(m_Window, 1, &image);
+
+		// Free the loaded image data
+		stbi_image_free(pixels);
 	}
 
 	void Renderer::FramebufferSizeCallback(int width, int height)
