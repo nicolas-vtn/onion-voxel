@@ -4,10 +4,12 @@
 
 namespace onion::voxel
 {
-	void Client::SayHello()
+	Client::Client() : m_Logger(m_LogFile.string())
 	{
-		std::cout << "Hello, I'm the Client" << std::endl;
+		SetLogLevel(m_LogLevel);
 	}
+
+	Client::~Client() {}
 
 	void Client::Start()
 	{
@@ -27,6 +29,32 @@ namespace onion::voxel
 	{
 		bool isRendererRunning = m_Renderer.IsRunning();
 		return isRendererRunning;
+	}
+
+	void Client::SetLogLevel(eLogLevel logLevel)
+	{
+		m_LogLevel = logLevel;
+
+		switch (logLevel)
+		{
+			case eLogLevel::All:
+				m_Logger.SetLogInfos(true);
+				m_Logger.SetLogErrors(true);
+				break;
+			case eLogLevel::ErrorsOnly:
+				m_Logger.SetLogInfos(false);
+				m_Logger.SetLogErrors(true);
+				break;
+			case eLogLevel::None:
+				m_Logger.SetLogInfos(false);
+				m_Logger.SetLogErrors(false);
+				break;
+		}
+	}
+
+	Client::eLogLevel Client::GetLogLevel() const
+	{
+		return m_LogLevel;
 	}
 
 } // namespace onion::voxel

@@ -52,6 +52,7 @@ target_link_libraries(OnionVoxel
 		nlohmann_json::nlohmann_json
 		imgui::imgui
 		onion_event
+		onion_logger
     PRIVATE
         onion_voxel_server
 )

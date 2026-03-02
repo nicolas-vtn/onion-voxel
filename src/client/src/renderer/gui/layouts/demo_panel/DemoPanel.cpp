@@ -93,7 +93,7 @@ namespace onion::voxel
 
 	void DemoPanel::HandleButtonClick(const Button& button)
 	{
-		std::cout << "Button '" + button.GetName() + "' Clicked." << std::endl;
+		std::cerr << "Button '" + button.GetName() + "' Clicked." << std::endl;
 	}
 
 	void DemoPanel::HandleButtonHoverEnter(const Button& button)
