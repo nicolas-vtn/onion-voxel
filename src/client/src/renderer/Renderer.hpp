@@ -22,24 +22,51 @@ namespace onion::voxel
 	class Renderer
 	{
 	  public:
+		enum class eRenderState
+		{
+			Menu,
+			InGame
+		};
+
+		// ----- Constructor / Destructor -----
+	  public:
 		Renderer();
 		~Renderer();
 
+		// ----- Public API -----
+	  public:
 		void Start();
 		void Stop();
 
 		bool IsRunning() const noexcept;
 
+		// ----- Getters / Setters -----
+	  public:
+		eRenderState GetRenderState() const;
+		void SetRenderState(eRenderState renderState);
+
+		// ----- Events -----
+	  public:
+		Event<const std::filesystem::path&> RequestStartSingleplayerGame;
+
+		// ----- Internal Methods -----
 	  private:
 		void InitWindow();
 		void InitOpenGlState();
 		void CleanupOpenGl();
 
+		// ----- Main Loop -----
+	  private:
 		std::atomic_bool m_IsRunning{false};
 		void RenderThreadFunction(std::stop_token st);
 		std::jthread m_ThreadRenderer;
 
-		//GLFW
+		// ----- Render State -----
+	  private:
+		mutable std::mutex m_MutexRenderState;
+		eRenderState m_RenderState = eRenderState::Menu;
+
+		// ----- GLFW -----
 	  private:
 		GLFWwindow* m_Window = nullptr;
 		int m_WindowWidth = 800;
@@ -50,10 +77,10 @@ namespace onion::voxel
 
 		void FramebufferSizeCallback(int width, int height);
 
-	  private:
 		double m_DeltaTime = 0.0f;
 		double m_LastFrame = 0.0f;
 
+		// ----- Inputs -----
 	  private:
 		InputsManager m_InputsManager;
 		std::shared_ptr<InputsSnapshot> m_InputsSnapshot;
@@ -74,6 +101,9 @@ namespace onion::voxel
 		// ------ GUI ------
 	  private:
 		Gui m_Gui;
+		EventHandle m_EventHandle_CursorStyleChangeRequest;
+		void Handle_CursorStyleChangeRequest(const CursorStyle& style);
+		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
 
 		// ----- ImGui -----
 	  private:

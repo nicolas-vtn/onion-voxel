@@ -4,9 +4,17 @@
 
 namespace onion::voxel
 {
-	void Server::SayHello()
+	Server::Server() {}
+
+	Server::~Server() {}
+
+	void Server::Start() {}
+
+	void Server::Stop() {}
+
+	bool Server::IsRunning() const noexcept
 	{
-		std::cout << "Hello, I'm the Server" << std::endl;
+		return m_IsRunning.load();
 	}
 
 } // namespace onion::voxel

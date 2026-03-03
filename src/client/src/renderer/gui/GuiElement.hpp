@@ -6,6 +6,8 @@
 
 #include <glm/glm.hpp>
 
+#include <onion/Event.hpp>
+
 #include "../Variables.hpp"
 #include "../inputs_manager/inputs_manager.hpp"
 #include "../shader/shader.hpp"
@@ -13,6 +15,17 @@
 
 namespace onion::voxel
 {
+	enum class eMenu
+	{
+		None,
+		DemoPanel,
+		MainMenu,
+		Singleplayer,
+		Multiplayer,
+		Settings,
+		Gameplay,
+	};
+
 	class GuiElement
 	{
 		// ----- Constructor / Destructor -----
@@ -40,6 +53,10 @@ namespace onion::voxel
 	  public:
 		static void Load();
 		static void Unload();
+
+		// ----- Static Events ----- (for shared resources)
+	  public:
+		static Event<const CursorStyle&> RequestCursorStyleChange;
 
 		// ----- State Management -----
 	  protected:

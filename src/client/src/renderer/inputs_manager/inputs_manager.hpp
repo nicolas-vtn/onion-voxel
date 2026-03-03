@@ -94,13 +94,16 @@ namespace onion::voxel
 	class InputsManager
 	{
 	  public:
-		InputsManager() = default;
-		~InputsManager() = default;
+		InputsManager();
+		~InputsManager();
 
 		/// @brief Initializes the InputsManager with the given GLFW window.
 		/// @param window The GLFW window to associate with the InputsManager for capturing inputs.
 		/// @details  This sets up the necessary callbacks and prepares the manager to capture inputs from the specified window. It must be called before using any other functionality of the InputsManager.
 		void Init(GLFWwindow* window);
+
+		/// @brief Deletes the InputsManager, cleaning up any resources.
+		void Delete();
 
 		/// @brief Polls the current input states and updates the internal snapshot. This should be called once per frame to ensure that the input states are up-to-date for the rendering loop.
 		void PoolInputs();
@@ -128,6 +131,11 @@ namespace onion::voxel
 		/// @brief Unregisters an input by its ID, removing it from the manager's tracking system. After an input is unregistered, its state will no longer be available in the InputsSnapshot, and any references to its ID should be removed to avoid errors.
 		void UnregisterInput(int inputId);
 
+		/// @brief Sets the cursor style for the application.
+		void SetCursorStyle(const CursorStyle& style);
+		/// @brief Retrieves the current cursor style for the application.
+		CursorStyle GetCursorStyle() const;
+
 		// ------------ INPUTS SNAPSHOT MANAGEMENT ------------
 	  private:
 		mutable std::mutex m_MutexSnapshot;
@@ -148,6 +156,9 @@ namespace onion::voxel
 
 		// ------------ Internal States ------------
 	  private:
+		bool m_Initialized = false;
+		bool m_Deleted = false;
+
 		mutable std::mutex m_MutexMouse;
 		MouseState m_MouseState;
 		bool m_MouseCaptureEnabled = true;
@@ -159,6 +170,14 @@ namespace onion::voxel
 
 		mutable std::mutex m_MutexFramebuffer;
 		FramebufferState m_FramebufferState;
+
+		// ------------ Cursors Management ------------
+	  private:
+		mutable std::mutex m_MutexCursors;
+		std::unordered_map<CursorStyle, GLFWcursor*> m_Cursors;
+		CursorStyle m_CurrentStyle = CursorStyle::Arrow;
+		void InitCursors();
+		void DestroyCursors();
 
 		// ------------ Internal Polling Methods ------------
 	  private:

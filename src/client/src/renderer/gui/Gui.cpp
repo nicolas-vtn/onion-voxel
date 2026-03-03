@@ -1,5 +1,7 @@
 #include "Gui.hpp"
 
+#include <csignal>
+
 namespace onion::voxel
 {
 	void Gui::StaticInitialize()
@@ -12,6 +14,50 @@ namespace onion::voxel
 		GuiElement::Unload();
 	}
 
+	Gui::Gui() : m_DemoPanel("DemoPanel"), m_MainMenuPanel("MainMenuPanel")
+	{
+		SubscribeToPannelsEvents();
+	}
+
+	Gui::~Gui() {}
+
+	void Gui::SubscribeToPannelsEvents()
+	{
+		m_EventHandles.push_back(GuiElement::RequestCursorStyleChange.Subscribe(
+			[this](const CursorStyle& style) { Handle_CursorStyleChangeRequest(style); }));
+
+		m_EventHandles.push_back(m_MainMenuPanel.RequestMenuNavigation.Subscribe(
+			[this](const eMenu& menu) { Handle_MenuNavigationRequest(menu); }));
+
+		m_EventHandles.push_back(m_DemoPanel.RequestMenuNavigation.Subscribe([this](const eMenu& menu)
+																			 { Handle_MenuNavigationRequest(menu); }));
+
+		m_EventHandles.push_back(m_MainMenuPanel.RequestQuitGame.Subscribe([this](const GuiElement* sender)
+																		   { Handle_QuitGameRequest(sender); }));
+	}
+
+	void Gui::Handle_MenuNavigationRequest(const eMenu& menu)
+	{
+		SetActiveMenu(menu);
+
+		// WIP : Temporary trigger
+		if (menu == eMenu::Singleplayer)
+		{
+			RequestStartSingleplayerGame.Trigger(GetAssetsPath() / "worlds" / "demo_map");
+		}
+	}
+
+	void Gui::Handle_QuitGameRequest(const GuiElement* sender)
+	{
+		// Sends a SIGINT Signal to the Application.
+		raise(SIGINT);
+	}
+
+	void Gui::Handle_CursorStyleChangeRequest(const CursorStyle& style)
+	{
+		RequestCursorStyleChange.Trigger(style);
+	}
+
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)
 	{
 		GuiElement::SetInputsSnapshot(inputsSnapshot);
@@ -22,17 +68,23 @@ namespace onion::voxel
 		GuiElement::SetScreenSize(screenWidth, screenHeight);
 	}
 
-	Gui::Gui() {}
-
-	Gui::~Gui() {}
+	void Gui::SetGameVersion(const std::string& version)
+	{
+		m_MainMenuPanel.SetGameVersion(version);
+	}
 
 	void Gui::SetActiveMenu(eMenu menu)
 	{
 		std::lock_guard lock(m_MutexState);
 		m_ActiveMenu = menu;
+
+		if (m_ActiveMenu == eMenu::MainMenu)
+		{
+			m_MainMenuPanel.CycleSplashText();
+		}
 	}
 
-	Gui::eMenu Gui::GetActiveMenu() const
+	eMenu Gui::GetActiveMenu() const
 	{
 		std::lock_guard lock(m_MutexState);
 		return m_ActiveMenu;
@@ -40,8 +92,8 @@ namespace onion::voxel
 
 	void Gui::Initialize()
 	{
-		m_DemoPanel = std::make_unique<DemoPanel>("DemoPanel");
-		m_DemoPanel->Initialize();
+		m_DemoPanel.Initialize();
+		m_MainMenuPanel.Initialize();
 	}
 
 	void Gui::Render()
@@ -49,8 +101,10 @@ namespace onion::voxel
 		switch (GetActiveMenu())
 		{
 			case eMenu::DemoPanel:
-				m_DemoPanel->Render();
+				m_DemoPanel.Render();
 				break;
+			case eMenu::MainMenu:
+				m_MainMenuPanel.Render();
 			default:
 				break;
 		}
@@ -58,8 +112,8 @@ namespace onion::voxel
 
 	void Gui::Shutdown()
 	{
-		m_DemoPanel->Delete();
-		m_DemoPanel.reset();
+		m_DemoPanel.Delete();
+		m_MainMenuPanel.Delete();
 	}
 
 } // namespace onion::voxel

@@ -31,7 +31,9 @@ add_executable(OnionVoxel
 	"src/renderer/gui/Gui.cpp"
 	"src/renderer/gui/GuiElement.cpp"
 	"src/renderer/gui/controls/button/Button.cpp"
+
 	"src/renderer/gui/layouts/demo_panel/DemoPanel.cpp"
+	"src/renderer/gui/layouts/main_menu_panel/MainMenuPanel.cpp"
 
 	"src/renderer/gui/font/Font.cpp"
 	"src/renderer/gui/controls/sprite/Sprite.cpp"

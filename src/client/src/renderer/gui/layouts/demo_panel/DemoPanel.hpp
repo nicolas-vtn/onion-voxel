@@ -6,8 +6,6 @@
 
 namespace onion::voxel
 {
-	class Button;
-
 	class DemoPanel : public GuiElement
 	{
 		// ----- Constructor / Destructor -----
@@ -21,14 +19,19 @@ namespace onion::voxel
 		void Initialize() override;
 		void Delete() override;
 
-		// ----- Properties -----
+		// ----- Public Events -----
 	  public:
+		Event<const eMenu&> RequestMenuNavigation;
+
+		// ----- Properties -----
+	  private:
 		std::string m_SpritePath = (GetAssetsPath() / "textures" / "OnionVoxelTitle.png").string();
 
 		// ----- Controls -----
 	  private:
 		Button m_Button;
 		Button m_Button2;
+		Button m_ButtonMainMenu;
 		Sprite m_Sprite;
 
 		// ----- Internal Event Subscription and Handlers -----
@@ -37,9 +40,14 @@ namespace onion::voxel
 
 		EventHandle m_HandleButtonClick;
 		void HandleButtonClick(const Button& button);
+
 		EventHandle m_HandleButtonHoverEnter;
 		void HandleButtonHoverEnter(const Button& button);
+
 		EventHandle m_HandleButtonHoverLeave;
 		void HandleButtonHoverLeave(const Button& button);
+
+		EventHandle m_HandleButtonMainMenuClick;
+		void HandleButtonMainMenuClick(const Button& button);
 	};
 } // namespace onion::voxel

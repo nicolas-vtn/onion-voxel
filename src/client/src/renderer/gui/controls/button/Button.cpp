@@ -60,25 +60,19 @@ namespace onion::voxel
 				size = glm::ivec2(glm::vec2(size) * m_ScaleFactorOnClick);
 			}
 
-			glm::vec2 topLeft_f = glm::vec2(GetPosition()) - glm::vec2(size) * 0.5f;
-			glm::ivec2 topLeft = glm::ivec2(topLeft_f);
+			float textHeight = size.y / 2.5f;
 
-			float textScale = size.y / 19.f;
-
-			glm::vec2 textSize = s_TextFont.MeasureText(m_Text, textScale);
-
-			float textX = topLeft.x + (size.x - textSize.x) * 0.5f;
-			float textY = topLeft.y + (size.y - textSize.y) * 0.5f;
-
-			textX = std::ceil(textX);
-			textY = std::ceil(textY);
+			glm::ivec2 textCenter = GetPosition();
 
 			// Render shadow
 			if (m_IsEnabled)
 			{
-				float shadowOffset = size.y * 0.06f;
+				glm::ivec2 shadowOffset{textHeight / s_TextFont.GetGlyphSize().y,
+										textHeight / s_TextFont.GetGlyphSize().y};
+
 				glm::vec3 shadowColor = {0.246f, 0.246f, 0.246f};
-				s_TextFont.RenderText(m_Text, textX + shadowOffset, textY + shadowOffset, textScale, shadowColor);
+				s_TextFont.RenderText(
+					m_Text, Font::eTextAlignment::Center, textCenter + shadowOffset, textHeight, shadowColor, 0.1f);
 			}
 
 			// Render main text
@@ -87,7 +81,7 @@ namespace onion::voxel
 			{
 				textColor = {0.625f, 0.625f, 0.625f};
 			}
-			s_TextFont.RenderText(m_Text, textX, textY, textScale, textColor);
+			s_TextFont.RenderText(m_Text, Font::eTextAlignment::Center, textCenter, textHeight, textColor, 0.2f);
 		}
 	}
 
@@ -214,27 +208,35 @@ namespace onion::voxel
 
 	void Button::HandleSpriteHoverEnter(const NineSliceSprite& sprite)
 	{
+		if (m_IsEnabled)
+		{
+			GuiElement::RequestCursorStyleChange.Trigger(CursorStyle::Hand);
+		}
 		OnHoverEnter.Trigger(*this);
 	}
 
 	void Button::HandleSpriteHoverLeave(const NineSliceSprite& sprite)
 	{
+		if (m_IsEnabled)
+		{
+			GuiElement::RequestCursorStyleChange.Trigger(CursorStyle::Arrow);
+		}
 		OnHoverLeave.Trigger(*this);
 	}
 
 	std::filesystem::path Button::GetSpritePath_Basic()
 	{
-		return GetMinecraftAssetsPath() / "textures" / "gui" / "sprites" / "widget" / "button.png";
+		return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button.png";
 	}
 
 	std::filesystem::path Button::GetSpritePath_Disabled()
 	{
-		return GetMinecraftAssetsPath() / "textures" / "gui" / "sprites" / "widget" / "button_disabled.png";
+		return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button_disabled.png";
 	}
 
 	std::filesystem::path Button::GetSpritePath_Highlighted()
 	{
-		return GetMinecraftAssetsPath() / "textures" / "gui" / "sprites" / "widget" / "button_highlighted.png";
+		return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button_highlighted.png";
 	}
 
 	void Button::RenderImGuiDebug()

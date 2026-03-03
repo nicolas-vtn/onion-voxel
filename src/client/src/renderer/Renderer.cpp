@@ -42,6 +42,28 @@ namespace onion::voxel
 		return m_IsRunning.load();
 	}
 
+	Renderer::eRenderState Renderer::GetRenderState() const
+	{
+		std::lock_guard lock(m_MutexRenderState);
+		return m_RenderState;
+	}
+
+	void Renderer::SetRenderState(eRenderState renderState)
+	{
+		std::lock_guard lock(m_MutexRenderState);
+		m_RenderState = renderState;
+
+		if (m_RenderState == eRenderState::InGame)
+		{
+			m_Gui.SetActiveMenu(eMenu::Gameplay);
+		}
+
+		if (m_RenderState == eRenderState::Menu)
+		{
+			m_Gui.SetActiveMenu(eMenu::MainMenu);
+		}
+	}
+
 	void Renderer::InitWindow()
 	{
 		glfwSetErrorCallback(error_callback);
@@ -81,6 +103,7 @@ namespace onion::voxel
 		// Initialize Inputs Manager
 		m_InputsManager.Init(m_Window);
 		m_InputsManager.SetMouseCaptureEnabled(false);
+		m_InputsManager.SetCursorStyle(CursorStyle::Arrow);
 		RegisterInputs();
 
 		// Init ImGui
@@ -111,11 +134,12 @@ namespace onion::voxel
 		InitOpenGlState();
 
 		Gui::StaticInitialize();
-
 		Gui::SetScreenSize(m_WindowWidth, m_WindowHeight);
 
 		m_Gui.Initialize();
-		m_Gui.SetActiveMenu(Gui::eMenu::DemoPanel);
+		m_Gui.SetGameVersion("0.1.0");
+		m_EventHandle_CursorStyleChangeRequest = m_Gui.RequestCursorStyleChange.Subscribe(
+			[this](const CursorStyle& style) { Handle_CursorStyleChangeRequest(style); });
 
 		while (!st.stop_requested() && !glfwWindowShouldClose(m_Window))
 		{
@@ -239,13 +263,23 @@ namespace onion::voxel
 		GuiElement::SetInputsSnapshot(inputs);
 	}
 
+	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)
+	{
+		m_InputsManager.SetCursorStyle(style);
+	}
+
+	void Renderer::Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath)
+	{
+		RequestStartSingleplayerGame.Trigger(worldPath);
+	}
+
 	void Renderer::InitImGui()
 	{
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 
 		ImGuiIO& io = ImGui::GetIO();
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+		io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
 
 		ImGui::StyleColorsDark();
 
