@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../../utils/SinusPulseGenerator.hpp"
 #include "../../GuiElement.hpp"
 #include "../../controls/button/Button.hpp"
 #include "../../controls/sprite/Sprite.hpp"
@@ -20,6 +21,7 @@ namespace onion::voxel
 		void Delete() override;
 
 		void SetGameVersion(const std::string& version);
+		void CycleSplashText();
 
 		// ----- Public Events -----
 	  public:
@@ -29,6 +31,7 @@ namespace onion::voxel
 		// ----- Properties -----
 	  private:
 		std::filesystem::path m_SpriteTitlePath = GetAssetsPath() / "textures" / "OnionVoxelTitle2.png";
+		std::filesystem::path m_SplashScreenTextPath = GetMinecraftDataPath() / "texts" / "splashes.txt";
 
 		std::string m_GameVersion = "0.1.0";
 
@@ -40,6 +43,13 @@ namespace onion::voxel
 		Button m_DemoPanel_Button;
 		Button m_Options_Button;
 		Button m_QuitGame_Button;
+
+		// ----- Internal Values -----
+	  private:
+		void LoadSplashes();
+		std::vector<std::string> m_Splashes;
+		int m_CurrentSplashIndex = 0;
+		SinusPulseGenerator m_SplashTextPulse{1, 0.1f, 1.f};
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:

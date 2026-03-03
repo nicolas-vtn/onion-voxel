@@ -41,6 +41,7 @@ namespace onion::voxel
 		void SubscribeToPannelsEvents();
 
 		void Handle_MenuNavigationRequest(const eMenu& menu);
+		void Handle_QuitGameRequest(const GuiElement* sender);
 		// ----- Set Static States -----
 	  public:
 		static void SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot);

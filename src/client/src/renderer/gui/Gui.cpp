@@ -1,5 +1,7 @@
 #include "Gui.hpp"
 
+#include <csignal>
+
 namespace onion::voxel
 {
 	void Gui::StaticInitialize()
@@ -26,11 +28,20 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_DemoPanel.RequestMenuNavigation.Subscribe([this](const eMenu& menu)
 																			 { Handle_MenuNavigationRequest(menu); }));
+
+		m_EventHandles.push_back(m_MainMenuPanel.RequestQuitGame.Subscribe([this](const GuiElement* sender)
+																		   { Handle_QuitGameRequest(sender); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const eMenu& menu)
 	{
 		SetActiveMenu(menu);
+	}
+
+	void Gui::Handle_QuitGameRequest(const GuiElement* sender)
+	{
+		// Sends a SIGINT Signal to the Application.
+		raise(SIGINT);
 	}
 
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)

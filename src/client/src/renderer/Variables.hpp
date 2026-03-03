@@ -18,15 +18,28 @@ namespace onion::voxel
 		return assetsPath;
 	}
 
-	inline std::filesystem::path GetMinecraftAssetsPath()
+	inline std::filesystem::path GetMinecraftTexturesPath()
 	{
 		std::filesystem::path currentPath = std::filesystem::current_path();
-		std::filesystem::path minecraftAssetsPath = currentPath / "assets" / "minecraft_16";
-		if (!std::filesystem::exists(minecraftAssetsPath))
+		std::filesystem::path minecraftTexturesPath = currentPath / "assets" / "minecraft_16" / "textures";
+		if (!std::filesystem::exists(minecraftTexturesPath))
 		{
-			std::cerr << "WARNING: Minecraft assets directory not found at: " << minecraftAssetsPath << std::endl;
-			throw std::runtime_error("Minecraft assets directory not found at: " + minecraftAssetsPath.string());
+			std::cerr << "WARNING: Minecraft textures directory not found at: " << minecraftTexturesPath << std::endl;
+			throw std::runtime_error("Minecraft textures directory not found at: " + minecraftTexturesPath.string());
 		}
-		return minecraftAssetsPath;
+		return minecraftTexturesPath;
 	}
+
+	inline std::filesystem::path GetMinecraftDataPath()
+	{
+		std::filesystem::path currentPath = std::filesystem::current_path();
+		std::filesystem::path minecraftDataPath = currentPath / "assets" / "minecraft";
+		if (!std::filesystem::exists(minecraftDataPath))
+		{
+			std::cerr << "WARNING: Minecraft data directory not found at: " << minecraftDataPath << std::endl;
+			throw std::runtime_error("Minecraft data directory not found at: " + minecraftDataPath.string());
+		}
+		return minecraftDataPath;
+	}
+
 } // namespace onion::voxel

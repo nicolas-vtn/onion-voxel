@@ -224,17 +224,17 @@ namespace onion::voxel
 
 	std::filesystem::path Button::GetSpritePath_Basic()
 	{
-		return GetMinecraftAssetsPath() / "textures" / "gui" / "sprites" / "widget" / "button.png";
+		return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button.png";
 	}
 
 	std::filesystem::path Button::GetSpritePath_Disabled()
 	{
-		return GetMinecraftAssetsPath() / "textures" / "gui" / "sprites" / "widget" / "button_disabled.png";
+		return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button_disabled.png";
 	}
 
 	std::filesystem::path Button::GetSpritePath_Highlighted()
 	{
-		return GetMinecraftAssetsPath() / "textures" / "gui" / "sprites" / "widget" / "button_highlighted.png";
+		return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button_highlighted.png";
 	}
 
 	void Button::RenderImGuiDebug()

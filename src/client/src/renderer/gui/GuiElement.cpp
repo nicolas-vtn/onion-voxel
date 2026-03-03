@@ -16,7 +16,7 @@ namespace onion::voxel
 	Shader GuiElement::s_ShaderNineSliceSprites(GetAssetsPath() / "shaders/nine_slice_sprite.vert",
 												GetAssetsPath() / "shaders/nine_slice_sprite.frag");
 
-	Font GuiElement::s_TextFont{(GetMinecraftAssetsPath() / "textures/font/ascii.png").string(), 16, 16};
+	Font GuiElement::s_TextFont{(GetMinecraftTexturesPath() / "font/ascii.png").string(), 16, 16};
 
 	glm::mat4 GuiElement::s_ProjectionMatrix{1.0f};
 	int GuiElement::s_ScreenWidth = 800;

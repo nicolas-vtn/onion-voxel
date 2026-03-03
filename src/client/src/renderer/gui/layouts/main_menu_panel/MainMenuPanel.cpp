@@ -2,6 +2,10 @@
 
 #include "../../LayoutHelper.hpp"
 
+#include <fstream>
+#include <iostream>
+#include <random>
+
 namespace onion::voxel
 {
 	MainMenuPanel::MainMenuPanel(const std::string& name)
@@ -10,6 +14,8 @@ namespace onion::voxel
 		  m_QuitGame_Button("Quit Game")
 	{
 		SubscribeToControlEvents();
+		LoadSplashes();
+		CycleSplashText();
 
 		m_Singleplayer_Button.SetText("Singleplayer");
 		m_Multiplayer_Button.SetText("Multiplayer");
@@ -20,6 +26,8 @@ namespace onion::voxel
 
 	void MainMenuPanel::Render()
 	{
+		// ---- Constants for Layout ----
+		float glfwTime = (float) glfwGetTime();
 		glm::vec2 buttonSizeRatio{0.415f, 0.08f};
 		glm::vec2 buttonSize{buttonSizeRatio.x * s_ScreenWidth, buttonSizeRatio.y * s_ScreenHeight};
 		float buttonYSpacingRatio = 94.f / 1009.f;
@@ -104,6 +112,28 @@ namespace onion::voxel
 		s_TextFont.RenderText(
 			copyrightText, copyrightTextX + shadowOffset, textY + shadowOffset, textHeight, shadowColor);
 		s_TextFont.RenderText(copyrightText, copyrightTextX, textY, textHeight, textColor);
+
+		// ---- Render Splash Text ----
+		if (!m_Splashes.empty())
+		{
+			const std::string& splashText = m_Splashes[m_CurrentSplashIndex];
+			float splashTextHeight = textHeight * m_SplashTextPulse.GetValue(glfwTime);
+			glm::ivec2 splashTextSize = s_TextFont.MeasureText(splashText, splashTextHeight);
+			float splashTextXratioCenter = 1420.f / 1920.f;
+			float splashTextYratioCenter = 267.f / 1009.f;
+			glm::vec3 splashTextColor = {1.f, 1.f, 0.0f};
+			glm::vec3 splashTextShadowColor = {0.246f, 0.246f, 0.0f};
+			glm::ivec2 textTopLeftPos = {s_ScreenWidth * splashTextXratioCenter - (splashTextSize.x / 2),
+										 s_ScreenHeight * splashTextYratioCenter};
+
+			s_TextFont.RenderText(splashText,
+								  textTopLeftPos.x + shadowOffset,
+								  textTopLeftPos.y + shadowOffset,
+								  splashTextHeight,
+								  splashTextShadowColor);
+
+			s_TextFont.RenderText(splashText, textTopLeftPos.x, textTopLeftPos.y, splashTextHeight, splashTextColor);
+		}
 	}
 
 	void MainMenuPanel::Initialize()
@@ -135,6 +165,42 @@ namespace onion::voxel
 	void MainMenuPanel::SetGameVersion(const std::string& version)
 	{
 		m_GameVersion = version;
+	}
+
+	void MainMenuPanel::CycleSplashText()
+	{
+		if (m_Splashes.empty())
+			return;
+
+		// Select a random splash text from the list
+		static std::random_device rd;  // Seed source
+		static std::mt19937 gen(rd()); // Mersenne Twister engine
+		std::uniform_int_distribution<int> dist(0, m_Splashes.size() - 1);
+
+		m_CurrentSplashIndex = dist(gen);
+	}
+
+	void MainMenuPanel::LoadSplashes()
+	{
+		m_Splashes.clear();
+		std::ifstream file(m_SplashScreenTextPath);
+
+		if (!file.is_open())
+		{
+			std::cerr << "Failed to open splashes file: " << m_SplashScreenTextPath << std::endl;
+			return;
+		}
+
+		std::string line;
+		while (std::getline(file, line))
+		{
+			if (!line.empty())
+			{
+				m_Splashes.push_back(line);
+			}
+		}
+
+		file.close();
 	}
 
 	void MainMenuPanel::SubscribeToControlEvents()
