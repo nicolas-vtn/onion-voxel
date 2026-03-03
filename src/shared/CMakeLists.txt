@@ -12,6 +12,8 @@ add_library(onion_voxel_shared
 target_link_libraries(onion_voxel_shared
 	PUBLIC
 		cereal::cereal
+
+		onion::event
 )
 
 target_include_directories(onion_voxel_shared

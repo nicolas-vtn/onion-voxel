@@ -15,7 +15,8 @@ target_link_libraries(onion_voxel_server
 		winmm
 		ws2_32
 
-		onion_voxel_shared
+		onion::event
+		onion_voxel_shared		
 )
 
 target_include_directories(onion_voxel_server

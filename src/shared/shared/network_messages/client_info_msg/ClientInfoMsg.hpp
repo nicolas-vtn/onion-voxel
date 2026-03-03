@@ -10,6 +10,8 @@ namespace onion::voxel
 {
 	struct ClientInfoMsg
 	{
+		static constexpr MessageHeader::eType StaticType = MessageHeader::eType::ClientInfo;
+
 		std::string Msg;
 
 		template <class Archive> void serialize(Archive& ar) { ar(Msg); }

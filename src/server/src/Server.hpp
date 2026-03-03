@@ -27,5 +27,12 @@ namespace onion::voxel
 		// ----- Network Server -----
 	  private:
 		NetworkServer m_NetworkServer;
+		std::vector<EventHandle> m_NetworkServerEventHandles;
+		void SubscribeToNetworkServerEvents();
+
+		// ----- Event Handlers -----
+	  private:
+		void HandleClientConnected(NetworkServer::ClientHandle client);
+		void HandleClientDisconnected(NetworkServer::ClientHandle client);
 	};
 } // namespace onion::voxel
