@@ -4,20 +4,26 @@ namespace onion::voxel
 {
 
 	DemoPanel::DemoPanel(const std::string& name)
-		: GuiElement(name), m_Button("DemoButton"), m_Sprite("DemoSprite", m_SpritePath), m_Button2("DemoButton2")
+		: GuiElement(name), m_Button("DemoButton"), m_Sprite("DemoSprite", m_SpritePath), m_Button2("DemoButton2"),
+		  m_ButtonMainMenu("MainMenuButton")
 	{
 
 		SubscribeToControlEvents();
 
 		m_Button.SetPosition({400, 400});
 		m_Button.SetSize({200.f, 70.f});
-		m_Button.SetText("Singleplayer");
+		m_Button.SetText("Hover Me !");
 		m_Button.SetEnabled(true);
 
 		m_Button2.SetPosition({400, 500});
 		m_Button2.SetSize({200.f, 40.f});
-		m_Button2.SetText("Multiplayer");
+		m_Button2.SetText("Dummy");
 		m_Button2.SetEnabled(true);
+
+		m_ButtonMainMenu.SetPosition({400, 500});
+		m_ButtonMainMenu.SetSize({200.f, 40.f});
+		m_ButtonMainMenu.SetText("Main Menu");
+		m_ButtonMainMenu.SetEnabled(true);
 	}
 
 	void DemoPanel::Render()
@@ -62,12 +68,25 @@ namespace onion::voxel
 		m_Button2.SetPosition(button2Pos);
 		m_Button2.SetSize(buttonSize);
 		m_Button2.Render();
+
+		// ---- Render Main Menu Button ----
+		float buttonMainMenuScaleFactorY = 0.5f;
+		float buttonMainMenuXPosRatio = 0.5f;
+		float buttonMainMenuYPosRatio = 0.8f;
+
+		const glm::vec2 buttonMainMenuPos{s_ScreenWidth * buttonMainMenuXPosRatio,
+										  s_ScreenHeight * buttonMainMenuYPosRatio};
+
+		m_ButtonMainMenu.SetPosition(buttonMainMenuPos);
+		m_ButtonMainMenu.SetSize(buttonSize);
+		m_ButtonMainMenu.Render();
 	}
 
 	void DemoPanel::Initialize()
 	{
 		m_Button.Initialize();
 		m_Button2.Initialize();
+		m_ButtonMainMenu.Initialize();
 		m_Sprite.Initialize();
 
 		SetInitState(true);
@@ -77,6 +96,7 @@ namespace onion::voxel
 	{
 		m_Button.Delete();
 		m_Button2.Delete();
+		m_ButtonMainMenu.Delete();
 		m_Sprite.Delete();
 
 		SetDeletedState(true);
@@ -85,10 +105,15 @@ namespace onion::voxel
 	void DemoPanel::SubscribeToControlEvents()
 	{
 		m_HandleButtonClick = m_Button.OnClick.Subscribe([this](const Button& button) { HandleButtonClick(button); });
+
 		m_HandleButtonHoverEnter =
 			m_Button.OnHoverEnter.Subscribe([this](const Button& button) { HandleButtonHoverEnter(button); });
+
 		m_HandleButtonHoverLeave =
 			m_Button.OnHoverLeave.Subscribe([this](const Button& button) { HandleButtonHoverLeave(button); });
+
+		m_HandleButtonMainMenuClick =
+			m_ButtonMainMenu.OnClick.Subscribe([this](const Button& button) { HandleButtonMainMenuClick(button); });
 	}
 
 	void DemoPanel::HandleButtonClick(const Button& button)
@@ -104,6 +129,12 @@ namespace onion::voxel
 	void DemoPanel::HandleButtonHoverLeave(const Button& button)
 	{
 		std::cout << "Button '" + button.GetName() + "' Hover Leave." << std::endl;
+	}
+
+	void DemoPanel::HandleButtonMainMenuClick(const Button& button)
+	{
+		std::cerr << "Button '" + button.GetName() + "' Clicked." << std::endl;
+		RequestMenuNavigation.Trigger(eMenu::MainMenu);
 	}
 
 } // namespace onion::voxel

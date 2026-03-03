@@ -13,6 +13,17 @@
 
 namespace onion::voxel
 {
+	enum class eMenu
+	{
+		None,
+		DemoPanel,
+		MainMenu,
+		Singleplayer,
+		Multiplayer,
+		Settings,
+		Gameplay,
+	};
+
 	class GuiElement
 	{
 		// ----- Constructor / Destructor -----

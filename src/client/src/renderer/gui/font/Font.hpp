@@ -31,8 +31,10 @@ namespace onion::voxel
 
 		static void SetProjectionMatrix(const glm::mat4& projection);
 
-		void RenderText(const std::string& text, float x, float y, float scale, const glm::vec3& color);
-		glm::vec2 MeasureText(const std::string& text, float scale) const;
+		void RenderText(const std::string& text, float x, float y, float textHeightPx, const glm::vec3& color);
+		glm::vec2 MeasureText(const std::string& text, float textHeightPx) const;
+
+		glm::ivec2 GetGlyphSize() const;
 
 		// ----- Private Structs -----
 	  private:
@@ -65,6 +67,7 @@ namespace onion::voxel
 		Texture m_TextureAtlas;
 		const int m_AtlasCols = 16;
 		const int m_AtlasRows = 16;
+		glm::ivec2 m_GlyphSize{0, 0};
 
 		// ----- Glyph Data -----
 		Glyph m_Glyphs[256]{};

@@ -111,11 +111,10 @@ namespace onion::voxel
 		InitOpenGlState();
 
 		Gui::StaticInitialize();
-
 		Gui::SetScreenSize(m_WindowWidth, m_WindowHeight);
 
 		m_Gui.Initialize();
-		m_Gui.SetActiveMenu(Gui::eMenu::DemoPanel);
+		m_Gui.SetGameVersion("0.1.0");
 
 		while (!st.stop_requested() && !glfwWindowShouldClose(m_Window))
 		{

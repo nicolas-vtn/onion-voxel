@@ -66,5 +66,4 @@ Add sound effects and background music.
 
 ## Misc
 
-- Add a proper Logger
 - Change Mouse Cursor (Crosshair, Hand, ...)

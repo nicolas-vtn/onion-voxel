@@ -63,9 +63,9 @@ namespace onion::voxel
 			glm::vec2 topLeft_f = glm::vec2(GetPosition()) - glm::vec2(size) * 0.5f;
 			glm::ivec2 topLeft = glm::ivec2(topLeft_f);
 
-			float textScale = size.y / 19.f;
+			float textHeight = size.y / 2.5f;
 
-			glm::vec2 textSize = s_TextFont.MeasureText(m_Text, textScale);
+			glm::vec2 textSize = s_TextFont.MeasureText(m_Text, textHeight);
 
 			float textX = topLeft.x + (size.x - textSize.x) * 0.5f;
 			float textY = topLeft.y + (size.y - textSize.y) * 0.5f;
@@ -76,9 +76,9 @@ namespace onion::voxel
 			// Render shadow
 			if (m_IsEnabled)
 			{
-				float shadowOffset = size.y * 0.06f;
+				float shadowOffset = textHeight / s_TextFont.GetGlyphSize().y;
 				glm::vec3 shadowColor = {0.246f, 0.246f, 0.246f};
-				s_TextFont.RenderText(m_Text, textX + shadowOffset, textY + shadowOffset, textScale, shadowColor);
+				s_TextFont.RenderText(m_Text, textX + shadowOffset, textY + shadowOffset, textHeight, shadowColor);
 			}
 
 			// Render main text
@@ -87,7 +87,7 @@ namespace onion::voxel
 			{
 				textColor = {0.625f, 0.625f, 0.625f};
 			}
-			s_TextFont.RenderText(m_Text, textX, textY, textScale, textColor);
+			s_TextFont.RenderText(m_Text, textX, textY, textHeight, textColor);
 		}
 	}
 

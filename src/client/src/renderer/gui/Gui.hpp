@@ -1,6 +1,7 @@
 #pragma once
 
 #include "layouts/demo_panel/DemoPanel.hpp"
+#include "layouts/main_menu_panel/MainMenuPanel.hpp"
 
 #include <memory>
 #include <mutex>
@@ -9,18 +10,6 @@ namespace onion::voxel
 {
 	class Gui
 	{
-	  public:
-		enum class eMenu
-		{
-			None,
-			DemoPanel,
-			MainMenu,
-			Singleplayer,
-			Multiplayer,
-			Settings,
-			Gameplay,
-		};
-
 		// ----- Static Initialization / Shutdown -----
 	  public:
 		static void StaticInitialize();
@@ -39,10 +28,19 @@ namespace onion::voxel
 
 		void SetActiveMenu(eMenu menu);
 		eMenu GetActiveMenu() const;
+		void SetGameVersion(const std::string& version);
+
 		// ----- Panels -----
 	  private:
-		std::unique_ptr<DemoPanel> m_DemoPanel;
+		DemoPanel m_DemoPanel;
+		MainMenuPanel m_MainMenuPanel;
 
+		// ----- Panel Events Handling -----
+	  private:
+		std::vector<EventHandle> m_EventHandles;
+		void SubscribeToPannelsEvents();
+
+		void Handle_MenuNavigationRequest(const eMenu& menu);
 		// ----- Set Static States -----
 	  public:
 		static void SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot);
@@ -51,6 +49,6 @@ namespace onion::voxel
 		// ----- States -----
 	  private:
 		mutable std::mutex m_MutexState;
-		eMenu m_ActiveMenu = eMenu::None;
+		eMenu m_ActiveMenu = eMenu::MainMenu;
 	};
 } // namespace onion::voxel

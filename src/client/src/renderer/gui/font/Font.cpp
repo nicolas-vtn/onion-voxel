@@ -50,7 +50,7 @@ void Font::SetProjectionMatrix(const glm::mat4& projection)
 	s_ShaderFont.setMat4("uProjection", s_ProjectionMatrix);
 }
 
-void Font::RenderText(const std::string& text, float x, float y, float scale, const glm::vec3& color)
+void Font::RenderText(const std::string& text, float x, float y, float textHeightPx, const glm::vec3& color)
 {
 	GLboolean depthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
 	if (depthTestEnabled)
@@ -68,14 +68,7 @@ void Font::RenderText(const std::string& text, float x, float y, float scale, co
 	float cursorX = x;
 	float cursorY = y;
 
-	int texWidth = m_TextureAtlas.Width();
-	int texHeight = m_TextureAtlas.Height();
-
-	float glyphPixelWidth = (float) texWidth / m_AtlasCols;
-	float glyphPixelHeight = (float) texHeight / m_AtlasRows;
-
-	float glyphSizeX = glyphPixelWidth * scale;
-	float glyphSizeY = glyphPixelHeight * scale;
+	float scale = textHeightPx / m_GlyphSize.y;
 
 	for (char c : text)
 	{
@@ -121,12 +114,12 @@ void Font::RenderText(const std::string& text, float x, float y, float scale, co
 	m_Vertices.clear();
 }
 
-glm::vec2 Font::MeasureText(const std::string& text, float scale) const
+glm::vec2 Font::MeasureText(const std::string& text, float textHeightPx) const
 {
 	if (text.empty())
 		return {0.f, 0.f};
 
-	float glyphPixelHeight = m_TextureAtlas.Height() / m_AtlasRows;
+	float scale = textHeightPx / m_GlyphSize.y;
 
 	float width = 0.f;
 	for (int i = 0; i < text.size(); i++)
@@ -136,9 +129,14 @@ glm::vec2 Font::MeasureText(const std::string& text, float scale) const
 		width += m_Glyphs[ascii].advance * scale;
 	}
 
-	float height = glyphPixelHeight * scale;
+	float height = m_GlyphSize.y * scale;
 
 	return {width, height};
+}
+
+glm::ivec2 onion::voxel::Font::GetGlyphSize() const
+{
+	return m_GlyphSize;
 }
 
 // -------- OpenGL Buffer Setup --------
@@ -249,4 +247,6 @@ void onion::voxel::Font::InitializeGlyphs()
 		m_Glyphs[i].u1 = m_Glyphs[i].u0 + uvStepX;
 		m_Glyphs[i].v1 = m_Glyphs[i].v0 + uvStepY;
 	}
+
+	m_GlyphSize = glm::ivec2(m_TextureAtlas.Width() / m_AtlasCols, m_TextureAtlas.Height() / m_AtlasRows);
 }
