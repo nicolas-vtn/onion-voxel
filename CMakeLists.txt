@@ -18,6 +18,7 @@ include(FetchSTB)
 include(FetchNlohmannJson)
 include(FetchImGui)
 include(FetchENet)
+include(FetchCereal)
 
 add_subdirectory(external/glad)
 

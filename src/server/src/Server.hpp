@@ -28,4 +28,4 @@ namespace onion::voxel
 	  private:
 		NetworkServer m_NetworkServer;
 	};
-}; // namespace onion::voxel
+} // namespace onion::voxel

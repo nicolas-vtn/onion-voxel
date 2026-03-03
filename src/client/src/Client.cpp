@@ -82,6 +82,10 @@ namespace onion::voxel
 			throw std::runtime_error("Network Client is already running");
 		}
 
+		// Sends a message to Server
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		m_NetworkClient.SendNetworkMessage(MessageHeader::eType::ClientInfo, ClientInfoMsg{"Hello from Client!"}, true);
+
 		// Sets Renderer UI to InGame UI.
 		m_Renderer.SetRenderState(Renderer::eRenderState::InGame);
 	}

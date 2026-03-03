@@ -73,6 +73,12 @@ namespace onion::voxel
 	{
 		return m_IsRunning.load();
 	}
+
+	bool NetworkServer::TryPopMessage(NetworkMessage& out)
+	{
+		return m_IncomingMessages.TryPop(out);
+	}
+
 	void NetworkServer::ListenForEvents(std::stop_token stopToken)
 	{
 		ENetEvent event;
@@ -81,7 +87,8 @@ namespace onion::voxel
 
 		while (!stopToken.stop_requested())
 		{
-			while (enet_host_service(m_EnetServer, &event, 1000) > 0)
+			std::lock_guard<std::mutex> lock(m_Mutex);
+			while (enet_host_service(m_EnetServer, &event, 1) > 0)
 			{
 				switch (event.type)
 				{
@@ -91,17 +98,41 @@ namespace onion::voxel
 						break;
 
 					case ENET_EVENT_TYPE_RECEIVE:
-						std::cout << "Received: " << event.packet->data << "\n";
+						{
+							const auto* rawData = reinterpret_cast<const char*>(event.packet->data);
+							const auto dataSize = static_cast<std::size_t>(event.packet->dataLength);
 
-						// Echo back message
-						packet =
-							enet_packet_create(event.packet->data, event.packet->dataLength, ENET_PACKET_FLAG_RELIABLE);
+							std::string_view view(rawData, dataSize);
 
-						enet_peer_send(event.peer, 0, packet);
-						enet_host_flush(m_EnetServer);
+							struct MemoryStream : std::streambuf
+							{
+								MemoryStream(const char* data, std::size_t size)
+								{
+									char* ptr = const_cast<char*>(data);
+									setg(ptr, ptr, ptr + size);
+								}
+							};
 
-						enet_packet_destroy(event.packet);
-						break;
+							MemoryStream memStream(view.data(), view.size());
+							std::istream stream(&memStream);
+
+							cereal::BinaryInputArchive archive(stream);
+
+							try
+							{
+								MessageHeader header;
+								archive(header);
+
+								m_IncomingMessages.Push(DeserializeMessage(archive, header.Type));
+							}
+							catch (const std::exception& e)
+							{
+								std::cerr << "Invalid packet: " << e.what() << "\n";
+							}
+
+							enet_packet_destroy(event.packet);
+							break;
+						}
 
 					case ENET_EVENT_TYPE_DISCONNECT:
 						std::cout << "Client disconnected.\n";

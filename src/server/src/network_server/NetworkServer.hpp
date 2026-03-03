@@ -6,6 +6,9 @@
 
 #include <enet/enet.h>
 
+#include <shared/network_messages/NetworkMessages.hpp>
+#include <shared/thread_safe_queue/ThreadSafeQueue.hpp>
+
 namespace onion::voxel
 {
 	class NetworkServer
@@ -21,11 +24,20 @@ namespace onion::voxel
 		void Stop();
 		bool IsRunning() const noexcept;
 
+		// ----- Getters / Setters -----
+	  public:
+		bool TryPopMessage(NetworkMessage& out);
+
 		// ---- Enet -----
 	  private:
 		ENetHost* m_EnetServer{nullptr};
 		std::jthread m_EventThread;
+
 		void ListenForEvents(std::stop_token stopToken);
+
+		// ----- Private Members -----
+	  public:
+		ThreadSafeQueue<NetworkMessage> m_IncomingMessages;
 
 		// ----- States -----
 	  private:

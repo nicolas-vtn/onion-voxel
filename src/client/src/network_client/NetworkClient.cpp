@@ -48,13 +48,13 @@ namespace onion::voxel
 
 	void NetworkClient::Stop()
 	{
-		std::lock_guard<std::mutex> lock(m_Mutex);
-
 		if (m_EventThread.joinable())
 		{
 			m_EventThread.request_stop();
 			m_EventThread.join();
 		}
+
+		std::lock_guard<std::mutex> lock(m_Mutex);
 
 		if (m_Peer)
 		{
@@ -76,17 +76,14 @@ namespace onion::voxel
 		return m_IsRunning.load();
 	}
 
-	void NetworkClient::Send(const void* data, size_t size, bool reliable)
+	bool NetworkClient::TryPopMessage(NetworkMessage& out)
 	{
-		std::lock_guard<std::mutex> lock(m_Mutex);
+		return m_IncomingMessages.TryPop(out);
+	}
 
-		if (!m_Peer)
-			return;
-
-		ENetPacket* packet = enet_packet_create(data, size, reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
-
-		enet_peer_send(m_Peer, 0, packet);
-		enet_host_flush(m_Client);
+	MessageHeader NetworkClient::BuildMessageHeader(MessageHeader::eType type) const
+	{
+		return MessageHeader{type, "ClientId"};
 	}
 
 	void NetworkClient::ListenForEvents(std::stop_token stopToken)
@@ -95,7 +92,7 @@ namespace onion::voxel
 
 		while (!stopToken.stop_requested())
 		{
-			while (enet_host_service(m_Client, &event, 1000) > 0)
+			while (enet_host_service(m_Client, &event, 1) > 0)
 			{
 				switch (event.type)
 				{
@@ -104,10 +101,41 @@ namespace onion::voxel
 						break;
 
 					case ENET_EVENT_TYPE_RECEIVE:
-						std::cout << "Received from server: " << reinterpret_cast<char*>(event.packet->data) << "\n";
+						{
+							const auto* rawData = reinterpret_cast<const char*>(event.packet->data);
 
-						enet_packet_destroy(event.packet);
-						break;
+							const std::size_t dataSize = static_cast<std::size_t>(event.packet->dataLength);
+
+							struct MemoryStreamBuf : std::streambuf
+							{
+								MemoryStreamBuf(const char* data, std::size_t size)
+								{
+									char* ptr = const_cast<char*>(data);
+									setg(ptr, ptr, ptr + size);
+								}
+							};
+
+							MemoryStreamBuf buffer(rawData, dataSize);
+							std::istream stream(&buffer);
+
+							cereal::BinaryInputArchive archive(stream);
+
+							try
+							{
+								MessageHeader header;
+								archive(header);
+
+								m_IncomingMessages.Push(DeserializeMessage(archive, header.Type));
+							}
+							catch (const std::exception& e)
+							{
+								std::cerr << "Invalid packet: " << e.what() << "\n";
+							}
+
+							enet_packet_destroy(event.packet);
+
+							break;
+						}
 
 					case ENET_EVENT_TYPE_DISCONNECT:
 						std::cout << "Disconnected from server.\n";
