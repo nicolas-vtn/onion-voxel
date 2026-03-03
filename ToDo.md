@@ -63,7 +63,3 @@ Add sound effects and background music.
 - Gen Chunk on Server (Seed Based, configurable world parameters)
 - Stream it to client
 - Block ID / Block States
-
-## Misc
-
-- Change Mouse Cursor (Crosshair, Hand, ...)

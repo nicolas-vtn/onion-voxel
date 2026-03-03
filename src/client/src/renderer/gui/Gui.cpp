@@ -39,6 +39,12 @@ namespace onion::voxel
 	void Gui::Handle_MenuNavigationRequest(const eMenu& menu)
 	{
 		SetActiveMenu(menu);
+
+		// WIP : Temporary trigger
+		if (menu == eMenu::Singleplayer)
+		{
+			RequestStartSingleplayerGame.Trigger(GetAssetsPath() / "worlds" / "demo_map");
+		}
 	}
 
 	void Gui::Handle_QuitGameRequest(const GuiElement* sender)

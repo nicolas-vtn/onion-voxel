@@ -33,6 +33,7 @@ namespace onion::voxel
 		// ----- Events -----
 	  public:
 		Event<const CursorStyle&> RequestCursorStyleChange;
+		Event<const std::filesystem::path&> RequestStartSingleplayerGame;
 
 		// ----- Panels -----
 	  private:

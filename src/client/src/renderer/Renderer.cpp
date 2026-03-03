@@ -42,6 +42,28 @@ namespace onion::voxel
 		return m_IsRunning.load();
 	}
 
+	Renderer::eRenderState Renderer::GetRenderState() const
+	{
+		std::lock_guard lock(m_MutexRenderState);
+		return m_RenderState;
+	}
+
+	void Renderer::SetRenderState(eRenderState renderState)
+	{
+		std::lock_guard lock(m_MutexRenderState);
+		m_RenderState = renderState;
+
+		if (m_RenderState == eRenderState::InGame)
+		{
+			m_Gui.SetActiveMenu(eMenu::Gameplay);
+		}
+
+		if (m_RenderState == eRenderState::Menu)
+		{
+			m_Gui.SetActiveMenu(eMenu::MainMenu);
+		}
+	}
+
 	void Renderer::InitWindow()
 	{
 		glfwSetErrorCallback(error_callback);
@@ -244,6 +266,11 @@ namespace onion::voxel
 	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)
 	{
 		m_InputsManager.SetCursorStyle(style);
+	}
+
+	void Renderer::Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath)
+	{
+		RequestStartSingleplayerGame.Trigger(worldPath);
 	}
 
 	void Renderer::InitImGui()

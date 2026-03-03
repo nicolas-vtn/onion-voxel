@@ -57,4 +57,18 @@ namespace onion::voxel
 		return m_LogLevel;
 	}
 
+	void Client::Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath)
+	{
+		// Starts a Server on Localhost and connect to it with the Client.
+
+		// Sets Renderer UI to InGame UI.
+		m_Renderer.SetRenderState(Renderer::eRenderState::InGame);
+	}
+
+	void Client::SubscribeToRendererEvents()
+	{
+		m_RendererEventHandles.push_back(m_Renderer.RequestStartSingleplayerGame.Subscribe(
+			[this](const std::filesystem::path& worldPath) { Handle_StartSingleplayerGameRequest(worldPath); }));
+	}
+
 } // namespace onion::voxel
