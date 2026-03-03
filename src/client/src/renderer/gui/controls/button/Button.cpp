@@ -60,25 +60,32 @@ namespace onion::voxel
 				size = glm::ivec2(glm::vec2(size) * m_ScaleFactorOnClick);
 			}
 
-			glm::vec2 topLeft_f = glm::vec2(GetPosition()) - glm::vec2(size) * 0.5f;
-			glm::ivec2 topLeft = glm::ivec2(topLeft_f);
+			//glm::vec2 topLeft_f = glm::vec2(GetPosition()) - glm::vec2(size) * 0.5f;
+			//glm::ivec2 topLeft = glm::ivec2(topLeft_f);
 
 			float textHeight = size.y / 2.5f;
 
-			glm::vec2 textSize = s_TextFont.MeasureText(m_Text, textHeight);
+			//glm::vec2 textSize = s_TextFont.MeasureText(m_Text, textHeight);
 
-			float textX = topLeft.x + (size.x - textSize.x) * 0.5f;
-			float textY = topLeft.y + (size.y - textSize.y) * 0.5f;
+			//float textX = topLeft.x + (size.x - textSize.x) * 0.5f;
+			//float textY = topLeft.y + (size.y - textSize.y) * 0.5f;
 
-			textX = std::ceil(textX);
-			textY = std::ceil(textY);
+			//textX = std::ceil(textX);
+			//textY = std::ceil(textY);
+
+			//glm::vec2 textPos{textX, textY};
+
+			glm::ivec2 textCenter = GetPosition();
 
 			// Render shadow
 			if (m_IsEnabled)
 			{
-				float shadowOffset = textHeight / s_TextFont.GetGlyphSize().y;
+				glm::ivec2 shadowOffset{textHeight / s_TextFont.GetGlyphSize().y,
+										textHeight / s_TextFont.GetGlyphSize().y};
+
 				glm::vec3 shadowColor = {0.246f, 0.246f, 0.246f};
-				s_TextFont.RenderText(m_Text, textX + shadowOffset, textY + shadowOffset, textHeight, shadowColor);
+				s_TextFont.RenderText(
+					m_Text, Font::eTextAlignment::Center, textCenter + shadowOffset, textHeight, shadowColor, 0.1f);
 			}
 
 			// Render main text
@@ -87,7 +94,7 @@ namespace onion::voxel
 			{
 				textColor = {0.625f, 0.625f, 0.625f};
 			}
-			s_TextFont.RenderText(m_Text, textX, textY, textHeight, textColor);
+			s_TextFont.RenderText(m_Text, Font::eTextAlignment::Center, textCenter, textHeight, textColor, 0.2f);
 		}
 	}
 

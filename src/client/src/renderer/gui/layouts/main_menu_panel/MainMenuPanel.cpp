@@ -95,23 +95,34 @@ namespace onion::voxel
 		// ---- Render Version Text ----
 		std::string versionText = "Voxel::Onion " + m_GameVersion;
 		float textX = s_ScreenHeight * 0.01f;
-		float textY = s_ScreenHeight * 0.96f;
+		float textY = s_ScreenHeight * 0.97f;
 		float textHeight = s_ScreenHeight * (28.f / 1009.f);
-		glm::vec3 textColor = {1.f, 1.f, 1.f};
+		glm::vec3 textColor{1.f, 1.f, 1.f};
 		float shadowOffset = textHeight / s_TextFont.GetGlyphSize().y;
-		glm::vec3 shadowColor = {0.246f, 0.246f, 0.246f};
+		glm::vec3 shadowColor{0.246f, 0.246f, 0.246f};
 
-		s_TextFont.RenderText(versionText, textX + shadowOffset, textY + shadowOffset, textHeight, shadowColor);
-		s_TextFont.RenderText(versionText, textX, textY, textHeight, textColor);
+		glm::vec2 textPos{textX, textY};
+		glm::vec2 shadowOffsetVec{shadowOffset, shadowOffset};
+
+		s_TextFont.RenderText(
+			versionText, Font::eTextAlignment::Left, textPos + shadowOffsetVec, textHeight, shadowColor, 0.1f);
+		s_TextFont.RenderText(versionText, Font::eTextAlignment::Left, textPos, textHeight, textColor, 0.2f);
 
 		// ---- Render Copyright Text ----
 		std::string copyrightText = "Uses Mojang's assets, DO NOT DISTRIBUTE.";
 		glm::ivec2 textSize = s_TextFont.MeasureText(copyrightText, textHeight);
 		float copyrightTextX = s_ScreenWidth - textSize.x - (s_ScreenWidth * 0.01f);
 
-		s_TextFont.RenderText(
-			copyrightText, copyrightTextX + shadowOffset, textY + shadowOffset, textHeight, shadowColor);
-		s_TextFont.RenderText(copyrightText, copyrightTextX, textY, textHeight, textColor);
+		glm::vec2 copyrightTextPos{copyrightTextX, textY};
+		glm::vec2 copyrightShadowOffsetVec{shadowOffset, shadowOffset};
+
+		s_TextFont.RenderText(copyrightText,
+							  Font::eTextAlignment::Left,
+							  copyrightTextPos + copyrightShadowOffsetVec,
+							  textHeight,
+							  shadowColor,
+							  0.1f);
+		s_TextFont.RenderText(copyrightText, Font::eTextAlignment::Left, copyrightTextPos, textHeight, textColor, 0.2f);
 
 		// ---- Render Splash Text ----
 		if (!m_Splashes.empty())
@@ -121,18 +132,27 @@ namespace onion::voxel
 			glm::ivec2 splashTextSize = s_TextFont.MeasureText(splashText, splashTextHeight);
 			float splashTextXratioCenter = 1420.f / 1920.f;
 			float splashTextYratioCenter = 267.f / 1009.f;
-			glm::vec3 splashTextColor = {1.f, 1.f, 0.0f};
+			glm::vec3 splashTextColor{1.f, 1.f, 0.0f};
 			glm::vec3 splashTextShadowColor = {0.246f, 0.246f, 0.0f};
-			glm::ivec2 textTopLeftPos = {s_ScreenWidth * splashTextXratioCenter - (splashTextSize.x / 2),
-										 s_ScreenHeight * splashTextYratioCenter};
+			glm::vec2 textCenter = {s_ScreenWidth * splashTextXratioCenter, s_ScreenHeight * splashTextYratioCenter};
+			float rotationDeg = -25.f;
+			glm::vec2 shadowOffsetSplash = glm::vec2(splashTextHeight / s_TextFont.GetGlyphSize().y);
 
 			s_TextFont.RenderText(splashText,
-								  textTopLeftPos.x + shadowOffset,
-								  textTopLeftPos.y + shadowOffset,
+								  Font::eTextAlignment::Center,
+								  textCenter + shadowOffsetSplash,
 								  splashTextHeight,
-								  splashTextShadowColor);
+								  splashTextShadowColor,
+								  0.1f,
+								  rotationDeg);
 
-			s_TextFont.RenderText(splashText, textTopLeftPos.x, textTopLeftPos.y, splashTextHeight, splashTextColor);
+			s_TextFont.RenderText(splashText,
+								  Font::eTextAlignment::Center,
+								  textCenter,
+								  splashTextHeight,
+								  splashTextColor,
+								  0.2f,
+								  rotationDeg);
 		}
 	}
 

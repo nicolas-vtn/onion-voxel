@@ -63,6 +63,11 @@ namespace onion::voxel
 	{
 		std::lock_guard lock(m_MutexState);
 		m_ActiveMenu = menu;
+
+		if (m_ActiveMenu == eMenu::MainMenu)
+		{
+			m_MainMenuPanel.CycleSplashText();
+		}
 	}
 
 	eMenu Gui::GetActiveMenu() const

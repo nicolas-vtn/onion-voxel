@@ -2,6 +2,8 @@
 
 #include "../../Variables.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 using namespace onion::voxel;
 
 // -------- Static Member Definitions --------
@@ -50,30 +52,115 @@ void Font::SetProjectionMatrix(const glm::mat4& projection)
 	s_ShaderFont.setMat4("uProjection", s_ProjectionMatrix);
 }
 
-void Font::RenderText(const std::string& text, float x, float y, float textHeightPx, const glm::vec3& color)
+//void Font::RenderText(const std::string& text, float x, float y, float textHeightPx, const glm::vec3& color)
+//{
+//	GLboolean depthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
+//	if (depthTestEnabled)
+//		glDisable(GL_DEPTH_TEST);
+//
+//	glEnable(GL_BLEND);
+//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//
+//	if (text.empty())
+//		return;
+//
+//	float uvStepX = 1.0f / m_AtlasCols;
+//	float uvStepY = 1.0f / m_AtlasRows;
+//
+//	float cursorX = x;
+//	float cursorY = y;
+//
+//	float scale = textHeightPx / m_GlyphSize.y;
+//
+//	for (char c : text)
+//	{
+//		int ascii = static_cast<unsigned char>(c);
+//
+//		const Glyph& glyph = m_Glyphs[ascii];
+//
+//		float x0 = cursorX;
+//		float y0 = cursorY;
+//		float x1 = x0 + glyph.width * scale;
+//		float y1 = y0 + glyph.height * scale;
+//
+//		m_Vertices.push_back({x0, y0, 0.f, glyph.u0, glyph.v0});
+//		m_Vertices.push_back({x1, y0, 0.f, glyph.u1, glyph.v0});
+//		m_Vertices.push_back({x1, y1, 0.f, glyph.u1, glyph.v1});
+//
+//		m_Vertices.push_back({x0, y0, 0.f, glyph.u0, glyph.v0});
+//		m_Vertices.push_back({x1, y1, 0.f, glyph.u1, glyph.v1});
+//		m_Vertices.push_back({x0, y1, 0.f, glyph.u0, glyph.v1});
+//
+//		cursorX += glyph.advance * scale;
+//	}
+//
+//	glBindVertexArray(m_VAO);
+//	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+//
+//	glBufferData(GL_ARRAY_BUFFER, m_Vertices.size() * sizeof(Vertex), m_Vertices.data(), GL_DYNAMIC_DRAW);
+//
+//	glActiveTexture(GL_TEXTURE0);
+//	m_TextureAtlas.Bind();
+//
+//	glm::mat4 model(1.0f);
+//
+//	s_ShaderFont.Use();
+//	s_ShaderFont.setMat4("uModel", model);
+//	s_ShaderFont.setVec3("uTextColor", color);
+//	s_ShaderFont.setInt("uTexture", 0);
+//
+//	glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m_Vertices.size()));
+//
+//	glBindVertexArray(0);
+//
+//	if (depthTestEnabled)
+//		glEnable(GL_DEPTH_TEST);
+//
+//	m_Vertices.clear();
+//}
+
+void onion::voxel::Font::RenderText(const std::string& text,
+									eTextAlignment alignment,
+									const glm::vec2& position,
+									float textHeightPx,
+									const glm::vec3& color,
+									float zOffset,
+									float rotationDegrees)
 {
-	GLboolean depthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
-	if (depthTestEnabled)
-		glDisable(GL_DEPTH_TEST);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	if (text.empty())
 		return;
 
-	float uvStepX = 1.0f / m_AtlasCols;
-	float uvStepY = 1.0f / m_AtlasRows;
+	glm::vec2 size = MeasureText(text, textHeightPx);
 
-	float cursorX = x;
-	float cursorY = y;
+	// Calculate Starting position based on alignment
+	float startX = 0.f, startY = 0.f;
+	switch (alignment)
+	{
+		case eTextAlignment::Left:
+			startX = position.x;
+			startY = position.y - size.y * 0.5f; // Center vertically
+			break;
+
+		case eTextAlignment::Center:
+			startX = position.x - size.x * 0.5f;
+			startY = position.y - size.y * 0.5f; // Center vertically
+			break;
+
+		case eTextAlignment::Right:
+			startX = position.x - size.x;
+			startY = position.y - size.y * 0.5f; // Center vertically
+			break;
+	}
+
+	// Build vertices
+	float cursorX = startX;
+	float cursorY = startY;
 
 	float scale = textHeightPx / m_GlyphSize.y;
 
 	for (char c : text)
 	{
 		int ascii = static_cast<unsigned char>(c);
-
 		const Glyph& glyph = m_Glyphs[ascii];
 
 		float x0 = cursorX;
@@ -81,17 +168,28 @@ void Font::RenderText(const std::string& text, float x, float y, float textHeigh
 		float x1 = x0 + glyph.width * scale;
 		float y1 = y0 + glyph.height * scale;
 
-		m_Vertices.push_back({x0, y0, 0.f, glyph.u0, glyph.v0});
-		m_Vertices.push_back({x1, y0, 0.f, glyph.u1, glyph.v0});
-		m_Vertices.push_back({x1, y1, 0.f, glyph.u1, glyph.v1});
+		m_Vertices.push_back({x0, y0, zOffset, glyph.u0, glyph.v0});
+		m_Vertices.push_back({x1, y0, zOffset, glyph.u1, glyph.v0});
+		m_Vertices.push_back({x1, y1, zOffset, glyph.u1, glyph.v1});
 
-		m_Vertices.push_back({x0, y0, 0.f, glyph.u0, glyph.v0});
-		m_Vertices.push_back({x1, y1, 0.f, glyph.u1, glyph.v1});
-		m_Vertices.push_back({x0, y1, 0.f, glyph.u0, glyph.v1});
+		m_Vertices.push_back({x0, y0, zOffset, glyph.u0, glyph.v0});
+		m_Vertices.push_back({x1, y1, zOffset, glyph.u1, glyph.v1});
+		m_Vertices.push_back({x0, y1, zOffset, glyph.u0, glyph.v1});
 
 		cursorX += glyph.advance * scale;
 	}
 
+	// --- Rotation Matrix ---
+	glm::mat4 model(1.0f);
+
+	if (rotationDegrees != 0.0f)
+	{
+		model = glm::translate(model, glm::vec3(position, 0.0f));
+		model = glm::rotate(model, glm::radians(rotationDegrees), glm::vec3(0, 0, 1));
+		model = glm::translate(model, glm::vec3(-position, 0.0f));
+	}
+
+	// --- Render ---
 	glBindVertexArray(m_VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
 
@@ -103,13 +201,11 @@ void Font::RenderText(const std::string& text, float x, float y, float textHeigh
 	s_ShaderFont.Use();
 	s_ShaderFont.setVec3("uTextColor", color);
 	s_ShaderFont.setInt("uTexture", 0);
+	s_ShaderFont.setMat4("uModel", model);
 
 	glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m_Vertices.size()));
 
 	glBindVertexArray(0);
-
-	if (depthTestEnabled)
-		glEnable(GL_DEPTH_TEST);
 
 	m_Vertices.clear();
 }
