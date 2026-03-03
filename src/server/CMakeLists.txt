@@ -4,7 +4,18 @@ project(onion_voxel_server LANGUAGES CXX)
 
 # ---- Library ----
 add_library(onion_voxel_server
-    src/Server.cpp
+    "src/Server.cpp"
+	"src/network_server/NetworkServer.cpp"
+
+)
+
+target_link_libraries(onion_voxel_server
+    PUBLIC
+        enet::enet
+		winmm
+		ws2_32
+
+		onion_voxel_shared
 )
 
 target_include_directories(onion_voxel_server

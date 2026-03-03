@@ -17,6 +17,7 @@ include(FetchGLM)
 include(FetchSTB)
 include(FetchNlohmannJson)
 include(FetchImGui)
+include(FetchENet)
 
 add_subdirectory(external/glad)
 
@@ -26,6 +27,6 @@ add_subdirectory(deps/onion-event)
 add_subdirectory(deps/onion-logger)
 add_subdirectory(deps/onion-timer)
 
-#add_subdirectory(src/shared)
+add_subdirectory(src/shared)
 add_subdirectory(src/client)
 add_subdirectory(src/server)

@@ -18,6 +18,8 @@ add_executable(OnionVoxel
     "main.cpp"
     "src/Client.cpp"
 
+	"src/network_client/NetworkClient.cpp"
+
 	"src/renderer/Renderer.cpp"
 
 	"src/renderer/texture/Texture.cpp"
@@ -53,10 +55,14 @@ target_link_libraries(OnionVoxel
         stb
 		nlohmann_json::nlohmann_json
 		imgui::imgui
+		enet::enet
+		winmm
+		ws2_32
+
 		onion_event
 		onion_logger
-    PRIVATE
         onion_voxel_server
+		onion_voxel_shared
 )
 
 target_compile_features(OnionVoxel PRIVATE cxx_std_20)

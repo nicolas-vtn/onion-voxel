@@ -7,6 +7,8 @@ namespace onion::voxel
 	Client::Client() : m_Logger(m_LogFile.string())
 	{
 		SetLogLevel(m_LogLevel);
+
+		SubscribeToRendererEvents();
 	}
 
 	Client::~Client() {}
@@ -59,10 +61,43 @@ namespace onion::voxel
 
 	void Client::Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath)
 	{
-		// Starts a Server on Localhost and connect to it with the Client.
+		// Starts a Server on Localhost
+		if (m_LocalhostServer == nullptr)
+		{
+			m_LocalhostServer = std::make_unique<Server>();
+			m_LocalhostServer->Start();
+		}
+		else
+		{
+			throw std::runtime_error("Localhost Server is already running");
+		}
+
+		// Connects to Localhost Server
+		if (!m_NetworkClient.IsRunning())
+		{
+			m_NetworkClient.Start();
+		}
+		else
+		{
+			throw std::runtime_error("Network Client is already running");
+		}
 
 		// Sets Renderer UI to InGame UI.
 		m_Renderer.SetRenderState(Renderer::eRenderState::InGame);
+	}
+
+	void Client::Handle_StopSingleplayerGameRequest(const std::filesystem::path& worldPath)
+	{
+		if (m_NetworkClient.IsRunning())
+		{
+			m_NetworkClient.Stop();
+		}
+
+		if (m_LocalhostServer != nullptr)
+		{
+			m_LocalhostServer->Stop();
+			m_LocalhostServer.reset();
+		}
 	}
 
 	void Client::SubscribeToRendererEvents()
