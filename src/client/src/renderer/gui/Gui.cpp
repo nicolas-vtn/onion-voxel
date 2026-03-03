@@ -23,6 +23,9 @@ namespace onion::voxel
 
 	void Gui::SubscribeToPannelsEvents()
 	{
+		m_EventHandles.push_back(GuiElement::RequestCursorStyleChange.Subscribe(
+			[this](const CursorStyle& style) { Handle_CursorStyleChangeRequest(style); }));
+
 		m_EventHandles.push_back(m_MainMenuPanel.RequestMenuNavigation.Subscribe(
 			[this](const eMenu& menu) { Handle_MenuNavigationRequest(menu); }));
 
@@ -42,6 +45,11 @@ namespace onion::voxel
 	{
 		// Sends a SIGINT Signal to the Application.
 		raise(SIGINT);
+	}
+
+	void Gui::Handle_CursorStyleChangeRequest(const CursorStyle& style)
+	{
+		RequestCursorStyleChange.Trigger(style);
 	}
 
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)

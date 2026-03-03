@@ -1,6 +1,20 @@
 #include "inputs_manager.hpp"
 
+#include <iostream>
+
 using namespace onion::voxel;
+
+onion::voxel::InputsManager::InputsManager() {}
+
+onion::voxel::InputsManager::~InputsManager()
+{
+	if (!m_Deleted)
+	{
+		std::cerr << "Warning: InputsManager destructor called but InputsManager::Delete() was not called. There is a "
+					 "memory leak."
+				  << std::endl;
+	}
+}
 
 void InputsManager::Init(GLFWwindow* window)
 {
@@ -15,10 +29,26 @@ void InputsManager::Init(GLFWwindow* window)
 	}
 
 	InitCallbacks();
+	InitCursors();
+
+	m_Initialized = true;
+}
+
+void onion::voxel::InputsManager::Delete()
+{
+	DestroyCursors();
+	m_Deleted = true;
 }
 
 void InputsManager::PoolInputs()
 {
+	if (!m_Initialized)
+	{
+		std::cerr << "Error: InputsManager::PoolInputs() called before InputsManager::Init(). Make sure to call Init() "
+					 "before PoolInputs()."
+				  << std::endl;
+		throw std::runtime_error("InputsManager::PoolInputs() called before InputsManager::Init().");
+	}
 
 	{
 		std::unique_lock<std::mutex> lockInputs(m_MutexSnapshot);
@@ -34,6 +64,33 @@ void InputsManager::PoolInputs()
 	UpdateInputsSnapshot();
 
 	ResetFlags();
+}
+
+void onion::voxel::InputsManager::InitCursors()
+{
+	std::lock_guard<std::mutex> lock(m_MutexCursors);
+
+	if (m_Cursors.size() > 0)
+	{
+		return; // Cursors already initialized
+	}
+
+	m_Cursors[CursorStyle::Arrow] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+	m_Cursors[CursorStyle::IBeam] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
+	m_Cursors[CursorStyle::Crosshair] = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+	m_Cursors[CursorStyle::Hand] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
+	m_Cursors[CursorStyle::HResize] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
+	m_Cursors[CursorStyle::VResize] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
+}
+
+void onion::voxel::InputsManager::DestroyCursors()
+{
+	std::lock_guard<std::mutex> lock(m_MutexCursors);
+
+	for (auto& [_, cursor] : m_Cursors)
+		glfwDestroyCursor(cursor);
+
+	m_Cursors.clear();
 }
 
 void InputsManager::PoolMouseMovement()
@@ -213,6 +270,26 @@ void InputsManager::UnregisterInput(int inputId)
 {
 	std::unique_lock<std::mutex> lock(m_MutexRegisteredInputs);
 	m_RegisteredInputs.erase(inputId);
+}
+
+void onion::voxel::InputsManager::SetCursorStyle(const CursorStyle& style)
+{
+	std::lock_guard<std::mutex> lock(m_MutexCursors);
+
+	if (m_CurrentStyle == style)
+		return;
+
+	m_CurrentStyle = style;
+
+	auto it = m_Cursors.find(style);
+	if (it != m_Cursors.end())
+		glfwSetCursor(m_Window, it->second);
+}
+
+CursorStyle onion::voxel::InputsManager::GetCursorStyle() const
+{
+	std::lock_guard<std::mutex> lock(m_MutexCursors);
+	return m_CurrentStyle;
 }
 
 void InputsManager::UpdateInputsSnapshot()

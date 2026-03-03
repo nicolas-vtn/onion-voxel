@@ -74,6 +74,8 @@ namespace onion::voxel
 		// ------ GUI ------
 	  private:
 		Gui m_Gui;
+		EventHandle m_EventHandle_CursorStyleChangeRequest;
+		void Handle_CursorStyleChangeRequest(const CursorStyle& style);
 
 		// ----- ImGui -----
 	  private:

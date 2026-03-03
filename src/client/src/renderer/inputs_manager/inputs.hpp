@@ -138,4 +138,14 @@ namespace onion::voxel
 		RightSuper = GLFW_KEY_RIGHT_SUPER,
 		Menu = GLFW_KEY_MENU
 	};
+
+	enum class CursorStyle : int
+	{
+		Arrow = GLFW_ARROW_CURSOR,
+		IBeam = GLFW_IBEAM_CURSOR,
+		Crosshair = GLFW_CROSSHAIR_CURSOR,
+		Hand = GLFW_HAND_CURSOR,
+		HResize = GLFW_HRESIZE_CURSOR,
+		VResize = GLFW_VRESIZE_CURSOR
+	};
 } // namespace onion::voxel

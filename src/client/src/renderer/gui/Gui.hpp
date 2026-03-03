@@ -30,6 +30,10 @@ namespace onion::voxel
 		eMenu GetActiveMenu() const;
 		void SetGameVersion(const std::string& version);
 
+		// ----- Events -----
+	  public:
+		Event<const CursorStyle&> RequestCursorStyleChange;
+
 		// ----- Panels -----
 	  private:
 		DemoPanel m_DemoPanel;
@@ -42,6 +46,8 @@ namespace onion::voxel
 
 		void Handle_MenuNavigationRequest(const eMenu& menu);
 		void Handle_QuitGameRequest(const GuiElement* sender);
+		void Handle_CursorStyleChangeRequest(const CursorStyle& style);
+
 		// ----- Set Static States -----
 	  public:
 		static void SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot);

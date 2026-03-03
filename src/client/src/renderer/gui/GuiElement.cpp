@@ -18,6 +18,8 @@ namespace onion::voxel
 
 	Font GuiElement::s_TextFont{(GetMinecraftTexturesPath() / "font/ascii.png").string(), 16, 16};
 
+	Event<const CursorStyle&> GuiElement::RequestCursorStyleChange;
+
 	glm::mat4 GuiElement::s_ProjectionMatrix{1.0f};
 	int GuiElement::s_ScreenWidth = 800;
 	int GuiElement::s_ScreenHeight = 600;

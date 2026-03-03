@@ -18,7 +18,7 @@ namespace onion::voxel
 		m_Button2.SetPosition({400, 500});
 		m_Button2.SetSize({200.f, 40.f});
 		m_Button2.SetText("Dummy");
-		m_Button2.SetEnabled(true);
+		m_Button2.SetEnabled(false);
 
 		m_ButtonMainMenu.SetPosition({400, 500});
 		m_ButtonMainMenu.SetSize({200.f, 40.f});

@@ -81,6 +81,7 @@ namespace onion::voxel
 		// Initialize Inputs Manager
 		m_InputsManager.Init(m_Window);
 		m_InputsManager.SetMouseCaptureEnabled(false);
+		m_InputsManager.SetCursorStyle(CursorStyle::Arrow);
 		RegisterInputs();
 
 		// Init ImGui
@@ -115,6 +116,8 @@ namespace onion::voxel
 
 		m_Gui.Initialize();
 		m_Gui.SetGameVersion("0.1.0");
+		m_EventHandle_CursorStyleChangeRequest = m_Gui.RequestCursorStyleChange.Subscribe(
+			[this](const CursorStyle& style) { Handle_CursorStyleChangeRequest(style); });
 
 		while (!st.stop_requested() && !glfwWindowShouldClose(m_Window))
 		{
@@ -238,13 +241,18 @@ namespace onion::voxel
 		GuiElement::SetInputsSnapshot(inputs);
 	}
 
+	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)
+	{
+		m_InputsManager.SetCursorStyle(style);
+	}
+
 	void Renderer::InitImGui()
 	{
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 
 		ImGuiIO& io = ImGui::GetIO();
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+		io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
 
 		ImGui::StyleColorsDark();
 
