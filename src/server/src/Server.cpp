@@ -34,27 +34,28 @@ namespace onion::voxel
 	void Server::SubscribeToNetworkServerEvents()
 	{
 		m_NetworkServerEventHandles.push_back(m_NetworkServer.ClientConnected.Subscribe(
-			[this](const NetworkServer::ClientHandle& client) { HandleClientConnected(client); }));
+			[this](const NetworkServer::ClientConnectedEventArgs& args) { HandleClientConnected(args); }));
 
 		m_NetworkServerEventHandles.push_back(m_NetworkServer.ClientDisconnected.Subscribe(
-			[this](const NetworkServer::ClientHandle& client) { HandleClientDisconnected(client); }));
+			[this](const NetworkServer::ClientDisconnectedEventArgs& args) { HandleClientDisconnected(args); }));
 	}
 
-	void Server::HandleClientConnected(NetworkServer::ClientHandle client)
+	void Server::HandleClientConnected(const NetworkServer::ClientConnectedEventArgs& args)
 	{
-		std::cout << "Client connected: " << client << std::endl;
+		std::cout << "New client connected: " << args.Client << " (" << args.Username << ", " << args.UUID << ", "
+				  << args.IpAddress << ")\n";
 
 		// Send a welcome message to the newly connected client
-		ServerInfoMsg welcomeMsg;
-		welcomeMsg.Msg = "Welcome to the server! Your client handle is " + std::to_string(client) + ".";
+		ServerInfoMsg srvInfoMsg;
+		srvInfoMsg.ServerName = "Demo_Server";
+		srvInfoMsg.ClientHandle = args.Client;
 
-		// Send in an other thread to avoid blocking the event handling thread
-		std::thread([this, client, welcomeMsg]() { m_NetworkServer.Send(client, welcomeMsg); }).detach();
+		m_NetworkServer.Send(args.Client, srvInfoMsg);
 	}
 
-	void Server::HandleClientDisconnected(NetworkServer::ClientHandle client)
+	void Server::HandleClientDisconnected(const NetworkServer::ClientDisconnectedEventArgs& args)
 	{
-		std::cout << "Client disconnected: " << client << std::endl;
+		std::cout << "Client disconnected: " << args.Client << " ( " << args.UUID << ", " << args.IpAddress << ")\n";
 	}
 
 } // namespace onion::voxel

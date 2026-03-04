@@ -19,7 +19,10 @@ namespace onion::voxel
 				{
 					ClientInfoMsg msg;
 					archive(msg);
-					std::cout << "Deserialized ClientInfoMsg: " << msg.Msg << std::endl;
+
+					std::cout << "Deserialized ClientInfoMsg: Username=" << msg.Username << ", UUID=" << msg.UUID
+							  << std::endl;
+
 					return msg;
 				}
 
@@ -27,7 +30,9 @@ namespace onion::voxel
 				{
 					ServerInfoMsg msg;
 					archive(msg);
-					std::cout << "Deserialized ServerInfoMsg: " << msg.Msg << std::endl;
+
+					std::cout << "Deserialized ServerInfoMsg: ServerName=" << msg.ServerName << std::endl;
+
 					return msg;
 				}
 

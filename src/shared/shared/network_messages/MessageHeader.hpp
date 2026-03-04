@@ -18,12 +18,13 @@ namespace onion::voxel
 		};
 
 		eType Type = eType::None;
-		std::string SenderId;
+
+		uint32_t ClientHandle = 0;
 
 		template <class Archive> void serialize(Archive& archive)
 		{
 			uint8_t type = static_cast<uint8_t>(Type);
-			archive(type, SenderId);
+			archive(type, ClientHandle);
 
 			if constexpr (Archive::is_loading::value)
 				Type = static_cast<eType>(type);

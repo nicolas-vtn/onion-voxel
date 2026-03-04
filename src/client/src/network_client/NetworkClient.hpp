@@ -14,6 +14,8 @@ namespace onion::voxel
 {
 	class NetworkClient
 	{
+		using ClientHandle = uint32_t;
+
 		// ----- Constructor / Destructor -----
 	  public:
 		NetworkClient(const std::string& host = "127.0.0.1", int port = 7777);
@@ -25,54 +27,43 @@ namespace onion::voxel
 		void Stop();
 		bool IsRunning() const noexcept;
 
-		template <typename T> inline void SendNetworkMessage(MessageHeader::eType type, const T& message, bool reliable)
-		{
-			std::ostringstream stream(std::ios::binary);
-			cereal::BinaryOutputArchive archive(stream);
-
-			MessageHeader header = BuildMessageHeader(type);
-
-			archive(header);
-			archive(message);
-
-			std::string buffer = stream.str();
-
-			ENetPacket* packet =
-				enet_packet_create(buffer.data(), buffer.size(), reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
-
-			{
-				std::lock_guard<std::mutex> lock(m_Mutex);
-
-				if (!m_Peer)
-					return;
-
-				enet_peer_send(m_Peer, 0, packet);
-				enet_host_flush(m_Client);
-			}
-		}
+		void Send(NetworkMessage message, bool reliable = true);
 
 		// ----- Getters / Setters -----
 	  public:
 		bool TryPopMessage(NetworkMessage& out);
 
+		// ----- Private Structs -----
 	  private:
-		MessageHeader BuildMessageHeader(MessageHeader::eType type) const;
-		std::jthread m_EventThread;
-		void ListenForEvents(std::stop_token stopToken);
+		struct OutgoingMessage
+		{
+			NetworkMessage Message;
+			bool Reliable;
+		};
 
-		// ------ Public Members ------
+		// ------ Private Members ------
+	  private:
+		std::atomic<ClientHandle> m_ClientHandle{0};
+
+		// ----- Message Queues -----
 	  private:
 		ThreadSafeQueue<NetworkMessage> m_IncomingMessages;
+		ThreadSafeQueue<OutgoingMessage> m_OutgoingMessages;
 
+		// ----- Enet -----
 	  private:
 		mutable std::mutex m_Mutex;
 		ENetHost* m_Client{nullptr};
 		ENetPeer* m_Peer{nullptr};
-
 		std::string m_Host;
 		int m_Port{7777};
 
+		std::jthread m_EventThread;
+		void ListenForEvents(std::stop_token stopToken);
 		std::atomic_bool m_IsRunning{false};
+
+		std::vector<uint8_t> SerializeNetworkMessage(const NetworkMessage& message);
+		void ProcessOutgoingMessages();
 	};
 
 } // namespace onion::voxel

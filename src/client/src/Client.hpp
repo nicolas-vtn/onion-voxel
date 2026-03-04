@@ -6,6 +6,7 @@
 
 #include <enet/enet.h>
 
+#include "ClientConfiguration.hpp"
 #include <network_client/NetworkClient.hpp>
 #include <renderer/Renderer.hpp>
 
@@ -36,6 +37,13 @@ namespace onion::voxel
 	  public:
 		void SetLogLevel(eLogLevel logLevel);
 		eLogLevel GetLogLevel() const;
+
+		// ----- Configuration -----
+	  private:
+		std::filesystem::path m_ConfigFilePath = "config.json";
+		ClientConfiguration m_Config;
+		void LoadConfiguration();
+		void SaveConfiguration();
 
 		// ----- Event Handling -----
 	  private:

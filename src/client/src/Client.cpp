@@ -6,6 +6,8 @@ namespace onion::voxel
 {
 	Client::Client() : m_Logger(m_LogFile.string())
 	{
+		LoadConfiguration();
+
 		SetLogLevel(m_LogLevel);
 
 		SubscribeToRendererEvents();
@@ -59,6 +61,16 @@ namespace onion::voxel
 		return m_LogLevel;
 	}
 
+	void Client::LoadConfiguration()
+	{
+		m_Config.Load(m_ConfigFilePath);
+	}
+
+	void Client::SaveConfiguration()
+	{
+		m_Config.Save(m_ConfigFilePath);
+	}
+
 	void Client::Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath)
 	{
 		// Starts a Server on Localhost
@@ -84,7 +96,12 @@ namespace onion::voxel
 
 		// Sends a message to Server
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		m_NetworkClient.SendNetworkMessage(MessageHeader::eType::ClientInfo, ClientInfoMsg{"Hello from Client!"}, true);
+
+		ClientInfoMsg clientInfoMsg;
+		clientInfoMsg.Username = m_Config.clientData.Username;
+		clientInfoMsg.UUID = m_Config.clientData.UUID;
+
+		m_NetworkClient.Send(std::move(clientInfoMsg), true);
 
 		// Sets Renderer UI to InGame UI.
 		m_Renderer.SetRenderState(Renderer::eRenderState::InGame);

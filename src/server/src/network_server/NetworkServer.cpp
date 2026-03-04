@@ -81,48 +81,15 @@ namespace onion::voxel
 
 	void NetworkServer::Send(const std::vector<ClientHandle>& clients, NetworkMessage message, bool reliable)
 	{
-		if (!m_EnetServer)
+		if (!m_IsRunning)
 			return;
 
-		// ---- Serialize once ----
-		std::ostringstream stream(std::ios::binary);
-		cereal::BinaryOutputArchive archive(stream);
+		OutgoingMessage out;
+		out.Targets = clients;
+		out.Message = std::move(message);
+		out.Reliable = reliable;
 
-		std::visit(
-			[&](auto&& msg)
-			{
-				using T = std::decay_t<decltype(msg)>;
-
-				MessageHeader header;
-				header.Type = T::StaticType;
-				header.SenderId = "Server";
-
-				archive(header);
-				archive(msg);
-			},
-			message);
-
-		std::string buffer = stream.str();
-
-		const enet_uint32 flags = reliable ? ENET_PACKET_FLAG_RELIABLE : 0;
-
-		// ---- Send to each client ----
-		std::lock_guard<std::mutex> lock(m_ClientMutex);
-
-		for (ClientHandle handle : clients)
-		{
-			auto it = m_HandleToPeer.find(handle);
-			if (it == m_HandleToPeer.end())
-				continue;
-
-			ENetPeer* peer = it->second;
-
-			ENetPacket* packet = enet_packet_create(buffer.data(), buffer.size(), flags);
-
-			enet_peer_send(peer, 0, packet);
-		}
-
-		enet_host_flush(m_EnetServer);
+		m_OutgoingMessages.Push(std::move(out));
 	}
 
 	void NetworkServer::Broadcast(NetworkMessage message, bool reliable)
@@ -140,7 +107,7 @@ namespace onion::voxel
 		Send(clients, std::move(message), reliable);
 	}
 
-	bool NetworkServer::TryPopMessage(ServerEvent& out)
+	bool NetworkServer::TryPopMessage(IncommingMessage& out)
 	{
 		return m_IncomingMessages.TryPop(out);
 	}
@@ -152,6 +119,8 @@ namespace onion::voxel
 
 		while (!stopToken.stop_requested())
 		{
+			ProcessOutgoingMessages();
+
 			while (enet_host_service(m_EnetServer, &event, 1) > 0)
 			{
 				switch (event.type)
@@ -213,10 +182,26 @@ namespace onion::voxel
 
 									if (header.Type == MessageHeader::eType::ClientInfo)
 									{
-										it->second.authenticated = true;
-										it->second.uuid = header.SenderId;
+										// Extracts ClientInfoMessage
+										ClientInfoMsg clientInfo = std::get<ClientInfoMsg>(msg);
 
-										ClientConnected.Trigger(handle);
+										// Get client's IP address
+										char ip[64];
+										enet_address_get_host_ip(&event.peer->address, ip, sizeof(ip));
+
+										// Update session with authenticated client info
+										it->second.authenticated = true;
+										it->second.uuid = clientInfo.UUID;
+										it->second.ipAddress = ip;
+
+										// Trigger ClientConnected event
+										ClientConnectedEventArgs args;
+										args.Client = handle;
+										args.UUID = clientInfo.UUID;
+										args.IpAddress = ip;
+										args.Username = clientInfo.Username;
+
+										ClientConnected.Trigger(args);
 									}
 								}
 
@@ -236,10 +221,23 @@ namespace onion::voxel
 						event.peer->data = nullptr;
 
 						{
-							std::lock_guard<std::mutex> lock(m_ClientMutex);
+							std::unique_lock<std::mutex> lock(m_ClientMutex);
 							ClientSession& session = m_PeerToSession[event.peer];
+
+							// Build event args before erasing session data
+							ClientDisconnectedEventArgs disconnectArgs;
+							disconnectArgs.Client = session.handle;
+							disconnectArgs.UUID = session.uuid;
+							disconnectArgs.IpAddress = session.ipAddress;
+
+							// Clean up session data
 							m_HandleToPeer.erase(session.handle);
 							m_PeerToSession.erase(event.peer);
+
+							lock.unlock();
+
+							// Trigger ClientDisconnected event
+							ClientDisconnected.Trigger(disconnectArgs);
 						}
 
 						break;
@@ -251,9 +249,59 @@ namespace onion::voxel
 		}
 	}
 
+	std::vector<uint8_t> NetworkServer::SerializeNetworkMessage(const NetworkMessage& message)
+	{
+		std::ostringstream stream(std::ios::binary);
+		cereal::BinaryOutputArchive archive(stream);
+
+		std::visit(
+			[&](auto&& msg)
+			{
+				using T = std::decay_t<decltype(msg)>;
+
+				MessageHeader header;
+				header.Type = T::StaticType;
+				header.ClientHandle = 0;
+
+				archive(header);
+				archive(msg);
+			},
+			message);
+
+		std::string tmp = stream.str();
+
+		return std::vector<uint8_t>(tmp.begin(), tmp.end());
+	}
+
+	void NetworkServer::ProcessOutgoingMessages()
+	{
+		OutgoingMessage msg;
+
+		while (m_OutgoingMessages.TryPop(msg))
+		{
+			std::vector<uint8_t> buffer = SerializeNetworkMessage(msg.Message);
+
+			const enet_uint32 flags = msg.Reliable ? ENET_PACKET_FLAG_RELIABLE : 0;
+
+			std::lock_guard<std::mutex> lock(m_ClientMutex);
+
+			for (ClientHandle handle : msg.Targets)
+			{
+				auto it = m_HandleToPeer.find(handle);
+				if (it == m_HandleToPeer.end())
+					continue;
+
+				ENetPacket* packet = enet_packet_create(buffer.data(), buffer.size(), flags);
+
+				enet_peer_send(it->second, 0, packet);
+			}
+		}
+
+		enet_host_flush(m_EnetServer);
+	}
+
 	NetworkServer::ClientHandle NetworkServer::GenerateClientHandle()
 	{
-
 		std::lock_guard<std::mutex> lock(m_ClientMutex);
 		return m_NextClientHandle++;
 	}

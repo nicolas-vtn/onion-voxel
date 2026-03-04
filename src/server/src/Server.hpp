@@ -32,7 +32,7 @@ namespace onion::voxel
 
 		// ----- Event Handlers -----
 	  private:
-		void HandleClientConnected(NetworkServer::ClientHandle client);
-		void HandleClientDisconnected(NetworkServer::ClientHandle client);
+		void HandleClientConnected(const NetworkServer::ClientConnectedEventArgs& args);
+		void HandleClientDisconnected(const NetworkServer::ClientDisconnectedEventArgs& args);
 	};
 } // namespace onion::voxel

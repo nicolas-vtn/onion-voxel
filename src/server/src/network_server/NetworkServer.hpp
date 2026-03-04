@@ -24,14 +24,37 @@ namespace onion::voxel
 			ClientHandle handle = 0;
 			ENetPeer* peer = nullptr;
 			std::string uuid;
+			std::string ipAddress;
 			bool authenticated = false;
 		};
 
 	  public:
-		struct ServerEvent
+		struct IncommingMessage
 		{
 			ClientHandle Sender;
 			NetworkMessage Message;
+		};
+
+		struct OutgoingMessage
+		{
+			std::vector<ClientHandle> Targets;
+			NetworkMessage Message;
+			bool Reliable;
+		};
+
+		struct ClientConnectedEventArgs
+		{
+			ClientHandle Client{0};
+			std::string UUID;
+			std::string Username;
+			std::string IpAddress;
+		};
+
+		struct ClientDisconnectedEventArgs
+		{
+			ClientHandle Client{0};
+			std::string UUID;
+			std::string IpAddress;
 		};
 
 		// ----- Constructor / Destructor -----
@@ -51,12 +74,12 @@ namespace onion::voxel
 
 		// ----- Getters / Setters -----
 	  public:
-		bool TryPopMessage(ServerEvent& out);
+		bool TryPopMessage(IncommingMessage& out);
 
 		// ----- Events -----
 	  public:
-		Event<ClientHandle> ClientConnected;
-		Event<ClientHandle> ClientDisconnected;
+		Event<ClientConnectedEventArgs> ClientConnected;
+		Event<ClientDisconnectedEventArgs> ClientDisconnected;
 
 		// ---- Enet -----
 	  private:
@@ -65,9 +88,13 @@ namespace onion::voxel
 
 		void ListenForEvents(std::stop_token stopToken);
 
+		static std::vector<uint8_t> SerializeNetworkMessage(const NetworkMessage& message);
+		void ProcessOutgoingMessages();
+
 		// ----- Private Members -----
 	  private:
-		ThreadSafeQueue<ServerEvent> m_IncomingMessages;
+		ThreadSafeQueue<IncommingMessage> m_IncomingMessages;
+		ThreadSafeQueue<OutgoingMessage> m_OutgoingMessages;
 
 		// ----- Client Management -----
 	  private:
