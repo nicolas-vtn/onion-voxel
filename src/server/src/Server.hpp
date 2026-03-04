@@ -2,6 +2,8 @@
 
 #include <atomic>
 
+#include "network_server/NetworkServer.hpp"
+
 namespace onion::voxel
 {
 	class Server
@@ -21,5 +23,16 @@ namespace onion::voxel
 		// ----- States -----
 	  private:
 		std::atomic_bool m_IsRunning{false};
+
+		// ----- Network Server -----
+	  private:
+		NetworkServer m_NetworkServer;
+		std::vector<EventHandle> m_NetworkServerEventHandles;
+		void SubscribeToNetworkServerEvents();
+
+		// ----- Event Handlers -----
+	  private:
+		void HandleClientConnected(const NetworkServer::ClientConnectedEventArgs& args);
+		void HandleClientDisconnected(const NetworkServer::ClientDisconnectedEventArgs& args);
 	};
-}; // namespace onion::voxel
+} // namespace onion::voxel

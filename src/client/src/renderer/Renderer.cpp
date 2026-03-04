@@ -137,9 +137,8 @@ namespace onion::voxel
 		Gui::SetScreenSize(m_WindowWidth, m_WindowHeight);
 
 		m_Gui.Initialize();
+		SubscribeToGuiEvents();
 		m_Gui.SetGameVersion("0.1.0");
-		m_EventHandle_CursorStyleChangeRequest = m_Gui.RequestCursorStyleChange.Subscribe(
-			[this](const CursorStyle& style) { Handle_CursorStyleChangeRequest(style); });
 
 		while (!st.stop_requested() && !glfwWindowShouldClose(m_Window))
 		{
@@ -190,6 +189,7 @@ namespace onion::voxel
 		CleanupOpenGl();
 
 		m_Gui.Shutdown();
+		m_InputsManager.Delete();
 
 		Gui::StaticShutdown();
 
@@ -261,6 +261,15 @@ namespace onion::voxel
 		}
 
 		GuiElement::SetInputsSnapshot(inputs);
+	}
+
+	void Renderer::SubscribeToGuiEvents()
+	{
+		m_EventHandles.push_back(m_Gui.RequestCursorStyleChange.Subscribe([this](const CursorStyle& style)
+																		  { Handle_CursorStyleChangeRequest(style); }));
+
+		m_EventHandles.push_back(m_Gui.RequestStartSingleplayerGame.Subscribe(
+			[this](const std::filesystem::path& worldPath) { Handle_StartSingleplayerGameRequest(worldPath); }));
 	}
 
 	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)

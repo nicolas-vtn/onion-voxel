@@ -101,7 +101,8 @@ namespace onion::voxel
 		// ------ GUI ------
 	  private:
 		Gui m_Gui;
-		EventHandle m_EventHandle_CursorStyleChangeRequest;
+		void SubscribeToGuiEvents();
+		std::vector<EventHandle> m_EventHandles;
 		void Handle_CursorStyleChangeRequest(const CursorStyle& style);
 		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
 

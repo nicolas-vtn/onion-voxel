@@ -2,8 +2,12 @@
 
 #include <onion/Logger.hpp>
 
-#include "../../server/src/Server.hpp"
+#include <Server.hpp>
 
+#include <enet/enet.h>
+
+#include "ClientConfiguration.hpp"
+#include <network_client/NetworkClient.hpp>
 #include <renderer/Renderer.hpp>
 
 namespace onion::voxel
@@ -34,9 +38,17 @@ namespace onion::voxel
 		void SetLogLevel(eLogLevel logLevel);
 		eLogLevel GetLogLevel() const;
 
+		// ----- Configuration -----
+	  private:
+		std::filesystem::path m_ConfigFilePath = "config.json";
+		ClientConfiguration m_Config;
+		void LoadConfiguration();
+		void SaveConfiguration();
+
 		// ----- Event Handling -----
 	  private:
 		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
+		void Handle_StopSingleplayerGameRequest(const std::filesystem::path& worldPath);
 
 		// ----- Renderer -----
 	  private:
@@ -49,6 +61,10 @@ namespace onion::voxel
 		eLogLevel m_LogLevel = eLogLevel::All;
 		std::filesystem::path m_LogFile = "logs.txt";
 		Logger m_Logger;
+
+		// ----- Network Client -----
+	  private:
+		NetworkClient m_NetworkClient;
 
 		// ----- Localhost Server -----
 	  private:

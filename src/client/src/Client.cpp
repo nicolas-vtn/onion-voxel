@@ -6,7 +6,11 @@ namespace onion::voxel
 {
 	Client::Client() : m_Logger(m_LogFile.string())
 	{
+		LoadConfiguration();
+
 		SetLogLevel(m_LogLevel);
+
+		SubscribeToRendererEvents();
 	}
 
 	Client::~Client() {}
@@ -57,12 +61,64 @@ namespace onion::voxel
 		return m_LogLevel;
 	}
 
+	void Client::LoadConfiguration()
+	{
+		m_Config.Load(m_ConfigFilePath);
+	}
+
+	void Client::SaveConfiguration()
+	{
+		m_Config.Save(m_ConfigFilePath);
+	}
+
 	void Client::Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath)
 	{
-		// Starts a Server on Localhost and connect to it with the Client.
+		// Starts a Server on Localhost
+		if (m_LocalhostServer == nullptr)
+		{
+			m_LocalhostServer = std::make_unique<Server>();
+			m_LocalhostServer->Start();
+		}
+		else
+		{
+			throw std::runtime_error("Localhost Server is already running");
+		}
+
+		// Connects to Localhost Server
+		if (!m_NetworkClient.IsRunning())
+		{
+			m_NetworkClient.Start();
+		}
+		else
+		{
+			throw std::runtime_error("Network Client is already running");
+		}
+
+		// Sends a message to Server
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+		ClientInfoMsg clientInfoMsg;
+		clientInfoMsg.Username = m_Config.clientData.Username;
+		clientInfoMsg.UUID = m_Config.clientData.UUID;
+
+		m_NetworkClient.Send(std::move(clientInfoMsg), true);
 
 		// Sets Renderer UI to InGame UI.
 		m_Renderer.SetRenderState(Renderer::eRenderState::InGame);
+	}
+
+	void Client::Handle_StopSingleplayerGameRequest(const std::filesystem::path& worldPath)
+	{
+		if (m_NetworkClient.IsRunning())
+		{
+			m_NetworkClient.Stop();
+		}
+
+		if (m_LocalhostServer != nullptr)
+		{
+			m_LocalhostServer->Stop();
+			m_LocalhostServer.reset();
+		}
 	}
 
 	void Client::SubscribeToRendererEvents()
