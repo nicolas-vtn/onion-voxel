@@ -48,6 +48,7 @@ namespace onion::voxel
 		// ----- Events -----
 	  public:
 		Event<const std::filesystem::path&> RequestStartSingleplayerGame;
+		Event<bool> RequestQuitToMainMenu;
 
 		// ----- Internal Methods -----
 	  private:
@@ -65,6 +66,7 @@ namespace onion::voxel
 	  private:
 		mutable std::mutex m_MutexRenderState;
 		eRenderState m_RenderState = eRenderState::Menu;
+		bool m_IsPaused = false;
 
 		// ----- GLFW -----
 	  private:
@@ -95,8 +97,13 @@ namespace onion::voxel
 		//int m_InputIdMoveUp = -1;
 		//int m_InputIdMoveDown = -1;
 		//int m_InputIdSpeedUp = -1;
+		int m_InputIdPause = -1;
 		int m_InputIdUnfocus = -1;
 		int m_InputIdFocus = -1;
+
+		// ----- Actions -----
+	  private:
+		void PauseGame(bool pause);
 
 		// ------ GUI ------
 	  private:
@@ -105,6 +112,8 @@ namespace onion::voxel
 		std::vector<EventHandle> m_EventHandles;
 		void Handle_CursorStyleChangeRequest(const CursorStyle& style);
 		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
+		void Handle_GameResumeRequest(bool resume);
+		void Handle_QuitToMainMenuRequest(bool quit);
 
 		// ----- ImGui -----
 	  private:

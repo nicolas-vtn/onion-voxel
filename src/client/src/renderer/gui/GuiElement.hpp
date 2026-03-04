@@ -24,6 +24,7 @@ namespace onion::voxel
 		Multiplayer,
 		Settings,
 		Gameplay,
+		Pause
 	};
 
 	class GuiElement

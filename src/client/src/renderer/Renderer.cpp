@@ -239,8 +239,9 @@ namespace onion::voxel
 
 	void Renderer::RegisterInputs()
 	{
-		m_InputIdUnfocus = m_InputsManager.RegisterInput(Key::Escape);
-		m_InputIdFocus = m_InputsManager.RegisterInput(Key::Space);
+		m_InputIdUnfocus = m_InputsManager.RegisterInput(Key::KP8);
+		m_InputIdFocus = m_InputsManager.RegisterInput(Key::KP7);
+		m_InputIdPause = m_InputsManager.RegisterInput(Key::Escape);
 	}
 
 	void Renderer::ProcessInputs(const std::shared_ptr<InputsSnapshot>& inputs)
@@ -260,7 +261,26 @@ namespace onion::voxel
 			m_InputsManager.SetMouseCaptureEnabled(true);
 		}
 
+		if (inputs->GetKeyState(m_InputIdPause).IsPressed && GetRenderState() == eRenderState::InGame)
+		{
+			PauseGame(true);
+		}
+
 		GuiElement::SetInputsSnapshot(inputs);
+	}
+
+	void Renderer::PauseGame(bool pause)
+	{
+		if (pause && !m_IsPaused)
+		{
+			m_Gui.SetActiveMenu(eMenu::Pause);
+		}
+		else if (!pause && m_IsPaused)
+		{
+			m_Gui.SetActiveMenu(eMenu::Gameplay);
+		}
+
+		m_IsPaused = pause;
 	}
 
 	void Renderer::SubscribeToGuiEvents()
@@ -270,6 +290,12 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_Gui.RequestStartSingleplayerGame.Subscribe(
 			[this](const std::filesystem::path& worldPath) { Handle_StartSingleplayerGameRequest(worldPath); }));
+
+		m_EventHandles.push_back(
+			m_Gui.RequestGameResume.Subscribe([this](bool resume) { Handle_GameResumeRequest(resume); }));
+
+		m_EventHandles.push_back(
+			m_Gui.RequestQuitToMainMenu.Subscribe([this](bool quit) { Handle_QuitToMainMenuRequest(quit); }));
 	}
 
 	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)
@@ -280,6 +306,22 @@ namespace onion::voxel
 	void Renderer::Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath)
 	{
 		RequestStartSingleplayerGame.Trigger(worldPath);
+		m_IsPaused = false;
+	}
+
+	void Renderer::Handle_GameResumeRequest(bool resume)
+	{
+		PauseGame(!resume);
+	}
+
+	void Renderer::Handle_QuitToMainMenuRequest(bool quit)
+	{
+		if (GetRenderState() == eRenderState::InGame)
+		{
+			// Stops the Client Game
+			RequestQuitToMainMenu.Trigger(quit);
+			m_IsPaused = false;
+		}
 	}
 
 	void Renderer::InitImGui()

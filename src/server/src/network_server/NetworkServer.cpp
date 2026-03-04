@@ -15,6 +15,7 @@ namespace onion::voxel
 	NetworkServer::~NetworkServer()
 	{
 		Stop();
+		std::cout << "NetworkServer destroyed.\n";
 	}
 
 	void NetworkServer::Start()
@@ -67,6 +68,8 @@ namespace onion::voxel
 		}
 
 		m_IsRunning.store(false);
+
+		std::cout << "Network server stopped.\n";
 	}
 
 	bool NetworkServer::IsRunning() const noexcept

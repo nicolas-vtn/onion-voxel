@@ -15,6 +15,7 @@ namespace onion::voxel
 	NetworkClient::~NetworkClient()
 	{
 		Stop();
+		std::cout << "Network client destroyed.\n";
 	}
 
 	void NetworkClient::Start()
@@ -69,6 +70,8 @@ namespace onion::voxel
 		}
 
 		m_IsRunning.store(false);
+
+		std::cout << "Network client stopped.\n";
 	}
 
 	bool NetworkClient::IsRunning() const noexcept

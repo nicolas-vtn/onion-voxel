@@ -94,6 +94,9 @@ namespace onion::voxel
 			throw std::runtime_error("Network Client is already running");
 		}
 
+		// Sets Renderer UI to InGame UI.
+		m_Renderer.SetRenderState(Renderer::eRenderState::InGame);
+
 		// Sends a message to Server
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -102,9 +105,6 @@ namespace onion::voxel
 		clientInfoMsg.UUID = m_Config.clientData.UUID;
 
 		m_NetworkClient.Send(std::move(clientInfoMsg), true);
-
-		// Sets Renderer UI to InGame UI.
-		m_Renderer.SetRenderState(Renderer::eRenderState::InGame);
 	}
 
 	void Client::Handle_StopSingleplayerGameRequest(const std::filesystem::path& worldPath)
@@ -119,12 +119,17 @@ namespace onion::voxel
 			m_LocalhostServer->Stop();
 			m_LocalhostServer.reset();
 		}
+
+		m_Renderer.SetRenderState(Renderer::eRenderState::Menu);
 	}
 
 	void Client::SubscribeToRendererEvents()
 	{
 		m_RendererEventHandles.push_back(m_Renderer.RequestStartSingleplayerGame.Subscribe(
 			[this](const std::filesystem::path& worldPath) { Handle_StartSingleplayerGameRequest(worldPath); }));
+
+		m_RendererEventHandles.push_back(
+			m_Renderer.RequestQuitToMainMenu.Subscribe([this](bool quit) { Handle_StopSingleplayerGameRequest(""); }));
 	}
 
 } // namespace onion::voxel

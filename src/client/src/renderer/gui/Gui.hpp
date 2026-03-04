@@ -2,6 +2,7 @@
 
 #include "layouts/demo_panel/DemoPanel.hpp"
 #include "layouts/main_menu_panel/MainMenuPanel.hpp"
+#include "layouts/pause_panel/PausePanel.hpp"
 
 #include <memory>
 #include <mutex>
@@ -34,11 +35,14 @@ namespace onion::voxel
 	  public:
 		Event<const CursorStyle&> RequestCursorStyleChange;
 		Event<const std::filesystem::path&> RequestStartSingleplayerGame;
+		Event<bool> RequestQuitToMainMenu;
+		Event<bool> RequestGameResume;
 
 		// ----- Panels -----
 	  private:
 		DemoPanel m_DemoPanel;
 		MainMenuPanel m_MainMenuPanel;
+		PausePanel m_PausePanel;
 
 		// ----- Panel Events Handling -----
 	  private:
@@ -48,6 +52,8 @@ namespace onion::voxel
 		void Handle_MenuNavigationRequest(const eMenu& menu);
 		void Handle_QuitGameRequest(const GuiElement* sender);
 		void Handle_CursorStyleChangeRequest(const CursorStyle& style);
+		void Handle_GameResumeRequest(bool resume);
+		void Handle_QuitToMainMenuRequest(bool quit);
 
 		// ----- Set Static States -----
 	  public:

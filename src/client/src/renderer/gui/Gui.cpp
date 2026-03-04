@@ -14,7 +14,7 @@ namespace onion::voxel
 		GuiElement::Unload();
 	}
 
-	Gui::Gui() : m_DemoPanel("DemoPanel"), m_MainMenuPanel("MainMenuPanel")
+	Gui::Gui() : m_DemoPanel("DemoPanel"), m_MainMenuPanel("MainMenuPanel"), m_PausePanel("PausePanel")
 	{
 		SubscribeToPannelsEvents();
 	}
@@ -34,6 +34,15 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_MainMenuPanel.RequestQuitGame.Subscribe([this](const GuiElement* sender)
 																		   { Handle_QuitGameRequest(sender); }));
+
+		m_EventHandles.push_back(m_PausePanel.RequestMenuNavigation.Subscribe([this](const eMenu& menu)
+																			  { Handle_MenuNavigationRequest(menu); }));
+
+		m_EventHandles.push_back(
+			m_PausePanel.RequestQuitToMainMenu.Subscribe([this](bool quit) { Handle_QuitToMainMenuRequest(quit); }));
+
+		m_EventHandles.push_back(
+			m_PausePanel.RequestGameResume.Subscribe([this](bool resume) { Handle_GameResumeRequest(resume); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const eMenu& menu)
@@ -56,6 +65,16 @@ namespace onion::voxel
 	void Gui::Handle_CursorStyleChangeRequest(const CursorStyle& style)
 	{
 		RequestCursorStyleChange.Trigger(style);
+	}
+
+	void Gui::Handle_GameResumeRequest(bool resume)
+	{
+		RequestGameResume.Trigger(resume);
+	}
+
+	void Gui::Handle_QuitToMainMenuRequest(bool quit)
+	{
+		RequestQuitToMainMenu.Trigger(quit);
 	}
 
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)
@@ -94,6 +113,7 @@ namespace onion::voxel
 	{
 		m_DemoPanel.Initialize();
 		m_MainMenuPanel.Initialize();
+		m_PausePanel.Initialize();
 	}
 
 	void Gui::Render()
@@ -105,6 +125,10 @@ namespace onion::voxel
 				break;
 			case eMenu::MainMenu:
 				m_MainMenuPanel.Render();
+				break;
+			case eMenu::Pause:
+				m_PausePanel.Render();
+				break;
 			default:
 				break;
 		}
@@ -114,6 +138,7 @@ namespace onion::voxel
 	{
 		m_DemoPanel.Delete();
 		m_MainMenuPanel.Delete();
+		m_PausePanel.Delete();
 	}
 
 } // namespace onion::voxel
