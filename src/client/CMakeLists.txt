@@ -42,6 +42,8 @@ add_executable(OnionVoxel
 	"src/renderer/gui/controls/sprite/Sprite.cpp"
 	"src/renderer/gui/nine_slice_sprite/NineSliceSprite.cpp"
 
+	"src/renderer/world_renderer/WorldRenderer.cpp"
+	"src/renderer/camera/Camera.cpp"
 )
 
 if (WIN32)

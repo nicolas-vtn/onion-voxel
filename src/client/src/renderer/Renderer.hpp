@@ -16,6 +16,7 @@
 
 #include "gui/Gui.hpp"
 #include "inputs_manager/inputs_manager.hpp"
+#include "world_renderer/WorldRenderer.hpp"
 
 namespace onion::voxel
 {
@@ -90,13 +91,13 @@ namespace onion::voxel
 		void RegisterInputs();
 		void ProcessInputs(const std::shared_ptr<InputsSnapshot>& inputs);
 
-		//int m_InputIdMoveForward = -1;
-		//int m_InputIdMoveBackward = -1;
-		//int m_InputIdMoveLeft = -1;
-		//int m_InputIdMoveRight = -1;
-		//int m_InputIdMoveUp = -1;
-		//int m_InputIdMoveDown = -1;
-		//int m_InputIdSpeedUp = -1;
+		int m_InputIdMoveForward = -1;
+		int m_InputIdMoveBackward = -1;
+		int m_InputIdMoveLeft = -1;
+		int m_InputIdMoveRight = -1;
+		int m_InputIdMoveUp = -1;
+		int m_InputIdMoveDown = -1;
+		int m_InputIdSpeedUp = -1;
 		int m_InputIdPause = -1;
 		int m_InputIdUnfocus = -1;
 		int m_InputIdFocus = -1;
@@ -104,6 +105,14 @@ namespace onion::voxel
 		// ----- Actions -----
 	  private:
 		void PauseGame(bool pause);
+
+		// ------ World Renderer ------
+	  private:
+		std::shared_ptr<Camera> m_Camera;
+		float m_CameraSpeed = 5.0f;
+		WorldRenderer m_WorldRenderer;
+		bool m_IsFreeCamera = true;
+		void UpdateCameraFromInputs(const std::shared_ptr<InputsSnapshot>& inputs);
 
 		// ------ GUI ------
 	  private:

@@ -32,7 +32,7 @@ namespace onion::voxel
 		}
 
 		// DEBUG
-		RenderImGuiDebug();
+		// RenderImGuiDebug();
 
 		// Pulls events
 		m_NineSliceSprite_Basic.PullEvents();
