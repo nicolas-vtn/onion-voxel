@@ -16,13 +16,56 @@ namespace onion::voxel
 		m_CurrentWorldPath.clear();
 	}
 
-	void WorldManager::AddChunk(const std::shared_ptr<void>& chunkData)
+	std::shared_ptr<Chunk> WorldManager::GetChunk(const glm::ivec2& chunkPosition) const
 	{
-		ChunkAdded.Trigger(chunkData);
+		std::shared_lock lock(m_MutexChunks);
+		auto it = m_Chunks.find(chunkPosition);
+		if (it != m_Chunks.end())
+		{
+			return it->second;
+		}
+		else
+		{
+			return nullptr; // Chunk not found
+		}
 	}
 
-	void WorldManager::RemoveChunk(const std::shared_ptr<void>& chunkData)
+	std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, IVec2Hash> WorldManager::GetAllChunks() const
 	{
-		ChunkRemoved.Trigger(chunkData);
+		std::shared_lock lock(m_MutexChunks);
+		return m_Chunks; // Return a copy of the chunks map
+	}
+
+	void WorldManager::AddChunk(const std::shared_ptr<Chunk> chunk)
+	{
+		std::unique_lock lock(m_MutexChunks);
+		m_Chunks[chunk->GetPosition()] = chunk;
+
+		// Unlock before triggering event
+		lock.unlock();
+
+		// Trigger event
+		ChunkAdded.Trigger(chunk);
+	}
+
+	void WorldManager::RemoveChunk(const glm::ivec2& chunkPosition)
+	{
+		std::unique_lock lock(m_MutexChunks);
+
+		auto it = m_Chunks.find(chunkPosition);
+		if (it != m_Chunks.end())
+		{
+			// Copy chunk
+			std::shared_ptr<Chunk> chunk = it->second;
+
+			// Remove chunk from map
+			m_Chunks.erase(it);
+
+			// Unlock before triggering event
+			lock.unlock();
+
+			// Trigger event
+			ChunkRemoved.Trigger(chunk);
+		}
 	}
 } // namespace onion::voxel

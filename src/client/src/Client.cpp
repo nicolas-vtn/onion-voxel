@@ -78,6 +78,17 @@ namespace onion::voxel
 		{
 			m_LocalhostServer = std::make_unique<Server>();
 			m_LocalhostServer->Start();
+
+			// DEBUG ONLY : Add A Chunk
+			// For testing, add a chunk at (0, 0)
+			std::shared_ptr<Chunk> chunk = std::make_shared<Chunk>(glm::ivec2(0, 0));
+
+			// Set some blocks in the chunk for testing
+			Block block;
+			block.m_BlockID = BlockId::Grass;
+			chunk->SetBlock(glm::ivec3(0, 0, 0), block);
+
+			m_WorldManager->AddChunk(chunk);
 		}
 		else
 		{

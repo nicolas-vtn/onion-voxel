@@ -236,7 +236,10 @@ namespace onion::voxel
 
 		GuiElement::SetScreenSize(m_WindowWidth, m_WindowHeight);
 
-		m_Camera->SetAspectRatio(static_cast<float>(m_WindowWidth) / static_cast<float>(m_WindowHeight));
+		if (m_WindowWidth != 0 && m_WindowHeight != 0)
+		{
+			m_Camera->SetAspectRatio(static_cast<float>(m_WindowWidth) / static_cast<float>(m_WindowHeight));
+		}
 	}
 
 	void Renderer::RegisterInputs()

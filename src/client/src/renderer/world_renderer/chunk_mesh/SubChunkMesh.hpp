@@ -1,0 +1,109 @@
+#pragma once
+
+#include <glad/glad.h>
+
+#include <GLFW/glfw3.h>
+
+#include <glm/glm.hpp>
+
+#include "../../shader/shader.hpp"
+#include "../../texture/texture.hpp"
+
+#include <atomic>
+#include <mutex>
+
+namespace onion::voxel
+{
+	class SubChunkMesh
+	{
+	  public:
+		struct Vertex;
+		enum class Facing : uint8_t;
+
+		// ----- Constructor / Destructor -----
+	  public:
+		SubChunkMesh();
+		~SubChunkMesh();
+
+		// ----- Public API -----
+	  public:
+		void RenderOpaque();
+		void RenderCutout();
+		void RenderTransparent();
+
+		// ----- Getters / Setters -----
+	  public:
+		bool IsDirty() const;
+		void SetDirty(bool isDirty);
+		bool IsGenerating() const;
+		void SetGenerating(bool isGenerating);
+		bool IsEmpty() const;
+
+		// ----- States -----
+	  private:
+		std::atomic_bool m_IsDirty{true};
+		std::atomic_bool m_IsGenerating{false};
+		std::atomic_bool m_IsEmpty{true};
+		std::atomic_bool m_NeedsToPrepareRendering{true};
+
+		std::atomic_bool m_AreBuffersGenerated{false};
+		std::atomic_bool m_AreBuffersDataSet{false};
+		std::atomic_bool m_IsReadyToRender{false};
+
+		// ----- OPENGL Buffers -----
+	  public:
+		mutable std::mutex m_Mutex;
+
+		std::vector<Vertex> m_VerticesOpaque;  // Vertex data for the mesh
+		std::vector<uint16_t> m_IndicesOpaque; // Indices for the Opaque mesh
+		unsigned int m_IndicesOpaqueCount = 0; // Count of indices for the classic mesh
+
+		std::vector<Vertex> m_VerticesCutout;  // Vertex data for the mesh
+		std::vector<uint16_t> m_IndicesCutout; // Indices for the mesh
+		unsigned int m_IndicesCutoutCount = 0; // Count of indices for the classic mesh
+
+		std::vector<Vertex> m_VerticesTransparent;	// Vertex data for the mesh
+		std::vector<uint16_t> m_IndicesTransparent; // Indices for the mesh
+		unsigned int m_IndicesTransparentCount = 0; // Count of indices for the classic mesh
+
+		unsigned int VBO_Opaque = 0, VAO_Opaque = 0, EBO_Opaque = 0, EBO_OpaqueOverlay = 0;
+		unsigned int VBO_Cutout = 0, VAO_Cutout = 0, EBO_Cutout = 0, EBO_CutoutOverlay = 0;
+		unsigned int VBO_Transparent = 0, VAO_Transparent = 0, EBO_Transparent = 0, EBO_TransparentOverlay = 0;
+
+		// ----- OpenGl Methods / Initialization -----
+	  private:
+		void InitOpenGlBuffers();
+		void UpdateOpenGlBuffers();
+		void CleanupOpenGlBuffers();
+
+		void PrepareForRendering();
+
+		// ----- Static Shader & Texture -----
+	  public:
+		static Shader s_Shader;
+		static Texture s_TextureAtlas;
+
+		// ----- Structs -----
+	  public:
+		struct Vertex
+		{
+			float x, y, z;			   // Position
+			float texX, texY;		   // Texture coordinates
+			float facing;			   // Facing direction (0-5 for the 6 faces of a cube)
+			float occlusion;		   // Ambient occlusion factor (0.0 to 1.0)
+			float tintR, tintG, tintB; // RGB tint color
+		};
+
+		enum class Facing : uint8_t
+		{
+			Top = 0,
+			Bottom = 1,
+			North = 2,
+			South = 3,
+			East = 4,
+			West = 5
+		};
+
+		static constexpr int VERTEX_SIZE = 10; // Vertex size in floats
+	};
+} // namespace onion::voxel

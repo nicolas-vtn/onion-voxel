@@ -44,7 +44,7 @@ add_executable(OnionVoxel
 
 	"src/renderer/world_renderer/WorldRenderer.cpp"
 	"src/renderer/camera/Camera.cpp"
-)
+ "src/renderer/world_renderer/chunk_mesh/ChunkMesh.cpp" "src/renderer/world_renderer/chunk_mesh/SubChunkMesh.cpp")
 
 if (WIN32)
     target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)

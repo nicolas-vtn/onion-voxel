@@ -126,7 +126,7 @@ namespace onion::voxel
 		m_HasBeenUploadedToGPU = true;
 	}
 
-	void Texture::Bind() const
+	void Texture::Bind(uint32_t slot) const
 	{
 
 		if (!m_HasBeenUploadedToGPU)
@@ -134,8 +134,8 @@ namespace onion::voxel
 			UploadToGPU();
 		}
 
-		glActiveTexture(GL_TEXTURE0);			   // Activate texture slot 0
-		glBindTexture(GL_TEXTURE_2D, m_TextureID); // Bind our atlas to slot 0
+		glActiveTexture(GL_TEXTURE0 + slot);	   // Activate texture slot
+		glBindTexture(GL_TEXTURE_2D, m_TextureID); // Bind our atlas to the specified slot
 	}
 
 	void Texture::Unbind() const

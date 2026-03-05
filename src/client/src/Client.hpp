@@ -52,6 +52,10 @@ namespace onion::voxel
 		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
 		void Handle_StopSingleplayerGameRequest(const std::filesystem::path& worldPath);
 
+		// ----- World Manager -----
+	  private:
+		std::shared_ptr<WorldManager> m_WorldManager = std::make_shared<WorldManager>();
+
 		// ----- Renderer -----
 	  private:
 		Renderer m_Renderer;
@@ -71,10 +75,6 @@ namespace onion::voxel
 		// ----- Localhost Server -----
 	  private:
 		std::unique_ptr<Server> m_LocalhostServer;
-
-		// ----- World Manager -----
-	  private:
-		std::shared_ptr<WorldManager> m_WorldManager = std::make_shared<WorldManager>();
 	};
 
 } // namespace onion::voxel

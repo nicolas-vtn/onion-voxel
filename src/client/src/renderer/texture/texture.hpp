@@ -15,6 +15,7 @@ namespace onion::voxel
 	  public:
 		/// @brief Default constructor. Creates an empty texture object that can be loaded later.
 		Texture();
+
 		/// @brief Constructs a texture object and loads the texture from the specified file path.
 		/// @param filePath The path to the texture file to load.
 		Texture(const std::filesystem::path& filePath);
@@ -34,7 +35,8 @@ namespace onion::voxel
 		// ------------ BIND & UNBIND ------------
 	  public:
 		/// @brief Binds the texture to the current OpenGL context, making it active for rendering.
-		void Bind() const;
+		/// @param slot The texture unit slot to bind the texture to (default is 0). This allows for using multiple textures in shaders by binding them to different slots.
+		void Bind(uint32_t slot = 0) const;
 		/// @brief Unbinds the texture from the current OpenGL context.
 		void Unbind() const;
 

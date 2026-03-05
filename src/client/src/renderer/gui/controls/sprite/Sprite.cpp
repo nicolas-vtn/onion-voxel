@@ -17,6 +17,12 @@ void Sprite::Render()
 {
 	glm::vec2 topLeft = m_Position - m_Size * 0.5f;
 
+	// ----- Setup state for sprites -----
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glDepthMask(GL_FALSE); // usually UI shouldn't write depth
+
 	// ----- Render Sprite -----
 	m_Texture.Bind();
 

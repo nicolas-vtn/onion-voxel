@@ -195,7 +195,6 @@ void onion::voxel::Font::RenderText(const std::string& text,
 
 	glBufferData(GL_ARRAY_BUFFER, m_Vertices.size() * sizeof(Vertex), m_Vertices.data(), GL_DYNAMIC_DRAW);
 
-	glActiveTexture(GL_TEXTURE0);
 	m_TextureAtlas.Bind();
 
 	s_ShaderFont.Use();

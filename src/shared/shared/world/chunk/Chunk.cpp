@@ -13,11 +13,6 @@ namespace onion::voxel
 		return m_Position;
 	}
 
-	void Chunk::SetPosition(const glm::ivec2& position)
-	{
-		m_Position = position;
-	}
-
 	Block voxel::Chunk::GetBlock(const glm::ivec3& localPosition) const
 	{
 		// Check if localPosition is within bounds of the chunk
@@ -28,6 +23,8 @@ namespace onion::voxel
 			// Out of bounds, throw
 			throw std::out_of_range("Local position is out of bounds of the chunk");
 		}
+
+		std::shared_lock lock(m_Mutex);
 
 		// Calculate which subchunk the local position is in
 		int subChunkIndex = localPosition.y / WorldConstants::SUBCHUNK_SIZE;
@@ -56,6 +53,8 @@ namespace onion::voxel
 			throw std::out_of_range("Local position is out of bounds of the chunk");
 		}
 
+		std::unique_lock lock(m_Mutex);
+
 		// Fill the subchunks vector with empty subchunks until we have enough subchunks to fit the local position
 		while (m_SubChunks.size() <= localPosition.y / WorldConstants::SUBCHUNK_SIZE)
 		{
@@ -77,6 +76,12 @@ namespace onion::voxel
 
 		// Set the block data in the subchunk
 		subChunk.SetBlockIndexInPalette(localPositionInSubChunk, indexInPalette);
+	}
+
+	int voxel::Chunk::GetSubChunkCount() const
+	{
+		std::shared_lock lock(m_Mutex);
+		return static_cast<int>(m_SubChunks.size());
 	}
 
 	uint8_t Chunk::AddBlockToPalette(const Block& block)

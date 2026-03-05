@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 
+#include <shared_mutex>
 #include <vector>
 
 #include "../block/Block.hpp"
@@ -20,14 +21,16 @@ namespace onion::voxel
 	  public:
 		// ----- Getters / Setters -----
 		glm::ivec2 GetPosition() const;
-		void SetPosition(const glm::ivec2& position);
 
 		Block GetBlock(const glm::ivec3& localPosition) const;
 		void SetBlock(const glm::ivec3& localPosition, const Block& block);
 
+		int GetSubChunkCount() const;
+
 		// ----- Members -----
 	  private:
-		glm::ivec2 m_Position;			   // Position of the chunk in chunk coordinates (Not in world coordinates)
+		const glm::ivec2 m_Position;	   // Position of the chunk in chunk coordinates (Not in world coordinates)
+		mutable std::shared_mutex m_Mutex; // Mutex for synchronizing access to the chunk data
 		std::vector<SubChunk> m_SubChunks; // The subchunks that make up this chunk
 		std::vector<Block> m_BlocksPalette{Block()}; // The blocks palette that make up this chunk
 
