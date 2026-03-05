@@ -6,6 +6,8 @@
 
 #include <enet/enet.h>
 
+#include <shared/world/world_manager/WorldManager.hpp>
+
 #include "ClientConfiguration.hpp"
 #include <network_client/NetworkClient.hpp>
 #include <renderer/Renderer.hpp>
@@ -69,6 +71,10 @@ namespace onion::voxel
 		// ----- Localhost Server -----
 	  private:
 		std::unique_ptr<Server> m_LocalhostServer;
+
+		// ----- World Manager -----
+	  private:
+		std::shared_ptr<WorldManager> m_WorldManager = std::make_shared<WorldManager>();
 	};
 
 } // namespace onion::voxel

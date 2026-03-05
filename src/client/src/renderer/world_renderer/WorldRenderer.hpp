@@ -1,8 +1,10 @@
 #pragma once
 
-#include "../camera/camera.hpp"
-
 #include <memory>
+
+#include <shared/world/world_manager/WorldManager.hpp>
+
+#include "../camera/camera.hpp"
 
 namespace onion::voxel
 {
@@ -10,7 +12,7 @@ namespace onion::voxel
 	{
 		// ----- Constructor / Destructor -----
 	  public:
-		WorldRenderer(std::shared_ptr<Camera> camera);
+		WorldRenderer(std::shared_ptr<WorldManager> worldManager, std::shared_ptr<Camera> camera);
 		~WorldRenderer();
 
 		// ----- Public API -----
@@ -19,6 +21,10 @@ namespace onion::voxel
 
 		// ----- Getters / Setters -----
 	  public:
+		// ----- World Manager -----
+	  private:
+		std::shared_ptr<WorldManager> m_WorldManager;
+
 		// ----- Camera -----
 	  private:
 		std::shared_ptr<Camera> m_Camera;

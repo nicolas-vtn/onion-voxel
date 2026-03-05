@@ -2,7 +2,9 @@
 
 namespace onion::voxel
 {
-	WorldRenderer::WorldRenderer(std::shared_ptr<Camera> camera) : m_Camera(camera) {};
+	WorldRenderer::WorldRenderer(std::shared_ptr<WorldManager> worldManager, std::shared_ptr<Camera> camera)
+		: m_WorldManager(worldManager), m_Camera(camera) {};
+
 	WorldRenderer::~WorldRenderer() {};
 
 	void WorldRenderer::Render()

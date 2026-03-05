@@ -15,8 +15,9 @@ namespace
 
 namespace onion::voxel
 {
-	Renderer::Renderer()
-		: m_Camera(std::make_shared<Camera>(glm::vec3(0.0f, 0.0f, 0.0f), 800, 600)), m_WorldRenderer(m_Camera)
+	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager)
+		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(0.0f, 0.0f, 0.0f), 800, 600)),
+		  m_WorldRenderer(worldManager, m_Camera)
 	{
 	}
 

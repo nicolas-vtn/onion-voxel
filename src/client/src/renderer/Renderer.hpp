@@ -14,6 +14,8 @@
 #include <string>
 #include <thread>
 
+#include <shared/world/world_manager/WorldManager.hpp>
+
 #include "gui/Gui.hpp"
 #include "inputs_manager/inputs_manager.hpp"
 #include "world_renderer/WorldRenderer.hpp"
@@ -31,7 +33,7 @@ namespace onion::voxel
 
 		// ----- Constructor / Destructor -----
 	  public:
-		Renderer();
+		Renderer(std::shared_ptr<WorldManager> worldManager);
 		~Renderer();
 
 		// ----- Public API -----
@@ -105,6 +107,10 @@ namespace onion::voxel
 		// ----- Actions -----
 	  private:
 		void PauseGame(bool pause);
+
+		// ------ World Manager ------
+	  private:
+		std::shared_ptr<WorldManager> m_WorldManager;
 
 		// ------ World Renderer ------
 	  private:
