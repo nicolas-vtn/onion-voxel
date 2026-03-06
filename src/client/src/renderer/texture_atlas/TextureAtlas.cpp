@@ -53,6 +53,21 @@ namespace onion::voxel
 
 		int grid = (int) std::ceil(std::sqrt((float) count));
 
+		// Loads a texture to check the texture size, assumes all textures are the same size
+		{
+			int w, h, channels;
+
+			stbi_set_flip_vertically_on_load(true);
+			unsigned char* pixels = stbi_load((m_Directory / "stone.png").string().c_str(), &w, &h, &channels, 4);
+
+			if (!pixels)
+				throw std::runtime_error("Failed loading texture");
+
+			stbi_image_free(pixels);
+
+			m_TextureSize = w;
+		}
+
 		m_AtlasSize = grid * m_TextureSize;
 
 		std::vector<unsigned char> atlasPixels(m_AtlasSize * m_AtlasSize * 4, 0);

@@ -28,31 +28,110 @@ namespace onion::voxel
 	{
 	}
 
+	static inline glm::ivec3 Cross(const glm::ivec3& a, const glm::ivec3& b)
+	{
+		return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
+	}
+
+	static inline BlockFace GetRotatedFace(BlockFace face, const Block& block)
+	{
+		using Orientation = Block::Orientation;
+
+		auto OrientationToVec = [](Orientation o) -> glm::ivec3
+		{
+			switch (o)
+			{
+				case Orientation::Up:
+					return {0, 1, 0};
+				case Orientation::Down:
+					return {0, -1, 0};
+				case Orientation::North:
+					return {0, 0, -1};
+				case Orientation::South:
+					return {0, 0, 1};
+				case Orientation::East:
+					return {1, 0, 0};
+				case Orientation::West:
+					return {-1, 0, 0};
+				default:
+					return {0, 0, 0};
+			}
+		};
+
+		auto VecToFace = [](const glm::ivec3& v) -> BlockFace
+		{
+			if (v == glm::ivec3(0, 1, 0))
+				return BlockFace::Top;
+			if (v == glm::ivec3(0, -1, 0))
+				return BlockFace::Bottom;
+			if (v == glm::ivec3(0, 0, -1))
+				return BlockFace::Front;
+			if (v == glm::ivec3(0, 0, 1))
+				return BlockFace::Back;
+			if (v == glm::ivec3(-1, 0, 0))
+				return BlockFace::Left;
+			if (v == glm::ivec3(1, 0, 0))
+				return BlockFace::Right;
+
+			return BlockFace::Front;
+		};
+
+		const glm::ivec3 front = OrientationToVec(block.m_Facing);
+		const glm::ivec3 top = OrientationToVec(block.m_Top);
+		const glm::ivec3 right = Cross(front, top);
+
+		glm::ivec3 dir;
+
+		switch (face)
+		{
+			case BlockFace::Front:
+				dir = front;
+				break;
+			case BlockFace::Back:
+				dir = -front;
+				break;
+			case BlockFace::Top:
+				dir = top;
+				break;
+			case BlockFace::Bottom:
+				dir = -top;
+				break;
+			case BlockFace::Right:
+				dir = right;
+				break;
+			case BlockFace::Left:
+				dir = -right;
+				break;
+			default:
+				return face;
+		}
+
+		return VecToFace(dir);
+	}
+
 	std::shared_ptr<ChunkMesh> MeshBuilder::BuildChunkMesh(const std::shared_ptr<Chunk> chunk)
 	{
-		const glm::ivec2 chunkPos = chunk->GetPosition();
-		std::shared_ptr<ChunkMesh> chunkMesh = std::make_shared<ChunkMesh>(chunkPos);
-
 		if (!chunk)
 			return nullptr;
 
+		const glm::ivec2 chunkPos = chunk->GetPosition();
+		auto chunkMesh = std::make_shared<ChunkMesh>(chunkPos);
+
 		std::unique_lock lock(chunkMesh->m_MutexSubChunkMeshes);
 
+		const int subChunkCount = chunk->GetSubChunkCount();
 		chunkMesh->m_SubChunkMeshes.clear();
-
-		int subChunkCount = chunk->GetSubChunkCount();
-
 		chunkMesh->m_SubChunkMeshes.resize(subChunkCount);
+
+		constexpr int SIZE = WorldConstants::SUBCHUNK_SIZE;
+
 		for (int sub = 0; sub < subChunkCount; ++sub)
 		{
 			auto mesh = std::make_shared<SubChunkMesh>();
 
-			auto& vertices = mesh->m_VerticesOpaque;
-			auto& indices = mesh->m_IndicesOpaque;
-
-			for (int z = 0; z < WorldConstants::SUBCHUNK_SIZE; ++z)
-				for (int y = 0; y < WorldConstants::SUBCHUNK_SIZE; ++y)
-					for (int x = 0; x < WorldConstants::SUBCHUNK_SIZE; ++x)
+			for (int z = 0; z < SIZE; ++z)
+				for (int y = 0; y < SIZE; ++y)
+					for (int x = 0; x < SIZE; ++x)
 					{
 						glm::ivec3 localPos(x, y, z);
 						Block block = chunk->GetBlock(localPos);
@@ -62,9 +141,9 @@ namespace onion::voxel
 
 						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.m_BlockID);
 
-						float wx = chunkPos.x * WorldConstants::SUBCHUNK_SIZE + x;
+						float wx = chunkPos.x * SIZE + x;
 						float wy = y;
-						float wz = chunkPos.y * WorldConstants::SUBCHUNK_SIZE + z;
+						float wz = chunkPos.y * SIZE + z;
 
 						glm::vec3 p000(wx, wy, wz);
 						glm::vec3 p001(wx, wy, wz + 1);
@@ -76,44 +155,53 @@ namespace onion::voxel
 						glm::vec3 p110(wx + 1, wy + 1, wz);
 						glm::vec3 p111(wx + 1, wy + 1, wz + 1);
 
-						// Top
-						BlockFace topFace = FacingToBlockFace(SubChunkMesh::Facing::Top);
-						const FaceTexture& topFaceTex = blockTextures.faces[(size_t) topFace];
-						auto uv = m_TextureAtlas->GetAtlasEntry(topFaceTex.texture);
-						AddFace(vertices, indices, p011, p111, p110, p010, (float) SubChunkMesh::Facing::Top, uv);
+						auto buildFace = [&](BlockFace worldFace,
+											 BlockFace textureFace,
+											 const glm::vec3& v0,
+											 const glm::vec3& v1,
+											 const glm::vec3& v2,
+											 const glm::vec3& v3)
+						{
+							const FaceTexture& faceTex = blockTextures.faces[(size_t) textureFace];
 
-						// Bottom
-						BlockFace bottomFace = FacingToBlockFace(SubChunkMesh::Facing::Bottom);
-						const FaceTexture& bottomFaceTex = blockTextures.faces[(size_t) bottomFace];
-						uv = m_TextureAtlas->GetAtlasEntry(bottomFaceTex.texture);
-						AddFace(vertices, indices, p000, p100, p101, p001, (float) SubChunkMesh::Facing::Bottom, uv);
+							auto uv = m_TextureAtlas->GetAtlasEntry(faceTex.texture);
 
-						// North
-						BlockFace northFace = FacingToBlockFace(SubChunkMesh::Facing::North);
-						const FaceTexture& northFaceTex = blockTextures.faces[(size_t) northFace];
-						uv = m_TextureAtlas->GetAtlasEntry(northFaceTex.texture);
-						AddFace(vertices, indices, p001, p101, p111, p011, (float) SubChunkMesh::Facing::North, uv);
+							AddFace(*mesh, v0, v1, v2, v3, worldFace, block, faceTex, uv);
+							// Optional overlay pass
+							const FaceTexture& overlay = blockTextures.overlay[(size_t) textureFace];
 
-						// South
-						BlockFace southFace = FacingToBlockFace(SubChunkMesh::Facing::South);
-						const FaceTexture& southFaceTex = blockTextures.faces[(size_t) southFace];
-						uv = m_TextureAtlas->GetAtlasEntry(southFaceTex.texture);
-						AddFace(vertices, indices, p100, p000, p010, p110, (float) SubChunkMesh::Facing::South, uv);
+							if (overlay.texture != 0)
+							{
+								auto uvOverlay = m_TextureAtlas->GetAtlasEntry(overlay.texture);
 
-						// East
-						BlockFace eastFace = FacingToBlockFace(SubChunkMesh::Facing::East);
-						const FaceTexture& eastFaceTex = blockTextures.faces[(size_t) eastFace];
-						uv = m_TextureAtlas->GetAtlasEntry(eastFaceTex.texture);
-						AddFace(vertices, indices, p101, p100, p110, p111, (float) SubChunkMesh::Facing::East, uv);
+								AddFace(*mesh, v0, v1, v2, v3, worldFace, block, overlay, uvOverlay);
+							}
+						};
 
-						// West
-						BlockFace westFace = FacingToBlockFace(SubChunkMesh::Facing::West);
-						const FaceTexture& westFaceTex = blockTextures.faces[(size_t) westFace];
-						uv = m_TextureAtlas->GetAtlasEntry(westFaceTex.texture);
-						AddFace(vertices, indices, p000, p001, p011, p010, (float) SubChunkMesh::Facing::West, uv);
+						if (block.m_IsRotated)
+						{
+							buildFace(BlockFace::Top, GetRotatedFace(BlockFace::Top, block), p011, p111, p110, p010);
+							buildFace(
+								BlockFace::Bottom, GetRotatedFace(BlockFace::Bottom, block), p000, p100, p101, p001);
+							buildFace(
+								BlockFace::Front, GetRotatedFace(BlockFace::Front, block), p001, p101, p111, p011);
+							buildFace(BlockFace::Back, GetRotatedFace(BlockFace::Back, block), p100, p000, p010, p110);
+							buildFace(
+								BlockFace::Right, GetRotatedFace(BlockFace::Right, block), p101, p100, p110, p111);
+							buildFace(BlockFace::Left, GetRotatedFace(BlockFace::Left, block), p000, p001, p011, p010);
+						}
+						else
+						{
+							buildFace(BlockFace::Top, BlockFace::Top, p011, p111, p110, p010);
+							buildFace(BlockFace::Bottom, BlockFace::Bottom, p000, p100, p101, p001);
+							buildFace(BlockFace::Front, BlockFace::Front, p001, p101, p111, p011);
+							buildFace(BlockFace::Back, BlockFace::Back, p100, p000, p010, p110);
+							buildFace(BlockFace::Right, BlockFace::Right, p101, p100, p110, p111);
+							buildFace(BlockFace::Left, BlockFace::Left, p000, p001, p011, p010);
+						}
 					}
 
-			mesh->m_IndicesOpaqueCount = indices.size();
+			mesh->m_IndicesOpaqueCount = mesh->m_IndicesOpaque.size();
 			mesh->SetDirty(false);
 
 			chunkMesh->m_SubChunkMeshes[sub] = mesh;
@@ -124,48 +212,95 @@ namespace onion::voxel
 		return chunkMesh;
 	}
 
-	void MeshBuilder::AddFace(std::vector<SubChunkMesh::Vertex>& vertices,
-							  std::vector<uint16_t>& indices,
+	void MeshBuilder::AddFace(SubChunkMesh& mesh,
 							  const glm::vec3& v0,
 							  const glm::vec3& v1,
 							  const glm::vec3& v2,
 							  const glm::vec3& v3,
-							  float facing,
+							  BlockFace face,
+							  const Block& block,
+							  const FaceTexture& faceTexture,
 							  const TextureAtlas::AtlasEntry& uv)
 	{
-		uint16_t startIndex = static_cast<uint16_t>(vertices.size());
+		std::vector<SubChunkMesh::Vertex>* vertices = nullptr;
+		std::vector<uint16_t>* indices = nullptr;
 
-		auto makeVertex = [&](const glm::vec3& p, float u, float v)
+		switch (faceTexture.textureType)
+		{
+			case TextureType::Opaque:
+				vertices = &mesh.m_VerticesOpaque;
+				indices = &mesh.m_IndicesOpaque;
+				break;
+
+			case TextureType::Cutout:
+				vertices = &mesh.m_VerticesCutout;
+				indices = &mesh.m_IndicesCutout;
+				break;
+
+			case TextureType::Transparent:
+				vertices = &mesh.m_VerticesTransparent;
+				indices = &mesh.m_IndicesTransparent;
+				break;
+		}
+
+		// ------ TINT HANDLING ------
+		glm::vec3 tint(1.0f);
+
+		switch (faceTexture.tintType)
+		{
+			case TintType::Grass:
+				tint = glm::vec3(0.6f, 0.85f, 0.4f);
+				break;
+
+			case TintType::Foliage:
+				tint = glm::vec3(0.5f, 0.8f, 0.3f);
+				break;
+
+			case TintType::Water:
+				tint = glm::vec3(0.3f, 0.5f, 1.0f);
+				break;
+
+			default:
+				break;
+		}
+
+		// ------ VERTEX CREATION ------
+		uint16_t startIndex = static_cast<uint16_t>(vertices->size());
+
+		auto makeVertex = [&](const glm::vec3& p, const glm::vec2& uv)
 		{
 			SubChunkMesh::Vertex vert;
+
 			vert.x = p.x;
 			vert.y = p.y;
 			vert.z = p.z;
 
-			vert.texX = u;
-			vert.texY = v;
+			vert.texX = uv.x;
+			vert.texY = uv.y;
 
-			vert.facing = facing;
+			vert.facing = static_cast<float>(face);
 			vert.occlusion = 0.0f;
 
-			vert.tintR = 1.0f;
-			vert.tintG = 1.0f;
-			vert.tintB = 1.0f;
+			vert.tintR = tint.r;
+			vert.tintG = tint.g;
+			vert.tintB = tint.b;
 
 			return vert;
 		};
 
-		vertices.push_back(makeVertex(v0, uv.uvMin.x, uv.uvMin.y));
-		vertices.push_back(makeVertex(v1, uv.uvMax.x, uv.uvMin.y));
-		vertices.push_back(makeVertex(v2, uv.uvMax.x, uv.uvMax.y));
-		vertices.push_back(makeVertex(v3, uv.uvMin.x, uv.uvMax.y));
+		// ------ Add vertices -----
+		vertices->push_back(makeVertex(v0, {uv.uvMin.x, uv.uvMin.y}));
+		vertices->push_back(makeVertex(v1, {uv.uvMax.x, uv.uvMin.y}));
+		vertices->push_back(makeVertex(v2, {uv.uvMax.x, uv.uvMax.y}));
+		vertices->push_back(makeVertex(v3, {uv.uvMin.x, uv.uvMax.y}));
 
-		indices.push_back(startIndex + 0);
-		indices.push_back(startIndex + 1);
-		indices.push_back(startIndex + 2);
+		// ------ Add indices -----
+		indices->push_back(startIndex + 0);
+		indices->push_back(startIndex + 1);
+		indices->push_back(startIndex + 2);
 
-		indices.push_back(startIndex + 2);
-		indices.push_back(startIndex + 3);
-		indices.push_back(startIndex + 0);
+		indices->push_back(startIndex + 2);
+		indices->push_back(startIndex + 3);
+		indices->push_back(startIndex + 0);
 	}
 } // namespace onion::voxel

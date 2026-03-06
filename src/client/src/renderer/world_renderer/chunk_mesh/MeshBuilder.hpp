@@ -28,13 +28,14 @@ namespace onion::voxel
 
 		// ----- Private Methods -----
 	  private:
-		void AddFace(std::vector<SubChunkMesh::Vertex>& vertices,
-					 std::vector<uint16_t>& indices,
-					 const glm::vec3& v0,
-					 const glm::vec3& v1,
-					 const glm::vec3& v2,
-					 const glm::vec3& v3,
-					 float facing,
-					 const TextureAtlas::AtlasEntry& uv);
+		static void AddFace(SubChunkMesh& mesh,
+							const glm::vec3& v0,
+							const glm::vec3& v1,
+							const glm::vec3& v2,
+							const glm::vec3& v3,
+							BlockFace face,
+							const Block& block,
+							const FaceTexture& faceTexture,
+							const TextureAtlas::AtlasEntry& uv);
 	};
 } // namespace onion::voxel

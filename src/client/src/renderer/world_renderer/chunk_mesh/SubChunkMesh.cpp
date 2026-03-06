@@ -25,9 +25,6 @@ namespace onion::voxel
 			PrepareForRendering();
 		}
 
-		glDepthMask(GL_TRUE); // Write to depth buffer
-		glDisable(GL_BLEND);
-
 		if (m_IndicesOpaqueCount > 0)
 		{
 			glBindVertexArray(VAO_Opaque);
@@ -44,22 +41,14 @@ namespace onion::voxel
 			PrepareForRendering();
 		}
 
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL);
+		if (m_IndicesCutoutCount > 0)
+		{
 
-		glDisable(GL_BLEND); // << no blending for cutout
-		// glDepthMask(GL_FALSE); // overlays don’t write depth (optional, see note)
-
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		glPolygonOffset(-1.0f, -1.0f); // pull slightly towards camera for coplanar overlays
-
-		glBindVertexArray(VAO_Cutout);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Cutout);
-		glDrawElements(GL_TRIANGLES, (GLsizei) m_IndicesCutoutCount, GL_UNSIGNED_SHORT, 0);
-		glBindVertexArray(0);
-
-		glDisable(GL_POLYGON_OFFSET_FILL);
-		glDepthMask(GL_TRUE); // restore
+			glBindVertexArray(VAO_Cutout);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Cutout);
+			glDrawElements(GL_TRIANGLES, (GLsizei) m_IndicesCutoutCount, GL_UNSIGNED_SHORT, 0);
+			glBindVertexArray(0);
+		}
 	}
 
 	void SubChunkMesh::RenderTransparent()
@@ -69,23 +58,13 @@ namespace onion::voxel
 			PrepareForRendering();
 		}
 
-		// glDepthMask(GL_FALSE); // Don't write to depth buffer
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 		if (m_IndicesTransparentCount > 0)
 		{
-			glEnable(GL_POLYGON_OFFSET_FILL);
-			glPolygonOffset(-1.0f, -1.0f); // negative values pull overlays forward a bit
 			glBindVertexArray(VAO_Transparent);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Transparent);
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_IndicesTransparentCount), GL_UNSIGNED_SHORT, 0);
 			glBindVertexArray(0);
-			glDisable(GL_POLYGON_OFFSET_FILL); // (Optional, disables after overlays)
 		}
-
-		// glDepthMask(GL_TRUE); // Reset state
-		glDisable(GL_BLEND);
 	}
 
 	bool SubChunkMesh::IsDirty() const

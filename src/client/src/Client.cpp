@@ -91,7 +91,13 @@ namespace onion::voxel
 			chunk->SetBlock(glm::ivec3(2, 0, 0), dirt);
 
 			Block stone{BlockId::Stone};
+			stone.m_Facing = Block::Orientation::South;
+			stone.m_Top = Block::Orientation::Down;
+			stone.m_IsRotated = true;
 			chunk->SetBlock(glm::ivec3(4, 0, 0), stone);
+
+			Block glass{BlockId::Glass};
+			chunk->SetBlock(glm::ivec3(6, 0, 0), glass);
 
 			m_WorldManager->AddChunk(chunk);
 		}

@@ -31,11 +31,64 @@ namespace onion::voxel
 		SubChunkMesh::s_Shader.setBool("u_UseOcclusion", true);
 		SubChunkMesh::s_Shader.setBool("u_UseFaceShading", true);
 		SubChunkMesh::s_Shader.setMat4("u_ViewProjMatrix", viewProjMatrix);
+		SubChunkMesh::s_Shader.setBool("u_RenderCutout", false);
+	}
+
+	void WorldRenderer::PrepareForRenderingOpaque()
+	{
+		// ----- Shader Setup -----
+		SubChunkMesh::s_Shader.Use();
+		SubChunkMesh::s_Shader.setBool("u_RenderCutout", false);
+
+		// ----- OpenGL State Setup -----
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+		glDisable(GL_POLYGON_OFFSET_FILL);
+	}
+
+	void WorldRenderer::PrepareForRenderingCutout()
+	{
+		// ----- Shader Setup -----
+		SubChunkMesh::s_Shader.Use();
+		SubChunkMesh::s_Shader.setBool("u_RenderCutout", true);
+
+		// ----- OpenGL State Setup -----
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+		glDisable(GL_POLYGON_OFFSET_FILL);
+	}
+
+	void WorldRenderer::PrepareForRenderingTransparent()
+	{
+		// ----- Shader Setup -----
+		SubChunkMesh::s_Shader.Use();
+		SubChunkMesh::s_Shader.setBool("u_RenderCutout", false);
+
+		// ----- OpenGL State Setup -----
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		glDepthMask(GL_FALSE);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glDisable(GL_POLYGON_OFFSET_FILL);
+	}
+
+	void WorldRenderer::ResetOpenGLState()
+	{
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+		glDisable(GL_POLYGON_OFFSET_FILL);
 	}
 
 	void WorldRenderer::Render()
 	{
 		PrepareForRendering();
+
+		PrepareForRenderingOpaque();
 
 		// Render chunks
 		std::shared_lock lock(m_MutexChunkMeshes);
@@ -43,6 +96,22 @@ namespace onion::voxel
 		{
 			chunkMesh->RenderOpaque();
 		}
+
+		PrepareForRenderingCutout();
+
+		for (const auto& [chunkPos, chunkMesh] : m_ChunkMeshes)
+		{
+			chunkMesh->RenderCutout();
+		}
+
+		PrepareForRenderingTransparent();
+
+		for (const auto& [chunkPos, chunkMesh] : m_ChunkMeshes)
+		{
+			chunkMesh->RenderTransparent();
+		}
+
+		ResetOpenGLState();
 	}
 
 	void WorldRenderer::SubscribeToWorldManagerEvents()

@@ -9,5 +9,6 @@ namespace onion::voxel
 		Dirt = 1,
 		Grass = 2,
 		Stone = 3,
+		Glass = 4,
 	};
 } // namespace onion::voxel

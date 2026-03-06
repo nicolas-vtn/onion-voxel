@@ -43,6 +43,13 @@ namespace onion::voxel
 		TextureType textureType = TextureType::Opaque;
 	};
 
+	struct TextureInfo
+	{
+		std::string name;
+		TintType tintType = TintType::None;
+		TextureType textureType = TextureType::Opaque;
+	};
+
 	struct BlockTextures
 	{
 		std::array<FaceTexture, (size_t) BlockFace::Count> faces;
@@ -57,10 +64,11 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		void Register(BlockId id, const std::array<std::string, 6>& textures);
+		void Register(BlockId id, const std::array<TextureInfo, 6>& textures);
+		void Register(BlockId id, const TextureInfo& texture);
 		void Register(BlockId id, const std::string& texture);
 
-		void SetOverlay(BlockId id, BlockFace face, const std::string& texture);
+		void SetOverlay(BlockId id, BlockFace face, const TextureInfo& texture);
 
 		const BlockTextures& Get(BlockId id) const;
 

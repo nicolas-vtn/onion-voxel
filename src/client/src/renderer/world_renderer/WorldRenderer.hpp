@@ -26,6 +26,10 @@ namespace onion::voxel
 		// ----- Public API -----
 	  public:
 		void PrepareForRendering();
+		void PrepareForRenderingOpaque();
+		void PrepareForRenderingCutout();
+		void PrepareForRenderingTransparent();
+		void ResetOpenGLState();
 		void Render();
 
 		// ----- Getters / Setters -----

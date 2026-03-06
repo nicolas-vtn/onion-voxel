@@ -35,6 +35,7 @@ namespace onion::voxel
 		// ----- Members -----
 	  public:
 		BlockId m_BlockID = BlockId::Air; // The block ID (type) of this block
+		bool m_IsRotated = false;
 		Orientation m_Facing = Orientation::North;
 		Orientation m_Top = Orientation::Up;
 	};
