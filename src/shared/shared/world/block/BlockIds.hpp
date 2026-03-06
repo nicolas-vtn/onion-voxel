@@ -10,5 +10,7 @@ namespace onion::voxel
 		Grass = 2,
 		Stone = 3,
 		Glass = 4,
+		OakLog = 5,
+		OakLeaves = 6
 	};
 } // namespace onion::voxel

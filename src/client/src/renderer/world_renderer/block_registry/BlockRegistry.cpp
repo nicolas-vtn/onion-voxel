@@ -4,6 +4,14 @@ namespace onion::voxel
 {
 	BlockRegistry::BlockRegistry(std::shared_ptr<TextureAtlas> atlas) : m_Atlas(atlas)
 	{
+
+		// Top
+		// Bottom
+		// Front
+		// Back
+		// Left
+		// Right
+
 		Register(BlockId::Stone, "stone.png");
 
 		//std::array<TextureInfo, 6> testTexture;
@@ -40,6 +48,16 @@ namespace onion::voxel
 				   TextureInfo{"grass_block_side_overlay.png", TintType::Grass, TextureType::Cutout});
 
 		Register(BlockId::Glass, TextureInfo{"light_blue_stained_glass.png", TintType::None, TextureType::Transparent});
+
+		Register(BlockId::OakLog,
+				 {TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque},
+				  TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque},
+				  TextureInfo{"oak_log_top.png", TintType::None, TextureType::Opaque},
+				  TextureInfo{"oak_log_top.png", TintType::None, TextureType::Opaque},
+				  TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque},
+				  TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque}});
+
+		Register(BlockId::OakLeaves, TextureInfo{"oak_leaves.png", TintType::Foliage, TextureType::Cutout});
 	}
 
 	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures)

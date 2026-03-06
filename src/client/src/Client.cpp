@@ -99,6 +99,26 @@ namespace onion::voxel
 			Block glass{BlockId::Glass};
 			chunk->SetBlock(glm::ivec3(6, 0, 0), glass);
 
+			Block oakLeaves{BlockId::OakLeaves};
+			chunk->SetBlock(glm::ivec3(8, 0, 0), oakLeaves);
+
+			Block oakLog0{BlockId::OakLog};
+			oakLog0.m_Facing = Block::Orientation::North;
+			oakLog0.m_Top = Block::Orientation::Up;
+			chunk->SetBlock(glm::ivec3(10, 0, 0), oakLog0);
+
+			Block oakLogHorizontal1{BlockId::OakLog};
+			oakLogHorizontal1.m_Facing = Block::Orientation::Up;
+			oakLogHorizontal1.m_Top = Block::Orientation::North;
+			oakLogHorizontal1.m_IsRotated = true;
+			chunk->SetBlock(glm::ivec3(12, 0, 0), oakLogHorizontal1);
+
+			Block oakLogHorizontal2{BlockId::OakLog};
+			oakLogHorizontal2.m_Facing = Block::Orientation::East;
+			oakLogHorizontal2.m_Top = Block::Orientation::Up;
+			oakLogHorizontal2.m_IsRotated = true;
+			chunk->SetBlock(glm::ivec3(14, 0, 0), oakLogHorizontal2);
+
 			m_WorldManager->AddChunk(chunk);
 		}
 		else
