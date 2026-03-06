@@ -93,7 +93,6 @@ namespace onion::voxel
 			Block stone{BlockId::Stone};
 			stone.m_Facing = Block::Orientation::South;
 			stone.m_Top = Block::Orientation::Down;
-			stone.m_IsRotated = true;
 			chunk->SetBlock(glm::ivec3(4, 0, 0), stone);
 
 			Block glass{BlockId::Glass};
@@ -110,14 +109,32 @@ namespace onion::voxel
 			Block oakLogHorizontal1{BlockId::OakLog};
 			oakLogHorizontal1.m_Facing = Block::Orientation::Up;
 			oakLogHorizontal1.m_Top = Block::Orientation::North;
-			oakLogHorizontal1.m_IsRotated = true;
 			chunk->SetBlock(glm::ivec3(12, 0, 0), oakLogHorizontal1);
 
 			Block oakLogHorizontal2{BlockId::OakLog};
 			oakLogHorizontal2.m_Facing = Block::Orientation::East;
 			oakLogHorizontal2.m_Top = Block::Orientation::Up;
-			oakLogHorizontal2.m_IsRotated = true;
 			chunk->SetBlock(glm::ivec3(14, 0, 0), oakLogHorizontal2);
+
+			Block furnaceNorth{BlockId::Furnace};
+			furnaceNorth.m_Facing = Block::Orientation::North;
+			furnaceNorth.m_Top = Block::Orientation::Up;
+			chunk->SetBlock(glm::ivec3(0, 0, 4), furnaceNorth);
+
+			Block furnaceSouth{BlockId::Furnace};
+			furnaceSouth.m_Facing = Block::Orientation::South;
+			furnaceSouth.m_Top = Block::Orientation::Up;
+			chunk->SetBlock(glm::ivec3(2, 0, 4), furnaceSouth);
+
+			Block furnaceEast{BlockId::Furnace};
+			furnaceEast.m_Facing = Block::Orientation::East;
+			furnaceEast.m_Top = Block::Orientation::Up;
+			chunk->SetBlock(glm::ivec3(4, 0, 4), furnaceEast);
+
+			Block furnaceWest{BlockId::Furnace};
+			furnaceWest.m_Facing = Block::Orientation::West;
+			furnaceWest.m_Top = Block::Orientation::Up;
+			chunk->SetBlock(glm::ivec3(6, 0, 4), furnaceWest);
 
 			m_WorldManager->AddChunk(chunk);
 		}

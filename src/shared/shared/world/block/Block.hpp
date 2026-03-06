@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+#include <vector>
+
 #include "BlockIds.hpp"
 
 namespace onion::voxel
@@ -24,7 +26,7 @@ namespace onion::voxel
 		// ----- Constructor / Destructor -----
 	  public:
 		Block() = default;
-		Block(BlockId blockID, Orientation facing = Orientation::North, Orientation top = Orientation::Up);
+		Block(BlockId blockID, Orientation facing = Orientation::None, Orientation top = Orientation::None);
 		~Block() = default;
 
 		// ----- Operators -----
@@ -35,8 +37,7 @@ namespace onion::voxel
 		// ----- Members -----
 	  public:
 		BlockId m_BlockID = BlockId::Air; // The block ID (type) of this block
-		bool m_IsRotated = false;
-		Orientation m_Facing = Orientation::North;
-		Orientation m_Top = Orientation::Up;
+		Orientation m_Facing = Orientation::None;
+		Orientation m_Top = Orientation::None;
 	};
 } // namespace onion::voxel

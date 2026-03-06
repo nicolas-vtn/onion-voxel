@@ -11,6 +11,7 @@ namespace onion::voxel
 		Stone = 3,
 		Glass = 4,
 		OakLog = 5,
-		OakLeaves = 6
+		OakLeaves = 6,
+		Furnace = 7,
 	};
 } // namespace onion::voxel

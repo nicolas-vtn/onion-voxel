@@ -2,111 +2,143 @@
 
 namespace onion::voxel
 {
-	static BlockFace FacingToBlockFace(SubChunkMesh::Facing facing)
-	{
-		switch (facing)
-		{
-			case SubChunkMesh::Facing::Top:
-				return BlockFace::Top;
-			case SubChunkMesh::Facing::Bottom:
-				return BlockFace::Bottom;
-			case SubChunkMesh::Facing::North:
-				return BlockFace::Front;
-			case SubChunkMesh::Facing::South:
-				return BlockFace::Back;
-			case SubChunkMesh::Facing::East:
-				return BlockFace::Right;
-			case SubChunkMesh::Facing::West:
-				return BlockFace::Left;
-		}
-
-		return BlockFace::Top;
-	}
-
 	MeshBuilder::MeshBuilder(std::shared_ptr<TextureAtlas> textureAtlas)
 		: m_BlockRegistry(textureAtlas), m_TextureAtlas(textureAtlas)
 	{
 	}
 
-	static inline glm::ivec3 Cross(const glm::ivec3& a, const glm::ivec3& b)
+	glm::ivec3 Cross(const glm::ivec3& a, const glm::ivec3& b)
 	{
-		return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
+		return glm::ivec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
 	}
 
-	static inline BlockFace GetRotatedFace(BlockFace face, const Block& block)
+	static inline glm::ivec3 OrientationToVector(Block::Orientation o)
 	{
-		using Orientation = Block::Orientation;
-
-		auto OrientationToVec = [](Orientation o) -> glm::ivec3
+		switch (o)
 		{
-			switch (o)
-			{
-				case Orientation::Up:
-					return {0, 1, 0};
-				case Orientation::Down:
-					return {0, -1, 0};
-				case Orientation::North:
-					return {0, 0, -1};
-				case Orientation::South:
-					return {0, 0, 1};
-				case Orientation::East:
-					return {1, 0, 0};
-				case Orientation::West:
-					return {-1, 0, 0};
-				default:
-					return {0, 0, 0};
-			}
-		};
+			case Block::Orientation::North:
+				return {0, 0, 1};
+			case Block::Orientation::South:
+				return {0, 0, -1};
+			case Block::Orientation::East:
+				return {1, 0, 0};
+			case Block::Orientation::West:
+				return {-1, 0, 0};
+			case Block::Orientation::Up:
+				return {0, 1, 0};
+			case Block::Orientation::Down:
+				return {0, -1, 0};
+			default:
+				return {0, 0, 0};
+		}
+	}
 
-		auto VecToFace = [](const glm::ivec3& v) -> BlockFace
-		{
-			if (v == glm::ivec3(0, 1, 0))
-				return BlockFace::Top;
-			if (v == glm::ivec3(0, -1, 0))
-				return BlockFace::Bottom;
-			if (v == glm::ivec3(0, 0, -1))
-				return BlockFace::Front;
-			if (v == glm::ivec3(0, 0, 1))
-				return BlockFace::Back;
-			if (v == glm::ivec3(-1, 0, 0))
-				return BlockFace::Left;
-			if (v == glm::ivec3(1, 0, 0))
-				return BlockFace::Right;
-
-			return BlockFace::Front;
-		};
-
-		const glm::ivec3 front = OrientationToVec(block.m_Facing);
-		const glm::ivec3 top = OrientationToVec(block.m_Top);
-		const glm::ivec3 right = Cross(front, top);
-
-		glm::ivec3 dir;
-
-		switch (face)
+	static inline glm::ivec3 FaceToVector(BlockFace f)
+	{
+		switch (f)
 		{
 			case BlockFace::Front:
-				dir = front;
-				break;
+				return {0, 0, 1};
 			case BlockFace::Back:
-				dir = -front;
-				break;
-			case BlockFace::Top:
-				dir = top;
-				break;
-			case BlockFace::Bottom:
-				dir = -top;
-				break;
+				return {0, 0, -1};
 			case BlockFace::Right:
-				dir = right;
-				break;
+				return {1, 0, 0};
 			case BlockFace::Left:
-				dir = -right;
-				break;
+				return {-1, 0, 0};
+			case BlockFace::Top:
+				return {0, 1, 0};
+			case BlockFace::Bottom:
+				return {0, -1, 0};
 			default:
-				return face;
+				return {0, 0, 0};
+		}
+	}
+
+	static inline BlockFace GetTextureFaceForWorldFace(BlockFace worldFace, const Block& block)
+	{
+		if (block.m_Facing == Block::Orientation::None || block.m_Top == Block::Orientation::None)
+		{
+			return worldFace;
 		}
 
-		return VecToFace(dir);
+		glm::ivec3 forward = OrientationToVector(block.m_Facing);
+		glm::ivec3 up = OrientationToVector(block.m_Top);
+		glm::ivec3 right = Cross(forward, up);
+
+		glm::ivec3 worldDir = FaceToVector(worldFace);
+
+		if (worldDir == forward)
+			return BlockFace::Front;
+		if (worldDir == -forward)
+			return BlockFace::Back;
+
+		if (worldDir == up)
+			return BlockFace::Top;
+		if (worldDir == -up)
+			return BlockFace::Bottom;
+
+		if (worldDir == right)
+			return BlockFace::Right;
+		if (worldDir == -right)
+			return BlockFace::Left;
+
+		return BlockFace::Front;
+	}
+
+	static int GetRotationSteps(const Block& block, BlockFace worldFace)
+	{
+		if (block.m_Facing == Block::Orientation::None || block.m_Facing == Block::Orientation::Up ||
+			block.m_Facing == Block::Orientation::Down)
+		{
+			return 0;
+		}
+
+		if (block.m_Facing == Block::Orientation::North || block.m_Facing == Block::Orientation::South)
+		{
+			if (worldFace == BlockFace::Left || worldFace == BlockFace::Right)
+				return 1;
+			else
+				return 0;
+		}
+
+		return 1;
+	}
+
+	static inline void RotateUVs(glm::vec2& uv0, glm::vec2& uv1, glm::vec2& uv2, glm::vec2& uv3, int rotation)
+	{
+		rotation &= 3;
+
+		if (rotation == 0)
+			return;
+
+		glm::vec2 t0 = uv0;
+		glm::vec2 t1 = uv1;
+		glm::vec2 t2 = uv2;
+		glm::vec2 t3 = uv3;
+
+		switch (rotation)
+		{
+			case 1: // 90
+				uv0 = t3;
+				uv1 = t0;
+				uv2 = t1;
+				uv3 = t2;
+				break;
+
+			case 2: // 180
+				uv0 = t2;
+				uv1 = t3;
+				uv2 = t0;
+				uv3 = t1;
+				break;
+
+			case 3: // 270
+				uv0 = t1;
+				uv1 = t2;
+				uv2 = t3;
+				uv3 = t0;
+				break;
+		}
 	}
 
 	std::shared_ptr<ChunkMesh> MeshBuilder::BuildChunkMesh(const std::shared_ptr<Chunk> chunk)
@@ -166,39 +198,60 @@ namespace onion::voxel
 
 							auto uv = m_TextureAtlas->GetAtlasEntry(faceTex.texture);
 
-							AddFace(*mesh, v0, v1, v2, v3, worldFace, block, faceTex, uv);
-							// Optional overlay pass
+							AddFace(*mesh, v0, v1, v2, v3, worldFace, block, faceTex, uv, blockTextures.rotationType);
+
+							// Overlay pass
 							const FaceTexture& overlay = blockTextures.overlay[(size_t) textureFace];
 
 							if (overlay.texture != 0)
 							{
 								auto uvOverlay = m_TextureAtlas->GetAtlasEntry(overlay.texture);
 
-								AddFace(*mesh, v0, v1, v2, v3, worldFace, block, overlay, uvOverlay);
+								AddFace(*mesh,
+										v0,
+										v1,
+										v2,
+										v3,
+										worldFace,
+										block,
+										overlay,
+										uvOverlay,
+										blockTextures.rotationType);
 							}
 						};
 
-						if (block.m_IsRotated)
-						{
-							buildFace(BlockFace::Top, GetRotatedFace(BlockFace::Top, block), p011, p111, p110, p010);
-							buildFace(
-								BlockFace::Bottom, GetRotatedFace(BlockFace::Bottom, block), p000, p100, p101, p001);
-							buildFace(
-								BlockFace::Front, GetRotatedFace(BlockFace::Front, block), p001, p101, p111, p011);
-							buildFace(BlockFace::Back, GetRotatedFace(BlockFace::Back, block), p100, p000, p010, p110);
-							buildFace(
-								BlockFace::Right, GetRotatedFace(BlockFace::Right, block), p101, p100, p110, p111);
-							buildFace(BlockFace::Left, GetRotatedFace(BlockFace::Left, block), p000, p001, p011, p010);
-						}
-						else
-						{
-							buildFace(BlockFace::Top, BlockFace::Top, p011, p111, p110, p010);
-							buildFace(BlockFace::Bottom, BlockFace::Bottom, p000, p100, p101, p001);
-							buildFace(BlockFace::Front, BlockFace::Front, p001, p101, p111, p011);
-							buildFace(BlockFace::Back, BlockFace::Back, p100, p000, p010, p110);
-							buildFace(BlockFace::Right, BlockFace::Right, p101, p100, p110, p111);
-							buildFace(BlockFace::Left, BlockFace::Left, p000, p001, p011, p010);
-						}
+						buildFace(
+							BlockFace::Top, GetTextureFaceForWorldFace(BlockFace::Top, block), p011, p111, p110, p010);
+						buildFace(BlockFace::Bottom,
+								  GetTextureFaceForWorldFace(BlockFace::Bottom, block),
+								  p000,
+								  p100,
+								  p101,
+								  p001);
+						buildFace(BlockFace::Front,
+								  GetTextureFaceForWorldFace(BlockFace::Front, block),
+								  p001,
+								  p101,
+								  p111,
+								  p011);
+						buildFace(BlockFace::Back,
+								  GetTextureFaceForWorldFace(BlockFace::Back, block),
+								  p100,
+								  p000,
+								  p010,
+								  p110);
+						buildFace(BlockFace::Right,
+								  GetTextureFaceForWorldFace(BlockFace::Right, block),
+								  p101,
+								  p100,
+								  p110,
+								  p111);
+						buildFace(BlockFace::Left,
+								  GetTextureFaceForWorldFace(BlockFace::Left, block),
+								  p000,
+								  p001,
+								  p011,
+								  p010);
 					}
 
 			mesh->m_IndicesOpaqueCount = mesh->m_IndicesOpaque.size();
@@ -220,7 +273,8 @@ namespace onion::voxel
 							  BlockFace face,
 							  const Block& block,
 							  const FaceTexture& faceTexture,
-							  const TextureAtlas::AtlasEntry& uv)
+							  const TextureAtlas::AtlasEntry& uv,
+							  RotationType rotationType)
 	{
 		std::vector<SubChunkMesh::Vertex>* vertices = nullptr;
 		std::vector<uint16_t>* indices = nullptr;
@@ -241,6 +295,19 @@ namespace onion::voxel
 				vertices = &mesh.m_VerticesTransparent;
 				indices = &mesh.m_IndicesTransparent;
 				break;
+		}
+
+		// ------ ROTATE UVs ------
+
+		glm::vec2 uv0{uv.uvMin.x, uv.uvMin.y};
+		glm::vec2 uv1{uv.uvMax.x, uv.uvMin.y};
+		glm::vec2 uv2{uv.uvMax.x, uv.uvMax.y};
+		glm::vec2 uv3{uv.uvMin.x, uv.uvMax.y};
+
+		if (rotationType == RotationType::Pillar)
+		{
+			int rotationSteps = GetRotationSteps(block, face);
+			RotateUVs(uv0, uv1, uv2, uv3, rotationSteps);
 		}
 
 		// ------ TINT HANDLING ------
@@ -289,10 +356,10 @@ namespace onion::voxel
 		};
 
 		// ------ Add vertices -----
-		vertices->push_back(makeVertex(v0, {uv.uvMin.x, uv.uvMin.y}));
-		vertices->push_back(makeVertex(v1, {uv.uvMax.x, uv.uvMin.y}));
-		vertices->push_back(makeVertex(v2, {uv.uvMax.x, uv.uvMax.y}));
-		vertices->push_back(makeVertex(v3, {uv.uvMin.x, uv.uvMax.y}));
+		vertices->push_back(makeVertex(v0, uv0));
+		vertices->push_back(makeVertex(v1, uv1));
+		vertices->push_back(makeVertex(v2, uv2));
+		vertices->push_back(makeVertex(v3, uv3));
 
 		// ------ Add indices -----
 		indices->push_back(startIndex + 0);

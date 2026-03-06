@@ -14,15 +14,6 @@ namespace onion::voxel
 
 		Register(BlockId::Stone, "stone.png");
 
-		//std::array<TextureInfo, 6> testTexture;
-		//testTexture[(int) BlockFace::Top] = {"acacia_log_top.png"};
-		//testTexture[(int) BlockFace::Bottom] = {"dirt.png"};
-		//testTexture[(int) BlockFace::Front] = {"stone.png"};
-		//testTexture[(int) BlockFace::Back] = {"blue_wool.png"};
-		//testTexture[(int) BlockFace::Left] = {"brain_coral_block.png"};
-		//testTexture[(int) BlockFace::Right] = {"bricks.png"};
-		//Register(BlockId::Stone, testTexture);
-
 		Register(BlockId::Dirt, "dirt.png");
 
 		std::array<TextureInfo, 6> grassTextures = {
@@ -32,7 +23,6 @@ namespace onion::voxel
 			TextureInfo{"grass_block_side.png", TintType::None, TextureType::Opaque},
 			TextureInfo{"grass_block_side.png", TintType::None, TextureType::Opaque},
 			TextureInfo{"grass_block_side.png", TintType::None, TextureType::Opaque}};
-
 		Register(BlockId::Grass, grassTextures);
 		SetOverlay(BlockId::Grass,
 				   BlockFace::Front,
@@ -55,14 +45,25 @@ namespace onion::voxel
 				  TextureInfo{"oak_log_top.png", TintType::None, TextureType::Opaque},
 				  TextureInfo{"oak_log_top.png", TintType::None, TextureType::Opaque},
 				  TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque},
-				  TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque}});
+				  TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque}},
+				 RotationType::Pillar);
 
 		Register(BlockId::OakLeaves, TextureInfo{"oak_leaves.png", TintType::Foliage, TextureType::Cutout});
+
+		Register(BlockId::Furnace,
+				 {TextureInfo{"furnace_top.png", TintType::None, TextureType::Opaque},
+				  TextureInfo{"furnace_top.png", TintType::None, TextureType::Opaque},
+				  TextureInfo{"furnace_front.png", TintType::None, TextureType::Opaque},
+				  TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque},
+				  TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque},
+				  TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque}},
+				 RotationType::Horizontal);
 	}
 
-	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures)
+	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures, RotationType rotationType)
 	{
 		BlockTextures tex;
+		tex.rotationType = rotationType;
 
 		for (size_t i = 0; i < 6; ++i)
 		{
@@ -74,18 +75,18 @@ namespace onion::voxel
 		m_Blocks[id] = tex;
 	}
 
-	void BlockRegistry::Register(BlockId id, const TextureInfo& texture)
+	void BlockRegistry::Register(BlockId id, const TextureInfo& texture, RotationType rotationType)
 	{
 		std::array<TextureInfo, 6> textures;
 		textures.fill(texture);
-		Register(id, textures);
+		Register(id, textures, rotationType);
 	}
 
-	void BlockRegistry::Register(BlockId id, const std::string& texture)
+	void BlockRegistry::Register(BlockId id, const std::string& texture, RotationType rotationType)
 	{
 		std::array<TextureInfo, 6> textures;
 		textures.fill({texture});
-		Register(id, textures);
+		Register(id, textures, rotationType);
 	}
 
 	void BlockRegistry::SetOverlay(BlockId id, BlockFace face, const TextureInfo& texture)
