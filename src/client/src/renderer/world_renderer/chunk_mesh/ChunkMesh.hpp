@@ -13,12 +13,15 @@
 
 namespace onion::voxel
 {
+	class MeshBuilder;
+
 	class ChunkMesh
 	{
+		friend class MeshBuilder;
+
 		// ----- Constructor / Destructor -----
 	  public:
 		ChunkMesh(const glm::ivec2& chunkPosition);
-		ChunkMesh(std::shared_ptr<Chunk> chunk);
 		~ChunkMesh();
 
 		// ----- Public API -----
@@ -42,19 +45,8 @@ namespace onion::voxel
 		std::atomic_bool m_DeleteRequested{false};
 		std::atomic_bool m_IsReadyToBeDeleted{false};
 
-		// ----- Mesh Building -----
-	  private:
-		void BuildMesh(std::shared_ptr<Chunk> chunk);
-		static void AddFace(std::vector<SubChunkMesh::Vertex>& vertices,
-							std::vector<uint16_t>& indices,
-							const glm::vec3& v0,
-							const glm::vec3& v1,
-							const glm::vec3& v2,
-							const glm::vec3& v3,
-							float facing);
-
 		// ----- Members -----
-	  private:
+	  protected:
 		const glm::ivec2 m_ChunkPosition; // The position of the chunk that this mesh represents (in chunk coordinates)
 		mutable std::shared_mutex m_MutexSubChunkMeshes; // Mutex for synchronizing access to the subchunk meshes
 		std::vector<std::shared_ptr<SubChunkMesh>> m_SubChunkMeshes; // The subchunk meshes that make up this chunk mesh

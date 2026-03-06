@@ -84,9 +84,14 @@ namespace onion::voxel
 			std::shared_ptr<Chunk> chunk = std::make_shared<Chunk>(glm::ivec2(0, 0));
 
 			// Set some blocks in the chunk for testing
-			Block block;
-			block.m_BlockID = BlockId::Grass;
-			chunk->SetBlock(glm::ivec3(0, 0, 0), block);
+			Block grass{BlockId::Grass};
+			chunk->SetBlock(glm::ivec3(0, 0, 0), grass);
+
+			Block dirt{BlockId::Dirt};
+			chunk->SetBlock(glm::ivec3(2, 0, 0), dirt);
+
+			Block stone{BlockId::Stone};
+			chunk->SetBlock(glm::ivec3(4, 0, 0), stone);
 
 			m_WorldManager->AddChunk(chunk);
 		}

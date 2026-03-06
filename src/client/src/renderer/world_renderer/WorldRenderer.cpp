@@ -5,7 +5,7 @@
 namespace onion::voxel
 {
 	WorldRenderer::WorldRenderer(std::shared_ptr<WorldManager> worldManager, std::shared_ptr<Camera> camera)
-		: m_WorldManager(worldManager), m_Camera(camera)
+		: m_WorldManager(worldManager), m_Camera(camera), m_MeshBuilder(m_TextureAtlas)
 	{
 		SubscribeToWorldManagerEvents();
 
@@ -22,7 +22,8 @@ namespace onion::voxel
 		glm::mat4 viewProjMatrix = projectionMatrix * viewMatrix;
 
 		// Bind Texture Atlas
-		SubChunkMesh::s_TextureAtlas.Bind();
+		//SubChunkMesh::s_TextureAtlas.Bind();
+		m_TextureAtlas->Bind();
 
 		// Sets Uniforms
 		SubChunkMesh::s_Shader.Use();
@@ -88,7 +89,7 @@ namespace onion::voxel
 				std::cout << "Building mesh for chunk at position: (" << chunkPos.x << ", " << chunkPos.y << ")"
 						  << std::endl;
 
-				std::shared_ptr<ChunkMesh> chunkMesh = std::make_shared<ChunkMesh>(chunk);
+				std::shared_ptr<ChunkMesh> chunkMesh = m_MeshBuilder.BuildChunkMesh(chunk);
 
 				// Adds the ChunkMesh to the m_ChunkMeshes map
 				{

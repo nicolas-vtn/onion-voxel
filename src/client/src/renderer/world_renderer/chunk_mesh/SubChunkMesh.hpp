@@ -14,8 +14,12 @@
 
 namespace onion::voxel
 {
+	class MeshBuilder;
+
 	class SubChunkMesh
 	{
+		friend class MeshBuilder;
+
 	  public:
 		struct Vertex;
 		enum class Facing : uint8_t;
@@ -51,7 +55,7 @@ namespace onion::voxel
 		std::atomic_bool m_IsReadyToRender{false};
 
 		// ----- OPENGL Buffers -----
-	  public:
+	  protected:
 		mutable std::mutex m_Mutex;
 
 		std::vector<Vertex> m_VerticesOpaque;  // Vertex data for the mesh

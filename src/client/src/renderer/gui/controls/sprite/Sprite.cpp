@@ -21,7 +21,7 @@ void Sprite::Render()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glDepthMask(GL_FALSE); // usually UI shouldn't write depth
+	glDepthMask(GL_FALSE);
 
 	// ----- Render Sprite -----
 	m_Texture.Bind();

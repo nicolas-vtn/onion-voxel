@@ -24,6 +24,7 @@ namespace onion::voxel
 		// ----- Constructor / Destructor -----
 	  public:
 		Block() = default;
+		Block(BlockId blockID, Orientation facing = Orientation::North, Orientation top = Orientation::Up);
 		~Block() = default;
 
 		// ----- Operators -----
@@ -34,7 +35,7 @@ namespace onion::voxel
 		// ----- Members -----
 	  public:
 		BlockId m_BlockID = BlockId::Air; // The block ID (type) of this block
-		Orientation m_Orientation =
-			Orientation::None; // The orientation of the block (for blocks that have different orientations)
+		Orientation m_Facing = Orientation::North;
+		Orientation m_Top = Orientation::Up;
 	};
 } // namespace onion::voxel
