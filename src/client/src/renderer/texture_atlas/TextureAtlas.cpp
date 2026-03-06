@@ -28,7 +28,7 @@ namespace onion::voxel
 		return it->second;
 	}
 
-	const TextureAtlas::AtlasEntry& TextureAtlas::Get(TextureID id) const
+	const TextureAtlas::AtlasEntry& TextureAtlas::GetAtlasEntry(TextureID id) const
 	{
 		if (id >= m_Entries.size())
 			throw std::out_of_range("TextureID out of range");
@@ -69,6 +69,7 @@ namespace onion::voxel
 
 			int w, h, channels;
 
+			stbi_set_flip_vertically_on_load(true);
 			unsigned char* pixels = stbi_load(m_TextureFiles[i].string().c_str(), &w, &h, &channels, 4);
 
 			if (!pixels)

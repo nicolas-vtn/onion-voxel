@@ -31,7 +31,7 @@ namespace onion::voxel
 	  public:
 		TextureID GetTextureID(const std::string& name) const;
 
-		const AtlasEntry& Get(TextureID id) const;
+		const AtlasEntry& GetAtlasEntry(TextureID id) const;
 
 	  private:
 		void ScanTextures();

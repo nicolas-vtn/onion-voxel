@@ -14,10 +14,10 @@ namespace onion::voxel
 	{
 		Top,
 		Bottom,
-		North,
-		South,
-		East,
-		West,
+		Front,
+		Back,
+		Left,
+		Right,
 		Count
 	};
 
@@ -57,7 +57,7 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		void Register(BlockId id, std::array<std::string, 6> textures);
+		void Register(BlockId id, const std::array<std::string, 6>& textures);
 		void Register(BlockId id, const std::string& texture);
 
 		void SetOverlay(BlockId id, BlockFace face, const std::string& texture);

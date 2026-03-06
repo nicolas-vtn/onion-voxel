@@ -2,8 +2,29 @@
 
 namespace onion::voxel
 {
+	static BlockFace FacingToBlockFace(SubChunkMesh::Facing facing)
+	{
+		switch (facing)
+		{
+			case SubChunkMesh::Facing::Top:
+				return BlockFace::Top;
+			case SubChunkMesh::Facing::Bottom:
+				return BlockFace::Bottom;
+			case SubChunkMesh::Facing::North:
+				return BlockFace::Front;
+			case SubChunkMesh::Facing::South:
+				return BlockFace::Back;
+			case SubChunkMesh::Facing::East:
+				return BlockFace::Right;
+			case SubChunkMesh::Facing::West:
+				return BlockFace::Left;
+		}
+
+		return BlockFace::Top;
+	}
+
 	MeshBuilder::MeshBuilder(std::shared_ptr<TextureAtlas> textureAtlas)
-		: m_TextureAtlas(textureAtlas), m_BlockRegistry(textureAtlas)
+		: m_BlockRegistry(textureAtlas), m_TextureAtlas(textureAtlas)
 	{
 	}
 
@@ -39,6 +60,8 @@ namespace onion::voxel
 						if (block.m_BlockID == BlockId::Air)
 							continue;
 
+						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.m_BlockID);
+
 						float wx = chunkPos.x * WorldConstants::SUBCHUNK_SIZE + x;
 						float wy = y;
 						float wz = chunkPos.y * WorldConstants::SUBCHUNK_SIZE + z;
@@ -54,22 +77,40 @@ namespace onion::voxel
 						glm::vec3 p111(wx + 1, wy + 1, wz + 1);
 
 						// Top
-						AddFace(vertices, indices, p011, p111, p110, p010, (float) SubChunkMesh::Facing::Top);
+						BlockFace topFace = FacingToBlockFace(SubChunkMesh::Facing::Top);
+						const FaceTexture& topFaceTex = blockTextures.faces[(size_t) topFace];
+						auto uv = m_TextureAtlas->GetAtlasEntry(topFaceTex.texture);
+						AddFace(vertices, indices, p011, p111, p110, p010, (float) SubChunkMesh::Facing::Top, uv);
 
 						// Bottom
-						AddFace(vertices, indices, p000, p100, p101, p001, (float) SubChunkMesh::Facing::Bottom);
+						BlockFace bottomFace = FacingToBlockFace(SubChunkMesh::Facing::Bottom);
+						const FaceTexture& bottomFaceTex = blockTextures.faces[(size_t) bottomFace];
+						uv = m_TextureAtlas->GetAtlasEntry(bottomFaceTex.texture);
+						AddFace(vertices, indices, p000, p100, p101, p001, (float) SubChunkMesh::Facing::Bottom, uv);
 
 						// North
-						AddFace(vertices, indices, p000, p001, p011, p010, (float) SubChunkMesh::Facing::North);
+						BlockFace northFace = FacingToBlockFace(SubChunkMesh::Facing::North);
+						const FaceTexture& northFaceTex = blockTextures.faces[(size_t) northFace];
+						uv = m_TextureAtlas->GetAtlasEntry(northFaceTex.texture);
+						AddFace(vertices, indices, p001, p101, p111, p011, (float) SubChunkMesh::Facing::North, uv);
 
 						// South
-						AddFace(vertices, indices, p100, p110, p111, p101, (float) SubChunkMesh::Facing::South);
+						BlockFace southFace = FacingToBlockFace(SubChunkMesh::Facing::South);
+						const FaceTexture& southFaceTex = blockTextures.faces[(size_t) southFace];
+						uv = m_TextureAtlas->GetAtlasEntry(southFaceTex.texture);
+						AddFace(vertices, indices, p100, p000, p010, p110, (float) SubChunkMesh::Facing::South, uv);
 
 						// East
-						AddFace(vertices, indices, p001, p101, p111, p011, (float) SubChunkMesh::Facing::East);
+						BlockFace eastFace = FacingToBlockFace(SubChunkMesh::Facing::East);
+						const FaceTexture& eastFaceTex = blockTextures.faces[(size_t) eastFace];
+						uv = m_TextureAtlas->GetAtlasEntry(eastFaceTex.texture);
+						AddFace(vertices, indices, p101, p100, p110, p111, (float) SubChunkMesh::Facing::East, uv);
 
 						// West
-						AddFace(vertices, indices, p000, p010, p110, p100, (float) SubChunkMesh::Facing::West);
+						BlockFace westFace = FacingToBlockFace(SubChunkMesh::Facing::West);
+						const FaceTexture& westFaceTex = blockTextures.faces[(size_t) westFace];
+						uv = m_TextureAtlas->GetAtlasEntry(westFaceTex.texture);
+						AddFace(vertices, indices, p000, p001, p011, p010, (float) SubChunkMesh::Facing::West, uv);
 					}
 
 			mesh->m_IndicesOpaqueCount = indices.size();
@@ -89,7 +130,8 @@ namespace onion::voxel
 							  const glm::vec3& v1,
 							  const glm::vec3& v2,
 							  const glm::vec3& v3,
-							  float facing)
+							  float facing,
+							  const TextureAtlas::AtlasEntry& uv)
 	{
 		uint16_t startIndex = static_cast<uint16_t>(vertices.size());
 
@@ -113,10 +155,10 @@ namespace onion::voxel
 			return vert;
 		};
 
-		vertices.push_back(makeVertex(v0, 0, 0));
-		vertices.push_back(makeVertex(v1, 1, 0));
-		vertices.push_back(makeVertex(v2, 1, 1));
-		vertices.push_back(makeVertex(v3, 0, 1));
+		vertices.push_back(makeVertex(v0, uv.uvMin.x, uv.uvMin.y));
+		vertices.push_back(makeVertex(v1, uv.uvMax.x, uv.uvMin.y));
+		vertices.push_back(makeVertex(v2, uv.uvMax.x, uv.uvMax.y));
+		vertices.push_back(makeVertex(v3, uv.uvMin.x, uv.uvMax.y));
 
 		indices.push_back(startIndex + 0);
 		indices.push_back(startIndex + 1);

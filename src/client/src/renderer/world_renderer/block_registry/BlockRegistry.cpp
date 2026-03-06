@@ -2,9 +2,25 @@
 
 namespace onion::voxel
 {
-	BlockRegistry::BlockRegistry(std::shared_ptr<TextureAtlas> atlas) : m_Atlas(atlas) {}
+	BlockRegistry::BlockRegistry(std::shared_ptr<TextureAtlas> atlas) : m_Atlas(atlas)
+	{
+		Register(BlockId::Stone, "stone.png");
+		Register(BlockId::Dirt, "dirt.png");
 
-	void BlockRegistry::Register(BlockId id, std::array<std::string, 6> textures)
+		std::array<std::string, 6> grassTextures = {"grass_block_top.png",
+													"dirt.png",
+													"grass_block_side.png",
+													"grass_block_side.png",
+													"grass_block_side.png",
+													"grass_block_side.png"};
+		Register(BlockId::Grass, grassTextures);
+		SetOverlay(BlockId::Grass, BlockFace::Front, "grass_block_side_overlay.png");
+		SetOverlay(BlockId::Grass, BlockFace::Back, "grass_block_side_overlay.png");
+		SetOverlay(BlockId::Grass, BlockFace::Left, "grass_block_side_overlay.png");
+		SetOverlay(BlockId::Grass, BlockFace::Right, "grass_block_side_overlay.png");
+	}
+
+	void BlockRegistry::Register(BlockId id, const std::array<std::string, 6>& textures)
 	{
 		BlockTextures tex;
 

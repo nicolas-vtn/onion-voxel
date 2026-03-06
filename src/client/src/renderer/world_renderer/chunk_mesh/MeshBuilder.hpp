@@ -6,7 +6,6 @@
 
 #include <shared/world/chunk/Chunk.hpp>
 
-#include "../../texture_atlas/TextureAtlas.hpp"
 #include "../block_registry/BlockRegistry.hpp"
 #include "ChunkMesh.hpp"
 
@@ -24,17 +23,18 @@ namespace onion::voxel
 
 		// ----- Private Members -----
 	  private:
-		const std::shared_ptr<TextureAtlas> m_TextureAtlas;
 		BlockRegistry m_BlockRegistry;
+		std::shared_ptr<TextureAtlas> m_TextureAtlas;
 
 		// ----- Private Methods -----
 	  private:
-		static void AddFace(std::vector<SubChunkMesh::Vertex>& vertices,
-							std::vector<uint16_t>& indices,
-							const glm::vec3& v0,
-							const glm::vec3& v1,
-							const glm::vec3& v2,
-							const glm::vec3& v3,
-							float facing);
+		void AddFace(std::vector<SubChunkMesh::Vertex>& vertices,
+					 std::vector<uint16_t>& indices,
+					 const glm::vec3& v0,
+					 const glm::vec3& v1,
+					 const glm::vec3& v2,
+					 const glm::vec3& v3,
+					 float facing,
+					 const TextureAtlas::AtlasEntry& uv);
 	};
 } // namespace onion::voxel
