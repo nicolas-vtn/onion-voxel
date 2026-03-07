@@ -39,5 +39,13 @@ namespace onion::voxel
 		BlockId m_BlockID = BlockId::Air; // The block ID (type) of this block
 		Orientation m_Facing = Orientation::None;
 		Orientation m_Top = Orientation::None;
+
+		// ----- Static Helpers -----
+	  public:
+		static bool IsTransparent(BlockId blockID);
+
+		// ----- Static Members -----
+	  private:
+		static inline std::vector<BlockId> s_TransparentBlocks{BlockId::Air, BlockId::Glass, BlockId::OakLeaves};
 	};
 } // namespace onion::voxel

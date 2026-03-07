@@ -17,4 +17,9 @@ namespace onion::voxel
 	{
 		return false;
 	}
+
+	bool Block::IsTransparent(BlockId blockID)
+	{
+		return std::find(s_TransparentBlocks.begin(), s_TransparentBlocks.end(), blockID) != s_TransparentBlocks.end();
+	}
 } // namespace onion::voxel

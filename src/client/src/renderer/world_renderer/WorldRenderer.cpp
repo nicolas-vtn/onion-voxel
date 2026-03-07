@@ -5,7 +5,7 @@
 namespace onion::voxel
 {
 	WorldRenderer::WorldRenderer(std::shared_ptr<WorldManager> worldManager, std::shared_ptr<Camera> camera)
-		: m_WorldManager(worldManager), m_Camera(camera), m_MeshBuilder(m_TextureAtlas)
+		: m_WorldManager(worldManager), m_Camera(camera), m_MeshBuilder(worldManager, m_TextureAtlas)
 	{
 		SubscribeToWorldManagerEvents();
 
@@ -155,8 +155,8 @@ namespace onion::voxel
 			{
 				// Build mesh for chunk
 				glm::ivec2 chunkPos = chunk->GetPosition();
-				std::cout << "Building mesh for chunk at position: (" << chunkPos.x << ", " << chunkPos.y << ")"
-						  << std::endl;
+				//std::cout << "Building mesh for chunk at position: (" << chunkPos.x << ", " << chunkPos.y << ")"
+				//		  << std::endl;
 
 				std::shared_ptr<ChunkMesh> chunkMesh = m_MeshBuilder.BuildChunkMesh(chunk);
 

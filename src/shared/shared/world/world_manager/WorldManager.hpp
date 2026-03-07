@@ -36,6 +36,8 @@ namespace onion::voxel
 		void AddChunk(const std::shared_ptr<Chunk> chunk);
 		void RemoveChunk(const glm::ivec2& chunkPosition);
 
+		Block GetBlock(const glm::ivec3& worldPosition) const;
+
 		std::shared_ptr<Chunk> GetChunk(const glm::ivec2& chunkPosition) const;
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, IVec2Hash> GetAllChunks() const;
 

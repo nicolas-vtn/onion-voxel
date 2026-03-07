@@ -2,8 +2,8 @@
 
 namespace onion::voxel
 {
-	MeshBuilder::MeshBuilder(std::shared_ptr<TextureAtlas> textureAtlas)
-		: m_BlockRegistry(textureAtlas), m_TextureAtlas(textureAtlas)
+	MeshBuilder::MeshBuilder(std::shared_ptr<WorldManager> worldManager, std::shared_ptr<TextureAtlas> textureAtlas)
+		: m_WorldManager(worldManager), m_BlockRegistry(textureAtlas), m_TextureAtlas(textureAtlas)
 	{
 	}
 
@@ -141,6 +141,26 @@ namespace onion::voxel
 		}
 	}
 
+	std::array<bool, 6> GetFaceVisibility(const Block& block, const std::array<Block, 6>& neighbors)
+	{
+		std::array<bool, 6> visibility{};
+
+		// If block is transparent, all faces are visible
+		if (Block::IsTransparent(block.m_BlockID))
+		{
+			std::fill(visibility.begin(), visibility.end(), true);
+			return visibility;
+		}
+
+		for (int i = 0; i < 6; i++)
+		{
+			// A face is visible if the neighboring block in that direction is transparent
+			visibility[i] = Block::IsTransparent(neighbors[i].m_BlockID);
+		}
+
+		return visibility;
+	}
+
 	std::shared_ptr<ChunkMesh> MeshBuilder::BuildChunkMesh(const std::shared_ptr<Chunk> chunk)
 	{
 		if (!chunk)
@@ -171,10 +191,72 @@ namespace onion::voxel
 						if (block.m_BlockID == BlockId::Air)
 							continue;
 
+						// ------ Get Neighboring Blocks ------
+						std::array<Block, 6> neighbors;
+
+						// Top (+y)
+						if (y + 1 < SIZE)
+							neighbors[(int) BlockFace::Top] = chunk->GetBlock(glm::ivec3(x, y + 1, z));
+						else
+							neighbors[(int) BlockFace::Top] = Block(); // Air
+
+						// Bottom (-y)
+						if (y - 1 >= 0)
+							neighbors[(int) BlockFace::Bottom] = chunk->GetBlock(glm::ivec3(x, y - 1, z));
+						else
+							neighbors[(int) BlockFace::Bottom] = Block(); // Air
+
+						// Front (+z)
+						if (z + 1 < SIZE)
+							neighbors[(int) BlockFace::Front] = chunk->GetBlock(glm::ivec3(x, y, z + 1));
+						else
+						{
+							// Asks the world manager for the block in the neighboring chunk if this block is on the edge of the chunk
+							neighbors[(int) BlockFace::Front] = m_WorldManager->GetBlock(
+								glm::ivec3(chunkPos.x * SIZE + x, chunkPos.y * SIZE + y, (chunkPos.y + 1) * SIZE));
+						}
+
+						// Back (-z)
+						if (z - 1 >= 0)
+							neighbors[(int) BlockFace::Back] = chunk->GetBlock(glm::ivec3(x, y, z - 1));
+						else
+						{
+							// Asks the world manager for the block in the neighboring chunk if this block is on the edge of the chunk
+							neighbors[(int) BlockFace::Back] = m_WorldManager->GetBlock(
+								glm::ivec3(chunkPos.x * SIZE + x, chunkPos.y * SIZE + y, (chunkPos.y - 1) * SIZE));
+						}
+
+						// Right (+x)
+						if (x + 1 < SIZE)
+							neighbors[(int) BlockFace::Right] = chunk->GetBlock(glm::ivec3(x + 1, y, z));
+						else
+						{
+							// Asks the world manager for the block in the neighboring chunk if this block is on the edge of the chunk
+							neighbors[(int) BlockFace::Right] = m_WorldManager->GetBlock(
+								glm::ivec3((chunkPos.x + 1) * SIZE, chunkPos.y * SIZE + y, chunkPos.y * SIZE + z));
+						}
+
+						// Left (-x)
+						if (x - 1 >= 0)
+							neighbors[(int) BlockFace::Left] = chunk->GetBlock(glm::ivec3(x - 1, y, z));
+						else
+						{
+							// Asks the world manager for the block in the neighboring chunk if this block is on the edge of the chunk
+							neighbors[(int) BlockFace::Left] = m_WorldManager->GetBlock(
+								glm::ivec3((chunkPos.x - 1) * SIZE, chunkPos.y * SIZE + y, chunkPos.y * SIZE + z));
+						}
+
+						// ------ Determine Face Visibility ------
+						const std::array<bool, 6> faceVisible = GetFaceVisibility(block, neighbors);
+
+						// If no faces are visible, skip this block
+						if (!std::any_of(faceVisible.begin(), faceVisible.end(), [](bool v) { return v; }))
+							continue;
+
 						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.m_BlockID);
 
 						float wx = chunkPos.x * SIZE + x;
-						float wy = y;
+						float wy = SIZE * sub + y;
 						float wz = chunkPos.y * SIZE + z;
 
 						glm::vec3 p000(wx, wy, wz);
@@ -220,38 +302,65 @@ namespace onion::voxel
 							}
 						};
 
-						buildFace(
-							BlockFace::Top, GetTextureFaceForWorldFace(BlockFace::Top, block), p011, p111, p110, p010);
-						buildFace(BlockFace::Bottom,
-								  GetTextureFaceForWorldFace(BlockFace::Bottom, block),
-								  p000,
-								  p100,
-								  p101,
-								  p001);
-						buildFace(BlockFace::Front,
-								  GetTextureFaceForWorldFace(BlockFace::Front, block),
-								  p001,
-								  p101,
-								  p111,
-								  p011);
-						buildFace(BlockFace::Back,
-								  GetTextureFaceForWorldFace(BlockFace::Back, block),
-								  p100,
-								  p000,
-								  p010,
-								  p110);
-						buildFace(BlockFace::Right,
-								  GetTextureFaceForWorldFace(BlockFace::Right, block),
-								  p101,
-								  p100,
-								  p110,
-								  p111);
-						buildFace(BlockFace::Left,
-								  GetTextureFaceForWorldFace(BlockFace::Left, block),
-								  p000,
-								  p001,
-								  p011,
-								  p010);
+						if (faceVisible[(int) BlockFace::Top])
+						{
+							buildFace(BlockFace::Top,
+									  GetTextureFaceForWorldFace(BlockFace::Top, block),
+									  p011,
+									  p111,
+									  p110,
+									  p010);
+						}
+
+						if (faceVisible[(int) BlockFace::Bottom])
+						{
+							buildFace(BlockFace::Bottom,
+									  GetTextureFaceForWorldFace(BlockFace::Bottom, block),
+									  p000,
+									  p100,
+									  p101,
+									  p001);
+						}
+
+						if (faceVisible[(int) BlockFace::Front])
+						{
+							buildFace(BlockFace::Front,
+									  GetTextureFaceForWorldFace(BlockFace::Front, block),
+									  p001,
+									  p101,
+									  p111,
+									  p011);
+						}
+
+						if (faceVisible[(int) BlockFace::Back])
+						{
+							buildFace(BlockFace::Back,
+									  GetTextureFaceForWorldFace(BlockFace::Back, block),
+									  p100,
+									  p000,
+									  p010,
+									  p110);
+						}
+
+						if (faceVisible[(int) BlockFace::Right])
+						{
+							buildFace(BlockFace::Right,
+									  GetTextureFaceForWorldFace(BlockFace::Right, block),
+									  p101,
+									  p100,
+									  p110,
+									  p111);
+						}
+
+						if (faceVisible[(int) BlockFace::Left])
+						{
+							buildFace(BlockFace::Left,
+									  GetTextureFaceForWorldFace(BlockFace::Left, block),
+									  p000,
+									  p001,
+									  p011,
+									  p010);
+						}
 					}
 
 			mesh->m_IndicesOpaqueCount = mesh->m_IndicesOpaque.size();

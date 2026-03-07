@@ -68,4 +68,25 @@ namespace onion::voxel
 			ChunkRemoved.Trigger(chunk);
 		}
 	}
+
+	Block WorldManager::GetBlock(const glm::ivec3& worldPosition) const
+	{
+		// Calculate chunk position and local position within chunk
+		glm::ivec2 chunkPosition{worldPosition.x / WorldConstants::SUBCHUNK_SIZE,
+								 worldPosition.z / WorldConstants::SUBCHUNK_SIZE};
+
+		glm::ivec3 localPosition{worldPosition.x % WorldConstants::SUBCHUNK_SIZE,
+								 worldPosition.y,
+								 worldPosition.z % WorldConstants::SUBCHUNK_SIZE};
+
+		std::shared_ptr<Chunk> chunk = GetChunk(chunkPosition);
+		if (chunk)
+		{
+			return chunk->GetBlock(localPosition);
+		}
+		else
+		{
+			return Block(); // Air block if chunk not found
+		}
+	}
 } // namespace onion::voxel

@@ -17,8 +17,7 @@ namespace onion::voxel
 	{
 		// Check if localPosition is within bounds of the chunk
 		if (localPosition.x < 0 || localPosition.x >= WorldConstants::SUBCHUNK_SIZE || localPosition.y < 0 ||
-			localPosition.y >= WorldConstants::SUBCHUNK_SIZE || localPosition.z < 0 ||
-			localPosition.z >= m_SubChunks.size() * WorldConstants::SUBCHUNK_SIZE)
+			localPosition.z < 0 || localPosition.z >= WorldConstants::SUBCHUNK_SIZE)
 		{
 			// Out of bounds, throw
 			throw std::out_of_range("Local position is out of bounds of the chunk");
@@ -28,6 +27,11 @@ namespace onion::voxel
 
 		// Calculate which subchunk the local position is in
 		int subChunkIndex = localPosition.y / WorldConstants::SUBCHUNK_SIZE;
+
+		if (subChunkIndex >= GetSubChunkCount())
+		{
+			return m_BlocksPalette[0]; // Air
+		}
 
 		// Get the subchunk
 		const SubChunk& subChunk = m_SubChunks[subChunkIndex];
@@ -47,7 +51,7 @@ namespace onion::voxel
 	{
 		// Check if localPosition is within bounds of the chunk
 		if (localPosition.x < 0 || localPosition.x >= WorldConstants::SUBCHUNK_SIZE || localPosition.y < 0 ||
-			localPosition.y >= WorldConstants::SUBCHUNK_SIZE || localPosition.z < 0)
+			localPosition.z < 0 || localPosition.z >= WorldConstants::SUBCHUNK_SIZE)
 		{
 			// Out of bounds, throw
 			throw std::out_of_range("Local position is out of bounds of the chunk");

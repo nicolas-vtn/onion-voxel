@@ -5,6 +5,7 @@
 #include <memory>
 
 #include <shared/world/chunk/Chunk.hpp>
+#include <shared/world/world_manager/WorldManager.hpp>
 
 #include "../block_registry/BlockRegistry.hpp"
 #include "ChunkMesh.hpp"
@@ -15,7 +16,7 @@ namespace onion::voxel
 	{
 		// ----- Constructor / Destructor -----
 	  public:
-		MeshBuilder(std::shared_ptr<TextureAtlas> textureAtlas);
+		MeshBuilder(std::shared_ptr<WorldManager> worldManager, std::shared_ptr<TextureAtlas> textureAtlas);
 
 		// ----- Public API -----
 	  public:
@@ -23,6 +24,7 @@ namespace onion::voxel
 
 		// ----- Private Members -----
 	  private:
+		std::shared_ptr<WorldManager> m_WorldManager;
 		BlockRegistry m_BlockRegistry;
 		std::shared_ptr<TextureAtlas> m_TextureAtlas;
 
