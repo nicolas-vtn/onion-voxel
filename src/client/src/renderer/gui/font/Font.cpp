@@ -279,11 +279,11 @@ float GetGlyphAdvance(
 	bool isEmpty = true;
 
 	// Scan columns
-	for (int x = 0; x < glyphPixelWidth; ++x)
+	for (int x = 0; x < glyphPixelWidth; x++)
 	{
 		bool columnHasPixel = false;
 
-		for (int y = 0; y < glyphPixelHeight; ++y)
+		for (int y = 0; y < glyphPixelHeight; y++)
 		{
 			int px = startX + x;
 			int py = startY + y;

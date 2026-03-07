@@ -22,7 +22,6 @@ namespace onion::voxel
 
 	  public:
 		struct Vertex;
-		enum class Facing : uint8_t;
 
 		// ----- Constructor / Destructor -----
 	  public:
@@ -35,27 +34,25 @@ namespace onion::voxel
 		void RenderCutout();
 		void RenderTransparent();
 
+		void Delete();
+
 		// ----- Getters / Setters -----
 	  public:
 		bool IsDirty() const;
 		void SetDirty(bool isDirty);
-		bool IsGenerating() const;
-		void SetGenerating(bool isGenerating);
-		bool IsEmpty() const;
 
 		// ----- States -----
 	  private:
 		std::atomic_bool m_IsDirty{true};
-		std::atomic_bool m_IsGenerating{false};
-		std::atomic_bool m_IsEmpty{true};
 		std::atomic_bool m_NeedsToPrepareRendering{true};
 
 		std::atomic_bool m_AreBuffersGenerated{false};
-		std::atomic_bool m_AreBuffersDataSet{false};
-		std::atomic_bool m_IsReadyToRender{false};
+		std::atomic_bool m_AreBuffersDataUpToDate{true};
 
 		// ----- OPENGL Buffers -----
 	  protected:
+		void BuffersUpdated();
+
 		mutable std::mutex m_Mutex;
 
 		std::vector<Vertex> m_VerticesOpaque;  // Vertex data for the mesh
@@ -96,16 +93,6 @@ namespace onion::voxel
 			float facing;			   // Facing direction (0-5 for the 6 faces of a cube)
 			float occlusion;		   // Ambient occlusion factor (0.0 to 1.0)
 			float tintR, tintG, tintB; // RGB tint color
-		};
-
-		enum class Facing : uint8_t
-		{
-			Top = 0,
-			Bottom = 1,
-			North = 2,
-			South = 3,
-			East = 4,
-			West = 5
 		};
 
 		static constexpr int VERTEX_SIZE = 10; // Vertex size in floats

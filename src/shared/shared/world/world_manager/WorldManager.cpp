@@ -69,6 +69,26 @@ namespace onion::voxel
 		}
 	}
 
+	void WorldManager::RemoveAllChunks()
+	{
+		std::vector<std::shared_ptr<Chunk>> chunksToRemove;
+
+		{
+			std::unique_lock lock(m_MutexChunks);
+			chunksToRemove.reserve(m_Chunks.size());
+			for (const auto& [pos, chunk] : m_Chunks)
+			{
+				chunksToRemove.push_back(chunk);
+			}
+			m_Chunks.clear();
+		}
+
+		for (const auto& chunk : chunksToRemove)
+		{
+			ChunkRemoved.Trigger(chunk);
+		}
+	}
+
 	Block WorldManager::GetBlock(const glm::ivec3& worldPosition) const
 	{
 		// Calculate chunk position and local position within chunk

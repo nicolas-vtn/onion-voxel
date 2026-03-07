@@ -86,6 +86,8 @@ namespace onion::voxel
 
 	void WorldRenderer::Render()
 	{
+		DeleteChunkMeshes();
+
 		PrepareForRendering();
 
 		PrepareForRenderingOpaque();
@@ -114,6 +116,16 @@ namespace onion::voxel
 		ResetOpenGLState();
 	}
 
+	void WorldRenderer::DeleteAllChunkMeshes()
+	{
+		std::unique_lock lock(m_MutexChunkMeshes);
+		for (const auto& [chunkPos, chunkMesh] : m_ChunkMeshes)
+		{
+			m_ChunkMeshesToDelete.Push(chunkMesh);
+		}
+		m_ChunkMeshes.clear();
+	}
+
 	void WorldRenderer::SubscribeToWorldManagerEvents()
 	{
 		m_EventHandles.push_back(m_WorldManager->ChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk)
@@ -125,11 +137,36 @@ namespace onion::voxel
 
 	void WorldRenderer::Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk)
 	{
+		if (!chunk)
+		{
+			std::cerr << "Error: Received null chunk in Handle_ChunkAdded" << std::endl;
+			return;
+		}
+
 		std::cout << "Chunk added at position: (" << chunk->GetPosition().x << ", " << chunk->GetPosition().y << ")"
 				  << std::endl;
 
-		// Adds the chunk to the m_ChunksToBuildMeshFor queue to be processed by the mesh builder thread
-		m_ChunksToBuildMeshFor.Push(chunk);
+		// Create a new chunk mesh for the added chunk and add it to the chunk meshes map
+		const glm::ivec2 chunkPos = chunk->GetPosition();
+		std::shared_ptr<ChunkMesh> chunkMesh = std::make_shared<ChunkMesh>(chunkPos, chunk);
+		{
+			std::unique_lock lock(m_MutexChunkMeshes);
+
+			// Check if a chunk mesh already exists for this chunk position
+			auto it = m_ChunkMeshes.find(chunkPos);
+			if (it != m_ChunkMeshes.end())
+			{
+				// If a chunk mesh already exists, mark it for deletion and remove it from the map
+				m_ChunkMeshesToDelete.Push(it->second);
+				m_ChunkMeshes.erase(it);
+			}
+
+			// Add the new chunk mesh to the map
+			m_ChunkMeshes[chunkPos] = chunkMesh;
+		}
+
+		// Request the mesh builder to build the mesh for the new chunk mesh
+		m_ChunkMeshesToRebuild.Push(chunkMesh);
 	}
 
 	void WorldRenderer::Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk)
@@ -140,8 +177,8 @@ namespace onion::voxel
 		auto it = m_ChunkMeshes.find(chunkPos);
 		if (it != m_ChunkMeshes.end())
 		{
-			// Marks the chunk mesh as DeleteRequested.
-			it->second->SetDeleteRequested(true);
+			m_ChunkMeshesToDelete.Push(it->second);
+			m_ChunkMeshes.erase(it);
 		}
 	}
 
@@ -149,28 +186,26 @@ namespace onion::voxel
 	{
 		while (!st.stop_requested())
 		{
-			std::shared_ptr<Chunk> chunk;
+			std::shared_ptr<ChunkMesh> chunkMesh;
 
-			if (m_ChunksToBuildMeshFor.TryPop(chunk))
+			if (m_ChunkMeshesToRebuild.TryPop(chunkMesh))
 			{
-				// Build mesh for chunk
-				glm::ivec2 chunkPos = chunk->GetPosition();
-				//std::cout << "Building mesh for chunk at position: (" << chunkPos.x << ", " << chunkPos.y << ")"
-				//		  << std::endl;
-
-				std::shared_ptr<ChunkMesh> chunkMesh = m_MeshBuilder.BuildChunkMesh(chunk);
-
-				// Adds the ChunkMesh to the m_ChunkMeshes map
-				{
-					std::unique_lock lock(m_MutexChunkMeshes);
-					m_ChunkMeshes[chunkPos] = chunkMesh;
-				}
+				m_MeshBuilder.UpdateChunkMesh(chunkMesh);
 			}
 			else
 			{
 				// No chunks to build mesh for, sleep for a short time to avoid busy waiting
 				std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			}
+		}
+	}
+
+	void WorldRenderer::DeleteChunkMeshes()
+	{
+		std::shared_ptr<ChunkMesh> chunkMesh;
+		while (m_ChunkMeshesToDelete.TryPop(chunkMesh))
+		{
+			chunkMesh->Delete();
 		}
 	}
 

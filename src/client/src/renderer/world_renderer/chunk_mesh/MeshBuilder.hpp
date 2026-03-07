@@ -20,7 +20,7 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		std::shared_ptr<ChunkMesh> BuildChunkMesh(const std::shared_ptr<Chunk> chunk);
+		void UpdateChunkMesh(const std::shared_ptr<ChunkMesh> chunkMesh);
 
 		// ----- Private Members -----
 	  private:

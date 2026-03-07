@@ -37,7 +37,7 @@ namespace onion::voxel
 				std::mt19937 gen(rd());
 				std::uniform_int_distribution<> dis(0, 15);
 				std::string uuid;
-				for (int i = 0; i < 32; ++i)
+				for (int i = 0; i < 32; i++)
 					uuid += "0123456789abcdef"[dis(gen)];
 				clientData.UUID = uuid;
 

@@ -32,6 +32,10 @@ namespace onion::voxel
 		void ResetOpenGLState();
 		void Render();
 
+		void DeleteAllChunkMeshes();
+
+		void DeleteChunkMeshes();
+
 		// ----- Getters / Setters -----
 	  public:
 		// ----- World Manager -----
@@ -62,9 +66,13 @@ namespace onion::voxel
 
 		// ----- Mesh Building -----
 	  private:
-		ThreadSafeQueue<std::shared_ptr<Chunk>> m_ChunksToBuildMeshFor;
+		ThreadSafeQueue<std::shared_ptr<ChunkMesh>> m_ChunkMeshesToRebuild;
 		std::jthread m_ThreadMeshBuilder;
 		void MeshBuilderThreadFunction(std::stop_token st);
 		MeshBuilder m_MeshBuilder;
+
+		// ----- Mesh Deletion and Cleanup -----
+	  private:
+		ThreadSafeQueue<std::shared_ptr<ChunkMesh>> m_ChunkMeshesToDelete;
 	};
 } // namespace onion::voxel

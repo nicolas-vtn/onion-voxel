@@ -419,6 +419,10 @@ namespace onion::voxel
 		{
 			// Stops the Client Game
 			RequestQuitToMainMenu.Trigger(quit);
+
+			m_WorldManager->RemoveAllChunks();
+			m_WorldRenderer.DeleteChunkMeshes();
+
 			m_IsPaused = false;
 		}
 	}

@@ -161,31 +161,43 @@ namespace onion::voxel
 		return visibility;
 	}
 
-	std::shared_ptr<ChunkMesh> MeshBuilder::BuildChunkMesh(const std::shared_ptr<Chunk> chunk)
+	void MeshBuilder::UpdateChunkMesh(const std::shared_ptr<ChunkMesh> chunkMesh)
 	{
+		// First, we need to get a shared pointer to the chunk from the weak pointer in the chunk mesh
+		std::shared_ptr<Chunk> chunk = chunkMesh->m_Chunk.lock();
 		if (!chunk)
-			return nullptr;
+			return;
 
 		const glm::ivec2 chunkPos = chunk->GetPosition();
-		auto chunkMesh = std::make_shared<ChunkMesh>(chunkPos);
-
-		std::unique_lock lock(chunkMesh->m_MutexSubChunkMeshes);
 
 		const int subChunkCount = chunk->GetSubChunkCount();
-		chunkMesh->m_SubChunkMeshes.clear();
-		chunkMesh->m_SubChunkMeshes.resize(subChunkCount);
 
+		// Ensure the chunk mesh has enough subchunk meshes for the number of subchunks in the chunk
+		{
+			std::unique_lock lock(chunkMesh->m_MutexSubChunkMeshes);
+			while (chunkMesh->m_SubChunkMeshes.size() < subChunkCount)
+			{
+				chunkMesh->m_SubChunkMeshes.emplace_back(std::make_unique<SubChunkMesh>());
+			}
+		}
+
+		std::shared_lock lock(chunkMesh->m_MutexSubChunkMeshes);
 		constexpr int SIZE = WorldConstants::SUBCHUNK_SIZE;
 
-		for (int sub = 0; sub < subChunkCount; ++sub)
+		for (int sub = 0; sub < subChunkCount; sub++)
 		{
-			auto mesh = std::make_shared<SubChunkMesh>();
+			auto& mesh = chunkMesh->m_SubChunkMeshes[sub];
+			std::unique_lock meshLock(mesh->m_Mutex);
 
-			for (int z = 0; z < SIZE; ++z)
-				for (int y = 0; y < SIZE; ++y)
-					for (int x = 0; x < SIZE; ++x)
+			// If the mesh is not dirty, we can skip it
+			if (!mesh->IsDirty())
+				continue;
+
+			for (int z = 0; z < SIZE; z++)
+				for (int y = 0; y < SIZE; y++)
+					for (int x = 0; x < SIZE; x++)
 					{
-						glm::ivec3 localPos(x, y, z);
+						const glm::ivec3 localPos(x, y, z);
 						Block block = chunk->GetBlock(localPos);
 
 						if (block.m_BlockID == BlockId::Air)
@@ -363,15 +375,11 @@ namespace onion::voxel
 						}
 					}
 
-			mesh->m_IndicesOpaqueCount = mesh->m_IndicesOpaque.size();
 			mesh->SetDirty(false);
-
-			chunkMesh->m_SubChunkMeshes[sub] = mesh;
+			mesh->BuffersUpdated();
 		}
 
 		chunkMesh->m_IsDirty = false;
-
-		return chunkMesh;
 	}
 
 	void MeshBuilder::AddFace(SubChunkMesh& mesh,

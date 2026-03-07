@@ -65,7 +65,7 @@ namespace onion::voxel
 		BlockTextures tex;
 		tex.rotationType = rotationType;
 
-		for (size_t i = 0; i < 6; ++i)
+		for (size_t i = 0; i < 6; i++)
 		{
 			tex.faces[i].texture = m_Atlas->GetTextureID(textures[i].name);
 			tex.faces[i].tintType = textures[i].tintType;

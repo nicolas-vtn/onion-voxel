@@ -16,7 +16,17 @@ namespace onion::voxel
 
 	SubChunkMesh::SubChunkMesh() {}
 
-	SubChunkMesh::~SubChunkMesh() {}
+	SubChunkMesh::~SubChunkMesh()
+	{
+		if (VBO_Cutout != 0 || VAO_Cutout != 0 || EBO_Cutout != 0 || EBO_CutoutOverlay != 0 || VBO_Opaque != 0 ||
+			VAO_Opaque != 0 || EBO_Opaque != 0 || EBO_OpaqueOverlay != 0 || VBO_Transparent != 0 ||
+			VAO_Transparent != 0 || EBO_Transparent != 0 || EBO_TransparentOverlay != 0)
+		{
+			std::cerr << "Warning: SubChunkMesh destructor called but OpenGL buffers were not cleaned up. There is a "
+						 "memory leak."
+					  << std::endl;
+		}
+	}
 
 	void SubChunkMesh::RenderOpaque()
 	{
@@ -36,14 +46,8 @@ namespace onion::voxel
 
 	void SubChunkMesh::RenderCutout()
 	{
-		if (m_NeedsToPrepareRendering)
-		{
-			PrepareForRendering();
-		}
-
 		if (m_IndicesCutoutCount > 0)
 		{
-
 			glBindVertexArray(VAO_Cutout);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Cutout);
 			glDrawElements(GL_TRIANGLES, (GLsizei) m_IndicesCutoutCount, GL_UNSIGNED_SHORT, 0);
@@ -53,11 +57,6 @@ namespace onion::voxel
 
 	void SubChunkMesh::RenderTransparent()
 	{
-		if (m_NeedsToPrepareRendering)
-		{
-			PrepareForRendering();
-		}
-
 		if (m_IndicesTransparentCount > 0)
 		{
 			glBindVertexArray(VAO_Transparent);
@@ -65,6 +64,11 @@ namespace onion::voxel
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_IndicesTransparentCount), GL_UNSIGNED_SHORT, 0);
 			glBindVertexArray(0);
 		}
+	}
+
+	void SubChunkMesh::Delete()
+	{
+		CleanupOpenGlBuffers();
 	}
 
 	bool SubChunkMesh::IsDirty() const
@@ -77,20 +81,12 @@ namespace onion::voxel
 		m_IsDirty = isDirty;
 	}
 
-	bool SubChunkMesh::IsGenerating() const
+	void SubChunkMesh::BuffersUpdated()
 	{
-		return m_IsGenerating;
+		m_AreBuffersDataUpToDate = false;
+		m_NeedsToPrepareRendering = true;
 	}
 
-	void SubChunkMesh::SetGenerating(bool isGenerating)
-	{
-		m_IsGenerating = isGenerating;
-	}
-
-	bool SubChunkMesh::IsEmpty() const
-	{
-		return m_IsEmpty;
-	}
 	void SubChunkMesh::InitOpenGlBuffers()
 	{
 		CleanupOpenGlBuffers();
@@ -103,7 +99,7 @@ namespace onion::voxel
 		glGenVertexArrays(1, &VAO_Cutout);
 		glGenBuffers(1, &VBO_Cutout);
 		glGenBuffers(1, &EBO_Cutout);
-		glGenBuffers(1, &EBO_Cutout);
+		glGenBuffers(1, &EBO_CutoutOverlay);
 
 		glGenVertexArrays(1, &VAO_Transparent);
 		glGenBuffers(1, &VBO_Transparent);
@@ -239,11 +235,14 @@ namespace onion::voxel
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 
-		m_AreBuffersDataSet = true;
+		m_AreBuffersDataUpToDate = true;
 
 		// Clear the buffers after setting data to free memory
 		std::vector<Vertex>().swap(m_VerticesOpaque);
 		std::vector<uint16_t>().swap(m_IndicesOpaque);
+
+		std::vector<Vertex>().swap(m_VerticesCutout);
+		std::vector<uint16_t>().swap(m_IndicesCutout);
 
 		std::vector<Vertex>().swap(m_VerticesTransparent);
 		std::vector<uint16_t>().swap(m_IndicesTransparent);
@@ -259,7 +258,7 @@ namespace onion::voxel
 		glDeleteVertexArrays(1, &VAO_Cutout);
 		glDeleteBuffers(1, &VBO_Cutout);
 		glDeleteBuffers(1, &EBO_Cutout);
-		glDeleteBuffers(1, &EBO_Cutout);
+		glDeleteBuffers(1, &EBO_CutoutOverlay);
 
 		glDeleteVertexArrays(1, &VAO_Transparent);
 		glDeleteBuffers(1, &VBO_Transparent);
@@ -271,10 +270,19 @@ namespace onion::voxel
 		EBO_Opaque = 0;
 		EBO_OpaqueOverlay = 0;
 
+		VAO_Cutout = 0;
+		VBO_Cutout = 0;
+		EBO_Cutout = 0;
+		EBO_CutoutOverlay = 0;
+
 		VAO_Transparent = 0;
 		VBO_Transparent = 0;
 		EBO_Transparent = 0;
 		EBO_TransparentOverlay = 0;
+
+		m_IndicesOpaqueCount = 0;
+		m_IndicesCutoutCount = 0;
+		m_IndicesTransparentCount = 0;
 
 		m_AreBuffersGenerated = false;
 	}
@@ -302,12 +310,11 @@ namespace onion::voxel
 			InitOpenGlBuffers(); // Generate OpenGL buffers if they haven't been generated yet
 		}
 
-		if (!m_AreBuffersDataSet)
+		if (!m_AreBuffersDataUpToDate)
 		{
-			UpdateOpenGlBuffers(); // Set data to OpenGL buffers if they haven't been set yet
+			UpdateOpenGlBuffers(); // Update OpenGL buffers with the latest vertex and index data if they are not up to date
 		}
 
-		m_IsReadyToRender = true;		   // Mark as ready to render
 		m_NeedsToPrepareRendering = false; // No longer needs to prepare rendering
 	}
 } // namespace onion::voxel

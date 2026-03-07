@@ -21,7 +21,7 @@ namespace onion::voxel
 
 		// ----- Constructor / Destructor -----
 	  public:
-		ChunkMesh(const glm::ivec2& chunkPosition);
+		ChunkMesh(const glm::ivec2& chunkPosition, std::shared_ptr<Chunk> chunk);
 		~ChunkMesh();
 
 		// ----- Public API -----
@@ -30,25 +30,26 @@ namespace onion::voxel
 		void RenderCutout();
 		void RenderTransparent();
 
+		void Delete();
+
 		// ----- Getters / Setters -----
 	  public:
-		glm::ivec2 GetChunkPosition() const;
+		const glm::ivec2& GetChunkPosition() const;
+
 		bool IsDirty() const;
-		void SetDirty(bool isDirty);
-		bool IsDeleteRequested() const;
-		void SetDeleteRequested(bool deleteRequested);
-		bool IsReadyToBeDeleted() const;
+		void SetSubChunkMeshDirty(int subChunkIndex, bool isDirty);
+		void SetAllSubChunkMeshesDirty(bool isDirty);
 
 		// ----- States -----
 	  private:
 		std::atomic_bool m_IsDirty{true};
-		std::atomic_bool m_DeleteRequested{false};
-		std::atomic_bool m_IsReadyToBeDeleted{false};
 
 		// ----- Members -----
 	  protected:
 		const glm::ivec2 m_ChunkPosition; // The position of the chunk that this mesh represents (in chunk coordinates)
-		mutable std::shared_mutex m_MutexSubChunkMeshes; // Mutex for synchronizing access to the subchunk meshes
-		std::vector<std::shared_ptr<SubChunkMesh>> m_SubChunkMeshes; // The subchunk meshes that make up this chunk mesh
+		mutable std::shared_mutex m_MutexSubChunkMeshes; // Mutex for synchronizing access to the subchunk meshes vector
+		std::vector<std::unique_ptr<SubChunkMesh>> m_SubChunkMeshes; // The subchunk meshes that make up this chunk mesh
+
+		std::weak_ptr<Chunk> m_Chunk; // Weak pointer to the chunk that this mesh represents
 	};
 } // namespace onion::voxel
