@@ -46,6 +46,7 @@ namespace onion::voxel
 
 		// ----- Static Members -----
 	  private:
-		static inline std::vector<BlockId> s_TransparentBlocks{BlockId::Air, BlockId::Glass, BlockId::OakLeaves};
+		static const std::vector<bool>
+			s_TransparencyLookupTable; // A lookup table for block transparency, indexed by BlockId
 	};
 } // namespace onion::voxel

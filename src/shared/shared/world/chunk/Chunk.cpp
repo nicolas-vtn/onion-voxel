@@ -6,6 +6,11 @@ namespace onion::voxel
 {
 	Chunk::Chunk(const glm::ivec2& position) : m_Position(position) {}
 
+	voxel::Chunk::Chunk(glm::ivec2 position, std::vector<SubChunk> subChunks, std::vector<Block> blocksPalette)
+		: m_Position(position), m_SubChunks(std::move(subChunks)), m_BlocksPalette(std::move(blocksPalette))
+	{
+	}
+
 	Chunk::~Chunk() {}
 
 	glm::ivec2 Chunk::GetPosition() const

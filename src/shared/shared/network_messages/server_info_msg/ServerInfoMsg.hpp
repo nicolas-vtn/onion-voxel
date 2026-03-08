@@ -6,6 +6,8 @@
 #include <sstream>
 #include <string>
 
+#include "../MessageHeader.hpp"
+
 namespace onion::voxel
 {
 	struct ServerInfoMsg

@@ -10,11 +10,21 @@ namespace onion::voxel
 	NetworkServer::NetworkServer(int port) : m_Port(port)
 	{
 		InitEnetOnce::Init();
+
+		m_DispatchIncomingMessagesThread =
+			std::jthread([this](std::stop_token stopToken) { DispatchIncomingMessages(stopToken); });
 	}
 
 	NetworkServer::~NetworkServer()
 	{
 		Stop();
+
+		if (m_DispatchIncomingMessagesThread.joinable())
+		{
+			m_DispatchIncomingMessagesThread.request_stop();
+			m_DispatchIncomingMessagesThread.join();
+		}
+
 		std::cout << "NetworkServer destroyed.\n";
 	}
 
@@ -307,5 +317,25 @@ namespace onion::voxel
 	{
 		std::lock_guard<std::mutex> lock(m_ClientMutex);
 		return m_NextClientHandle++;
+	}
+	void NetworkServer::DispatchIncomingMessages(std::stop_token stopToken)
+	{
+
+		IncommingMessage msg;
+
+		while (!stopToken.stop_requested())
+		{
+			if (m_IncomingMessages.TryPop(msg))
+			{
+				MessageReceivedEventArgs args;
+				args.Sender = msg.Sender;
+				args.Message = std::move(msg.Message);
+				MessageReceived.Trigger(args);
+			}
+			else
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			}
+		}
 	}
 } // namespace onion::voxel

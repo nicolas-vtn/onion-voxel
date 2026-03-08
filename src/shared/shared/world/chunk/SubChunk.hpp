@@ -10,8 +10,12 @@
 
 namespace onion::voxel
 {
+	class Serializer;
+
 	class SubChunk
 	{
+		friend class Serializer;
+
 		// ----- Constructor / Destructor -----
 	  public:
 		SubChunk();
@@ -34,7 +38,7 @@ namespace onion::voxel
 		void SetBlockIndexInPalette(const glm::ivec3& localPosition, uint8_t blockIndex);
 
 		// ----- Members -----
-	  private:
+	  protected:
 		bool m_IsMonoBlock = true;			   // Whether the subchunk is made of a single block
 		uint8_t m_MonoBlockIndexInPalette = 0; // The block data for the mono block (if m_IsMonoBlock is true)
 

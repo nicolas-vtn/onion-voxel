@@ -10,11 +10,21 @@ namespace onion::voxel
 	NetworkClient::NetworkClient(const std::string& host, int port) : m_Host(host), m_Port(port)
 	{
 		InitEnetOnce::Init();
+
+		m_DispatchIncomingMessagesThread =
+			std::jthread([this](std::stop_token stopToken) { DispatchIncomingMessages(stopToken); });
 	}
 
 	NetworkClient::~NetworkClient()
 	{
 		Stop();
+
+		if (m_DispatchIncomingMessagesThread.joinable())
+		{
+			m_DispatchIncomingMessagesThread.request_stop();
+			m_DispatchIncomingMessagesThread.join();
+		}
+
 		std::cout << "Network client destroyed.\n";
 	}
 
@@ -86,11 +96,6 @@ namespace onion::voxel
 		out.Reliable = reliable;
 
 		m_OutgoingMessages.Push(std::move(out));
-	}
-
-	bool NetworkClient::TryPopMessage(NetworkMessage& out)
-	{
-		return m_IncomingMessages.TryPop(out);
 	}
 
 	void NetworkClient::ListenForEvents(std::stop_token stopToken)
@@ -220,5 +225,21 @@ namespace onion::voxel
 
 		if (m_Client)
 			enet_host_flush(m_Client);
+	}
+	void NetworkClient::DispatchIncomingMessages(std::stop_token stopToken)
+	{
+		NetworkMessage msg;
+
+		while (!stopToken.stop_requested())
+		{
+			if (m_IncomingMessages.TryPop(msg))
+			{
+				MessageReceived.Trigger(msg);
+			}
+			else
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			}
+		}
 	}
 } // namespace onion::voxel

@@ -10,11 +10,16 @@
 
 namespace onion::voxel
 {
+	class Serializer;
+
 	class Chunk
 	{
+		friend class Serializer;
+
 		// ----- Constructor / Destructor -----
 	  public:
 		Chunk(const glm::ivec2& position);
+		Chunk(glm::ivec2 position, std::vector<SubChunk> subChunks, std::vector<Block> blocksPalette);
 		~Chunk();
 
 		// ----- Public API -----
@@ -28,11 +33,11 @@ namespace onion::voxel
 		int GetSubChunkCount() const;
 
 		// ----- Members -----
-	  private:
+	  protected:
 		const glm::ivec2 m_Position;	   // Position of the chunk in chunk coordinates (Not in world coordinates)
 		mutable std::shared_mutex m_Mutex; // Mutex for synchronizing access to the chunk data
 		std::vector<SubChunk> m_SubChunks; // The subchunks that make up this chunk
-		std::vector<Block> m_BlocksPalette{Block()}; // The blocks palette that make up this chunk
+		std::vector<Block> m_BlocksPalette{Block(BlockId::Air)}; // The blocks palette that make up this chunk
 
 		// ----- Private Methods -----
 	  private:

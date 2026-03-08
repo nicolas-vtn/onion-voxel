@@ -13,5 +13,12 @@ namespace onion::voxel
 		OakLog = 5,
 		OakLeaves = 6,
 		Furnace = 7,
+		Bedrock = 8,
 	};
+
+	inline int GetBlockIdCount()
+	{
+		return 9; // Update this if you add more block IDs
+	}
+
 } // namespace onion::voxel

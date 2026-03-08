@@ -58,6 +58,8 @@ namespace onion::voxel
 				  TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque},
 				  TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque}},
 				 RotationType::Horizontal);
+
+		Register(BlockId::Bedrock, "bedrock.png");
 	}
 
 	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures, RotationType rotationType)

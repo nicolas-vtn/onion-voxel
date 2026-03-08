@@ -72,6 +72,12 @@ namespace onion::voxel
 		// ----- Network Client -----
 	  private:
 		NetworkClient m_NetworkClient;
+		std::vector<EventHandle> m_NetworkClientEventHandles;
+		void SubscribeToNetworkClientEvents();
+
+		void Handle_NetworkMessageReceived(const NetworkMessage& message);
+		void Handle_ServerInfoMessageReceived(const ServerInfoMsg& msg);
+		void Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg);
 
 		// ----- Localhost Server -----
 	  private:
