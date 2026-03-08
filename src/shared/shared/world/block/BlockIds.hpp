@@ -14,11 +14,14 @@ namespace onion::voxel
 		OakLeaves = 6,
 		Furnace = 7,
 		Bedrock = 8,
+		Water = 9,
+		Sand = 10,
+		Gravel = 11,
 	};
 
 	inline int GetBlockIdCount()
 	{
-		return 9; // Update this if you add more block IDs
+		return 12; // Update this if you add more block IDs
 	}
 
 } // namespace onion::voxel

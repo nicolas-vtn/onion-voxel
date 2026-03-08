@@ -60,6 +60,12 @@ namespace onion::voxel
 				 RotationType::Horizontal);
 
 		Register(BlockId::Bedrock, "bedrock.png");
+
+		Register(BlockId::Water, TextureInfo{"water_still.png", TintType::Water, TextureType::Transparent});
+
+		Register(BlockId::Sand, "sand.png");
+
+		Register(BlockId::Gravel, "gravel.png");
 	}
 
 	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures, RotationType rotationType)
