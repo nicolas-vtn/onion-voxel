@@ -33,6 +33,7 @@ namespace onion::voxel
 		void Render();
 
 		void DeleteChunkMeshesAsync();
+		void DeleteChunkMeshAsync(const glm::ivec2& chunkPos);
 
 		void DeleteChunkMeshes();
 

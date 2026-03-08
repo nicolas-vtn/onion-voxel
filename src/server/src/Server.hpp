@@ -67,6 +67,7 @@ namespace onion::voxel
 		WorldGenerator m_WorldGenerator;
 
 		void GenerateChunksAroundPlayer(const glm::ivec2& playerChunkPosition);
+		void RemoveUnusedChunks();
 
 		// ----- Players -----
 	  private:

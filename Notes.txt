@@ -3,3 +3,9 @@
 - Compress sub chunk data
 
 
+---------- Render Distance ----------
+- Bugfix : Bug when Client render distance is is lower than ServerRenderDistance.
+
+
+---------- Vertex -----------
+- Optimize Vertex format to use uint8_t / int instead of floats.

@@ -164,6 +164,38 @@ namespace onion::voxel
 		}
 	}
 
+	void Server::RemoveUnusedChunks()
+	{
+		// One unused chunk is a chunk that is outside the simulation distance of all players.
+		std::vector<glm::ivec2> chunksToRemove;
+		{
+			std::shared_lock lock(m_MutexPlayers);
+			for (const auto& [chunkPos, chunk] : m_WorldManager->GetAllChunks())
+			{
+				bool isChunkUsed = false;
+				for (const auto& [clientHandle, playerChunkPos] : m_PlayerChunkPositions)
+				{
+					const int simulationDistance = m_Config.serverData.SimulationDistance;
+					if (std::abs(playerChunkPos.x - chunkPos.x) <= simulationDistance &&
+						std::abs(playerChunkPos.y - chunkPos.y) <= simulationDistance)
+					{
+						isChunkUsed = true;
+						break;
+					}
+				}
+				if (!isChunkUsed)
+				{
+					chunksToRemove.push_back(chunkPos);
+				}
+			}
+		}
+
+		for (const auto& chunkPos : chunksToRemove)
+		{
+			m_WorldManager->RemoveChunk(chunkPos);
+		}
+	}
+
 	void Server::AddOrUpdatePlayer(const PlayerInfo& playerInfo)
 	{
 		std::lock_guard lock(m_MutexPlayers);
@@ -173,24 +205,31 @@ namespace onion::voxel
 
 	void Server::UpdatePlayerPosition(uint32_t clientHandle, const glm::vec3& newPosition)
 	{
-		std::lock_guard lock(m_MutexPlayers);
-		auto it = m_Players.find(clientHandle);
-		if (it != m_Players.end())
+		glm::ivec2 playerChunkPos;
+		glm::ivec2 oldChunkPos;
+
 		{
-			const glm::ivec2 oldChunkPos = m_PlayerChunkPositions[clientHandle];
-			glm::ivec2 playerChunkPos = Utils::WorldToChunkPosition(newPosition);
-			// Generate new chunks around the player if they have moved to a different chunk
-			if (playerChunkPos != oldChunkPos)
+			std::lock_guard lock(m_MutexPlayers);
+
+			auto it = m_Players.find(clientHandle);
+			if (it == m_Players.end())
 			{
-				GenerateChunksAroundPlayer(playerChunkPos);
+				throw std::runtime_error("Player with client handle " + std::to_string(clientHandle) + " not found.");
 			}
+
+			oldChunkPos = m_PlayerChunkPositions[clientHandle];
+			playerChunkPos = Utils::WorldToChunkPosition(newPosition);
 
 			it->second.Position = newPosition;
 			m_PlayerChunkPositions[clientHandle] = playerChunkPos;
 		}
-		else
+
+		// lock released here
+
+		if (playerChunkPos != oldChunkPos)
 		{
-			throw std::runtime_error("Player with client handle " + std::to_string(clientHandle) + " not found.");
+			RemoveUnusedChunks();
+			GenerateChunksAroundPlayer(playerChunkPos);
 		}
 	}
 

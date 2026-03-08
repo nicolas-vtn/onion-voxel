@@ -14,6 +14,7 @@ namespace onion::voxel
 	{
 		std::string Username = "DefaultUsername";
 		std::string UUID;
+		int RenderDistance = 8;
 	};
 
 	struct ClientConfiguration
@@ -61,6 +62,7 @@ namespace onion::voxel
 
 			clientData.Username = json.value("Username", "");
 			clientData.UUID = json.value("UUID", "");
+			clientData.RenderDistance = json.value("RenderDistance", 8);
 		}
 
 		void Save(const std::filesystem::path& filePath) const
@@ -69,6 +71,7 @@ namespace onion::voxel
 
 			json["Username"] = clientData.Username;
 			json["UUID"] = clientData.UUID;
+			json["RenderDistance"] = clientData.RenderDistance;
 
 			std::ofstream file(filePath);
 			if (!file.is_open())

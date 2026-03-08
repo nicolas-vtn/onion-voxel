@@ -5,6 +5,8 @@
 #include <stop_token>
 #include <thread>
 
+#include <shared/utils/Utils.hpp>
+
 namespace
 {
 	static void error_callback(int code, const char* desc)
@@ -81,6 +83,20 @@ namespace onion::voxel
 	std::shared_ptr<ServerInfo> Renderer::GetServerInfo() const
 	{
 		return m_ServerInfo;
+	}
+
+	void Renderer::SetRenderDistance(uint32_t renderDistance)
+	{
+		uint32_t clampedRenderDistance =
+			std::max(renderDistance, m_ServerInfo ? static_cast<uint32_t>(m_ServerInfo->SimulationDistance) : 8u);
+
+		m_RenderDistance = clampedRenderDistance;
+		m_LastCameraChunkPosition = glm::ivec2(INT32_MAX, INT32_MAX); // Force update of rendered chunks
+	}
+
+	uint32_t Renderer::GetRenderDistance() const
+	{
+		return m_RenderDistance;
 	}
 
 	void Renderer::InitWindow()
@@ -180,6 +196,7 @@ namespace onion::voxel
 			m_LastFrame = currentFrame;
 
 			// Render World
+			RemoveDistantChunks();
 			if (GetRenderState() == eRenderState::InGame)
 			{
 				m_WorldRenderer.Render();
@@ -317,6 +334,32 @@ namespace onion::voxel
 		}
 
 		m_IsPaused = pause;
+	}
+
+	void Renderer::RemoveDistantChunks()
+	{
+		// Get the current camera chunk position
+		glm::ivec2 currentCameraChunkPos = Utils::WorldToChunkPosition(m_Camera->GetPosition());
+
+		// Only proceed if the camera has moved to a different chunk
+		if (currentCameraChunkPos != m_LastCameraChunkPosition)
+		{
+			m_LastCameraChunkPosition = currentCameraChunkPos;
+
+			// Get all loaded chunks
+			auto loadedChunks = m_WorldManager->GetAllChunks();
+			for (const auto& [chunkPos, chunk] : loadedChunks)
+			{
+				// Calculate the distance from the camera to the chunk
+				int distanceX = std::abs(chunkPos.x - currentCameraChunkPos.x);
+				int distanceZ = std::abs(chunkPos.y - currentCameraChunkPos.y);
+				// If the chunk is outside the render distance, remove it
+				if (distanceX > static_cast<int>(m_RenderDistance) || distanceZ > static_cast<int>(m_RenderDistance))
+				{
+					m_WorldManager->RemoveChunk(chunkPos);
+				}
+			}
+		}
 	}
 
 	void Renderer::UpdateCameraFromInputs(const std::shared_ptr<InputsSnapshot>& inputs)
@@ -483,6 +526,16 @@ namespace onion::voxel
 			else
 			{
 				ImGui::Text("No server info available");
+			}
+		}
+
+		// ----- Render Settings Debug -----
+		if (ImGui::CollapsingHeader("Render Settings", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			int renderDistance = static_cast<int>(m_RenderDistance);
+			if (ImGui::SliderInt("Render Distance (chunks)", &renderDistance, 0, 64))
+			{
+				SetRenderDistance(static_cast<uint32_t>(renderDistance));
 			}
 		}
 

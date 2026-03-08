@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <shared/network_messages/Serializer.hpp>
+#include <shared/utils/Utils.hpp>
 
 namespace onion::voxel
 {
@@ -71,6 +72,9 @@ namespace onion::voxel
 	void Client::LoadConfiguration()
 	{
 		m_Config.Load(m_ConfigFilePath);
+
+		// Apply configuration to the client
+		m_Renderer.SetRenderDistance(m_Config.clientData.RenderDistance);
 	}
 
 	void Client::SaveConfiguration()
@@ -201,7 +205,17 @@ namespace onion::voxel
 	void Client::Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg)
 	{
 		std::shared_ptr<Chunk> chunk = Serializer::DeserializeChunk(msg);
-		m_WorldManager->AddChunk(chunk);
+
+		// Checks if the chunk is in the render distance
+		glm::ivec2 chunkPosition = chunk->GetPosition();
+		glm::ivec2 playerChunkPosition = Utils::WorldToChunkPosition(m_Renderer.GetPlayerPosition());
+
+		const int renderDistance = m_Renderer.GetRenderDistance();
+		if (std::abs(playerChunkPosition.x - chunkPosition.x) <= renderDistance &&
+			std::abs(playerChunkPosition.y - chunkPosition.y) <= renderDistance)
+		{
+			m_WorldManager->AddChunk(chunk);
+		}
 	}
 
 	void Client::SendPlayerInfosToServer()

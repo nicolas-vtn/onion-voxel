@@ -24,7 +24,6 @@ namespace onion::voxel
 		glm::mat4 viewProjMatrix = projectionMatrix * viewMatrix;
 
 		// Bind Texture Atlas
-		//SubChunkMesh::s_TextureAtlas.Bind();
 		m_TextureAtlas->Bind();
 
 		// Sets Uniforms
@@ -131,6 +130,17 @@ namespace onion::voxel
 		m_ChunkMeshes.clear();
 	}
 
+	void WorldRenderer::DeleteChunkMeshAsync(const glm::ivec2& chunkPos)
+	{
+		std::unique_lock lock(m_MutexChunkMeshes);
+		auto it = m_ChunkMeshes.find(chunkPos);
+		if (it != m_ChunkMeshes.end())
+		{
+			m_ChunkMeshesToDelete.Push(it->second);
+			m_ChunkMeshes.erase(it);
+		}
+	}
+
 	void WorldRenderer::SubscribeToWorldManagerEvents()
 	{
 		m_EventHandles.push_back(m_WorldManager->ChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk)
@@ -181,15 +191,7 @@ namespace onion::voxel
 	{
 		const glm::ivec2 chunkPos = chunk->GetPosition();
 
-		{
-			std::unique_lock lock(m_MutexChunkMeshes);
-			auto it = m_ChunkMeshes.find(chunkPos);
-			if (it != m_ChunkMeshes.end())
-			{
-				m_ChunkMeshesToDelete.Push(it->second);
-				m_ChunkMeshes.erase(it);
-			}
-		}
+		DeleteChunkMeshAsync(chunkPos);
 
 		// Mark neighboring chunk meshes as dirty so they will be rebuilt to update their faces that are adjacent to the removed chunk
 		MarkNeighboringChunkMeshesDirty(chunkPos);
