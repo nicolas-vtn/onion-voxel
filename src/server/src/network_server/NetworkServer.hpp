@@ -81,7 +81,8 @@ namespace onion::voxel
 
 		// ----- Getters / Setters -----
 	  public:
-		bool TryPopMessage(IncommingMessage& out);
+		int GetServerPort() const;
+		void SetServerPort(int port);
 
 		// ----- Events -----
 	  public:

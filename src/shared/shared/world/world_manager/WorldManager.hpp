@@ -40,6 +40,7 @@ namespace onion::voxel
 
 		Block GetBlock(const glm::ivec3& worldPosition) const;
 
+		bool IsChunkLoaded(const glm::ivec2& chunkPosition) const;
 		std::shared_ptr<Chunk> GetChunk(const glm::ivec2& chunkPosition) const;
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, IVec2Hash> GetAllChunks() const;
 

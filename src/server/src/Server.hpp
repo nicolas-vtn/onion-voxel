@@ -1,9 +1,13 @@
 #pragma once
 
 #include <atomic>
+#include <shared_mutex>
+#include <string>
+#include <thread>
+#include <unordered_map>
 
+#include "ServerConfiguration.hpp"
 #include "network_server/NetworkServer.hpp"
-#include <shared/network_messages/Serializer.hpp>
 
 #include "world_generator/WorldGenerator.hpp"
 #include <shared/world/world_manager/WorldManager.hpp>
@@ -23,6 +27,14 @@ namespace onion::voxel
 		void Stop();
 
 		bool IsRunning() const noexcept;
+
+		// ----- Configuration (Server) -----
+	  private:
+		static inline const std::string SERVER_VERSION = "0.1.0";
+		std::filesystem::path m_ConfigFilePath = "config_server.json";
+		ServerConfiguration m_Config;
+		void LoadConfiguration();
+		void SaveConfiguration();
 
 		// ----- States -----
 	  private:
@@ -54,7 +66,26 @@ namespace onion::voxel
 
 		WorldGenerator m_WorldGenerator;
 
-		// ----- Event Handlers -----
+		void GenerateChunksAroundPlayer(const glm::ivec2& playerChunkPosition);
+
+		// ----- Players -----
 	  private:
+		struct PlayerInfo
+		{
+			std::string Username;
+			std::string UUID;
+			uint32_t ClientHandle;
+			glm::vec3 Position;
+		};
+
+		mutable std::shared_mutex m_MutexPlayers;
+		std::unordered_map<uint32_t, PlayerInfo> m_Players;
+		std::unordered_map<uint32_t, glm::ivec2>
+			m_PlayerChunkPositions; // The chunk positions of the chunks that each player is currently in
+
+		void AddOrUpdatePlayer(const PlayerInfo& playerInfo);
+		void UpdatePlayerPosition(uint32_t clientHandle, const glm::vec3& newPosition);
+		void RemovePlayer(uint32_t clientHandle);
+		PlayerInfo GetPlayerInfo(uint32_t clientHandle) const;
 	};
 } // namespace onion::voxel

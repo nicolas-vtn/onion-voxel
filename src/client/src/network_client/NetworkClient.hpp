@@ -30,9 +30,20 @@ namespace onion::voxel
 		bool IsRunning() const noexcept;
 
 		void Send(NetworkMessage message, bool reliable = true);
+
+		// ----- Getters / Setters -----
+	  public:
+		std::string GetRemoteHost() const;
+		void SetRemoteHost(const std::string& host);
+
+		int GetRemotePort() const;
+		void SetRemotePort(int port);
+
 		// ----- Events -----
 	  public:
 		Event<const NetworkMessage&> MessageReceived;
+		Event<const ServerInfoMsg&> Connected;
+		Event<bool> Disconnected;
 
 		// ----- Private Structs -----
 	  private:

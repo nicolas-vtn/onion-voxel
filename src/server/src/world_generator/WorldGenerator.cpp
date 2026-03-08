@@ -36,10 +36,13 @@ namespace onion::voxel
 			glm::ivec2 chunkPosition;
 			if (m_ChunkGenerationQueue.TryPop(chunkPosition))
 			{
-				std::shared_ptr<Chunk> chunk = GenerateChunk(chunkPosition);
-				if (chunk)
+				if (!m_WorldManager->IsChunkLoaded(chunkPosition))
 				{
-					m_WorldManager->AddChunk(chunk);
+					std::shared_ptr<Chunk> chunk = GenerateChunk(chunkPosition);
+					if (chunk)
+					{
+						m_WorldManager->AddChunk(chunk);
+					}
 				}
 			}
 			else

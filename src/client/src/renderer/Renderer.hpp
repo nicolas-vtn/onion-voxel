@@ -22,6 +22,14 @@
 
 namespace onion::voxel
 {
+	struct ServerInfo
+	{
+		std::string Name;
+		std::string Address;
+		int Port;
+		int SimulationDistance;
+	};
+
 	class Renderer
 	{
 	  public:
@@ -49,6 +57,9 @@ namespace onion::voxel
 		void SetRenderState(eRenderState renderState);
 
 		glm::vec3 GetPlayerPosition() const;
+
+		void SetServerInfo(std::shared_ptr<ServerInfo> serverInfo);
+		std::shared_ptr<ServerInfo> GetServerInfo() const;
 
 		// ----- Events -----
 	  public:
@@ -121,6 +132,10 @@ namespace onion::voxel
 		WorldRenderer m_WorldRenderer;
 		bool m_IsFreeCamera = true;
 		void UpdateCameraFromInputs(const std::shared_ptr<InputsSnapshot>& inputs);
+
+		// ----- Server Info -----
+	  private:
+		std::shared_ptr<ServerInfo> m_ServerInfo;
 
 		// ------ GUI ------
 	  private:

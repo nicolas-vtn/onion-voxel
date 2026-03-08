@@ -46,8 +46,8 @@ namespace onion::voxel
 
 		// ----- Configuration (Client) -----
 	  private:
-		static inline const std::string GAME_VERSION = "0.1.0";
-		std::filesystem::path m_ConfigFilePath = "config.json";
+		static inline const std::string CLIENT_VERSION = "0.1.0";
+		std::filesystem::path m_ConfigFilePath = "config_client.json";
 		ClientConfiguration m_Config;
 		void LoadConfiguration();
 		void SaveConfiguration();
@@ -83,6 +83,8 @@ namespace onion::voxel
 		std::vector<EventHandle> m_NetworkClientEventHandles;
 		void SubscribeToNetworkClientEvents();
 
+		void Handle_ClientConnected(const ServerInfoMsg& message);
+		void Handle_ClientDisconnected(bool disconnectedByServer);
 		void Handle_NetworkMessageReceived(const NetworkMessage& message);
 		void Handle_ServerInfoMessageReceived(const ServerInfoMsg& msg);
 		void Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg);

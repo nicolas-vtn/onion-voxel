@@ -91,6 +91,12 @@ namespace onion::voxel
 		}
 	}
 
+	bool WorldManager::IsChunkLoaded(const glm::ivec2& chunkPosition) const
+	{
+		std::shared_lock lock(m_MutexChunks);
+		return m_Chunks.find(chunkPosition) != m_Chunks.end();
+	}
+
 	Block WorldManager::GetBlock(const glm::ivec3& worldPosition) const
 	{
 		// Calculate chunk position and local position within chunk

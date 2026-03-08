@@ -143,8 +143,24 @@ namespace onion::voxel
 
 	void Client::SubscribeToNetworkClientEvents()
 	{
+		m_NetworkClientEventHandles.push_back(m_NetworkClient.Connected.Subscribe(
+			[this](const ServerInfoMsg& message) { Handle_ClientConnected(message); }));
+
+		m_NetworkClientEventHandles.push_back(m_NetworkClient.Disconnected.Subscribe(
+			[this](bool disconnectedByServer) { Handle_ClientDisconnected(disconnectedByServer); }));
+
 		m_NetworkClientEventHandles.push_back(m_NetworkClient.MessageReceived.Subscribe(
 			[this](const NetworkMessage& message) { Handle_NetworkMessageReceived(message); }));
+	}
+
+	void Client::Handle_ClientConnected(const ServerInfoMsg& message)
+	{
+		Handle_ServerInfoMessageReceived(message);
+	}
+
+	void Client::Handle_ClientDisconnected(bool disconnectedByServer)
+	{
+		m_Renderer.SetServerInfo(nullptr);
 	}
 
 	void Client::Handle_NetworkMessageReceived(const NetworkMessage& message)
@@ -172,6 +188,14 @@ namespace onion::voxel
 
 		m_ClientHandle = msg.ClientHandle;
 		m_ServerName = msg.ServerName;
+
+		std::shared_ptr<ServerInfo> serverInfo = std::make_shared<ServerInfo>();
+		serverInfo->Name = msg.ServerName;
+		serverInfo->Address = m_NetworkClient.GetRemoteHost();
+		serverInfo->Port = m_NetworkClient.GetRemotePort();
+		serverInfo->SimulationDistance = msg.SimulationDistance;
+
+		m_Renderer.SetServerInfo(serverInfo);
 	}
 
 	void Client::Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg)

@@ -15,6 +15,7 @@ target_link_libraries(onion_voxel_server
         enet::enet
 		winmm
 		ws2_32
+		nlohmann_json::nlohmann_json
 
 		onion::event
 		onion_voxel_shared		

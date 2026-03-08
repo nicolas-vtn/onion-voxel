@@ -2,10 +2,15 @@
 
 #include <iostream>
 
+#include <shared/network_messages/Serializer.hpp>
+#include <shared/utils/Utils.hpp>
+
 namespace onion::voxel
 {
 	Server::Server() : m_WorldManager(std::make_shared<WorldManager>()), m_WorldGenerator(m_WorldManager)
 	{
+		LoadConfiguration();
+
 		SubscribeToNetworkServerEvents();
 		SubscribeToWorldManagerEvents();
 	}
@@ -30,6 +35,19 @@ namespace onion::voxel
 	bool Server::IsRunning() const noexcept
 	{
 		return m_IsRunning.load();
+	}
+
+	void Server::LoadConfiguration()
+	{
+		m_Config.Load(m_ConfigFilePath);
+
+		// Apply configuration to the network server
+		m_NetworkServer.SetServerPort(m_Config.serverData.Port);
+	}
+
+	void Server::SaveConfiguration()
+	{
+		m_Config.Save(m_ConfigFilePath);
 	}
 
 	void Server::SubscribeToNetworkServerEvents()
@@ -71,6 +89,14 @@ namespace onion::voxel
 	{
 		std::cout << "Received ClientInfoMsg from client " << args.Sender << ": Username=" << msg.Username
 				  << ", UUID=" << msg.UUID << "\n";
+
+		// Update player info
+		PlayerInfo playerInfo;
+		playerInfo.ClientHandle = args.Sender;
+		playerInfo.Username = msg.Username;
+		playerInfo.UUID = msg.UUID;
+
+		AddOrUpdatePlayer(playerInfo);
 	}
 
 	void Server::Handle_PlayerInfoMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
@@ -79,6 +105,9 @@ namespace onion::voxel
 		std::cout << "Received PlayerInfoMsg from client " << args.Sender << ": Username=" << msg.Username
 				  << ", UUID=" << msg.UUID << ", Position=" << msg.Position.x << "," << msg.Position.y << ","
 				  << msg.Position.z << "\n";
+
+		// Update player position
+		UpdatePlayerPosition(args.Sender, msg.Position);
 	}
 
 	void Server::Handle_ClientConnected(const NetworkServer::ClientConnectedEventArgs& args)
@@ -88,19 +117,20 @@ namespace onion::voxel
 
 		// Send a welcome message to the newly connected client
 		ServerInfoMsg srvInfoMsg;
-		srvInfoMsg.ServerName = "Demo_Server";
+		srvInfoMsg.ServerName = m_Config.serverData.ServerName;
 		srvInfoMsg.ClientHandle = args.Client;
+		srvInfoMsg.SimulationDistance = m_Config.serverData.SimulationDistance;
 
 		m_NetworkServer.Send(args.Client, srvInfoMsg);
 
-		// DEMO : Generate 10 * 10 chunks around (0, 0)
-		for (int x = -5; x < 5; ++x)
-		{
-			for (int z = -5; z < 5; ++z)
-			{
-				m_WorldGenerator.GenerateChunkAsync({x, z});
-			}
-		}
+		//// DEMO : Generate 10 * 10 chunks around (0, 0)
+		//for (int x = -5; x < 5; ++x)
+		//{
+		//	for (int z = -5; z < 5; ++z)
+		//	{
+		//		m_WorldGenerator.GenerateChunkAsync({x, z});
+		//	}
+		//}
 	}
 
 	void Server::Handle_ClientDisconnected(const NetworkServer::ClientDisconnectedEventArgs& args)
@@ -119,6 +149,69 @@ namespace onion::voxel
 	void Server::Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk)
 	{
 		// For now, the client has the resposiblity to remove it's chunks.
+	}
+
+	void Server::GenerateChunksAroundPlayer(const glm::ivec2& playerChunkPosition)
+	{
+		const int simulationDistance = m_Config.serverData.SimulationDistance;
+		for (int x = playerChunkPosition.x - simulationDistance; x <= playerChunkPosition.x + simulationDistance; ++x)
+		{
+			for (int z = playerChunkPosition.y - simulationDistance; z <= playerChunkPosition.y + simulationDistance;
+				 ++z)
+			{
+				m_WorldGenerator.GenerateChunkAsync({x, z});
+			}
+		}
+	}
+
+	void Server::AddOrUpdatePlayer(const PlayerInfo& playerInfo)
+	{
+		std::lock_guard lock(m_MutexPlayers);
+		m_Players[playerInfo.ClientHandle] = playerInfo;
+		m_PlayerChunkPositions[playerInfo.ClientHandle] = Utils::WorldToChunkPosition(playerInfo.Position);
+	}
+
+	void Server::UpdatePlayerPosition(uint32_t clientHandle, const glm::vec3& newPosition)
+	{
+		std::lock_guard lock(m_MutexPlayers);
+		auto it = m_Players.find(clientHandle);
+		if (it != m_Players.end())
+		{
+			const glm::ivec2 oldChunkPos = m_PlayerChunkPositions[clientHandle];
+			glm::ivec2 playerChunkPos = Utils::WorldToChunkPosition(newPosition);
+			// Generate new chunks around the player if they have moved to a different chunk
+			if (playerChunkPos != oldChunkPos)
+			{
+				GenerateChunksAroundPlayer(playerChunkPos);
+			}
+
+			it->second.Position = newPosition;
+			m_PlayerChunkPositions[clientHandle] = playerChunkPos;
+		}
+		else
+		{
+			throw std::runtime_error("Player with client handle " + std::to_string(clientHandle) + " not found.");
+		}
+	}
+
+	void Server::RemovePlayer(uint32_t clientHandle)
+	{
+		std::lock_guard lock(m_MutexPlayers);
+		m_Players.erase(clientHandle);
+	}
+
+	Server::PlayerInfo Server::GetPlayerInfo(uint32_t clientHandle) const
+	{
+		std::shared_lock lock(m_MutexPlayers);
+		auto it = m_Players.find(clientHandle);
+		if (it != m_Players.end())
+		{
+			return it->second;
+		}
+		else
+		{
+			throw std::runtime_error("Player with client handle " + std::to_string(clientHandle) + " not found.");
+		}
 	}
 
 	void Server::SubscribeToWorldManagerEvents()

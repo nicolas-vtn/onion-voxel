@@ -93,7 +93,7 @@ namespace onion::voxel
 		m_QuitGame_Button.Render();
 
 		// ---- Render Version Text ----
-		std::string versionText = "Voxel::Onion " + GAME_VERSION;
+		std::string versionText = "Voxel::Onion " + CLIENT_VERSION;
 		float textX = s_ScreenHeight * 0.01f;
 		float textY = s_ScreenHeight * 0.97f;
 		float textHeight = s_ScreenHeight * (28.f / 1009.f);

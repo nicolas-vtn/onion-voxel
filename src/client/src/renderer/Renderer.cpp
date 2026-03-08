@@ -73,6 +73,16 @@ namespace onion::voxel
 		return m_Camera->GetPosition();
 	}
 
+	void Renderer::SetServerInfo(std::shared_ptr<ServerInfo> serverInfo)
+	{
+		m_ServerInfo = serverInfo;
+	}
+
+	std::shared_ptr<ServerInfo> Renderer::GetServerInfo() const
+	{
+		return m_ServerInfo;
+	}
+
 	void Renderer::InitWindow()
 	{
 		glfwSetErrorCallback(error_callback);
@@ -458,7 +468,23 @@ namespace onion::voxel
 
 		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 
-		ImGui::Text("Game Version: %s", GAME_VERSION.c_str());
+		ImGui::Text("Client Version: %s", CLIENT_VERSION.c_str());
+
+		// ----- Server Info Debug -----
+		if (ImGui::CollapsingHeader("Server Info", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			if (m_ServerInfo)
+			{
+				ImGui::Text("Name: %s", m_ServerInfo->Name.c_str());
+				ImGui::Text("Address: %s", m_ServerInfo->Address.c_str());
+				ImGui::Text("Port: %d", m_ServerInfo->Port);
+				ImGui::Text("Simu Dist: %d", m_ServerInfo->SimulationDistance);
+			}
+			else
+			{
+				ImGui::Text("No server info available");
+			}
+		}
 
 		// ----- Camera Debug -----
 		if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen))

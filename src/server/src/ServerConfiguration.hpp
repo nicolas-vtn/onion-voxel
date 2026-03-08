@@ -10,22 +10,24 @@
 
 namespace onion::voxel
 {
-	struct ClientData
+	struct ServerData
 	{
-		std::string Username = "DefaultUsername";
+		std::string ServerName = "DefaultServer";
 		std::string UUID;
+		uint16_t Port = 7777;
+		uint16_t SimulationDistance = 8;
 	};
 
-	struct ClientConfiguration
+	struct ServerConfiguration
 	{
 		// ----- Members -----
 	  public:
-		ClientData clientData;
+		ServerData serverData;
 
 		// ----- Constructor / Destructor -----
 	  public:
-		ClientConfiguration() = default;
-		~ClientConfiguration() = default;
+		ServerConfiguration() = default;
+		~ServerConfiguration() = default;
 
 		// ----- Load / Save -----
 	  public:
@@ -40,7 +42,7 @@ namespace onion::voxel
 				std::string uuid;
 				for (int i = 0; i < 32; i++)
 					uuid += "0123456789abcdef"[dis(gen)];
-				clientData.UUID = uuid;
+				serverData.UUID = uuid;
 
 				// Save the new configuration
 				Save(filePath);
@@ -59,16 +61,20 @@ namespace onion::voxel
 
 			file >> json;
 
-			clientData.Username = json.value("Username", "");
-			clientData.UUID = json.value("UUID", "");
+			serverData.ServerName = json.value("ServerName", serverData.ServerName);
+			serverData.UUID = json.value("UUID", serverData.UUID);
+			serverData.Port = json.value("Port", serverData.Port);
+			serverData.SimulationDistance = json.value("SimulationDistance", serverData.SimulationDistance);
 		}
 
 		void Save(const std::filesystem::path& filePath) const
 		{
 			nlohmann::json json;
 
-			json["Username"] = clientData.Username;
-			json["UUID"] = clientData.UUID;
+			json["ServerName"] = serverData.ServerName;
+			json["UUID"] = serverData.UUID;
+			json["Port"] = serverData.Port;
+			json["SimulationDistance"] = serverData.SimulationDistance;
 
 			std::ofstream file(filePath);
 			if (!file.is_open())

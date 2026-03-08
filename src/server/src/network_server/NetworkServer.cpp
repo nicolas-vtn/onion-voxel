@@ -120,9 +120,22 @@ namespace onion::voxel
 		Send(clients, std::move(message), reliable);
 	}
 
-	bool NetworkServer::TryPopMessage(IncommingMessage& out)
+	int NetworkServer::GetServerPort() const
 	{
-		return m_IncomingMessages.TryPop(out);
+		std::lock_guard<std::mutex> lock(m_Mutex);
+		return m_Port;
+	}
+
+	void NetworkServer::SetServerPort(int port)
+	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+		m_Port = port;
+
+		if (IsRunning())
+		{
+			Stop();
+			Start();
+		}
 	}
 
 	void NetworkServer::ListenForEvents(std::stop_token stopToken)

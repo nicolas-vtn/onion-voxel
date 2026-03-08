@@ -65,6 +65,8 @@ namespace onion::voxel
 			m_EventThread.join();
 		}
 
+		Disconnected.Trigger(true);
+
 		std::lock_guard<std::mutex> lock(m_Mutex);
 
 		if (m_Peer)
@@ -96,6 +98,38 @@ namespace onion::voxel
 		out.Reliable = reliable;
 
 		m_OutgoingMessages.Push(std::move(out));
+	}
+
+	std::string NetworkClient::GetRemoteHost() const
+	{
+		return m_Host;
+	}
+
+	void NetworkClient::SetRemoteHost(const std::string& host)
+	{
+		m_Host = host;
+
+		if (IsRunning())
+		{
+			Stop();
+			Start();
+		}
+	}
+
+	int NetworkClient::GetRemotePort() const
+	{
+		return m_Port;
+	}
+
+	void NetworkClient::SetRemotePort(int port)
+	{
+		m_Port = port;
+
+		if (IsRunning())
+		{
+			Stop();
+			Start();
+		}
 	}
 
 	void NetworkClient::ListenForEvents(std::stop_token stopToken)
@@ -150,6 +184,8 @@ namespace onion::voxel
 									m_ClientHandle.store(serverInfo.ClientHandle);
 
 									std::cout << "Assigned ClientHandle: " << m_ClientHandle.load() << "\n";
+
+									Connected.Trigger(serverInfo);
 								}
 
 								m_IncomingMessages.Push(std::move(msg));
@@ -166,6 +202,7 @@ namespace onion::voxel
 
 					case ENET_EVENT_TYPE_DISCONNECT:
 						std::cout << "Disconnected from server.\n";
+						Disconnected.Trigger(true);
 						m_Peer = nullptr;
 						return;
 
