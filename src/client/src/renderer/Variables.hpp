@@ -6,6 +6,8 @@
 
 namespace onion::voxel
 {
+	inline const std::string GAME_VERSION = "0.1.0";
+
 	inline std::filesystem::path GetAssetsPath()
 	{
 		std::filesystem::path currentPath = std::filesystem::current_path();

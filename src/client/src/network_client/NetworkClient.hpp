@@ -7,6 +7,8 @@
 
 #include <enet/enet.h>
 
+#include <onion/Event.hpp>
+
 #include <shared/network_messages/NetworkMessages.hpp>
 #include <shared/thread_safe_queue/ThreadSafeQueue.hpp>
 
@@ -28,10 +30,9 @@ namespace onion::voxel
 		bool IsRunning() const noexcept;
 
 		void Send(NetworkMessage message, bool reliable = true);
-
-		// ----- Getters / Setters -----
+		// ----- Events -----
 	  public:
-		bool TryPopMessage(NetworkMessage& out);
+		Event<const NetworkMessage&> MessageReceived;
 
 		// ----- Private Structs -----
 	  private:
@@ -64,6 +65,11 @@ namespace onion::voxel
 
 		std::vector<uint8_t> SerializeNetworkMessage(const NetworkMessage& message);
 		void ProcessOutgoingMessages();
+
+		// ----- Incoming Message Handling -----
+	  private:
+		std::jthread m_DispatchIncomingMessagesThread;
+		void DispatchIncomingMessages(std::stop_token stopToken);
 	};
 
 } // namespace onion::voxel

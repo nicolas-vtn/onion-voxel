@@ -6,12 +6,15 @@ project(onion_voxel_shared LANGUAGES CXX)
 add_library(onion_voxel_shared
     "dummy.cpp"
  
+ "shared/world/chunk/Chunk.cpp"
+ "shared/world/world_manager/WorldManager.cpp"
 
-)
+ "shared/world/chunk/SubChunk.cpp" "shared/world/block/Block.cpp")
 
 target_link_libraries(onion_voxel_shared
 	PUBLIC
 		cereal::cereal
+		glm
 
 		onion::event
 )

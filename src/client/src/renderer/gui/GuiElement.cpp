@@ -106,4 +106,14 @@ namespace onion::voxel
 		m_HasBeenDeleted.store(state);
 	}
 
+	void GuiElement::SetGuiScale(int scale)
+	{
+		s_GuiScale = scale;
+	}
+
+	int GuiElement::GetGuiScale()
+	{
+		return s_GuiScale;
+	}
+
 } // namespace onion::voxel

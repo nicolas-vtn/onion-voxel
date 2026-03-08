@@ -2,15 +2,18 @@
 
 #include <iostream>
 
+#include <shared/network_messages/Serializer.hpp>
+
 namespace onion::voxel
 {
-	Client::Client() : m_Logger(m_LogFile.string())
+	Client::Client() : m_Logger(m_LogFile.string()), m_Renderer(m_WorldManager)
 	{
 		LoadConfiguration();
 
 		SetLogLevel(m_LogLevel);
 
 		SubscribeToRendererEvents();
+		SubscribeToNetworkClientEvents();
 	}
 
 	Client::~Client() {}
@@ -130,6 +133,42 @@ namespace onion::voxel
 
 		m_RendererEventHandles.push_back(
 			m_Renderer.RequestQuitToMainMenu.Subscribe([this](bool quit) { Handle_StopSingleplayerGameRequest(""); }));
+	}
+
+	void Client::SubscribeToNetworkClientEvents()
+	{
+		m_NetworkClientEventHandles.push_back(m_NetworkClient.MessageReceived.Subscribe(
+			[this](const NetworkMessage& message) { Handle_NetworkMessageReceived(message); }));
+	}
+
+	void Client::Handle_NetworkMessageReceived(const NetworkMessage& message)
+	{
+		std::visit(
+			[this](const auto& msg)
+			{
+				using T = std::decay_t<decltype(msg)>;
+				if constexpr (std::is_same_v<T, ServerInfoMsg>)
+				{
+					Handle_ServerInfoMessageReceived(msg);
+				}
+				else if constexpr (std::is_same_v<T, ChunkDataMsg>)
+				{
+					Handle_ChunkDataMessageReceived(msg);
+				}
+			},
+			message);
+	}
+
+	void Client::Handle_ServerInfoMessageReceived(const ServerInfoMsg& msg)
+	{
+		std::cout << "Received ServerInfoMsg: ServerName=" << msg.ServerName << ", ClientHandle=" << msg.ClientHandle
+				  << std::endl;
+	}
+
+	void Client::Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg)
+	{
+		std::shared_ptr<Chunk> chunk = Serializer::DeserializeChunk(msg);
+		m_WorldManager->AddChunk(chunk);
 	}
 
 } // namespace onion::voxel

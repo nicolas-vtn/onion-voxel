@@ -5,8 +5,9 @@ project(onion_voxel_server LANGUAGES CXX)
 # ---- Library ----
 add_library(onion_voxel_server
     "src/Server.cpp"
-	"src/network_server/NetworkServer.cpp"
 
+	"src/network_server/NetworkServer.cpp"
+	"src/world_generator/WorldGenerator.cpp"
 )
 
 target_link_libraries(onion_voxel_server

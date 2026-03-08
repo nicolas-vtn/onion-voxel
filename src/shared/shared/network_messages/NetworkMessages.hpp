@@ -2,14 +2,18 @@
 
 #include "MessageHeader.hpp"
 
+#include "chunk_data_msg/ChunkDataMsg.hpp"
 #include "client_info_msg/ClientInfoMsg.hpp"
 #include "server_info_msg/ServerInfoMsg.hpp"
+
+#include "DTOs/BlockDTO.hpp"
+#include "DTOs/SubChunkDTO.hpp"
 
 #include <variant>
 
 namespace onion::voxel
 {
-	using NetworkMessage = std::variant<ClientInfoMsg, ServerInfoMsg>;
+	using NetworkMessage = std::variant<ClientInfoMsg, ServerInfoMsg, ChunkDataMsg>;
 
 	inline NetworkMessage DeserializeMessage(cereal::BinaryInputArchive& archive, MessageHeader::eType type)
 	{
@@ -19,10 +23,6 @@ namespace onion::voxel
 				{
 					ClientInfoMsg msg;
 					archive(msg);
-
-					std::cout << "Deserialized ClientInfoMsg: Username=" << msg.Username << ", UUID=" << msg.UUID
-							  << std::endl;
-
 					return msg;
 				}
 
@@ -30,9 +30,13 @@ namespace onion::voxel
 				{
 					ServerInfoMsg msg;
 					archive(msg);
+					return msg;
+				}
 
-					std::cout << "Deserialized ServerInfoMsg: ServerName=" << msg.ServerName << std::endl;
-
+			case MessageHeader::eType::ChunkData:
+				{
+					ChunkDataMsg msg;
+					archive(msg);
 					return msg;
 				}
 

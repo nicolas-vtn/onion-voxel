@@ -20,7 +20,6 @@ namespace onion::voxel
 		void Initialize() override;
 		void Delete() override;
 
-		void SetGameVersion(const std::string& version);
 		void CycleSplashText();
 
 		// ----- Public Events -----
@@ -32,8 +31,6 @@ namespace onion::voxel
 	  private:
 		std::filesystem::path m_SpriteTitlePath = GetAssetsPath() / "textures" / "OnionVoxelTitle2.png";
 		std::filesystem::path m_SplashScreenTextPath = GetMinecraftDataPath() / "texts" / "splashes.txt";
-
-		std::string m_GameVersion = "0.1.0";
 
 		// ----- Controls -----
 	  private:

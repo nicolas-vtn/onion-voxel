@@ -42,7 +42,15 @@ add_executable(OnionVoxel
 	"src/renderer/gui/controls/sprite/Sprite.cpp"
 	"src/renderer/gui/nine_slice_sprite/NineSliceSprite.cpp"
 
-)
+	"src/renderer/world_renderer/WorldRenderer.cpp"
+	"src/renderer/camera/Camera.cpp"
+	"src/renderer/world_renderer/chunk_mesh/ChunkMesh.cpp"
+	"src/renderer/world_renderer/chunk_mesh/SubChunkMesh.cpp"
+
+	"src/renderer/texture_atlas/TextureAtlas.cpp"
+	"src/renderer/world_renderer/block_registry/BlockRegistry.cpp"
+
+ "src/renderer/world_renderer/chunk_mesh/MeshBuilder.cpp")
 
 if (WIN32)
     target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)

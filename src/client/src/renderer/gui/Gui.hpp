@@ -27,9 +27,12 @@ namespace onion::voxel
 		void Render();
 		void Shutdown();
 
+		// ----- Getters / Setters -----
+	  public:
 		void SetActiveMenu(eMenu menu);
 		eMenu GetActiveMenu() const;
-		void SetGameVersion(const std::string& version);
+		void SetGuiScale(int scale);
+		int GetGuiScale() const;
 
 		// ----- Events -----
 	  public:
@@ -64,5 +67,9 @@ namespace onion::voxel
 	  private:
 		mutable std::mutex m_MutexState;
 		eMenu m_ActiveMenu = eMenu::MainMenu;
+
+		// ----- ImGui menu -----
+	  private:
+		void RenderDebugPanel();
 	};
 } // namespace onion::voxel

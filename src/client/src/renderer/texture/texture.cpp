@@ -23,6 +23,42 @@ namespace onion::voxel
 		}
 	}
 
+	Texture::Texture(const std::vector<unsigned char>& data, int width, int height, int channels)
+		: m_Width(width), m_Height(height), m_NbrChannels(channels)
+	{
+		if (data.empty())
+		{
+			std::cerr << "[TEXTURE] [ERROR] : Provided texture data is empty." << std::endl;
+			throw std::runtime_error("Provided texture data is empty.");
+		}
+
+		size_t expectedSize = static_cast<size_t>(width) * static_cast<size_t>(height) * static_cast<size_t>(channels);
+		if (data.size() != expectedSize)
+		{
+			std::cerr << "[TEXTURE] [ERROR] : Texture data size (" << data.size() << ") does not match expected size ("
+					  << expectedSize << ") for dimensions (" << width << "x" << height << ") and channels ("
+					  << channels << ")." << std::endl;
+			throw std::runtime_error(
+				"Texture data size does not match expected size for given dimensions and channels.");
+		}
+
+		unsigned char* subBuffer = new unsigned char[expectedSize];
+
+		// Copy data to the new buffer
+		std::copy(data.begin(), data.end(), subBuffer);
+
+		auto deleter = [](unsigned char* p) { delete[] p; };
+		std::unique_ptr<unsigned char[], PixelDeleter> ptr(subBuffer, deleter);
+
+		std::filesystem::path texturePath = "In-Memory Texture";
+
+		m_FilePath = texturePath;
+		m_Data = std::move(ptr);
+		m_Width = width;
+		m_Height = height;
+		m_NbrChannels = channels;
+	}
+
 	Texture::~Texture()
 	{
 		if (m_Data)
@@ -126,7 +162,7 @@ namespace onion::voxel
 		m_HasBeenUploadedToGPU = true;
 	}
 
-	void Texture::Bind() const
+	void Texture::Bind(uint32_t slot) const
 	{
 
 		if (!m_HasBeenUploadedToGPU)
@@ -134,8 +170,8 @@ namespace onion::voxel
 			UploadToGPU();
 		}
 
-		glActiveTexture(GL_TEXTURE0);			   // Activate texture slot 0
-		glBindTexture(GL_TEXTURE_2D, m_TextureID); // Bind our atlas to slot 0
+		glActiveTexture(GL_TEXTURE0 + slot);	   // Activate texture slot
+		glBindTexture(GL_TEXTURE_2D, m_TextureID); // Bind our atlas to the specified slot
 	}
 
 	void Texture::Unbind() const

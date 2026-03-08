@@ -7,6 +7,7 @@
 #include <enet/enet.h>
 
 #include <onion/Event.hpp>
+
 #include <shared/network_messages/NetworkMessages.hpp>
 #include <shared/thread_safe_queue/ThreadSafeQueue.hpp>
 
@@ -57,6 +58,12 @@ namespace onion::voxel
 			std::string IpAddress;
 		};
 
+		struct MessageReceivedEventArgs
+		{
+			ClientHandle Sender;
+			NetworkMessage Message;
+		};
+
 		// ----- Constructor / Destructor -----
 	  public:
 		NetworkServer(int port = 7777);
@@ -78,8 +85,9 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<ClientConnectedEventArgs> ClientConnected;
-		Event<ClientDisconnectedEventArgs> ClientDisconnected;
+		Event<const ClientConnectedEventArgs&> ClientConnected;
+		Event<const ClientDisconnectedEventArgs&> ClientDisconnected;
+		Event<const MessageReceivedEventArgs&> MessageReceived;
 
 		// ---- Enet -----
 	  private:
@@ -103,6 +111,11 @@ namespace onion::voxel
 		ClientHandle GenerateClientHandle();
 		std::unordered_map<ENetPeer*, ClientSession> m_PeerToSession;
 		std::unordered_map<ClientHandle, ENetPeer*> m_HandleToPeer;
+
+		// ----- Message Reception and Dispatching -----
+	  private:
+		std::jthread m_DispatchIncomingMessagesThread;
+		void DispatchIncomingMessages(std::stop_token stopToken);
 
 		// ----- States -----
 	  private:

@@ -1,5 +1,7 @@
 #include "Gui.hpp"
 
+#include <imgui.h>
+
 #include <csignal>
 
 namespace onion::voxel
@@ -87,9 +89,46 @@ namespace onion::voxel
 		GuiElement::SetScreenSize(screenWidth, screenHeight);
 	}
 
-	void Gui::SetGameVersion(const std::string& version)
+	void Gui::RenderDebugPanel()
 	{
-		m_MainMenuPanel.SetGameVersion(version);
+		ImGui::Begin("Gui");
+
+		ImGui::Text("Active Menu: %s",
+					[this]()
+					{
+						switch (GetActiveMenu())
+						{
+							case eMenu::DemoPanel:
+								return "Demo Panel";
+							case eMenu::MainMenu:
+								return "Main Menu";
+							case eMenu::Singleplayer:
+								return "Singleplayer";
+							case eMenu::Multiplayer:
+								return "Multiplayer";
+							case eMenu::Settings:
+								return "Settings";
+							case eMenu::Gameplay:
+								return "Gameplay";
+							case eMenu::Pause:
+								return "Pause Menu";
+							default:
+								return "None";
+						}
+					}());
+
+		// ----- GuiElement Debug -----
+		if (ImGui::CollapsingHeader("GuiElement", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			int guiScale = GetGuiScale();
+			ImGui::SliderInt("Gui Scale", &guiScale, 1, 10);
+			if (guiScale != GetGuiScale())
+			{
+				SetGuiScale(guiScale);
+			}
+		}
+
+		ImGui::End();
 	}
 
 	void Gui::SetActiveMenu(eMenu menu)
@@ -109,6 +148,16 @@ namespace onion::voxel
 		return m_ActiveMenu;
 	}
 
+	void Gui::SetGuiScale(int scale)
+	{
+		GuiElement::SetGuiScale(scale);
+	}
+
+	int Gui::GetGuiScale() const
+	{
+		return GuiElement::GetGuiScale();
+	}
+
 	void Gui::Initialize()
 	{
 		m_DemoPanel.Initialize();
@@ -118,6 +167,8 @@ namespace onion::voxel
 
 	void Gui::Render()
 	{
+		RenderDebugPanel();
+
 		switch (GetActiveMenu())
 		{
 			case eMenu::DemoPanel:

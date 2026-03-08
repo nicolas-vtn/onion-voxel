@@ -15,7 +15,11 @@ namespace
 
 namespace onion::voxel
 {
-	Renderer::Renderer() {}
+	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager)
+		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(0.0f, 0.0f, 0.0f), 800, 600)),
+		  m_WorldRenderer(worldManager, m_Camera)
+	{
+	}
 
 	Renderer::~Renderer() {}
 
@@ -138,7 +142,6 @@ namespace onion::voxel
 
 		m_Gui.Initialize();
 		SubscribeToGuiEvents();
-		m_Gui.SetGameVersion("0.1.0");
 
 		while (!st.stop_requested() && !glfwWindowShouldClose(m_Window))
 		{
@@ -161,26 +164,22 @@ namespace onion::voxel
 			m_DeltaTime = currentFrame - m_LastFrame;
 			m_LastFrame = currentFrame;
 
+			// Render World
+			if (GetRenderState() == eRenderState::InGame)
+			{
+				m_WorldRenderer.Render();
+			}
+
+			// Render GUI
 			m_Gui.Render();
 
 			// Render Debug Panel
 			RenderDebugPanel();
 
-			//// Process Camera Movement
-			//ProcessCameraMovement(m_InputsSnapshot);
-
-			//// Get Camera projection, view and ProjView Matix
-			//m_ProjectionMatrix = m_Camera.GetProjectionMatrix();
-			//m_ViewMatrix = m_Camera.GetViewMatrix();
-			//m_ViewProjMatrix = m_ProjectionMatrix * m_ViewMatrix;
-
-			//// ------ TESTS MODELS ------
-			//UpdateShaderModel();
-			//DrawAppleModel();
-
 			// End ImGui Frame
 			EndImGuiFrame();
 
+			// Swap buffers and poll events
 			glfwSwapBuffers(m_Window);
 			glfwPollEvents();
 		}
@@ -235,10 +234,23 @@ namespace onion::voxel
 		m_WindowHeight = height;
 
 		GuiElement::SetScreenSize(m_WindowWidth, m_WindowHeight);
+
+		if (m_WindowWidth != 0 && m_WindowHeight != 0)
+		{
+			m_Camera->SetAspectRatio(static_cast<float>(m_WindowWidth) / static_cast<float>(m_WindowHeight));
+		}
 	}
 
 	void Renderer::RegisterInputs()
 	{
+		m_InputIdMoveForward = m_InputsManager.RegisterInput(Key::W);
+		m_InputIdMoveBackward = m_InputsManager.RegisterInput(Key::S);
+		m_InputIdMoveLeft = m_InputsManager.RegisterInput(Key::A);
+		m_InputIdMoveRight = m_InputsManager.RegisterInput(Key::D);
+		m_InputIdMoveUp = m_InputsManager.RegisterInput(Key::Space);
+		m_InputIdMoveDown = m_InputsManager.RegisterInput(Key::LeftShift);
+		m_InputIdSpeedUp = m_InputsManager.RegisterInput(Key::LeftControl);
+
 		m_InputIdUnfocus = m_InputsManager.RegisterInput(Key::KP8);
 		m_InputIdFocus = m_InputsManager.RegisterInput(Key::KP7);
 		m_InputIdPause = m_InputsManager.RegisterInput(Key::Escape);
@@ -267,6 +279,9 @@ namespace onion::voxel
 		}
 
 		GuiElement::SetInputsSnapshot(inputs);
+
+		// Process Camera Movement Inputs (Only if in Free Camera Mode)
+		UpdateCameraFromInputs(inputs);
 	}
 
 	void Renderer::PauseGame(bool pause)
@@ -274,13 +289,92 @@ namespace onion::voxel
 		if (pause && !m_IsPaused)
 		{
 			m_Gui.SetActiveMenu(eMenu::Pause);
+
+			// Disable mouse capture when paused
+			m_InputsManager.SetMouseCaptureEnabled(false);
 		}
 		else if (!pause && m_IsPaused)
 		{
 			m_Gui.SetActiveMenu(eMenu::Gameplay);
+
+			// Enable mouse capture when resuming
+			m_InputsManager.SetMouseCaptureEnabled(true);
 		}
 
 		m_IsPaused = pause;
+	}
+
+	void Renderer::UpdateCameraFromInputs(const std::shared_ptr<InputsSnapshot>& inputs)
+	{
+		if (!m_IsFreeCamera)
+			return;
+
+		if (!inputs->Mouse.CaptureEnabled)
+		{
+			return; // If mouse capture is not enabled, skip camera movement processing
+		}
+
+		// Camera's Orientation
+		if (inputs->Mouse.MovementOffsetChanged)
+		{
+			const double sensitivity = 0.1f;
+			const double xoffset = inputs->Mouse.Xoffset * sensitivity;
+			const double yoffset = inputs->Mouse.Yoffset * sensitivity;
+
+			m_Camera->SetYaw(m_Camera->GetYaw() + xoffset);
+			m_Camera->SetPitch(m_Camera->GetPitch() + yoffset);
+
+			if (m_Camera->GetPitch() > 89.0f)
+				m_Camera->SetPitch(89.0f);
+			if (m_Camera->GetPitch() < -89.0f)
+				m_Camera->SetPitch(-89.0f);
+		}
+
+		// Adjust camera Speed
+		if (inputs->Mouse.ScrollOffsetChanged)
+		{
+			const double xoffset = inputs->Mouse.ScrollXoffset;
+			const double yoffset = inputs->Mouse.ScrollYoffset;
+			if (yoffset != 0.f)
+			{
+				float coeefIncrease = 1.3f;
+				float coeefDecrease = 0.7f;
+				if (yoffset > 0)
+				{
+					m_CameraSpeed *= coeefIncrease; // Speed up
+				}
+				else if (yoffset < 0)
+				{
+					m_CameraSpeed *= coeefDecrease; // Slow down
+				}
+			}
+		}
+
+		// Camera's Position
+		float velocity = m_CameraSpeed * m_DeltaTime;
+
+		if (inputs->GetKeyState(m_InputIdSpeedUp).IsPressed)
+		{
+			velocity *= 2.0f; // Double speed if left control is pressed
+		}
+
+		// Flatten the front vector for XZ movement
+		glm::vec3 CamFront = m_Camera->GetFront();
+		glm::vec3 frontXZ = glm::normalize(glm::vec3(CamFront.x, 0.0f, CamFront.z));
+		const glm::vec3 Up(0.0f, 1.0f, 0.0f); // Up vector
+
+		if (inputs->GetKeyState(m_InputIdMoveForward).IsPressed)
+			m_Camera->SetPosition(m_Camera->GetPosition() + frontXZ * velocity);
+		if (inputs->GetKeyState(m_InputIdMoveBackward).IsPressed)
+			m_Camera->SetPosition(m_Camera->GetPosition() - frontXZ * velocity);
+		if (inputs->GetKeyState(m_InputIdMoveLeft).IsPressed)
+			m_Camera->SetPosition(m_Camera->GetPosition() - glm::normalize(glm::cross(frontXZ, Up)) * velocity);
+		if (inputs->GetKeyState(m_InputIdMoveRight).IsPressed)
+			m_Camera->SetPosition(m_Camera->GetPosition() + glm::normalize(glm::cross(frontXZ, Up)) * velocity);
+		if (inputs->GetKeyState(m_InputIdMoveUp).IsPressed) // Jump / up
+			m_Camera->SetPosition(m_Camera->GetPosition() + Up * velocity);
+		if (inputs->GetKeyState(m_InputIdMoveDown).IsPressed) // Down
+			m_Camera->SetPosition(m_Camera->GetPosition() - Up * velocity);
 	}
 
 	void Renderer::SubscribeToGuiEvents()
@@ -306,6 +400,10 @@ namespace onion::voxel
 	void Renderer::Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath)
 	{
 		RequestStartSingleplayerGame.Trigger(worldPath);
+
+		// Enable mouse capture for gameplay
+		m_InputsManager.SetMouseCaptureEnabled(true);
+
 		m_IsPaused = false;
 	}
 
@@ -320,6 +418,10 @@ namespace onion::voxel
 		{
 			// Stops the Client Game
 			RequestQuitToMainMenu.Trigger(quit);
+
+			m_WorldManager->RemoveAllChunks();
+			m_WorldRenderer.DeleteChunkMeshes();
+
 			m_IsPaused = false;
 		}
 	}
@@ -351,11 +453,38 @@ namespace onion::voxel
 
 		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 
-		static bool showWireframe = false;
-		ImGui::Checkbox("Wireframe", &showWireframe);
+		ImGui::Text("Game Version: %s", GAME_VERSION.c_str());
 
-		static float exposure = 1.0f;
-		ImGui::SliderFloat("Exposure", &exposure, 0.1f, 5.0f);
+		// ----- Camera Debug -----
+		if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			glm::vec3 position = m_Camera->GetPosition();
+			glm::vec3 front = m_Camera->GetFront();
+			float yaw = m_Camera->GetYaw();
+			float pitch = m_Camera->GetPitch();
+			float fov = m_Camera->GetFovY();
+			float aspect = m_Camera->GetAspectRatio();
+
+			if (ImGui::DragFloat3("Position", &position.x, 0.1f))
+				m_Camera->SetPosition(position);
+
+			if (ImGui::DragFloat3("Front", &front.x, 0.01f))
+				m_Camera->SetFront(front);
+
+			if (ImGui::DragFloat("Yaw", &yaw, 0.5f))
+				m_Camera->SetYaw(yaw);
+
+			if (ImGui::DragFloat("Pitch", &pitch, 0.5f, -89.f, 89.f))
+				m_Camera->SetPitch(pitch);
+
+			if (ImGui::DragFloat("FOV", &fov, 0.1f, 1.f, 120.f))
+				m_Camera->SetFovY(fov);
+
+			if (ImGui::DragFloat("Aspect Ratio", &aspect, 0.01f))
+				m_Camera->SetAspectRatio(aspect);
+
+			ImGui::DragFloat("Speed", &m_CameraSpeed, 0.1f, 0.1f, 50.f);
+		}
 
 		ImGui::End();
 	}
