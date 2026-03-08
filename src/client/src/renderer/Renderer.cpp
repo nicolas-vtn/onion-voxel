@@ -142,7 +142,6 @@ namespace onion::voxel
 
 		m_Gui.Initialize();
 		SubscribeToGuiEvents();
-		m_Gui.SetGameVersion("0.1.0");
 
 		while (!st.stop_requested() && !glfwWindowShouldClose(m_Window))
 		{
@@ -453,6 +452,8 @@ namespace onion::voxel
 		ImGui::Begin("Debug Panel");
 
 		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+
+		ImGui::Text("Game Version: %s", GAME_VERSION.c_str());
 
 		// ----- Camera Debug -----
 		if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen))

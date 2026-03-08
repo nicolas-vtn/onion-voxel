@@ -93,7 +93,7 @@ namespace onion::voxel
 		m_QuitGame_Button.Render();
 
 		// ---- Render Version Text ----
-		std::string versionText = "Voxel::Onion " + m_GameVersion;
+		std::string versionText = "Voxel::Onion " + GAME_VERSION;
 		float textX = s_ScreenHeight * 0.01f;
 		float textY = s_ScreenHeight * 0.97f;
 		float textHeight = s_ScreenHeight * (28.f / 1009.f);
@@ -180,11 +180,6 @@ namespace onion::voxel
 		m_QuitGame_Button.Delete();
 
 		SetDeletedState(true);
-	}
-
-	void MainMenuPanel::SetGameVersion(const std::string& version)
-	{
-		m_GameVersion = version;
 	}
 
 	void MainMenuPanel::CycleSplashText()

@@ -32,12 +32,15 @@ namespace onion::voxel
 		void ResetOpenGLState();
 		void Render();
 
-		void DeleteAllChunkMeshes();
+		void DeleteChunkMeshesAsync();
 
 		void DeleteChunkMeshes();
 
 		// ----- Getters / Setters -----
 	  public:
+		uint64_t GetVertexCount() const;
+		uint64_t GetChunkMeshesCount() const;
+
 		// ----- World Manager -----
 	  private:
 		std::shared_ptr<WorldManager> m_WorldManager;
@@ -49,6 +52,10 @@ namespace onion::voxel
 
 		void Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk);
 		void Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk);
+
+		// ----- Internal Helpers -----
+	  private:
+		void MarkNeighboringChunkMeshesDirty(const glm::ivec2& chunkPosition);
 
 		// ----- Camera -----
 	  private:
@@ -70,9 +77,14 @@ namespace onion::voxel
 		std::jthread m_ThreadMeshBuilder;
 		void MeshBuilderThreadFunction(std::stop_token st);
 		MeshBuilder m_MeshBuilder;
+		void RebuildDirtyChunkMeshesAsync();
 
 		// ----- Mesh Deletion and Cleanup -----
 	  private:
 		ThreadSafeQueue<std::shared_ptr<ChunkMesh>> m_ChunkMeshesToDelete;
+
+		// ----- ImGui menu -----
+	  private:
+		void RenderDebugPanel();
 	};
 } // namespace onion::voxel

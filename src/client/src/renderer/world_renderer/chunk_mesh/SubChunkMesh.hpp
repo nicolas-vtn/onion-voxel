@@ -36,6 +36,8 @@ namespace onion::voxel
 
 		void Delete();
 
+		uint32_t GetVertexCount() const;
+
 		// ----- Getters / Setters -----
 	  public:
 		bool IsDirty() const;
@@ -48,6 +50,8 @@ namespace onion::voxel
 
 		std::atomic_bool m_AreBuffersGenerated{false};
 		std::atomic_bool m_AreBuffersDataUpToDate{true};
+
+		std::atomic_uint32_t m_VertexCount = 0; // The total vertex count for this subchunk mesh
 
 		// ----- OPENGL Buffers -----
 	  protected:

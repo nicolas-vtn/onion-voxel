@@ -272,7 +272,12 @@ namespace onion::voxel
 			SetSize(size);
 		}
 
-		ImGui::SliderInt("GuiScale", &GuiElement::s_GUI_SCALE, 1, 16);
+		int guiScale = GuiElement::GetGuiScale();
+		ImGui::SliderInt("GuiScale", &guiScale, 1, 16);
+		if (guiScale != GuiElement::GetGuiScale())
+		{
+			GuiElement::SetGuiScale(guiScale);
+		}
 
 		ImGui::End();
 	}

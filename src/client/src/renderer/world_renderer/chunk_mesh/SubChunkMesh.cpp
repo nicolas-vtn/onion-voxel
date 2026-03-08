@@ -71,6 +71,11 @@ namespace onion::voxel
 		CleanupOpenGlBuffers();
 	}
 
+	uint32_t SubChunkMesh::GetVertexCount() const
+	{
+		return m_VertexCount;
+	}
+
 	bool SubChunkMesh::IsDirty() const
 	{
 		return m_IsDirty;
@@ -235,7 +240,12 @@ namespace onion::voxel
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 
+		// Mark buffers as up to date
 		m_AreBuffersDataUpToDate = true;
+
+		// Update the vertex count
+		m_VertexCount = static_cast<uint32_t>(m_VerticesOpaque.size()) +
+			static_cast<uint32_t>(m_VerticesCutout.size()) + static_cast<uint32_t>(m_VerticesTransparent.size());
 
 		// Clear the buffers after setting data to free memory
 		std::vector<Vertex>().swap(m_VerticesOpaque);

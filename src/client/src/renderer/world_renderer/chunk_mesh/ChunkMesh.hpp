@@ -32,9 +32,12 @@ namespace onion::voxel
 
 		void Delete();
 
+		void StartRebuilding();
+
 		// ----- Getters / Setters -----
 	  public:
 		const glm::ivec2& GetChunkPosition() const;
+		uint64_t GetVertexCount() const;
 
 		bool IsDirty() const;
 		void SetSubChunkMeshDirty(int subChunkIndex, bool isDirty);

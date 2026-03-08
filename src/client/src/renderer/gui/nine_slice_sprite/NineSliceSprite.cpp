@@ -82,7 +82,7 @@ namespace onion::voxel
 
 	void NineSliceSprite::Render()
 	{
-		if (m_LastBuiltGuiScale != s_GUI_SCALE)
+		if (m_LastBuiltGuiScale != s_GuiScale)
 			m_MeshDirty = true;
 
 		if (m_MeshDirty)
@@ -614,7 +614,7 @@ namespace onion::voxel
 
 		m_LastBuiltSize = m_Size;
 		m_LastBuiltPosition = m_Position;
-		m_LastBuiltGuiScale = s_GUI_SCALE;
+		m_LastBuiltGuiScale = s_GuiScale;
 
 		m_MeshDirty = false;
 	}
@@ -627,10 +627,10 @@ namespace onion::voxel
 		if (m_Size.x <= 0.0f || m_Size.y <= 0.0f)
 			return;
 
-		int leftBorderPx = meta.LeftBorder * s_GUI_SCALE;
-		int rightBorderPx = meta.RightBorder * s_GUI_SCALE;
-		int topBorderPx = meta.TopBorder * s_GUI_SCALE;
-		int bottomBorderPx = meta.BottomBorder * s_GUI_SCALE;
+		int leftBorderPx = meta.LeftBorder * s_GuiScale;
+		int rightBorderPx = meta.RightBorder * s_GuiScale;
+		int topBorderPx = meta.TopBorder * s_GuiScale;
+		int bottomBorderPx = meta.BottomBorder * s_GuiScale;
 
 		int centerWidth = std::max(0, m_Size.x - leftBorderPx - rightBorderPx);
 		int centerHeight = std::max(0, m_Size.y - topBorderPx - bottomBorderPx);
@@ -661,7 +661,7 @@ namespace onion::voxel
 		};
 
 		// Top Texture (repeat horizontally, no crop vertically)
-		float repeatU = static_cast<float>(centerWidth) / (meta.Width * s_GUI_SCALE);
+		float repeatU = static_cast<float>(centerWidth) / (meta.Width * s_GuiScale);
 		float u0 = 0.5f - repeatU * 0.5f;
 		float u1 = 0.5f + repeatU * 0.5f;
 		float v0 = 0.0f;
@@ -682,7 +682,7 @@ namespace onion::voxel
 		};
 
 		// Left Texture (no repeat horizontally, repeat vertically)
-		float repeatV = static_cast<float>(centerHeight) / (meta.Height * s_GUI_SCALE);
+		float repeatV = static_cast<float>(centerHeight) / (meta.Height * s_GuiScale);
 		u0 = 0.0f;
 		u1 = 1.0f;
 		v0 = 0.5f - repeatV * 0.5f;

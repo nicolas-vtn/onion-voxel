@@ -1,5 +1,7 @@
 #include "WorldRenderer.hpp"
 
+#include <imgui.h>
+
 #include <iostream>
 
 namespace onion::voxel
@@ -86,6 +88,9 @@ namespace onion::voxel
 
 	void WorldRenderer::Render()
 	{
+		RenderDebugPanel();
+
+		RebuildDirtyChunkMeshesAsync();
 		DeleteChunkMeshes();
 
 		PrepareForRendering();
@@ -116,7 +121,7 @@ namespace onion::voxel
 		ResetOpenGLState();
 	}
 
-	void WorldRenderer::DeleteAllChunkMeshes()
+	void WorldRenderer::DeleteChunkMeshesAsync()
 	{
 		std::unique_lock lock(m_MutexChunkMeshes);
 		for (const auto& [chunkPos, chunkMesh] : m_ChunkMeshes)
@@ -167,18 +172,43 @@ namespace onion::voxel
 
 		// Request the mesh builder to build the mesh for the new chunk mesh
 		m_ChunkMeshesToRebuild.Push(chunkMesh);
+
+		// Mark neighboring chunk meshes as dirty so they will be rebuilt to update their faces that are adjacent to the new chunk
+		MarkNeighboringChunkMeshesDirty(chunkPos);
 	}
 
 	void WorldRenderer::Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk)
 	{
-		std::unique_lock lock(m_MutexChunkMeshes);
-
 		const glm::ivec2 chunkPos = chunk->GetPosition();
-		auto it = m_ChunkMeshes.find(chunkPos);
-		if (it != m_ChunkMeshes.end())
+
 		{
-			m_ChunkMeshesToDelete.Push(it->second);
-			m_ChunkMeshes.erase(it);
+			std::unique_lock lock(m_MutexChunkMeshes);
+			auto it = m_ChunkMeshes.find(chunkPos);
+			if (it != m_ChunkMeshes.end())
+			{
+				m_ChunkMeshesToDelete.Push(it->second);
+				m_ChunkMeshes.erase(it);
+			}
+		}
+
+		// Mark neighboring chunk meshes as dirty so they will be rebuilt to update their faces that are adjacent to the removed chunk
+		MarkNeighboringChunkMeshesDirty(chunkPos);
+	}
+
+	void WorldRenderer::MarkNeighboringChunkMeshesDirty(const glm::ivec2& chunkPosition)
+	{
+		std::shared_lock lock(m_MutexChunkMeshes);
+		const std::array<glm::ivec2, 4> neighborOffsets = {
+			glm::ivec2(-1, 0), glm::ivec2(1, 0), glm::ivec2(0, -1), glm::ivec2(0, 1)};
+
+		for (const auto& offset : neighborOffsets)
+		{
+			const glm::ivec2 neighborPos = chunkPosition + offset;
+			auto it = m_ChunkMeshes.find(neighborPos);
+			if (it != m_ChunkMeshes.end())
+			{
+				it->second->SetAllSubChunkMeshesDirty(true);
+			}
 		}
 	}
 
@@ -200,6 +230,43 @@ namespace onion::voxel
 		}
 	}
 
+	void WorldRenderer::RebuildDirtyChunkMeshesAsync()
+	{
+		std::shared_lock lock(m_MutexChunkMeshes);
+		for (const auto& [chunkPos, chunkMesh] : m_ChunkMeshes)
+		{
+			if (chunkMesh->IsDirty())
+			{
+				chunkMesh->StartRebuilding();
+				m_ChunkMeshesToRebuild.Push(chunkMesh);
+			}
+		}
+	}
+
+	inline std::string FormatThousands(uint64_t value)
+	{
+		std::string s = std::to_string(value);
+
+		int insertPosition = s.length() - 3;
+		while (insertPosition > 0)
+		{
+			s.insert(insertPosition, " ");
+			insertPosition -= 3;
+		}
+
+		return s;
+	}
+
+	void WorldRenderer::RenderDebugPanel()
+	{
+		ImGui::Begin("World Renderer");
+
+		ImGui::Text("Chunk Meshes: %s", FormatThousands(GetChunkMeshesCount()).c_str());
+		ImGui::Text("Vertices: %s", FormatThousands(GetVertexCount()).c_str());
+
+		ImGui::End();
+	}
+
 	void WorldRenderer::DeleteChunkMeshes()
 	{
 		std::shared_ptr<ChunkMesh> chunkMesh;
@@ -207,6 +274,26 @@ namespace onion::voxel
 		{
 			chunkMesh->Delete();
 		}
+	}
+
+	uint64_t WorldRenderer::GetVertexCount() const
+	{
+		std::shared_lock lock(m_MutexChunkMeshes);
+		uint64_t vertexCount = 0;
+		for (const auto& [chunkPos, chunkMesh] : m_ChunkMeshes)
+		{
+			if (chunkMesh)
+			{
+				vertexCount += chunkMesh->GetVertexCount();
+			}
+		}
+		return vertexCount;
+	}
+
+	uint64_t WorldRenderer::GetChunkMeshesCount() const
+	{
+		std::shared_lock lock(m_MutexChunkMeshes);
+		return m_ChunkMeshes.size();
 	}
 
 } // namespace onion::voxel

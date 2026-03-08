@@ -45,6 +45,9 @@ namespace onion::voxel
 		std::string GetName() const;
 		void SetName(const std::string& name);
 
+		static void SetGuiScale(int scale);
+		static int GetGuiScale();
+
 		// ----- Static Methods ----- (for shared resources and context)
 	  public:
 		static void SetScreenSize(int screenWidth, int screenHeight);
@@ -72,7 +75,7 @@ namespace onion::voxel
 		static int s_ScreenWidth;
 		static int s_ScreenHeight;
 
-		static inline int s_GUI_SCALE = 4;
+		static inline std::atomic_int s_GuiScale = 4;
 
 		static std::shared_ptr<InputsSnapshot> s_InputsSnapshot;
 

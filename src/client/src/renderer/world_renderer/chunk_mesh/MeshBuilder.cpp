@@ -197,65 +197,66 @@ namespace onion::voxel
 				for (int y = 0; y < SIZE; y++)
 					for (int x = 0; x < SIZE; x++)
 					{
-						const glm::ivec3 localPos(x, y, z);
+						const glm::ivec3 localPos(x, SIZE * sub + y, z);
 						Block block = chunk->GetBlock(localPos);
 
 						if (block.m_BlockID == BlockId::Air)
 							continue;
 
+						// ------ Calculate World Position -----
+						float wx = chunkPos.x * SIZE + x;
+						float wy = SIZE * sub + y;
+						float wz = chunkPos.y * SIZE + z;
+
 						// ------ Get Neighboring Blocks ------
 						std::array<Block, 6> neighbors;
 
 						// Top (+y)
-						if (y + 1 < SIZE)
-							neighbors[(int) BlockFace::Top] = chunk->GetBlock(glm::ivec3(x, y + 1, z));
+						if (localPos.y + 1 < subChunkCount * SIZE)
+							neighbors[(int) BlockFace::Top] = chunk->GetBlock(glm::ivec3(x, localPos.y + 1, z));
 						else
-							neighbors[(int) BlockFace::Top] = Block(); // Air
+							neighbors[(int) BlockFace::Top] = Block(BlockId::Air); // Air block if above the world
 
 						// Bottom (-y)
-						if (y - 1 >= 0)
-							neighbors[(int) BlockFace::Bottom] = chunk->GetBlock(glm::ivec3(x, y - 1, z));
+						if (localPos.y - 1 >= 0)
+							neighbors[(int) BlockFace::Bottom] = chunk->GetBlock(glm::ivec3(x, localPos.y - 1, z));
 						else
-							neighbors[(int) BlockFace::Bottom] = Block(); // Air
+							neighbors[(int) BlockFace::Bottom] = Block(BlockId::Air); // Air block if below the world
 
 						// Front (+z)
 						if (z + 1 < SIZE)
-							neighbors[(int) BlockFace::Front] = chunk->GetBlock(glm::ivec3(x, y, z + 1));
+							neighbors[(int) BlockFace::Front] = chunk->GetBlock(glm::ivec3(x, localPos.y, z + 1));
 						else
 						{
 							// Asks the world manager for the block in the neighboring chunk if this block is on the edge of the chunk
-							neighbors[(int) BlockFace::Front] = m_WorldManager->GetBlock(
-								glm::ivec3(chunkPos.x * SIZE + x, chunkPos.y * SIZE + y, (chunkPos.y + 1) * SIZE));
+							neighbors[(int) BlockFace::Front] = m_WorldManager->GetBlock(glm::ivec3(wx, wy, wz + 1));
 						}
 
 						// Back (-z)
 						if (z - 1 >= 0)
-							neighbors[(int) BlockFace::Back] = chunk->GetBlock(glm::ivec3(x, y, z - 1));
+							neighbors[(int) BlockFace::Back] = chunk->GetBlock(glm::ivec3(x, localPos.y, z - 1));
 						else
 						{
 							// Asks the world manager for the block in the neighboring chunk if this block is on the edge of the chunk
-							neighbors[(int) BlockFace::Back] = m_WorldManager->GetBlock(
-								glm::ivec3(chunkPos.x * SIZE + x, chunkPos.y * SIZE + y, (chunkPos.y - 1) * SIZE));
+							neighbors[(int) BlockFace::Back] = m_WorldManager->GetBlock(glm::ivec3(wx, wy, wz - 1));
 						}
 
 						// Right (+x)
 						if (x + 1 < SIZE)
-							neighbors[(int) BlockFace::Right] = chunk->GetBlock(glm::ivec3(x + 1, y, z));
+							neighbors[(int) BlockFace::Right] = chunk->GetBlock(glm::ivec3(x + 1, localPos.y, z));
 						else
 						{
 							// Asks the world manager for the block in the neighboring chunk if this block is on the edge of the chunk
-							neighbors[(int) BlockFace::Right] = m_WorldManager->GetBlock(
-								glm::ivec3((chunkPos.x + 1) * SIZE, chunkPos.y * SIZE + y, chunkPos.y * SIZE + z));
+							neighbors[(int) BlockFace::Right] = m_WorldManager->GetBlock(glm::ivec3(wx + 1, wy, wz));
 						}
 
 						// Left (-x)
 						if (x - 1 >= 0)
-							neighbors[(int) BlockFace::Left] = chunk->GetBlock(glm::ivec3(x - 1, y, z));
+							neighbors[(int) BlockFace::Left] = chunk->GetBlock(glm::ivec3(x - 1, localPos.y, z));
 						else
 						{
 							// Asks the world manager for the block in the neighboring chunk if this block is on the edge of the chunk
-							neighbors[(int) BlockFace::Left] = m_WorldManager->GetBlock(
-								glm::ivec3((chunkPos.x - 1) * SIZE, chunkPos.y * SIZE + y, chunkPos.y * SIZE + z));
+							neighbors[(int) BlockFace::Left] = m_WorldManager->GetBlock(glm::ivec3(wx - 1, wy, wz));
 						}
 
 						// ------ Determine Face Visibility ------
@@ -265,12 +266,10 @@ namespace onion::voxel
 						if (!std::any_of(faceVisible.begin(), faceVisible.end(), [](bool v) { return v; }))
 							continue;
 
+						// ------ Get Block Textures ------
 						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.m_BlockID);
 
-						float wx = chunkPos.x * SIZE + x;
-						float wy = SIZE * sub + y;
-						float wz = chunkPos.y * SIZE + z;
-
+						// ------ Build Mesh ------
 						glm::vec3 p000(wx, wy, wz);
 						glm::vec3 p001(wx, wy, wz + 1);
 						glm::vec3 p010(wx, wy + 1, wz);
@@ -378,8 +377,6 @@ namespace onion::voxel
 			mesh->SetDirty(false);
 			mesh->BuffersUpdated();
 		}
-
-		chunkMesh->m_IsDirty = false;
 	}
 
 	void MeshBuilder::AddFace(SubChunkMesh& mesh,

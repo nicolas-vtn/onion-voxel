@@ -42,6 +42,7 @@ namespace onion::voxel
 
 		// ----- Configuration -----
 	  private:
+		static inline const std::string GAME_VERSION = "0.1.0";
 		std::filesystem::path m_ConfigFilePath = "config.json";
 		ClientConfiguration m_Config;
 		void LoadConfiguration();

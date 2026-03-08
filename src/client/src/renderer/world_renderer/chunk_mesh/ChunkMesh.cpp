@@ -54,9 +54,28 @@ namespace onion::voxel
 		}
 	}
 
+	void ChunkMesh::StartRebuilding()
+	{
+		m_IsDirty = false;
+	}
+
 	const glm::ivec2& ChunkMesh::GetChunkPosition() const
 	{
 		return m_ChunkPosition;
+	}
+
+	uint64_t ChunkMesh::GetVertexCount() const
+	{
+		std::shared_lock lock(m_MutexSubChunkMeshes);
+		uint64_t count = 0;
+		for (const auto& subChunkMesh : m_SubChunkMeshes)
+		{
+			if (subChunkMesh)
+			{
+				count += subChunkMesh->GetVertexCount();
+			}
+		}
+		return count;
 	}
 
 	bool ChunkMesh::IsDirty() const

@@ -1,5 +1,7 @@
 #include "WorldManager.hpp"
 
+#include "../../utils/Utils.hpp"
+
 namespace onion::voxel
 {
 	WorldManager::WorldManager() {}
@@ -92,12 +94,8 @@ namespace onion::voxel
 	Block WorldManager::GetBlock(const glm::ivec3& worldPosition) const
 	{
 		// Calculate chunk position and local position within chunk
-		glm::ivec2 chunkPosition{worldPosition.x / WorldConstants::SUBCHUNK_SIZE,
-								 worldPosition.z / WorldConstants::SUBCHUNK_SIZE};
-
-		glm::ivec3 localPosition{worldPosition.x % WorldConstants::SUBCHUNK_SIZE,
-								 worldPosition.y,
-								 worldPosition.z % WorldConstants::SUBCHUNK_SIZE};
+		glm::ivec2 chunkPosition = Utils::WorldToChunkPosition(worldPosition);
+		glm::ivec3 localPosition = Utils::WorldToLocalPosition(worldPosition);
 
 		std::shared_ptr<Chunk> chunk = GetChunk(chunkPosition);
 		if (chunk)
