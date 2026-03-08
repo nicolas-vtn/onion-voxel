@@ -388,7 +388,7 @@ namespace onion::voxel
 							  const Block& block,
 							  const FaceTexture& faceTexture,
 							  const TextureAtlas::AtlasEntry& uv,
-							  RotationType rotationType)
+							  Block::RotationType rotationType)
 	{
 		std::vector<SubChunkMesh::Vertex>* vertices = nullptr;
 		std::vector<uint16_t>* indices = nullptr;
@@ -418,7 +418,7 @@ namespace onion::voxel
 		glm::vec2 uv2{uv.uvMax.x, uv.uvMax.y};
 		glm::vec2 uv3{uv.uvMin.x, uv.uvMax.y};
 
-		if (rotationType == RotationType::Pillar)
+		if (rotationType == Block::RotationType::Pillar)
 		{
 			int rotationSteps = GetRotationSteps(block, face);
 			RotateUVs(uv0, uv1, uv2, uv3, rotationSteps);

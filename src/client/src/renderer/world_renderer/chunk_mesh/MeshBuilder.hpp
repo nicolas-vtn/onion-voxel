@@ -39,6 +39,6 @@ namespace onion::voxel
 							const Block& block,
 							const FaceTexture& faceTexture,
 							const TextureAtlas::AtlasEntry& uv,
-							RotationType rotationType);
+							Block::RotationType rotationType);
 	};
 } // namespace onion::voxel

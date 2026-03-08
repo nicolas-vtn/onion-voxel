@@ -68,11 +68,66 @@ namespace onion::voxel
 		}
 	}
 
+	struct OrientationPair
+	{
+		Block::Orientation facing;
+		Block::Orientation top;
+	};
+
+	static std::vector<OrientationPair> GetOrientationPairs(BlockId id)
+	{
+		using O = Block::Orientation;
+
+		std::vector<OrientationPair> pairs;
+		pairs.reserve(6);
+
+		switch (Block::GetRotationType(id))
+		{
+			case Block::RotationType::None:
+				{
+					pairs.push_back({O::None, O::None});
+					break;
+				}
+
+			case Block::RotationType::Facing:
+				{
+					pairs.push_back({O::North, O::Up});
+					pairs.push_back({O::South, O::Up});
+					pairs.push_back({O::East, O::Up});
+					pairs.push_back({O::West, O::Up});
+					break;
+				}
+
+			case Block::RotationType::Pillar:
+				{
+					pairs.push_back({O::Up, O::North});
+					pairs.push_back({O::Down, O::North});
+
+					pairs.push_back({O::North, O::Up});
+					pairs.push_back({O::South, O::Up});
+					pairs.push_back({O::East, O::Up});
+					pairs.push_back({O::West, O::Up});
+					break;
+				}
+
+			case Block::RotationType::Horizontal:
+				{
+					pairs.push_back({O::North, O::Up});
+					pairs.push_back({O::South, O::Up});
+					pairs.push_back({O::East, O::Up});
+					pairs.push_back({O::West, O::Up});
+					break;
+				}
+		}
+
+		return pairs;
+	}
+
 	std::shared_ptr<Chunk> WorldGenerator::GenerateChunk_DemoBlocks(const glm::ivec2& chunkPosition)
 	{
 		std::shared_ptr<Chunk> chunk = std::make_shared<Chunk>(chunkPosition);
 
-		constexpr int spacing = 2; // 1 block + 1 air gap
+		constexpr int spacing = 3; // 1 block + 1 air gap
 		constexpr int start = 1;   // avoid borders
 
 		// ---- All orientations except None ----
@@ -84,11 +139,6 @@ namespace onion::voxel
 														Block::Orientation::West};
 
 		// ---- Build valid (Facing, Top) pairs ----
-		struct OrientationPair
-		{
-			Block::Orientation facing;
-			Block::Orientation top;
-		};
 
 		std::vector<OrientationPair> orientationPairs;
 
@@ -141,7 +191,8 @@ namespace onion::voxel
 			if (id == BlockId::Air)
 				continue;
 
-			for (const auto& pair : orientationPairs)
+			auto pairs = GetOrientationPairs(id);
+			for (const auto& pair : pairs)
 			{
 				if (x >= max)
 				{

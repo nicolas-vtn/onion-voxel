@@ -45,8 +45,7 @@ namespace onion::voxel
 				  TextureInfo{"oak_log_top.png", TintType::None, TextureType::Opaque},
 				  TextureInfo{"oak_log_top.png", TintType::None, TextureType::Opaque},
 				  TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque},
-				  TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque}},
-				 RotationType::Pillar);
+				  TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque}});
 
 		Register(BlockId::OakLeaves, TextureInfo{"oak_leaves.png", TintType::Foliage, TextureType::Cutout});
 
@@ -56,8 +55,7 @@ namespace onion::voxel
 				  TextureInfo{"furnace_front.png", TintType::None, TextureType::Opaque},
 				  TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque},
 				  TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque},
-				  TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque}},
-				 RotationType::Horizontal);
+				  TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque}});
 
 		Register(BlockId::Bedrock, "bedrock.png");
 
@@ -68,10 +66,10 @@ namespace onion::voxel
 		Register(BlockId::Gravel, "gravel.png");
 	}
 
-	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures, RotationType rotationType)
+	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures)
 	{
 		BlockTextures tex;
-		tex.rotationType = rotationType;
+		tex.rotationType = Block::GetRotationType(id);
 
 		for (size_t i = 0; i < 6; i++)
 		{
@@ -83,18 +81,18 @@ namespace onion::voxel
 		m_Blocks[id] = tex;
 	}
 
-	void BlockRegistry::Register(BlockId id, const TextureInfo& texture, RotationType rotationType)
+	void BlockRegistry::Register(BlockId id, const TextureInfo& texture)
 	{
 		std::array<TextureInfo, 6> textures;
 		textures.fill(texture);
-		Register(id, textures, rotationType);
+		Register(id, textures);
 	}
 
-	void BlockRegistry::Register(BlockId id, const std::string& texture, RotationType rotationType)
+	void BlockRegistry::Register(BlockId id, const std::string& texture)
 	{
 		std::array<TextureInfo, 6> textures;
 		textures.fill({texture});
-		Register(id, textures, rotationType);
+		Register(id, textures);
 	}
 
 	void BlockRegistry::SetOverlay(BlockId id, BlockFace face, const TextureInfo& texture)

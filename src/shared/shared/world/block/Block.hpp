@@ -23,6 +23,14 @@ namespace onion::voxel
 			West
 		};
 
+		enum class RotationType
+		{
+			None,		// Dirt, stone
+			Horizontal, // Furnace, chest
+			Pillar,		// Rotatable along X/Y/Z
+			Facing,		// Observers, pistons
+		};
+
 		// ----- Constructor / Destructor -----
 	  public:
 		Block() = default;
@@ -43,10 +51,13 @@ namespace onion::voxel
 		// ----- Static Helpers -----
 	  public:
 		static bool IsTransparent(BlockId blockID);
+		static RotationType GetRotationType(BlockId blockID);
 
 		// ----- Static Members -----
 	  private:
 		static const std::vector<bool>
 			s_TransparencyLookupTable; // A lookup table for block transparency, indexed by BlockId
+		static const std::vector<RotationType>
+			s_RotationTypeLookupTable; // A lookup table for block rotation types, indexed by BlockId
 	};
 } // namespace onion::voxel

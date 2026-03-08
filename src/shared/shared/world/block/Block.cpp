@@ -12,6 +12,14 @@ namespace onion::voxel
 		return table;
 	}();
 
+	const std::vector<Block::RotationType> Block::s_RotationTypeLookupTable = []()
+	{
+		std::vector<RotationType> table(static_cast<size_t>(GetBlockIdCount()), RotationType::None);
+		table[static_cast<size_t>(BlockId::Furnace)] = RotationType::Horizontal;
+		table[static_cast<size_t>(BlockId::OakLog)] = RotationType::Pillar;
+		return table;
+	}();
+
 	Block::Block(BlockId blockID, Orientation facing, Orientation top)
 		: m_BlockID(blockID), m_Facing(facing), m_Top(top)
 	{
@@ -30,5 +38,10 @@ namespace onion::voxel
 	bool Block::IsTransparent(BlockId blockID)
 	{
 		return s_TransparencyLookupTable[static_cast<size_t>(blockID)];
+	}
+
+	Block::RotationType Block::GetRotationType(BlockId blockID)
+	{
+		return s_RotationTypeLookupTable[static_cast<size_t>(blockID)];
 	}
 } // namespace onion::voxel

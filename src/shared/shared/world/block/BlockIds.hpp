@@ -21,7 +21,7 @@ namespace onion::voxel
 
 	inline int GetBlockIdCount()
 	{
-		return 12; // Update this if you add more block IDs
+		return 12;
 	}
 
 } // namespace onion::voxel

@@ -50,19 +50,11 @@ namespace onion::voxel
 		TextureType textureType = TextureType::Opaque;
 	};
 
-	enum class RotationType
-	{
-		None,		// Dirt, stone
-		Horizontal, // Furnace, chest
-		Pillar,		// Rotatable along X/Y/Z
-		Facing,		// Observers, pistons
-	};
-
 	struct BlockTextures
 	{
 		std::array<FaceTexture, (size_t) BlockFace::Count> faces;
 		std::array<FaceTexture, (size_t) BlockFace::Count> overlay;
-		RotationType rotationType = RotationType::None;
+		Block::RotationType rotationType = Block::RotationType::None;
 	};
 
 	class BlockRegistry
@@ -73,11 +65,9 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		void Register(BlockId id,
-					  const std::array<TextureInfo, 6>& textures,
-					  RotationType rotationType = RotationType::None);
-		void Register(BlockId id, const TextureInfo& texture, RotationType rotationType = RotationType::None);
-		void Register(BlockId id, const std::string& texture, RotationType rotationType = RotationType::None);
+		void Register(BlockId id, const std::array<TextureInfo, 6>& textures);
+		void Register(BlockId id, const TextureInfo& texture);
+		void Register(BlockId id, const std::string& texture);
 
 		void SetOverlay(BlockId id, BlockFace face, const TextureInfo& texture);
 
