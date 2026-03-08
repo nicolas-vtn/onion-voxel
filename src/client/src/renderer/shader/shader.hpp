@@ -48,6 +48,8 @@ namespace onion::voxel
 		void setVec3(const std::string& name, const glm::vec3& value) const;
 		/// @brief Sets a vec3 uniform variable in the shader program.
 		void setVec3(const std::string& name, float x, float y, float z) const;
+		/// @brief Sets a glm::vec4 uniform variable in the shader program.
+		void setVec4(const std::string& name, const glm::vec4& value) const;
 		/// @brief Sets a glm::mat2 uniform variable in the shader program.
 		void setMat2(const std::string& name, const glm::mat2& mat) const;
 		/// @brief Sets a glm::mat3 uniform variable in the shader program.

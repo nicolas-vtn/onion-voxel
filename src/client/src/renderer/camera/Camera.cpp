@@ -90,6 +90,11 @@ namespace onion::voxel
 		return m_Projection;
 	}
 
+	glm::mat4 Camera::GetViewProjectionMatrix() const
+	{
+		return GetProjectionMatrix() * GetViewMatrix();
+	}
+
 	void Camera::UpdateProjectionMatrix()
 	{
 		m_Projection = glm::perspective(glm::radians(m_FovY), m_AspectRatio, m_NearPlane, m_FarPlane);

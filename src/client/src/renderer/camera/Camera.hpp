@@ -56,6 +56,7 @@ namespace onion::voxel
 		void SetPitch(float pitch);
 
 		glm::mat4 GetProjectionMatrix() const;
+		glm::mat4 GetViewProjectionMatrix() const;
 
 		void UpdateProjectionMatrix();
 

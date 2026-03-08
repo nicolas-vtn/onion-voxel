@@ -7,6 +7,8 @@
 
 #include <shared/utils/Utils.hpp>
 
+#include "debug_draws/DebugDraws.hpp"
+
 namespace
 {
 	static void error_callback(int code, const char* desc)
@@ -194,6 +196,9 @@ namespace onion::voxel
 			double currentFrame = glfwGetTime();
 			m_DeltaTime = currentFrame - m_LastFrame;
 			m_LastFrame = currentFrame;
+
+			// DEBUG : Sets DebugDraws ViewProj Matrix
+			DebugDraws::SetViewProjMatrix(m_Camera->GetViewProjectionMatrix());
 
 			// Render World
 			RemoveDistantChunks();
