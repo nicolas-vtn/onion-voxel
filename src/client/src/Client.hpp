@@ -1,10 +1,9 @@
 #pragma once
 
 #include <onion/Logger.hpp>
+#include <onion/Timer.hpp>
 
 #include <Server.hpp>
-
-#include <enet/enet.h>
 
 #include <shared/world/world_manager/WorldManager.hpp>
 
@@ -40,13 +39,22 @@ namespace onion::voxel
 		void SetLogLevel(eLogLevel logLevel);
 		eLogLevel GetLogLevel() const;
 
-		// ----- Configuration -----
+		// ---- Client Status -----
+	  private:
+		glm::vec3 m_PlayerPosition;
+		uint32_t m_ClientHandle = 0;
+
+		// ----- Configuration (Client) -----
 	  private:
 		static inline const std::string GAME_VERSION = "0.1.0";
 		std::filesystem::path m_ConfigFilePath = "config.json";
 		ClientConfiguration m_Config;
 		void LoadConfiguration();
 		void SaveConfiguration();
+
+		// ----- Configuration (Server) -----
+	  private:
+		std::string m_ServerName;
 
 		// ----- Event Handling -----
 	  private:
@@ -78,6 +86,9 @@ namespace onion::voxel
 		void Handle_NetworkMessageReceived(const NetworkMessage& message);
 		void Handle_ServerInfoMessageReceived(const ServerInfoMsg& msg);
 		void Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg);
+
+		Timer m_TimerSendPlayerInfos;
+		void SendPlayerInfosToServer();
 
 		// ----- Localhost Server -----
 	  private:

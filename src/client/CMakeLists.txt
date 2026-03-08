@@ -70,6 +70,7 @@ target_link_libraries(OnionVoxel
 
 		onion_event
 		onion_logger
+		onion::timer
         onion_voxel_server
 		onion_voxel_shared
 )

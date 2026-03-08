@@ -15,7 +15,8 @@ namespace onion::voxel
 			None = 0,
 			ServerInfo,
 			ClientInfo,
-			ChunkData
+			ChunkData,
+			PlayerInfos,
 		};
 
 		eType Type = eType::None;

@@ -14,6 +14,10 @@ namespace onion::voxel
 
 		SubscribeToRendererEvents();
 		SubscribeToNetworkClientEvents();
+
+		m_TimerSendPlayerInfos.setTimeoutFunction([this]() { SendPlayerInfosToServer(); });
+		m_TimerSendPlayerInfos.setElapsedPeriod(std::chrono::milliseconds(500));
+		m_TimerSendPlayerInfos.setRepeat(true);
 	}
 
 	Client::~Client() {}
@@ -91,6 +95,7 @@ namespace onion::voxel
 		if (!m_NetworkClient.IsRunning())
 		{
 			m_NetworkClient.Start();
+			m_TimerSendPlayerInfos.Start();
 		}
 		else
 		{
@@ -115,6 +120,7 @@ namespace onion::voxel
 		if (m_NetworkClient.IsRunning())
 		{
 			m_NetworkClient.Stop();
+			m_TimerSendPlayerInfos.Stop();
 		}
 
 		if (m_LocalhostServer != nullptr)
@@ -163,12 +169,25 @@ namespace onion::voxel
 	{
 		std::cout << "Received ServerInfoMsg: ServerName=" << msg.ServerName << ", ClientHandle=" << msg.ClientHandle
 				  << std::endl;
+
+		m_ClientHandle = msg.ClientHandle;
+		m_ServerName = msg.ServerName;
 	}
 
 	void Client::Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg)
 	{
 		std::shared_ptr<Chunk> chunk = Serializer::DeserializeChunk(msg);
 		m_WorldManager->AddChunk(chunk);
+	}
+
+	void Client::SendPlayerInfosToServer()
+	{
+		PlayerInfoMsg playerInfoMsg;
+		playerInfoMsg.Username = m_Config.clientData.Username;
+		playerInfoMsg.UUID = m_Config.clientData.UUID;
+		playerInfoMsg.Position = m_Renderer.GetPlayerPosition();
+
+		m_NetworkClient.Send(std::move(playerInfoMsg), false);
 	}
 
 } // namespace onion::voxel

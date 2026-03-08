@@ -68,6 +68,11 @@ namespace onion::voxel
 		}
 	}
 
+	glm::vec3 Renderer::GetPlayerPosition() const
+	{
+		return m_Camera->GetPosition();
+	}
+
 	void Renderer::InitWindow()
 	{
 		glfwSetErrorCallback(error_callback);

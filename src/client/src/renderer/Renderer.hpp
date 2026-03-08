@@ -48,6 +48,8 @@ namespace onion::voxel
 		eRenderState GetRenderState() const;
 		void SetRenderState(eRenderState renderState);
 
+		glm::vec3 GetPlayerPosition() const;
+
 		// ----- Events -----
 	  public:
 		Event<const std::filesystem::path&> RequestStartSingleplayerGame;

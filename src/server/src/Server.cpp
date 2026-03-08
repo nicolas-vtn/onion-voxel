@@ -54,6 +54,10 @@ namespace onion::voxel
 				{
 					Handle_ClientInfoMsgReceived(args, msg);
 				}
+				if constexpr (std::is_same_v<T, PlayerInfoMsg>)
+				{
+					Handle_PlayerInfoMsgReceived(args, msg);
+				}
 				else
 				{
 					std::cout << "Received unhandled message type from client " << args.Sender << "\n";
@@ -67,6 +71,14 @@ namespace onion::voxel
 	{
 		std::cout << "Received ClientInfoMsg from client " << args.Sender << ": Username=" << msg.Username
 				  << ", UUID=" << msg.UUID << "\n";
+	}
+
+	void Server::Handle_PlayerInfoMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
+											  const PlayerInfoMsg& msg)
+	{
+		std::cout << "Received PlayerInfoMsg from client " << args.Sender << ": Username=" << msg.Username
+				  << ", UUID=" << msg.UUID << ", Position=" << msg.Position.x << "," << msg.Position.y << ","
+				  << msg.Position.z << "\n";
 	}
 
 	void Server::Handle_ClientConnected(const NetworkServer::ClientConnectedEventArgs& args)

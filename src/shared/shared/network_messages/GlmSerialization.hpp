@@ -16,4 +16,14 @@ namespace cereal
 	{
 		ar(v.x, v.y, v.z);
 	}
+
+	template <class Archive> void serialize(Archive& ar, glm::vec2& v)
+	{
+		ar(v.x, v.y);
+	}
+
+	template <class Archive> void serialize(Archive& ar, glm::vec3& v)
+	{
+		ar(v.x, v.y, v.z);
+	}
 } // namespace cereal
