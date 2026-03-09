@@ -267,14 +267,9 @@ namespace onion::voxel
 	{
 		NetworkMessage msg;
 
-		while (!stopToken.stop_requested())
+		while (m_IncomingMessages.WaitPop(msg, stopToken))
 		{
-			while (m_IncomingMessages.TryPop(msg) && !stopToken.stop_requested())
-			{
-				MessageReceived.Trigger(msg);
-			}
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			MessageReceived.Trigger(msg);
 		}
 	}
 } // namespace onion::voxel
