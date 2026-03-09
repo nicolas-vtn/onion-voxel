@@ -20,7 +20,7 @@ namespace
 namespace onion::voxel
 {
 	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager)
-		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(0.0f, 0.0f, 0.0f), 800, 600)),
+		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), 800, 600)),
 		  m_WorldRenderer(worldManager, m_Camera)
 	{
 	}
@@ -90,7 +90,7 @@ namespace onion::voxel
 	void Renderer::SetRenderDistance(uint32_t renderDistance)
 	{
 		uint32_t clampedRenderDistance =
-			std::max(renderDistance, m_ServerInfo ? static_cast<uint32_t>(m_ServerInfo->SimulationDistance) : 8u);
+			std::max(renderDistance, m_ServerInfo ? static_cast<uint32_t>(m_ServerInfo->SimulationDistance) : 0);
 
 		m_RenderDistance = clampedRenderDistance;
 		m_LastCameraChunkPosition = glm::ivec2(INT32_MAX, INT32_MAX); // Force update of rendered chunks

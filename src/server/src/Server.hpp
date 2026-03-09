@@ -77,7 +77,7 @@ namespace onion::voxel
 			std::string Username;
 			std::string UUID;
 			uint32_t ClientHandle;
-			glm::vec3 Position;
+			glm::vec3 Position{99999.0f, 99999.0f, 99999.0f};
 		};
 
 		mutable std::shared_mutex m_MutexPlayers;

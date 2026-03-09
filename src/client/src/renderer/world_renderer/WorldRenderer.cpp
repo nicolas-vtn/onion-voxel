@@ -60,7 +60,8 @@ namespace onion::voxel
 		glDepthFunc(GL_LEQUAL);
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
-		glDisable(GL_POLYGON_OFFSET_FILL);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(-1.0f, -1.0f);
 	}
 
 	void WorldRenderer::PrepareForRenderingTransparent()
@@ -75,7 +76,8 @@ namespace onion::voxel
 		glDepthMask(GL_FALSE);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_POLYGON_OFFSET_FILL);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(-1.0f, -1.0f);
 	}
 
 	void WorldRenderer::ResetOpenGLState()
@@ -191,7 +193,8 @@ namespace onion::voxel
 		}
 
 		// Request the mesh builder to build the mesh for the new chunk mesh
-		m_ChunkMeshesToRebuild.Push(chunkMesh);
+		//m_ChunkMeshesToRebuild.Push(chunkMesh);
+		m_MeshBuilder.UpdateChunkMeshAsync(chunkMesh);
 
 		// Mark neighboring chunk meshes as dirty so they will be rebuilt to update their faces that are adjacent to the new chunk
 		MarkNeighboringChunkMeshesDirty(chunkPos);
@@ -333,7 +336,7 @@ namespace onion::voxel
 
 			if (m_ChunkMeshesToRebuild.TryPop(chunkMesh))
 			{
-				m_MeshBuilder.UpdateChunkMesh(chunkMesh);
+				m_MeshBuilder.UpdateChunkMeshAsync(chunkMesh);
 			}
 			else
 			{
@@ -351,7 +354,8 @@ namespace onion::voxel
 			if (chunkMesh->IsDirty())
 			{
 				chunkMesh->StartRebuilding();
-				m_ChunkMeshesToRebuild.Push(chunkMesh);
+				//m_ChunkMeshesToRebuild.Push(chunkMesh);
+				m_MeshBuilder.UpdateChunkMeshAsync(chunkMesh);
 			}
 		}
 	}
@@ -384,6 +388,15 @@ namespace onion::voxel
 		// ----- Render Options -----
 		ImGui::Separator();
 		ImGui::Checkbox("Render Chunk Borders", &m_RenderChunkBorders);
+
+		// ----- Performance Options -----
+		ImGui::Separator();
+		size_t meshBuilderThreadCount = m_MeshBuilder.GetMeshBuilderThreadCount();
+		if (ImGui::SliderInt(
+				"Mesh Builder Thread Count", (int*) &meshBuilderThreadCount, 1, std::thread::hardware_concurrency()))
+		{
+			m_MeshBuilder.SetMeshBuilderThreadCount(meshBuilderThreadCount);
+		}
 
 		// ---- SubChunk Shader Configuration ----
 		ImGui::Separator();

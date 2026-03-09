@@ -19,6 +19,7 @@ target_link_libraries(onion_voxel_server
 		FastNoiseLite
 
 		onion::event
+		onion::threadpool
 		onion_voxel_shared		
 )
 

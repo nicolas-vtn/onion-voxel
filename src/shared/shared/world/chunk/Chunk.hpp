@@ -18,7 +18,7 @@ namespace onion::voxel
 
 		// ----- Constructor / Destructor -----
 	  public:
-		Chunk(const glm::ivec2& position);
+		Chunk(const glm::ivec2& position, const size_t subChunkCount = 0);
 		Chunk(glm::ivec2 position, std::vector<SubChunk> subChunks, std::vector<Block> blocksPalette);
 		~Chunk();
 
@@ -31,6 +31,8 @@ namespace onion::voxel
 
 		Block GetBlock(const glm::ivec3& localPosition) const;
 		void SetBlock(const glm::ivec3& localPosition, const Block& block);
+
+		void SetBlock_Unsafe(const uint8_t x, const uint8_t y, const uint8_t z, const Block& block);
 
 		int GetSubChunkCount() const;
 

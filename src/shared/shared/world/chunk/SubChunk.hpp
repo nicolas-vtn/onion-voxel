@@ -24,6 +24,7 @@ namespace onion::voxel
 		// ----- Public API -----
 	  public:
 		void Optimize(); // Optimize the subchunk data (e.g., convert to mono block if all blocks are the same)
+		bool IsEmpty();	 // Check if the subchunk is empty (all blocks are air)
 
 		// ----- Getters / Setters -----
 	  public:
@@ -36,6 +37,8 @@ namespace onion::voxel
 		/// @param localPosition The local position within the subchunk (0 to SUBCHUNK_SIZE-1 in each axis)
 		/// @param blockIndex The block index in the palette to set at the given local position
 		void SetBlockIndexInPalette(const glm::ivec3& localPosition, uint8_t blockIndex);
+
+		void SetBlockIndexInPalette_Unsafe(const uint8_t x, const uint8_t y, const uint8_t z, const uint8_t blockIndex);
 
 		// ----- Members -----
 	  protected:

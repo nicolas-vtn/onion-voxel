@@ -28,6 +28,7 @@ add_subdirectory(deps/onion-datetime)
 add_subdirectory(deps/onion-event)
 add_subdirectory(deps/onion-logger)
 add_subdirectory(deps/onion-timer)
+add_subdirectory(deps/onion-threadpool)
 
 add_subdirectory(src/shared)
 add_subdirectory(src/client)

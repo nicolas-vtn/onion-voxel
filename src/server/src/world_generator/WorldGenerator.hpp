@@ -6,10 +6,11 @@
 #include <random>
 #include <thread>
 
-#include <shared/thread_safe_queue/ThreadSafeQueue.hpp>
-#include <shared/world/world_manager/WorldManager.hpp>
+#include <onion/ThreadPool.hpp>
 
+#include <shared/thread_safe_queue/ThreadSafeQueue.hpp>
 #include <shared/world/schematic/Schematic.hpp>
+#include <shared/world/world_manager/WorldManager.hpp>
 
 namespace std
 {
@@ -58,7 +59,6 @@ namespace onion::voxel
 		// ----- Private Members -----
 	  private:
 		std::shared_ptr<WorldManager> m_WorldManager;
-		ThreadSafeQueue<glm::ivec2> m_ChunkGenerationQueue;
 
 		// ----- Events Handlers -----
 	  private:
@@ -80,8 +80,8 @@ namespace onion::voxel
 
 		// ----- Chunk Generation Thread -----
 	  private:
-		std::jthread m_ThreadChunkGeneration;
-		void ChunkGenerationThreadFunction(std::stop_token st);
+		ThreadPool m_ThreadPool{4};
+
 		GenChunk GenerateChunk(const glm::ivec2& chunkPosition);
 
 		GenChunk GenerateChunk_DemoBlocks(const glm::ivec2& chunkPosition);

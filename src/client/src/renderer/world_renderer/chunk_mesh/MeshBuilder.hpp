@@ -6,6 +6,8 @@
 #include <deque>
 #include <memory>
 
+#include <onion/ThreadPool.hpp>
+
 #include <shared/world/chunk/Chunk.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
@@ -22,16 +24,21 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		void UpdateChunkMesh(const std::shared_ptr<ChunkMesh> chunkMesh);
+		void UpdateChunkMeshAsync(const std::shared_ptr<ChunkMesh> chunkMesh);
 		double GetAverageChunkMeshUpdateTime() const; // Returns the average time taken for chunk mesh updates in ms
 		size_t GetChunkMeshUpdatesLastSeconds() const;
 		double GetChunkMeshUpdatesPerSecond() const;
+
+		size_t GetMeshBuilderThreadCount() const;
+		void SetMeshBuilderThreadCount(size_t count);
 
 		// ----- Private Members -----
 	  private:
 		std::shared_ptr<WorldManager> m_WorldManager;
 		BlockRegistry m_BlockRegistry;
 		std::shared_ptr<TextureAtlas> m_TextureAtlas;
+
+		ThreadPool m_ThreadPool{4};
 
 		// ----- Latency Metrics -----
 	  private:
@@ -50,6 +57,8 @@ namespace onion::voxel
 
 		// ----- Private Methods -----
 	  private:
+		void UpdateChunkMesh(const std::shared_ptr<ChunkMesh> chunkMesh);
+
 		static void AddFace(SubChunkMesh& mesh,
 							const glm::vec3& v0,
 							const glm::vec3& v1,

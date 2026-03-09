@@ -72,7 +72,7 @@ namespace onion::voxel
 				{
 					Handle_ClientInfoMsgReceived(args, msg);
 				}
-				if constexpr (std::is_same_v<T, PlayerInfoMsg>)
+				else if constexpr (std::is_same_v<T, PlayerInfoMsg>)
 				{
 					Handle_PlayerInfoMsgReceived(args, msg);
 				}
@@ -122,15 +122,6 @@ namespace onion::voxel
 		srvInfoMsg.SimulationDistance = m_Config.serverData.SimulationDistance;
 
 		m_NetworkServer.Send(args.Client, srvInfoMsg);
-
-		//// DEMO : Generate 10 * 10 chunks around (0, 0)
-		//for (int x = -5; x < 5; ++x)
-		//{
-		//	for (int z = -5; z < 5; ++z)
-		//	{
-		//		m_WorldGenerator.GenerateChunkAsync({x, z});
-		//	}
-		//}
 	}
 
 	void Server::Handle_ClientDisconnected(const NetworkServer::ClientDisconnectedEventArgs& args)

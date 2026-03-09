@@ -335,20 +335,18 @@ namespace onion::voxel
 	{
 
 		IncommingMessage msg;
+		MessageReceivedEventArgs args;
 
 		while (!stopToken.stop_requested())
 		{
-			if (m_IncomingMessages.TryPop(msg))
+			while (m_IncomingMessages.TryPop(msg) && !stopToken.stop_requested())
 			{
-				MessageReceivedEventArgs args;
 				args.Sender = msg.Sender;
 				args.Message = std::move(msg.Message);
 				MessageReceived.Trigger(args);
 			}
-			else
-			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(10));
-			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}
 	}
 } // namespace onion::voxel

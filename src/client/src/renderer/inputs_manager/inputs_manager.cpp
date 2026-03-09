@@ -23,7 +23,7 @@ void InputsManager::Init(GLFWwindow* window)
 	glfwSetWindowUserPointer(window, this);
 
 	{
-		std::unique_lock<std::mutex> lockFramebuffer(m_MutexFramebuffer);
+		std::lock_guard lockFramebuffer(m_MutexFramebuffer);
 		glfwGetFramebufferSize(m_Window, &m_FramebufferState.Width, &m_FramebufferState.Height);
 		m_FramebufferState.Resized = true;
 	}
@@ -51,7 +51,7 @@ void InputsManager::PoolInputs()
 	}
 
 	{
-		std::unique_lock<std::mutex> lockInputs(m_MutexSnapshot);
+		std::lock_guard lockInputs(m_MutexSnapshot);
 		m_InputsSnapshot = nullptr;
 	}
 
@@ -95,7 +95,7 @@ void onion::voxel::InputsManager::DestroyCursors()
 
 void InputsManager::PoolMouseMovement()
 {
-	std::unique_lock<std::mutex> lock(m_MutexMouse);
+	std::lock_guard lock(m_MutexMouse);
 
 	m_MouseState.CaptureEnabled = IsMouseCaptureEnabled();
 
@@ -142,14 +142,14 @@ void InputsManager::PoolMouseMovement()
 
 void InputsManager::PoolMouseInputs()
 {
-	std::unique_lock<std::mutex> lock(m_MutexMouse);
+	std::lock_guard lock(m_MutexMouse);
 	m_MouseState.LeftButtonPressed = glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 	m_MouseState.RightButtonPressed = glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
 }
 
 void InputsManager::PollKeyboardInputs()
 {
-	std::unique_lock<std::mutex> lock(m_MutexRegisteredInputs);
+	std::lock_guard lock(m_MutexRegisteredInputs);
 	for (auto& [inputId, keyControl] : m_RegisteredInputs)
 	{
 		bool isKeyDown = glfwGetKey(m_Window, static_cast<int>(keyControl.key)) == GLFW_PRESS;
@@ -160,12 +160,12 @@ void InputsManager::PollKeyboardInputs()
 void InputsManager::ResetFlags()
 {
 	{
-		std::unique_lock<std::mutex> lockFramebuffer(m_MutexFramebuffer);
+		std::lock_guard lockFramebuffer(m_MutexFramebuffer);
 		m_FramebufferState.Resized = false;
 	}
 
 	{
-		std::unique_lock<std::mutex> lock(m_MutexMouse);
+		std::lock_guard lock(m_MutexMouse);
 		m_MouseState.ScrollOffsetChanged = false;
 		m_MouseState.MovementOffsetChanged = false;
 	}
@@ -204,7 +204,7 @@ void InputsManager::InitCallbacks()
 
 void InputsManager::FramebufferSizeCallback(int width, int height)
 {
-	std::unique_lock<std::mutex> lock(m_MutexFramebuffer);
+	std::lock_guard lock(m_MutexFramebuffer);
 	m_FramebufferState.Resized = true;
 	m_FramebufferState.Width = width;
 	m_FramebufferState.Height = height;
@@ -212,7 +212,7 @@ void InputsManager::FramebufferSizeCallback(int width, int height)
 
 void InputsManager::MouseScrollCallback(double xoffset, double yoffset)
 {
-	std::unique_lock<std::mutex> lock(m_MutexMouse);
+	std::lock_guard lock(m_MutexMouse);
 	m_MouseState.ScrollOffsetChanged = true;
 	m_MouseState.ScrollXoffset = xoffset;
 	m_MouseState.ScrollYoffset = yoffset;
@@ -244,13 +244,13 @@ bool InputsManager::IsMouseCaptureEnabled() const
 
 FramebufferState InputsManager::GetFramebufferState()
 {
-	std::unique_lock<std::mutex> lock(m_MutexFramebuffer);
+	std::lock_guard lock(m_MutexFramebuffer);
 	return m_FramebufferState;
 }
 
 int InputsManager::RegisterInput(const Key key, InputConfig config)
 {
-	std::unique_lock<std::mutex> lock(m_MutexRegisteredInputs);
+	std::lock_guard lock(m_MutexRegisteredInputs);
 
 	int inputId = m_NextInputId++;
 
@@ -268,7 +268,7 @@ int InputsManager::RegisterInput(const Key key, InputConfig config)
 
 void InputsManager::UnregisterInput(int inputId)
 {
-	std::unique_lock<std::mutex> lock(m_MutexRegisteredInputs);
+	std::lock_guard lock(m_MutexRegisteredInputs);
 	m_RegisteredInputs.erase(inputId);
 }
 
@@ -297,18 +297,18 @@ void InputsManager::UpdateInputsSnapshot()
 	std::shared_ptr<InputsSnapshot> inputs = std::make_shared<InputsSnapshot>();
 
 	{
-		std::unique_lock lock(m_MutexFramebuffer);
+		std::lock_guard lock(m_MutexFramebuffer);
 		inputs->Framebuffer = m_FramebufferState;
 		m_FramebufferState.Resized = false; // Reset the framebuffer resized flag
 	}
 
 	{
-		std::unique_lock<std::mutex> lock(m_MutexMouse);
+		std::lock_guard lock(m_MutexMouse);
 		inputs->Mouse = m_MouseState;
 	}
 
 	{
-		std::unique_lock<std::mutex> lockInputs(m_MutexRegisteredInputs);
+		std::lock_guard lockInputs(m_MutexRegisteredInputs);
 		for (const auto& [inputId, keyControl] : m_RegisteredInputs)
 		{
 			KeyState keyState;
@@ -318,7 +318,7 @@ void InputsManager::UpdateInputsSnapshot()
 		}
 	}
 
-	std::unique_lock<std::mutex> lockInputs(m_MutexSnapshot);
+	std::lock_guard lockInputs(m_MutexSnapshot);
 	m_InputsSnapshot = inputs;
 }
 

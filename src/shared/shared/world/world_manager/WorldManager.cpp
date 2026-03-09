@@ -233,7 +233,7 @@ namespace onion::voxel
 
 	void WorldManager::PlaceOutOfBoundsBlocks()
 	{
-		std::vector<std::pair<glm::ivec3, Block>> blocksToPlace;
+		std::vector<std::pair<glm::ivec3, Block>> blocksPlaced;
 		{
 			std::unique_lock lock(m_MutexOutOfBoundsBlocks);
 			for (auto it = m_OutOfBoundsBlocks.begin(); it != m_OutOfBoundsBlocks.end();)
@@ -247,7 +247,7 @@ namespace onion::voxel
 					{
 						chunk->SetBlock(localPos, block);
 						const glm::ivec3 worldPos = Utils::LocalToWorldPosition(localPos, chunkPos);
-						blocksToPlace.emplace_back(worldPos, block);
+						blocksPlaced.emplace_back(worldPos, block);
 					}
 					// Remove the entry from the map after placing the blocks
 					it = m_OutOfBoundsBlocks.erase(it);
@@ -258,9 +258,10 @@ namespace onion::voxel
 				}
 			}
 		}
-		if (!blocksToPlace.empty())
+
+		if (!blocksPlaced.empty())
 		{
-			BlocksChanged.Trigger(blocksToPlace);
+			BlocksChanged.Trigger(blocksPlaced);
 		}
 	}
 

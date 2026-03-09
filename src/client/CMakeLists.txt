@@ -68,9 +68,11 @@ target_link_libraries(OnionVoxel
 		winmm
 		ws2_32
 
-		onion_event
-		onion_logger
+		onion::event
+		onion::logger
 		onion::timer
+		onion::threadpool
+
         onion_voxel_server
 		onion_voxel_shared
 )

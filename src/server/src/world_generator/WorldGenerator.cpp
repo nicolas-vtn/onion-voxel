@@ -1,36 +1,41 @@
 #include "WorldGenerator.hpp"
 
+#include <iostream>
+
+#include <shared/utils/Stopwatch.hpp>
 #include <shared/utils/Utils.hpp>
 
 namespace onion::voxel
 {
 	WorldGenerator::WorldGenerator(std::shared_ptr<WorldManager> worldManager) : m_WorldManager(worldManager)
 	{
-		m_ThreadChunkGeneration = std::jthread([this](std::stop_token st) { ChunkGenerationThreadFunction(st); });
-
 		SubscribeToWorldManagerEvents();
 		Handle_SeedChanged(m_WorldManager->GetSeed());
 	}
 
-	WorldGenerator::~WorldGenerator()
-	{
-		if (m_ThreadChunkGeneration.joinable())
-		{
-			m_ThreadChunkGeneration.request_stop();
-			m_ThreadChunkGeneration.join();
-		}
-	}
+	WorldGenerator::~WorldGenerator() {}
 
 	void WorldGenerator::GenerateChunkAsync(const glm::ivec2& chunkPosition)
 	{
-		m_ChunkGenerationQueue.Push(chunkPosition);
+		m_ThreadPool.Dispatch(
+			[this, chunkPosition]()
+			{
+				if (!m_WorldManager->IsChunkLoaded(chunkPosition))
+				{
+					GenChunk genChunk = GenerateChunk(chunkPosition);
+					if (genChunk.chunk)
+					{
+						m_WorldManager->AddChunk(genChunk.chunk, genChunk.outOfBoundsBlocks);
+					}
+				}
+			});
 	}
 
 	void WorldGenerator::GenerateChunksAsync(const std::vector<glm::ivec2>& chunkPositions)
 	{
 		for (const auto& chunkPosition : chunkPositions)
 		{
-			m_ChunkGenerationQueue.Push(chunkPosition);
+			GenerateChunkAsync(chunkPosition);
 		}
 	}
 
@@ -50,43 +55,32 @@ namespace onion::voxel
 		ConfigureNoiseGenerator();
 	}
 
-	void WorldGenerator::ChunkGenerationThreadFunction(std::stop_token st)
-	{
-		while (!st.stop_requested())
-		{
-			glm::ivec2 chunkPosition;
-			if (m_ChunkGenerationQueue.TryPop(chunkPosition))
-			{
-				if (!m_WorldManager->IsChunkLoaded(chunkPosition))
-				{
-					GenChunk genChunk = GenerateChunk(chunkPosition);
-					if (genChunk.chunk)
-					{
-						m_WorldManager->AddChunk(genChunk.chunk, genChunk.outOfBoundsBlocks);
-					}
-				}
-			}
-			else
-			{
-				std::this_thread::sleep_for(
-					std::chrono::milliseconds(10)); // Sleep for a short duration to prevent busy waiting
-			}
-		}
-	}
-
 	WorldGenerator::GenChunk WorldGenerator::GenerateChunk(const glm::ivec2& chunkPosition)
 	{
+		Stopwatch stopwatch;
+		stopwatch.Start();
+
+		GenChunk genChunk;
+
 		switch (m_WorldGenerationType)
 		{
 			case eWorldGenerationType::DemoBlocks:
-				return GenerateChunk_DemoBlocks(chunkPosition);
+				genChunk = GenerateChunk_DemoBlocks(chunkPosition);
+				break;
 			case eWorldGenerationType::Superflat:
-				return GenerateChunk_Superflat(chunkPosition);
+				genChunk = GenerateChunk_Superflat(chunkPosition);
+				break;
 			case eWorldGenerationType::Classic:
-				return GenerateChunk_Classic(chunkPosition);
+				genChunk = GenerateChunk_Classic(chunkPosition);
+				break;
 			default:
 				throw std::runtime_error("Invalid world generation type");
 		}
+
+		double elapsedMs = stopwatch.ElapsedMs();
+		//std::cout << elapsedMs << " ms" << std::endl;
+
+		return genChunk;
 	}
 
 	struct OrientationPair
@@ -302,7 +296,7 @@ namespace onion::voxel
 		GenChunk genChunk;
 
 		// Creates the Chunk
-		auto chunk = std::make_shared<Chunk>(chunkPosition);
+		auto chunk = std::make_shared<Chunk>(chunkPosition, 100);
 
 		constexpr int CHUNK_SIZE = WorldConstants::SUBCHUNK_SIZE;
 

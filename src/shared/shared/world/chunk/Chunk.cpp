@@ -4,7 +4,10 @@
 
 namespace onion::voxel
 {
-	Chunk::Chunk(const glm::ivec2& position) : m_Position(position) {}
+	Chunk::Chunk(const glm::ivec2& position, const size_t subChunkCount) : m_Position(position)
+	{
+		m_SubChunks.resize(subChunkCount);
+	}
 
 	Chunk::Chunk(glm::ivec2 position, std::vector<SubChunk> subChunks, std::vector<Block> blocksPalette)
 		: m_Position(position), m_SubChunks(std::move(subChunks)), m_BlocksPalette(std::move(blocksPalette))
@@ -16,6 +19,12 @@ namespace onion::voxel
 	void Chunk::Optimize()
 	{
 		std::unique_lock lock(m_Mutex);
+
+		// Remove empty subchunks at the end of the subchunks vector
+		while (!m_SubChunks.empty() && m_SubChunks.back().IsEmpty())
+		{
+			m_SubChunks.pop_back();
+		}
 
 		// Optimize each subchunk
 		for (SubChunk& subChunk : m_SubChunks)
@@ -96,6 +105,19 @@ namespace onion::voxel
 
 		// Set the block data in the subchunk
 		subChunk.SetBlockIndexInPalette(localPositionInSubChunk, indexInPalette);
+	}
+
+	void voxel::Chunk::SetBlock_Unsafe(const uint8_t x, const uint8_t y, const uint8_t z, const Block& block)
+	{
+		// Add the block to the palette and get the block data index
+		const uint8_t indexInPalette = AddBlockToPalette(block);
+
+		// Calculate which subchunk the local position is in
+		const int subChunkIndex = y / WorldConstants::SUBCHUNK_SIZE;
+
+		// Set the block data in the subchunk
+		m_SubChunks[subChunkIndex].SetBlockIndexInPalette_Unsafe(
+			x, y % WorldConstants::SUBCHUNK_SIZE, z, indexInPalette);
 	}
 
 	int Chunk::GetSubChunkCount() const

@@ -214,6 +214,8 @@ namespace onion::voxel
 		glm::ivec2 chunkPosition = chunk->GetPosition();
 		glm::ivec2 playerChunkPosition = Utils::WorldToChunkPosition(m_Renderer.GetPlayerPosition());
 
+		//std::cout << "Received chunk at position: (" << chunkPosition.x << ", " << chunkPosition.y << ")\n";
+
 		const int renderDistance = m_Renderer.GetRenderDistance();
 		if (std::abs(playerChunkPosition.x - chunkPosition.x) <= renderDistance &&
 			std::abs(playerChunkPosition.y - chunkPosition.y) <= renderDistance)
@@ -232,7 +234,7 @@ namespace onion::voxel
 
 		size_t blocksSet = m_WorldManager->SetBlocks(changedBlocks, false);
 
-		std::cout << "Set " << blocksSet << " blocks out of " << changedBlocks.size() << std::endl;
+		//std::cout << "Set " << blocksSet << " blocks out of " << changedBlocks.size() << std::endl;
 	}
 
 	void Client::SendPlayerInfosToServer()

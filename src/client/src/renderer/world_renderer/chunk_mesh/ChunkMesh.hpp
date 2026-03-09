@@ -33,6 +33,7 @@ namespace onion::voxel
 		void Delete();
 
 		void StartRebuilding();
+		void FinishRebuilding();
 
 		// ----- Getters / Setters -----
 	  public:
@@ -46,12 +47,15 @@ namespace onion::voxel
 		// ----- States -----
 	  private:
 		std::atomic_bool m_IsDirty{true};
+		std::atomic_bool m_IsRebuilding{false};
+		std::mutex m_MutexRebuilding;
+		std::stop_source m_RebuildStopSource;
 
 		// ----- Members -----
 	  protected:
 		const glm::ivec2 m_ChunkPosition; // The position of the chunk that this mesh represents (in chunk coordinates)
 		mutable std::shared_mutex m_MutexSubChunkMeshes; // Mutex for synchronizing access to the subchunk meshes vector
-		std::vector<std::unique_ptr<SubChunkMesh>> m_SubChunkMeshes; // The subchunk meshes that make up this chunk mesh
+		std::vector<std::shared_ptr<SubChunkMesh>> m_SubChunkMeshes; // The subchunk meshes that make up this chunk mesh
 
 		std::weak_ptr<Chunk> m_Chunk; // Weak pointer to the chunk that this mesh represents
 	};

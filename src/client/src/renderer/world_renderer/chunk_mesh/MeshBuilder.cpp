@@ -151,15 +151,26 @@ namespace onion::voxel
 
 		for (int i = 0; i < 6; i++)
 		{
-			// Special case for water: if both the block and its neighbor are water, the face between them should not be rendered
-			if (block.m_BlockID == BlockId::Water && neighbors[i].m_BlockID == BlockId::Water)
+			// Water is only visible when next to air
+			if (block.m_BlockID == BlockId::Water && neighbors[i].m_BlockID != BlockId::Air)
 			{
 				visibility[i] = false;
 				continue;
 			}
 
+			if (block.m_BlockID == BlockId::OakLeaves && neighbors[i].m_BlockID == BlockId::OakLeaves)
+			{
+				if (i == (int) BlockFace::Top || i == (int) BlockFace::Left || i == (int) BlockFace::Back)
+				{
+					visibility[i] = true;
+					continue;
+				}
+				visibility[i] = false;
+				continue;
+			}
+
 			// A face is visible if the neighboring block in that direction is transparent
-			visibility[i] = Block::IsTransparent(neighbors[i].m_BlockID);
+			visibility[i] = Block::IsTransparent(block.m_BlockID) || Block::IsTransparent(neighbors[i].m_BlockID);
 		}
 
 		return visibility;
@@ -179,26 +190,56 @@ namespace onion::voxel
 
 		const int subChunkCount = chunk->GetSubChunkCount();
 
-		// Ensure the chunk mesh has enough subchunk meshes for the number of subchunks in the chunk
+		// If the chunk mesh is already being rebuilt, we should stop the existing rebuild and start a new one
+		if (chunkMesh->m_IsRebuilding)
 		{
-			std::unique_lock lock(chunkMesh->m_MutexSubChunkMeshes);
-			while (chunkMesh->m_SubChunkMeshes.size() < subChunkCount)
-			{
-				chunkMesh->m_SubChunkMeshes.emplace_back(std::make_unique<SubChunkMesh>());
-			}
+			chunkMesh->m_RebuildStopSource.request_stop();
 		}
 
-		std::shared_lock lock(chunkMesh->m_MutexSubChunkMeshes);
+		// Acquire the lock to set the rebuilding flag and create a new stop source for this rebuild
+		std::lock_guard lock(chunkMesh->m_MutexRebuilding);
+		chunkMesh->m_IsRebuilding = true;
+		chunkMesh->m_RebuildStopSource = std::stop_source();
+		std::stop_token stopToken = chunkMesh->m_RebuildStopSource.get_token();
+
+		// Create a new vector of SubChunkMeshes to build the new meshes into.
+		std::vector<std::shared_ptr<SubChunkMesh>> newSubChunkMeshes(subChunkCount);
+		{
+			std::shared_lock lock(chunkMesh->m_MutexSubChunkMeshes);
+			newSubChunkMeshes = chunkMesh->m_SubChunkMeshes;
+		}
+
+		// Ensure the new vector has enough subchunk meshes for the number of subchunks in the chunk
+		while (newSubChunkMeshes.size() < subChunkCount)
+		{
+			newSubChunkMeshes.emplace_back(std::make_shared<SubChunkMesh>());
+		}
+
 		constexpr int SIZE = WorldConstants::SUBCHUNK_SIZE;
+
+		// Gets the adjacent chunks.
+		std::shared_ptr<Chunk> adjacentPosX = m_WorldManager->GetChunk(glm::ivec2(chunkPos.x + 1, chunkPos.y));
+		std::shared_ptr<Chunk> adjacentNegX = m_WorldManager->GetChunk(glm::ivec2(chunkPos.x - 1, chunkPos.y));
+		std::shared_ptr<Chunk> adjacentPosZ = m_WorldManager->GetChunk(glm::ivec2(chunkPos.x, chunkPos.y + 1));
+		std::shared_ptr<Chunk> adjacentNegZ = m_WorldManager->GetChunk(glm::ivec2(chunkPos.x, chunkPos.y - 1));
 
 		for (int sub = 0; sub < subChunkCount; sub++)
 		{
-			auto& mesh = chunkMesh->m_SubChunkMeshes[sub];
+			// If a stop has been requested for this rebuild, we should stop building the mesh
+			if (stopToken.stop_requested())
+			{
+				return;
+			}
+
+			auto& mesh = newSubChunkMeshes[sub];
 			std::unique_lock meshLock(mesh->m_Mutex);
 
 			// If the mesh is not dirty, we can skip it
 			if (!mesh->IsDirty())
+			{
+				newSubChunkMeshes[sub] = mesh; // Reuse the existing mesh
 				continue;
+			}
 
 			for (int z = 0; z < SIZE; z++)
 				for (int y = 0; y < SIZE; y++)
@@ -235,8 +276,9 @@ namespace onion::voxel
 							neighbors[(int) BlockFace::Front] = chunk->GetBlock(glm::ivec3(x, localPos.y, z + 1));
 						else
 						{
-							// Asks the world manager for the block in the neighboring chunk if this block is on the edge of the chunk
-							neighbors[(int) BlockFace::Front] = m_WorldManager->GetBlock(glm::ivec3(wx, wy, wz + 1));
+							neighbors[(int) BlockFace::Front] = adjacentPosZ
+								? adjacentPosZ->GetBlock(glm::ivec3(x, localPos.y, 0))
+								: Block(BlockId::Stone);
 						}
 
 						// Back (-z)
@@ -244,8 +286,9 @@ namespace onion::voxel
 							neighbors[(int) BlockFace::Back] = chunk->GetBlock(glm::ivec3(x, localPos.y, z - 1));
 						else
 						{
-							// Asks the world manager for the block in the neighboring chunk if this block is on the edge of the chunk
-							neighbors[(int) BlockFace::Back] = m_WorldManager->GetBlock(glm::ivec3(wx, wy, wz - 1));
+							neighbors[(int) BlockFace::Back] = adjacentNegZ
+								? adjacentNegZ->GetBlock(glm::ivec3(x, localPos.y, SIZE - 1))
+								: Block(BlockId::Stone);
 						}
 
 						// Right (+x)
@@ -253,8 +296,9 @@ namespace onion::voxel
 							neighbors[(int) BlockFace::Right] = chunk->GetBlock(glm::ivec3(x + 1, localPos.y, z));
 						else
 						{
-							// Asks the world manager for the block in the neighboring chunk if this block is on the edge of the chunk
-							neighbors[(int) BlockFace::Right] = m_WorldManager->GetBlock(glm::ivec3(wx + 1, wy, wz));
+							neighbors[(int) BlockFace::Right] = adjacentPosX
+								? adjacentPosX->GetBlock(glm::ivec3(0, localPos.y, z))
+								: Block(BlockId::Stone);
 						}
 
 						// Left (-x)
@@ -262,8 +306,9 @@ namespace onion::voxel
 							neighbors[(int) BlockFace::Left] = chunk->GetBlock(glm::ivec3(x - 1, localPos.y, z));
 						else
 						{
-							// Asks the world manager for the block in the neighboring chunk if this block is on the edge of the chunk
-							neighbors[(int) BlockFace::Left] = m_WorldManager->GetBlock(glm::ivec3(wx - 1, wy, wz));
+							neighbors[(int) BlockFace::Left] = adjacentNegX
+								? adjacentNegX->GetBlock(glm::ivec3(SIZE - 1, localPos.y, z))
+								: Block(BlockId::Stone);
 						}
 
 						// ------ Determine Face Visibility ------
@@ -385,6 +430,14 @@ namespace onion::voxel
 			mesh->BuffersUpdated();
 		}
 
+		// Swap the old subchunk meshes with the new ones
+		{
+			std::unique_lock lock(chunkMesh->m_MutexSubChunkMeshes);
+			chunkMesh->m_SubChunkMeshes = std::move(newSubChunkMeshes);
+		}
+
+		chunkMesh->FinishRebuilding();
+
 		AddChunkMeshUpdateTime(stopwatch.ElapsedMs());
 		RecordExecution();
 	}
@@ -401,6 +454,11 @@ namespace onion::voxel
 
 		double total = std::accumulate(m_ChunkMeshUpdateTimes_ms.begin(), m_ChunkMeshUpdateTimes_ms.end(), 0.0);
 		m_AverageChunkMeshUpdateTime.store(total / m_ChunkMeshUpdateTimes_ms.size());
+	}
+
+	void MeshBuilder::UpdateChunkMeshAsync(const std::shared_ptr<ChunkMesh> chunkMesh)
+	{
+		m_ThreadPool.Dispatch([this, chunkMesh]() { UpdateChunkMesh(chunkMesh); });
 	}
 
 	double MeshBuilder::GetAverageChunkMeshUpdateTime() const
@@ -423,6 +481,16 @@ namespace onion::voxel
 
 		auto duration = std::chrono::duration<double>(m_Window).count();
 		return m_ExecutionTimes.size() / duration;
+	}
+
+	size_t MeshBuilder::GetMeshBuilderThreadCount() const
+	{
+		return m_ThreadPool.GetPoolsCount();
+	}
+
+	void MeshBuilder::SetMeshBuilderThreadCount(size_t count)
+	{
+		m_ThreadPool.SetPoolsCount(count);
 	}
 
 	void MeshBuilder::RecordExecution()

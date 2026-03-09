@@ -11,7 +11,7 @@ namespace onion::voxel
 		m_SubChunkMeshes.reserve(subChunkCount);
 		for (int i = 0; i < subChunkCount; ++i)
 		{
-			m_SubChunkMeshes.emplace_back(std::make_unique<SubChunkMesh>());
+			m_SubChunkMeshes.emplace_back(std::make_shared<SubChunkMesh>());
 		}
 	}
 
@@ -57,6 +57,12 @@ namespace onion::voxel
 	void ChunkMesh::StartRebuilding()
 	{
 		m_IsDirty = false;
+		m_IsRebuilding = true;
+	}
+
+	void ChunkMesh::FinishRebuilding()
+	{
+		m_IsRebuilding = false;
 	}
 
 	const glm::ivec2& ChunkMesh::GetChunkPosition() const

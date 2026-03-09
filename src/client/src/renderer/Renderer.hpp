@@ -128,7 +128,7 @@ namespace onion::voxel
 	  private:
 		std::shared_ptr<WorldManager> m_WorldManager;
 		void RemoveDistantChunks();
-		uint32_t m_RenderDistance = 8; // In chunks
+		uint32_t m_RenderDistance = 5; // In chunks
 
 		// ------ World Renderer ------
 	  private:
