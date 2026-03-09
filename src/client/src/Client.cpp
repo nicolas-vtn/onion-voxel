@@ -181,6 +181,10 @@ namespace onion::voxel
 				{
 					Handle_ChunkDataMessageReceived(msg);
 				}
+				else if constexpr (std::is_same_v<T, BlocksChangedMsg>)
+				{
+					Handle_BlocksChangedMessageReceived(msg);
+				}
 			},
 			message);
 	}
@@ -216,6 +220,19 @@ namespace onion::voxel
 		{
 			m_WorldManager->AddChunk(chunk);
 		}
+	}
+
+	void Client::Handle_BlocksChangedMessageReceived(const BlocksChangedMsg& msg)
+	{
+		std::vector<std::pair<glm::ivec3, Block>> changedBlocks;
+		for (const auto& [worldPos, blockDTO] : msg.ChangedBlocks)
+		{
+			changedBlocks.emplace_back(worldPos, Serializer::DeserializeBlock(blockDTO));
+		}
+
+		size_t blocksSet = m_WorldManager->SetBlocks(changedBlocks, false);
+
+		std::cout << "Set " << blocksSet << " blocks out of " << changedBlocks.size() << std::endl;
 	}
 
 	void Client::SendPlayerInfosToServer()

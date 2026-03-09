@@ -245,7 +245,14 @@ namespace onion::voxel
 		// ----- Get Camera Chunk Corners -----
 		const glm::vec3 cameraPos = m_Camera->GetPosition();
 		const glm::ivec2 cameraChunkPos = Utils::WorldToChunkPosition(cameraPos);
-		const float maxY = m_WorldManager->GetChunk(cameraChunkPos)->GetSubChunkCount() * WorldConstants::SUBCHUNK_SIZE;
+		const auto cameraChunk = m_WorldManager->GetChunk(cameraChunkPos);
+
+		if (!cameraChunk)
+		{
+			return;
+		}
+
+		const float maxY = cameraChunk->GetSubChunkCount() * WorldConstants::SUBCHUNK_SIZE;
 		const auto [minCorner, maxCorner] = GetChunkCorners(cameraChunkPos, maxY);
 
 		// Render Borders for the chunk of the camera

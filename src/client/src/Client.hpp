@@ -88,6 +88,7 @@ namespace onion::voxel
 		void Handle_NetworkMessageReceived(const NetworkMessage& message);
 		void Handle_ServerInfoMessageReceived(const ServerInfoMsg& msg);
 		void Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg);
+		void Handle_BlocksChangedMessageReceived(const BlocksChangedMsg& msg);
 
 		Timer m_TimerSendPlayerInfos;
 		void SendPlayerInfosToServer();

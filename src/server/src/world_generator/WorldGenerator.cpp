@@ -1,5 +1,7 @@
 #include "WorldGenerator.hpp"
 
+#include <shared/utils/Utils.hpp>
+
 namespace onion::voxel
 {
 	WorldGenerator::WorldGenerator(std::shared_ptr<WorldManager> worldManager) : m_WorldManager(worldManager)
@@ -60,9 +62,7 @@ namespace onion::voxel
 					GenChunk genChunk = GenerateChunk(chunkPosition);
 					if (genChunk.chunk)
 					{
-						m_WorldManager->AddChunk(genChunk.chunk);
-
-						// TO DO : Add OutOfBoundsBlocks to WorldManager
+						m_WorldManager->AddChunk(genChunk.chunk, genChunk.outOfBoundsBlocks);
 					}
 				}
 			}
@@ -318,11 +318,6 @@ namespace onion::voxel
 				float noisePositionX = static_cast<float>(realWorldX) * m_SmoothnessX;
 				float noisePositionZ = static_cast<float>(realWorldZ) * m_SmoothnessZ;
 
-				//// Random float number in range [-1, 1]
-				//static std::mt19937 rng(std::random_device{}());
-				//static std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
-				//heightMap[x][z] = static_cast<uint16_t>(GetTerrainHeight(dist(rng)));
-
 				heightMap[x][z] =
 					static_cast<uint16_t>(GetTerrainHeight(m_FastNoiseLite.GetNoise(noisePositionX, noisePositionZ)));
 			}
@@ -388,88 +383,86 @@ namespace onion::voxel
 		}
 
 		// Adds trees
-		//for (uint8_t x = 0; x < World::CHUNK_SIZE_X; ++x)
-		//{
-		//	for (uint8_t z = 0; z < World::CHUNK_SIZE_Z; ++z)
-		//	{
-		//		int realWorldX = (position.x * World::CHUNK_SIZE_X + x);
-		//		int realWorldZ = (position.z * World::CHUNK_SIZE_Z + z);
-		//		int height = heightMap[x][z];
+		for (uint8_t x = 0; x < WorldConstants::SUBCHUNK_SIZE; ++x)
+		{
+			for (uint8_t z = 0; z < WorldConstants::SUBCHUNK_SIZE; ++z)
+			{
+				int realWorldX = (chunkPosition.x * WorldConstants::SUBCHUNK_SIZE + x);
+				int realWorldZ = (chunkPosition.y * WorldConstants::SUBCHUNK_SIZE + z);
+				int height = heightMap[x][z];
 
-		//		if (height < m_AverageHeight)
-		//			continue; // Skip if the height is below average (no trees in water)
+				if (height < m_AverageHeight)
+					continue; // Skip if the height is below average (no trees in water)
 
-		//		int minRand = 0;
-		//		int maxRand = 1000000;
+				int minRand = 0;
+				int maxRand = 1000000;
 
-		//		// Seed PRNG directly
-		//		std::uint64_t hash = 14695981039346656037ull; // FNV offset
-		//		hash ^= static_cast<std::uint64_t>(m_Seed);
-		//		hash *= 1099511628211ull;
-		//		hash ^= static_cast<std::uint64_t>(realWorldX);
-		//		hash *= 1099511628211ull;
-		//		hash ^= static_cast<std::uint64_t>(realWorldZ);
-		//		hash *= 1099511628211ull;
+				// Seed PRNG directly
+				std::uint64_t hash = 14695981039346656037ull; // FNV offset
+				hash ^= static_cast<std::uint64_t>(GetSeed());
+				hash *= 1099511628211ull;
+				hash ^= static_cast<std::uint64_t>(realWorldX);
+				hash *= 1099511628211ull;
+				hash ^= static_cast<std::uint64_t>(realWorldZ);
+				hash *= 1099511628211ull;
 
-		//		std::mt19937 generator(static_cast<std::mt19937::result_type>(hash));
-		//		std::uniform_int_distribution<int> heightDistribution(minRand, maxRand);
+				std::mt19937 generator(static_cast<std::mt19937::result_type>(hash));
+				std::uniform_int_distribution<int> heightDistribution(minRand, maxRand);
 
-		//		// Generate a float in [0,1)
-		//		float randomVal = static_cast<float>(heightDistribution(generator)) / (maxRand + 1);
+				// Generate a float in [0,1)
+				float randomVal = static_cast<float>(heightDistribution(generator)) / (maxRand + 1);
 
-		//		// 5% chance to generate a tree
-		//		if (randomVal < 0.01f)
-		//		{
-		//			// Every 0 0
-		//			// if (x == 0 && z == 0 && position.x == 0 && position.z == 0) {
-		//			BlockPosition topBlock{
-		//				(position.x * CHUNK_SIZE_X) + x, height - 1, (position.z * CHUNK_SIZE_Z) + z};
-		//			Schematic tree = GenerateTree(topBlock); // Generate a tree at the top block position
+				// 5% chance to generate a tree
+				if (randomVal < 0.01f)
+				{
+					// Every 0 0
+					// if (x == 0 && z == 0 && position.x == 0 && position.z == 0) {
+					glm::ivec3 topBlock{(chunkPosition.x * WorldConstants::SUBCHUNK_SIZE) + x,
+										height - 1,
+										(chunkPosition.y * WorldConstants::SUBCHUNK_SIZE) + z};
 
-		//			// Fuse the tree schematic into the chunk pile
-		//			for (int treeX = 0; treeX < tree.SizeX; treeX++)
-		//			{
-		//				for (int treeY = 0; treeY < tree.SizeY; treeY++)
-		//				{
-		//					for (int treeZ = 0; treeZ < tree.SizeZ; treeZ++)
-		//					{
+					Schematic tree = GenerateTree(topBlock); // Generate a tree at the top block position
 
-		//						BlockState blockState = tree.GetBlockStateAt(treeX, treeY, treeZ);
+					// Fuse the tree schematic into the chunk pile
+					for (int treeX = 0; treeX < tree.SizeX; treeX++)
+					{
+						for (int treeY = 0; treeY < tree.SizeY; treeY++)
+						{
+							for (int treeZ = 0; treeZ < tree.SizeZ; treeZ++)
+							{
 
-		//						if (blockState.Id == BlockId::Air)
-		//						{
-		//							continue; // Skip air blocks
-		//						}
+								Block block = tree.GetBlockAt(treeX, treeY, treeZ);
+								const glm::ivec3 blockWorldPos = {
+									tree.Origin.x + treeX, tree.Origin.y + treeY, tree.Origin.z + treeZ};
 
-		//						// Check if the block is in the chunkpile bounds
-		//						const auto chunkpilePos =
-		//							GetChunkPosition(tree.Origin.x + treeX, tree.Origin.z + treeZ);
-		//						if (chunkpilePos == position)
-		//						{
-		//							// Set the block in the chunk pile
+								if (block.m_BlockID == BlockId::Air)
+								{
+									continue; // Skip air blocks
+								}
 
-		//							// Get local coordinates in the chunk
-		//							int localX = PositiveModulo((tree.Origin.x + treeX), World::CHUNK_SIZE_X);
-		//							int localZ = PositiveModulo((tree.Origin.z + treeZ), World::CHUNK_SIZE_Z);
-		//							chunk->SetBlock(localX, tree.Origin.y + treeY, localZ, blockState);
-		//						}
-		//						else
-		//						{
-		//							// Tree block is outside the chunk pile bounds ...
-		//							int treeRealWorldX = tree.Origin.x + treeX;
-		//							int treeRealWorldZ = tree.Origin.z + treeZ;
+								// Check if the block is in the chunkpile bounds
+								const auto blockChunkPos = Utils::WorldToChunkPosition(blockWorldPos);
+								if (blockChunkPos == chunkPosition)
+								{
+									// Set the block in the chunk pile
 
-		//							// Add the block to the out-of-bounds blocks
-		//							Block outOfBoundsBlock{
-		//								treeRealWorldX, tree.Origin.y + treeY, treeRealWorldZ, blockState};
-		//							genChunk.OutOfBoundsBlocks[chunkpilePos].push_back(outOfBoundsBlock);
-		//						}
-		//					}
-		//				}
-		//			}
-		//		}
-		//	}
-		//}
+									// Get local coordinates in the chunk
+									const glm::ivec3 localPos = Utils::WorldToLocalPosition(blockWorldPos);
+									chunk->SetBlock(localPos, block);
+								}
+								else
+								{
+									// Tree block is outside the chunk pile bounds ...
+
+									// Add the block to the out-of-bounds blocks
+									genChunk.outOfBoundsBlocks[blockWorldPos] = block;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 
 		// Optimize the chunk (less memory, faster to send to clients)
 		chunk->Optimize();
@@ -477,6 +470,83 @@ namespace onion::voxel
 		genChunk.chunk = chunk;
 
 		return genChunk;
+	}
+
+	Schematic WorldGenerator::GenerateTree(const glm::ivec3& position) const
+	{
+		glm::ivec3 treePosition{position.x, position.y + 1, position.z};
+
+		glm::ivec3 SchematicOrigin{treePosition.x - 2, treePosition.y + 1, treePosition.z - 2};
+
+		Schematic treeSchematic(5, 20, 5, SchematicOrigin);
+
+		int minTreeHeight = 2;
+		int maxTreeHeight = 5;
+
+		// Combine seed, x and z in a simple way
+		std::uint64_t combined = static_cast<std::uint64_t>(GetSeed()) ^
+			(static_cast<std::uint64_t>(position.x) << 16) ^ (static_cast<std::uint64_t>(position.z) << 32);
+
+		std::mt19937 generator(static_cast<std::mt19937::result_type>(combined));
+		std::uniform_int_distribution<int> heightDistribution(minTreeHeight, maxTreeHeight);
+
+		int treeHeight = heightDistribution(generator);
+
+		static std::random_device rd;  // Non-deterministic (hardware RNG)
+		static std::mt19937 gen(rd()); // Only seeded once
+		static std::uniform_int_distribution<int> dist(1, 100);
+
+		// Creates the block palette for the tree
+		Block verticalOakLog = Block(BlockId::OakLog, Block::Orientation::Up, Block::Orientation::North);
+		Block oakLeaves = Block(BlockId::OakLeaves);
+
+		// Generate the Logs
+		for (int y = 0; y < treeHeight + 3; ++y)
+		{
+			// Vertical oak log
+			treeSchematic.SetBlockAt(2, y, 2, verticalOakLog); // Set the trunk block
+		}
+
+		// Generate the Leaves
+		for (int x = 0; x < 5; ++x)
+		{
+			for (int z = 0; z < 5; ++z)
+			{
+				for (int y = treeHeight; y < treeHeight + 2; y++)
+				{
+					if (treeSchematic.GetBlockIdAt(x, y, z) == BlockId::Air)
+					{
+						treeSchematic.SetBlockAt(x, y, z, oakLeaves); // Set the leaves block
+					}
+
+					// 20% chance to NOT have leaves at the corners
+					if ((x == 0 && z == 0) || (x == 0 && z == 4) || (x == 4 && z == 0) || (x == 4 && z == 4))
+					{
+						if (dist(gen) <= 20)
+						{
+							// Set the corner leaves to air
+							treeSchematic.SetBlockAt(x, y, z, Block(BlockId::Air));
+						}
+					}
+				}
+			}
+		}
+
+		for (int x = 1; x < 4; ++x)
+		{
+			for (int z = 1; z < 4; ++z)
+			{
+				for (int y = treeHeight + 2; y <= treeHeight + 3; y++)
+				{
+					if (treeSchematic.GetBlockIdAt(x, y, z) == BlockId::Air)
+					{
+						treeSchematic.SetBlockAt(x, y, z, oakLeaves); // Set the leaves block
+					}
+				}
+			}
+		}
+
+		return treeSchematic;
 	}
 
 	void WorldGenerator::ConfigureNoiseGenerator()

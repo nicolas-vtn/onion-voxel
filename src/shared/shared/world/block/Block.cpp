@@ -33,7 +33,7 @@ namespace onion::voxel
 
 	bool Block::operator!=(const Block& other) const
 	{
-		return false;
+		return !(*this == other);
 	}
 
 	bool Block::IsTransparent(BlockId blockID)

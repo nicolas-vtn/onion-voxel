@@ -44,7 +44,7 @@ namespace onion::voxel
 		// Calculate which subchunk the local position is in
 		int subChunkIndex = localPosition.y / WorldConstants::SUBCHUNK_SIZE;
 
-		if (subChunkIndex >= GetSubChunkCount())
+		if (subChunkIndex >= m_SubChunks.size())
 		{
 			return m_BlocksPalette[0]; // Air
 		}

@@ -9,6 +9,8 @@
 #include <shared/thread_safe_queue/ThreadSafeQueue.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
+#include <shared/world/schematic/Schematic.hpp>
+
 namespace std
 {
 	template <> struct hash<glm::ivec3>
@@ -85,6 +87,11 @@ namespace onion::voxel
 		GenChunk GenerateChunk_DemoBlocks(const glm::ivec2& chunkPosition);
 		GenChunk GenerateChunk_Superflat(const glm::ivec2& chunkPosition);
 		GenChunk GenerateChunk_Classic(const glm::ivec2& chunkPosition);
+
+		// ----- Structures Generation -----
+	  private:
+		// ------------ STRUCTURES ------------
+		Schematic GenerateTree(const glm::ivec3& position) const;
 
 		// ----- Classic Generation Parameters -----
 	  private:
