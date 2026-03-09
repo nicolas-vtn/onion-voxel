@@ -10,3 +10,6 @@
 [submodule "deps/onion-timer"]
 	path = deps/onion-timer
 	url = https://github.com/nicolas-vtn/onion-timer.git
+[submodule "deps/onion-threadpool"]
+	path = deps/onion-threadpool
+	url = https://github.com/nicolas-vtn/onion-threadpool.git
