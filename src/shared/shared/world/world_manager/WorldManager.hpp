@@ -44,14 +44,23 @@ namespace onion::voxel
 		std::shared_ptr<Chunk> GetChunk(const glm::ivec2& chunkPosition) const;
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, IVec2Hash> GetAllChunks() const;
 
+		// ----- Getters / Setters -----
+	  public:
+		std::filesystem::path GetCurrentWorldPath() const;
+
+		uint32_t GetSeed() const;
+		void SetSeed(uint32_t seed);
+
 		// ----- Events -----
 	  public:
+		Event<const uint32_t&> SeedChanged;
 		Event<std::shared_ptr<Chunk>> ChunkAdded;
 		Event<std::shared_ptr<Chunk>> ChunkRemoved;
 
 		// ----- Members -----
 	  private:
 		std::filesystem::path m_CurrentWorldPath;
+		std::atomic_uint32_t m_Seed{1};
 
 		mutable std::shared_mutex m_MutexChunks;
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, IVec2Hash> m_Chunks;

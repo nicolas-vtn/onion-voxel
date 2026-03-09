@@ -145,15 +145,15 @@ namespace onion::voxel
 	{
 		std::array<bool, 6> visibility{};
 
-		// If block is transparent, all faces are visible
-		if (Block::IsTransparent(block.m_BlockID))
-		{
-			std::fill(visibility.begin(), visibility.end(), true);
-			return visibility;
-		}
-
 		for (int i = 0; i < 6; i++)
 		{
+			// Special case for water: if both the block and its neighbor are water, the face between them should not be rendered
+			if (block.m_BlockID == BlockId::Water && neighbors[i].m_BlockID == BlockId::Water)
+			{
+				visibility[i] = false;
+				continue;
+			}
+
 			// A face is visible if the neighboring block in that direction is transparent
 			visibility[i] = Block::IsTransparent(neighbors[i].m_BlockID);
 		}

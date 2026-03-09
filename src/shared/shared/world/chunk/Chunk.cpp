@@ -6,19 +6,30 @@ namespace onion::voxel
 {
 	Chunk::Chunk(const glm::ivec2& position) : m_Position(position) {}
 
-	voxel::Chunk::Chunk(glm::ivec2 position, std::vector<SubChunk> subChunks, std::vector<Block> blocksPalette)
+	Chunk::Chunk(glm::ivec2 position, std::vector<SubChunk> subChunks, std::vector<Block> blocksPalette)
 		: m_Position(position), m_SubChunks(std::move(subChunks)), m_BlocksPalette(std::move(blocksPalette))
 	{
 	}
 
 	Chunk::~Chunk() {}
 
+	void Chunk::Optimize()
+	{
+		std::unique_lock lock(m_Mutex);
+
+		// Optimize each subchunk
+		for (SubChunk& subChunk : m_SubChunks)
+		{
+			subChunk.Optimize();
+		}
+	}
+
 	glm::ivec2 Chunk::GetPosition() const
 	{
 		return m_Position;
 	}
 
-	Block voxel::Chunk::GetBlock(const glm::ivec3& localPosition) const
+	Block Chunk::GetBlock(const glm::ivec3& localPosition) const
 	{
 		// Check if localPosition is within bounds of the chunk
 		if (localPosition.x < 0 || localPosition.x >= WorldConstants::SUBCHUNK_SIZE || localPosition.y < 0 ||
@@ -52,7 +63,7 @@ namespace onion::voxel
 		return m_BlocksPalette[blockIndex];
 	}
 
-	void voxel::Chunk::SetBlock(const glm::ivec3& localPosition, const Block& block)
+	void Chunk::SetBlock(const glm::ivec3& localPosition, const Block& block)
 	{
 		// Check if localPosition is within bounds of the chunk
 		if (localPosition.x < 0 || localPosition.x >= WorldConstants::SUBCHUNK_SIZE || localPosition.y < 0 ||
@@ -87,7 +98,7 @@ namespace onion::voxel
 		subChunk.SetBlockIndexInPalette(localPositionInSubChunk, indexInPalette);
 	}
 
-	int voxel::Chunk::GetSubChunkCount() const
+	int Chunk::GetSubChunkCount() const
 	{
 		std::shared_lock lock(m_Mutex);
 		return static_cast<int>(m_SubChunks.size());

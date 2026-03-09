@@ -9,6 +9,7 @@ namespace onion::voxel
 		table[static_cast<size_t>(BlockId::Air)] = true;
 		table[static_cast<size_t>(BlockId::Glass)] = true;
 		table[static_cast<size_t>(BlockId::OakLeaves)] = true;
+		table[static_cast<size_t>(BlockId::Water)] = true;
 		return table;
 	}();
 

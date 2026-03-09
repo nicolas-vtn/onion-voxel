@@ -97,6 +97,22 @@ namespace onion::voxel
 		return m_Chunks.find(chunkPosition) != m_Chunks.end();
 	}
 
+	std::filesystem::path WorldManager::GetCurrentWorldPath() const
+	{
+		return m_CurrentWorldPath;
+	}
+
+	uint32_t WorldManager::GetSeed() const
+	{
+		return m_Seed;
+	}
+
+	void WorldManager::SetSeed(uint32_t seed)
+	{
+		m_Seed = seed;
+		SeedChanged.Trigger(seed);
+	}
+
 	Block WorldManager::GetBlock(const glm::ivec3& worldPosition) const
 	{
 		// Calculate chunk position and local position within chunk
