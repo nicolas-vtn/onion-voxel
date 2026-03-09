@@ -166,8 +166,8 @@ namespace onion::voxel
 			return;
 		}
 
-		std::cout << "Chunk added at position: (" << chunk->GetPosition().x << ", " << chunk->GetPosition().y << ")"
-				  << std::endl;
+		//std::cout << "Chunk added at position: (" << chunk->GetPosition().x << ", " << chunk->GetPosition().y << ")"
+		//		  << std::endl;
 
 		// Create a new chunk mesh for the added chunk and add it to the chunk meshes map
 		const glm::ivec2 chunkPos = chunk->GetPosition();

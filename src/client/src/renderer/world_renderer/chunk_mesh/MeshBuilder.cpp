@@ -425,20 +425,20 @@ namespace onion::voxel
 		}
 
 		// ------ TINT HANDLING ------
-		glm::vec3 tint(1.0f);
+		glm::ivec3 tint(255);
 
 		switch (faceTexture.tintType)
 		{
 			case TintType::Grass:
-				tint = glm::vec3(0.6f, 0.85f, 0.4f);
+				tint = glm::ivec3(153, 217, 102);
 				break;
 
 			case TintType::Foliage:
-				tint = glm::vec3(0.5f, 0.8f, 0.3f);
+				tint = glm::ivec3(128, 204, 77);
 				break;
 
 			case TintType::Water:
-				tint = glm::vec3(0.3f, 0.5f, 1.0f);
+				tint = glm::ivec3(77, 128, 255);
 				break;
 
 			default:
@@ -459,12 +459,12 @@ namespace onion::voxel
 			vert.texX = uv.x;
 			vert.texY = uv.y;
 
-			vert.facing = static_cast<float>(face);
-			vert.occlusion = 0.0f;
+			vert.facing = static_cast<uint8_t>(face);
+			vert.occlusion = 0;
 
-			vert.tintR = tint.r;
-			vert.tintG = tint.g;
-			vert.tintB = tint.b;
+			vert.tintR = static_cast<uint8_t>(tint.r);
+			vert.tintG = static_cast<uint8_t>(tint.g);
+			vert.tintB = static_cast<uint8_t>(tint.b);
 
 			return vert;
 		};

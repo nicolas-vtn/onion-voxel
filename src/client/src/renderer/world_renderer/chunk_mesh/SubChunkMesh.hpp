@@ -92,13 +92,14 @@ namespace onion::voxel
 	  public:
 		struct Vertex
 		{
-			float x, y, z;			   // Position
-			float texX, texY;		   // Texture coordinates
-			float facing;			   // Facing direction (0-5 for the 6 faces of a cube)
-			float occlusion;		   // Ambient occlusion factor (0.0 to 1.0)
-			float tintR, tintG, tintB; // RGB tint color
+			float x, y, z;	  // Position
+			float texX, texY; // Texture coordinates
+
+			uint8_t facing;				 // Facing direction (0-5 for the 6 faces of a cube)
+			uint8_t occlusion;			 // Ambient occlusion factor (0-255)
+			uint8_t tintR, tintG, tintB; // RGB tint color
 		};
 
-		static constexpr int VERTEX_SIZE = 10; // Vertex size in floats
+		//static constexpr int VERTEX_SIZE = 10; // Vertex size in floats
 	};
 } // namespace onion::voxel
