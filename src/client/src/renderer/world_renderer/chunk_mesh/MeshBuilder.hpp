@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+#include <chrono>
+#include <deque>
 #include <memory>
 
 #include <shared/world/chunk/Chunk.hpp>
@@ -21,12 +23,30 @@ namespace onion::voxel
 		// ----- Public API -----
 	  public:
 		void UpdateChunkMesh(const std::shared_ptr<ChunkMesh> chunkMesh);
+		double GetAverageChunkMeshUpdateTime() const; // Returns the average time taken for chunk mesh updates in ms
+		size_t GetChunkMeshUpdatesLastSeconds() const;
+		double GetChunkMeshUpdatesPerSecond() const;
 
 		// ----- Private Members -----
 	  private:
 		std::shared_ptr<WorldManager> m_WorldManager;
 		BlockRegistry m_BlockRegistry;
 		std::shared_ptr<TextureAtlas> m_TextureAtlas;
+
+		// ----- Latency Metrics -----
+	  private:
+		size_t m_MaxDurationsToStore = 100;			  // Maximum number of durations to store for averaging
+		std::mutex m_ChunkMeshUpdateTimesMutex;		  // Mutex to protect access to the chunk mesh update times
+		std::deque<double> m_ChunkMeshUpdateTimes_ms; // Stores the time taken for each chunk mesh update
+		void AddChunkMeshUpdateTime(double timeMs);	  // Adds a new chunk mesh update time and updates the average
+		std::atomic<double> m_AverageChunkMeshUpdateTime{0.0}; // The average time taken for chunk mesh updates
+
+		// ----- Execution Frequency Metrics -----
+	  private:
+		std::chrono::seconds m_Window{1}; // window size (last X seconds)
+		mutable std::mutex m_ExecutionTimesMutex;
+		std::deque<std::chrono::steady_clock::time_point> m_ExecutionTimes;
+		void RecordExecution();
 
 		// ----- Private Methods -----
 	  private:

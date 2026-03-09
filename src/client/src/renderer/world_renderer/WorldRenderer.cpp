@@ -374,8 +374,15 @@ namespace onion::voxel
 	{
 		ImGui::Begin("World Renderer");
 
+		// ----- General Stats -----
 		ImGui::Text("Chunk Meshes: %s", FormatThousands(GetChunkMeshesCount()).c_str());
 		ImGui::Text("Vertices: %s", FormatThousands(GetVertexCount()).c_str());
+		const double avgMeshBuildTime_ms = m_MeshBuilder.GetAverageChunkMeshUpdateTime();
+		ImGui::Text("Average Mesh Build Time: %.2f ms", avgMeshBuildTime_ms);
+		ImGui::Text("Chunk Mesh Updates per Second: %.2f", m_MeshBuilder.GetChunkMeshUpdatesPerSecond());
+
+		// ----- Render Options -----
+		ImGui::Separator();
 		ImGui::Checkbox("Render Chunk Borders", &m_RenderChunkBorders);
 
 		// ---- SubChunk Shader Configuration ----
