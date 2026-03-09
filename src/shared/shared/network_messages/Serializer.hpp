@@ -11,6 +11,104 @@ namespace onion::voxel
 	class Serializer
 	{
 	  public:
+		static inline SubChunkDTO SerializeSubChunk(const SubChunk& sc)
+		{
+			SubChunkDTO dto;
+
+			if (sc.m_IsMonoBlock)
+			{
+				dto.compressionType = SubChunkDTO::MonoIndex;
+				dto.monoIndex = sc.m_MonoBlockIndexInPalette;
+				return dto;
+			}
+
+			const auto& arr = *sc.m_BlockIndexInPalette;
+			const size_t SIZE = arr.size();
+
+			// --------- RAW ---------
+			std::vector<uint8_t> raw(arr.begin(), arr.end());
+
+			// --------- RLE ---------
+			std::vector<uint8_t> rle;
+			rle.reserve(SIZE);
+
+			uint8_t current = arr[0];
+			uint8_t count = 1;
+
+			for (size_t i = 1; i < SIZE; i++)
+			{
+				if (arr[i] == current && count < 255)
+				{
+					count++;
+				}
+				else
+				{
+					rle.push_back(count);
+					rle.push_back(current);
+
+					current = arr[i];
+					count = 1;
+				}
+			}
+
+			rle.push_back(count);
+			rle.push_back(current);
+
+			// --------- Choose best compression ---------
+			if (rle.size() < raw.size())
+			{
+				dto.compressionType = SubChunkDTO::RLE;
+				dto.rleData = std::move(rle);
+			}
+			else
+			{
+				dto.compressionType = SubChunkDTO::None;
+				dto.indices = std::move(raw);
+			}
+
+			return dto;
+		}
+
+		static inline SubChunk DeserializeSubChunk(const SubChunkDTO& dto)
+		{
+			SubChunk sc;
+
+			sc.m_IsMonoBlock = dto.compressionType == SubChunkDTO::MonoIndex;
+			sc.m_MonoBlockIndexInPalette = dto.monoIndex;
+
+			if (sc.m_IsMonoBlock)
+				return sc;
+
+			sc.m_BlockIndexInPalette =
+				std::make_shared<std::array<uint8_t,
+											WorldConstants::SUBCHUNK_SIZE * WorldConstants::SUBCHUNK_SIZE *
+												WorldConstants::SUBCHUNK_SIZE>>();
+
+			auto& arr = *sc.m_BlockIndexInPalette;
+
+			if (dto.compressionType == SubChunkDTO::None)
+			{
+				std::copy(dto.indices.begin(), dto.indices.end(), arr.begin());
+			}
+			else if (dto.compressionType == SubChunkDTO::RLE)
+			{
+				size_t writeIndex = 0;
+
+				for (size_t i = 0; i < dto.rleData.size(); i += 2)
+				{
+					uint8_t count = dto.rleData[i];
+					uint8_t value = dto.rleData[i + 1];
+
+					for (uint8_t c = 0; c < count; c++)
+					{
+						arr[writeIndex++] = value;
+					}
+				}
+			}
+
+			return sc;
+		}
+
 		static inline ChunkDataMsg SerializeChunk(std::shared_ptr<Chunk> chunk)
 		{
 			std::shared_lock lock(chunk->m_Mutex);
@@ -34,17 +132,7 @@ namespace onion::voxel
 
 			for (const SubChunk& sc : chunk->m_SubChunks)
 			{
-				SubChunkDTO dto;
-
-				dto.isMono = sc.m_IsMonoBlock;
-				dto.monoIndex = sc.m_MonoBlockIndexInPalette;
-
-				if (!sc.m_IsMonoBlock)
-				{
-					dto.indices.assign(sc.m_BlockIndexInPalette->begin(), sc.m_BlockIndexInPalette->end());
-				}
-
-				msg.SubChunks.push_back(dto);
+				msg.SubChunks.emplace_back(SerializeSubChunk(sc));
 			}
 
 			return msg;
@@ -73,22 +161,7 @@ namespace onion::voxel
 
 				for (const SubChunkDTO& dto : msg.SubChunks)
 				{
-					SubChunk sc;
-
-					sc.m_IsMonoBlock = dto.isMono;
-					sc.m_MonoBlockIndexInPalette = dto.monoIndex;
-
-					if (!dto.isMono)
-					{
-						sc.m_BlockIndexInPalette =
-							std::make_shared<std::array<uint8_t,
-														WorldConstants::SUBCHUNK_SIZE * WorldConstants::SUBCHUNK_SIZE *
-															WorldConstants::SUBCHUNK_SIZE>>();
-
-						std::copy(dto.indices.begin(), dto.indices.end(), sc.m_BlockIndexInPalette->begin());
-					}
-
-					chunk->m_SubChunks.push_back(sc);
+					chunk->m_SubChunks.emplace_back(DeserializeSubChunk(dto));
 				}
 			}
 

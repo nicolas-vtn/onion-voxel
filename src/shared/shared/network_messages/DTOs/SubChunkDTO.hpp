@@ -8,10 +8,20 @@ namespace onion::voxel
 {
 	struct SubChunkDTO
 	{
-		bool isMono;
-		uint8_t monoIndex;
-		std::vector<uint8_t> indices;
+		enum eCompressionType : uint8_t
+		{
+			None = 0,	   // No compression, raw block indices in palette
+			MonoIndex = 1, // All blocks are the same
+			RLE = 2,	   // Run-Length Encoding
+		};
 
-		template <class Archive> void serialize(Archive& ar) { ar(isMono, monoIndex, indices); }
+		eCompressionType compressionType = eCompressionType::MonoIndex;
+
+		uint8_t monoIndex{0};
+
+		std::vector<uint8_t> indices; // Raw block indices in palette (compressionType is None)
+		std::vector<uint8_t> rleData; // Run-Length Encoding (compressionType is RLE) (pairs of [count, indexInPalette])
+
+		template <class Archive> void serialize(Archive& ar) { ar(compressionType, monoIndex, indices, rleData); }
 	};
 } // namespace onion::voxel

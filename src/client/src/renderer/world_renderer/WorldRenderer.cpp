@@ -222,11 +222,11 @@ namespace onion::voxel
 		}
 	}
 
-	inline std::pair<glm::vec3, glm::vec3> GetChunkCorners(const glm::ivec2& chunkPos)
+	inline std::pair<glm::vec3, glm::vec3> GetChunkCorners(const glm::ivec2& chunkPos, float maxY)
 	{
 		const float chunkSize = static_cast<float>(WorldConstants::SUBCHUNK_SIZE);
 		const glm::vec3 worldPos = glm::vec3(chunkPos.x * chunkSize, 0.0f, chunkPos.y * chunkSize);
-		return {worldPos, worldPos + glm::vec3(chunkSize, 256, chunkSize)};
+		return {worldPos, worldPos + glm::vec3(chunkSize, maxY, chunkSize)};
 	}
 
 	void WorldRenderer::RenderChunkBorders()
@@ -243,7 +243,8 @@ namespace onion::voxel
 		// ----- Get Camera Chunk Corners -----
 		const glm::vec3 cameraPos = m_Camera->GetPosition();
 		const glm::ivec2 cameraChunkPos = Utils::WorldToChunkPosition(cameraPos);
-		const auto [minCorner, maxCorner] = GetChunkCorners(cameraChunkPos);
+		const float maxY = m_WorldManager->GetChunk(cameraChunkPos)->GetSubChunkCount() * WorldConstants::SUBCHUNK_SIZE;
+		const auto [minCorner, maxCorner] = GetChunkCorners(cameraChunkPos, maxY);
 
 		// Render Borders for the chunk of the camera
 		DebugDraws::DrawWorldBoxMinMax(
@@ -251,7 +252,6 @@ namespace onion::voxel
 
 		constexpr int spacing = 2;
 		const float minY = minCorner.y;
-		const float maxY = 256.0f;
 
 		// ----- Borders along X (vary Z) -----
 		for (int z = (int) minCorner.z; z <= (int) maxCorner.z; z += spacing)
@@ -292,7 +292,7 @@ namespace onion::voxel
 		// ----- SubChunk Borders -----
 		constexpr glm::vec3 subChunkLinesColor = glm::vec3(1.0f, 0.0f, 1.0f);
 		constexpr int subChunkLineWidth = 1;
-		if (cameraPos.y > 0.0f)
+		if (cameraPos.y > 0.0f && cameraPos.y < maxY)
 		{
 			const int subChunkIndex = static_cast<int>(cameraPos.y) / WorldConstants::SUBCHUNK_SIZE;
 			const float y = (float) subChunkIndex * WorldConstants::SUBCHUNK_SIZE;
