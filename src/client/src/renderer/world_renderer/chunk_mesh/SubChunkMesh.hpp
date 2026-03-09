@@ -71,9 +71,9 @@ namespace onion::voxel
 		std::vector<uint16_t> m_IndicesTransparent; // Indices for the mesh
 		unsigned int m_IndicesTransparentCount = 0; // Count of indices for the classic mesh
 
-		unsigned int VBO_Opaque = 0, VAO_Opaque = 0, EBO_Opaque = 0, EBO_OpaqueOverlay = 0;
-		unsigned int VBO_Cutout = 0, VAO_Cutout = 0, EBO_Cutout = 0, EBO_CutoutOverlay = 0;
-		unsigned int VBO_Transparent = 0, VAO_Transparent = 0, EBO_Transparent = 0, EBO_TransparentOverlay = 0;
+		unsigned int VBO_Opaque = 0, VAO_Opaque = 0, EBO_Opaque = 0;
+		unsigned int VBO_Cutout = 0, VAO_Cutout = 0, EBO_Cutout = 0;
+		unsigned int VBO_Transparent = 0, VAO_Transparent = 0, EBO_Transparent = 0;
 
 		// ----- OpenGl Methods / Initialization -----
 	  private:

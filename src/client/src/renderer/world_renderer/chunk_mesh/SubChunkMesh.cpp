@@ -18,9 +18,8 @@ namespace onion::voxel
 
 	SubChunkMesh::~SubChunkMesh()
 	{
-		if (VBO_Cutout != 0 || VAO_Cutout != 0 || EBO_Cutout != 0 || EBO_CutoutOverlay != 0 || VBO_Opaque != 0 ||
-			VAO_Opaque != 0 || EBO_Opaque != 0 || EBO_OpaqueOverlay != 0 || VBO_Transparent != 0 ||
-			VAO_Transparent != 0 || EBO_Transparent != 0 || EBO_TransparentOverlay != 0)
+		if (VBO_Cutout != 0 || VAO_Cutout != 0 || EBO_Cutout != 0 || VBO_Opaque != 0 || VAO_Opaque != 0 ||
+			EBO_Opaque != 0 || VBO_Transparent != 0 || VAO_Transparent != 0 || EBO_Transparent != 0)
 		{
 			std::cerr << "Warning: SubChunkMesh destructor called but OpenGL buffers were not cleaned up. There is a "
 						 "memory leak."
@@ -99,17 +98,14 @@ namespace onion::voxel
 		glGenVertexArrays(1, &VAO_Opaque);
 		glGenBuffers(1, &VBO_Opaque);
 		glGenBuffers(1, &EBO_Opaque);
-		glGenBuffers(1, &EBO_OpaqueOverlay);
 
 		glGenVertexArrays(1, &VAO_Cutout);
 		glGenBuffers(1, &VBO_Cutout);
 		glGenBuffers(1, &EBO_Cutout);
-		glGenBuffers(1, &EBO_CutoutOverlay);
 
 		glGenVertexArrays(1, &VAO_Transparent);
 		glGenBuffers(1, &VBO_Transparent);
 		glGenBuffers(1, &EBO_Transparent);
-		glGenBuffers(1, &EBO_TransparentOverlay);
 
 		m_AreBuffersGenerated = true;
 	}
@@ -261,32 +257,26 @@ namespace onion::voxel
 		glDeleteVertexArrays(1, &VAO_Opaque);
 		glDeleteBuffers(1, &VBO_Opaque);
 		glDeleteBuffers(1, &EBO_Opaque);
-		glDeleteBuffers(1, &EBO_OpaqueOverlay);
 
 		glDeleteVertexArrays(1, &VAO_Cutout);
 		glDeleteBuffers(1, &VBO_Cutout);
 		glDeleteBuffers(1, &EBO_Cutout);
-		glDeleteBuffers(1, &EBO_CutoutOverlay);
 
 		glDeleteVertexArrays(1, &VAO_Transparent);
 		glDeleteBuffers(1, &VBO_Transparent);
 		glDeleteBuffers(1, &EBO_Transparent);
-		glDeleteBuffers(1, &EBO_TransparentOverlay);
 
 		VAO_Opaque = 0;
 		VBO_Opaque = 0;
 		EBO_Opaque = 0;
-		EBO_OpaqueOverlay = 0;
 
 		VAO_Cutout = 0;
 		VBO_Cutout = 0;
 		EBO_Cutout = 0;
-		EBO_CutoutOverlay = 0;
 
 		VAO_Transparent = 0;
 		VBO_Transparent = 0;
 		EBO_Transparent = 0;
-		EBO_TransparentOverlay = 0;
 
 		m_IndicesOpaqueCount = 0;
 		m_IndicesCutoutCount = 0;
