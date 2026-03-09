@@ -43,6 +43,15 @@ namespace onion::voxel
 		bool IsDirty() const;
 		void SetDirty(bool isDirty);
 
+		static void SetLightColor(const glm::vec3& lightColor);
+		static glm::vec3 GetLightColor();
+
+		static void SetUseFaceShading(bool useFaceShading);
+		static bool GetUseFaceShading();
+
+		static void SetUseOcclusion(bool useOcclusion);
+		static bool GetUseOcclusion();
+
 		// ----- States -----
 	  private:
 		std::atomic_bool m_IsDirty{true};
@@ -87,6 +96,11 @@ namespace onion::voxel
 	  public:
 		static Shader s_Shader;
 		static Texture s_TextureAtlas;
+
+	  private:
+		static inline glm::vec3 s_LightColor{1.0f, 1.0f, 1.0f};
+		static inline bool s_UseFaceShading = true;
+		static inline bool s_UseOcclusion = true;
 
 		// ----- Structs -----
 	  public:

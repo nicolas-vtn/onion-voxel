@@ -45,6 +45,7 @@ namespace onion::voxel
 		// ----- States -----
 	  private:
 		bool m_RenderChunkBorders{false};
+		bool m_HasShaderBeenInitialized{false};
 
 		// ----- World Manager -----
 	  private:
@@ -62,6 +63,7 @@ namespace onion::voxel
 	  private:
 		void MarkNeighboringChunkMeshesDirty(const glm::ivec2& chunkPosition);
 		void RenderChunkBorders();
+		void InitializeShaderVariables();
 
 		// ----- Camera -----
 	  private:

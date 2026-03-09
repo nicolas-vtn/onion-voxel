@@ -31,9 +31,6 @@ namespace onion::voxel
 
 		// Sets Uniforms
 		SubChunkMesh::s_Shader.Use();
-		SubChunkMesh::s_Shader.setVec3("u_LightColor", 1.0f, 1.0f, 1.0f);
-		SubChunkMesh::s_Shader.setBool("u_UseOcclusion", true);
-		SubChunkMesh::s_Shader.setBool("u_UseFaceShading", true);
 		SubChunkMesh::s_Shader.setMat4("u_ViewProjMatrix", viewProjMatrix);
 		SubChunkMesh::s_Shader.setBool("u_RenderCutout", false);
 	}
@@ -91,6 +88,11 @@ namespace onion::voxel
 	void WorldRenderer::Render()
 	{
 		RenderDebugPanel();
+
+		if (!m_HasShaderBeenInitialized)
+		{
+			InitializeShaderVariables();
+		}
 
 		if (m_RenderChunkBorders)
 		{
@@ -304,6 +306,18 @@ namespace onion::voxel
 		}
 	}
 
+	void WorldRenderer::InitializeShaderVariables()
+	{
+		SubChunkMesh::s_Shader.Use();
+		SubChunkMesh::s_Shader.setInt("u_TextureAtlas", 0);
+
+		SubChunkMesh::SetLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
+		SubChunkMesh::SetUseFaceShading(true);
+		SubChunkMesh::SetUseOcclusion(true);
+
+		m_HasShaderBeenInitialized = true;
+	}
+
 	void WorldRenderer::MeshBuilderThreadFunction(std::stop_token st)
 	{
 		while (!st.stop_requested())
@@ -356,6 +370,27 @@ namespace onion::voxel
 		ImGui::Text("Chunk Meshes: %s", FormatThousands(GetChunkMeshesCount()).c_str());
 		ImGui::Text("Vertices: %s", FormatThousands(GetVertexCount()).c_str());
 		ImGui::Checkbox("Render Chunk Borders", &m_RenderChunkBorders);
+
+		// ---- SubChunk Shader Configuration ----
+		ImGui::Separator();
+		bool useFaceShading = SubChunkMesh::GetUseFaceShading();
+		if (ImGui::Checkbox("Use Face Shading", &useFaceShading))
+		{
+			SubChunkMesh::SetUseFaceShading(useFaceShading);
+		}
+
+		bool useOcclusion = SubChunkMesh::GetUseOcclusion();
+		if (ImGui::Checkbox("Use Occlusion", &useOcclusion))
+		{
+			SubChunkMesh::SetUseOcclusion(useOcclusion);
+		}
+
+		glm::vec3 lightColor = SubChunkMesh::GetLightColor();
+		float color[3] = {lightColor.r, lightColor.g, lightColor.b};
+		if (ImGui::ColorEdit3("Light Color", color))
+		{
+			SubChunkMesh::SetLightColor(glm::vec3(color[0], color[1], color[2]));
+		}
 
 		ImGui::End();
 	}

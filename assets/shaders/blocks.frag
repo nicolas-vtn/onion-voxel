@@ -8,11 +8,11 @@ in float Occlusion;
 out vec4 FragColor;
 
 uniform sampler2D u_Atlas;
-uniform vec3 u_LightColor;
+uniform bool u_RenderCutout; // If the shader should discard pixels based on alpha
 
+uniform vec3 u_LightColor; // The color of the light affecting the block
 uniform bool u_UseOcclusion; // If the shader should use occlusion
 uniform bool u_UseFaceShading; // If the shader should use face shading
-uniform bool u_RenderCutout; // If the shader should discard pixels based on alpha
 
 vec3 getNormal(float f) {
     int fi = int(f + 0.2); // Safely round to nearest int (0–5)
