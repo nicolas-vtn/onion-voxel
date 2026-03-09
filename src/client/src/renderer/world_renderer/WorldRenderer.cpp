@@ -4,6 +4,9 @@
 
 #include <iostream>
 
+#include "../debug_draws/DebugDraws.hpp"
+#include <shared/utils/Utils.hpp>
+
 namespace onion::voxel
 {
 	WorldRenderer::WorldRenderer(std::shared_ptr<WorldManager> worldManager, std::shared_ptr<Camera> camera)
@@ -88,6 +91,11 @@ namespace onion::voxel
 	void WorldRenderer::Render()
 	{
 		RenderDebugPanel();
+
+		if (m_RenderChunkBorders)
+		{
+			RenderChunkBorders();
+		}
 
 		RebuildDirtyChunkMeshesAsync();
 		DeleteChunkMeshes();
@@ -214,6 +222,88 @@ namespace onion::voxel
 		}
 	}
 
+	inline std::pair<glm::vec3, glm::vec3> GetChunkCorners(const glm::ivec2& chunkPos)
+	{
+		const float chunkSize = static_cast<float>(WorldConstants::SUBCHUNK_SIZE);
+		const glm::vec3 worldPos = glm::vec3(chunkPos.x * chunkSize, 0.0f, chunkPos.y * chunkSize);
+		return {worldPos, worldPos + glm::vec3(chunkSize, 256, chunkSize)};
+	}
+
+	void WorldRenderer::RenderChunkBorders()
+	{
+		// ----- Colors and Line Widths -----
+		constexpr glm::vec3 linesColor = glm::vec3(1.0f, 1.0f, 0.0f);
+
+		constexpr int cornersLineWidth = 4;
+		constexpr float cornersAlpha = 1.0f;
+
+		constexpr int bordersLineWidth = 1;
+		constexpr float bordersAlpha = 0.5f;
+
+		// ----- Get Camera Chunk Corners -----
+		const glm::vec3 cameraPos = m_Camera->GetPosition();
+		const glm::ivec2 cameraChunkPos = Utils::WorldToChunkPosition(cameraPos);
+		const auto [minCorner, maxCorner] = GetChunkCorners(cameraChunkPos);
+
+		// Render Borders for the chunk of the camera
+		DebugDraws::DrawWorldBoxMinMax(
+			minCorner, maxCorner, glm::vec4(linesColor, cornersAlpha), cornersLineWidth, false);
+
+		constexpr int spacing = 2;
+		const float minY = minCorner.y;
+		const float maxY = 256.0f;
+
+		// ----- Borders along X (vary Z) -----
+		for (int z = (int) minCorner.z; z <= (int) maxCorner.z; z += spacing)
+		{
+			// x = min
+			DebugDraws::DrawWorldLine({minCorner.x, minY, (float) z},
+									  {minCorner.x, maxY, (float) z},
+									  glm::vec4(linesColor, bordersAlpha),
+									  bordersLineWidth,
+									  false);
+
+			// x = max
+			DebugDraws::DrawWorldLine({maxCorner.x, minY, (float) z},
+									  {maxCorner.x, maxY, (float) z},
+									  glm::vec4(linesColor, bordersAlpha),
+									  bordersLineWidth,
+									  false);
+		}
+
+		// ----- Borders along Z (vary X) -----
+		for (int x = (int) minCorner.x; x <= (int) maxCorner.x; x += spacing)
+		{
+			// z = min
+			DebugDraws::DrawWorldLine({(float) x, minY, minCorner.z},
+									  {(float) x, maxY, minCorner.z},
+									  glm::vec4(linesColor, bordersAlpha),
+									  bordersLineWidth,
+									  false);
+
+			// z = max
+			DebugDraws::DrawWorldLine({(float) x, minY, maxCorner.z},
+									  {(float) x, maxY, maxCorner.z},
+									  glm::vec4(linesColor, bordersAlpha),
+									  bordersLineWidth,
+									  false);
+		}
+
+		// ----- SubChunk Borders -----
+		constexpr glm::vec3 subChunkLinesColor = glm::vec3(1.0f, 0.0f, 1.0f);
+		constexpr int subChunkLineWidth = 1;
+		if (cameraPos.y > 0.0f)
+		{
+			const int subChunkIndex = static_cast<int>(cameraPos.y) / WorldConstants::SUBCHUNK_SIZE;
+			const float y = (float) subChunkIndex * WorldConstants::SUBCHUNK_SIZE;
+			DebugDraws::DrawWorldBoxMinMax({minCorner.x, y, minCorner.z},
+										   {maxCorner.x, y + WorldConstants::SUBCHUNK_SIZE, maxCorner.z},
+										   glm::vec4(subChunkLinesColor, bordersAlpha),
+										   subChunkLineWidth,
+										   false);
+		}
+	}
+
 	void WorldRenderer::MeshBuilderThreadFunction(std::stop_token st)
 	{
 		while (!st.stop_requested())
@@ -265,6 +355,7 @@ namespace onion::voxel
 
 		ImGui::Text("Chunk Meshes: %s", FormatThousands(GetChunkMeshesCount()).c_str());
 		ImGui::Text("Vertices: %s", FormatThousands(GetVertexCount()).c_str());
+		ImGui::Checkbox("Render Chunk Borders", &m_RenderChunkBorders);
 
 		ImGui::End();
 	}

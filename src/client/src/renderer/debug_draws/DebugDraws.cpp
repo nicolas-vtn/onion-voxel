@@ -27,16 +27,11 @@ namespace onion::voxel
 		s_LineShader.setMat4("u_ViewProj", s_ViewProjMatrix);
 		s_LineShader.setBool("u_NormalizedCoordonates", false);
 		s_LineShader.setVec4("u_Color", color);
+		s_LineShader.setBool("u_TopMost", topMost);
 
 		glLineWidth((float) widthPx);
 
-		if (topMost)
-			glDisable(GL_DEPTH_TEST);
-
 		glDrawArrays(GL_LINES, 0, 2);
-
-		if (topMost)
-			glEnable(GL_DEPTH_TEST);
 
 		glBindVertexArray(0);
 	}
@@ -107,14 +102,11 @@ namespace onion::voxel
 
 		s_LineShader.setBool("u_NormalizedCoordonates", true);
 		s_LineShader.setVec4("u_Color", color);
+		s_LineShader.setBool("u_TopMost", true);
 
 		glLineWidth((float) widthPx);
 
-		glDisable(GL_DEPTH_TEST);
-
 		glDrawArrays(GL_LINES, 0, 2);
-
-		glEnable(GL_DEPTH_TEST);
 
 		glBindVertexArray(0);
 	}

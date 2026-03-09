@@ -3,6 +3,7 @@ layout(location = 0) in vec3 aPos;
 
 uniform bool u_NormalizedCoordonates;
 uniform mat4 u_ViewProj;
+uniform bool u_TopMost;
 
 void main()
 {
@@ -16,4 +17,7 @@ void main()
     {
         gl_Position = u_ViewProj * vec4(aPos, 1.0);
     }
+
+    if (u_TopMost)
+        gl_Position.z = -1.0;
 }

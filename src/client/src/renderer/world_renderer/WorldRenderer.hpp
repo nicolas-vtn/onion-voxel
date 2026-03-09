@@ -42,6 +42,10 @@ namespace onion::voxel
 		uint64_t GetVertexCount() const;
 		uint64_t GetChunkMeshesCount() const;
 
+		// ----- States -----
+	  private:
+		bool m_RenderChunkBorders{false};
+
 		// ----- World Manager -----
 	  private:
 		std::shared_ptr<WorldManager> m_WorldManager;
@@ -57,6 +61,7 @@ namespace onion::voxel
 		// ----- Internal Helpers -----
 	  private:
 		void MarkNeighboringChunkMeshesDirty(const glm::ivec2& chunkPosition);
+		void RenderChunkBorders();
 
 		// ----- Camera -----
 	  private:
