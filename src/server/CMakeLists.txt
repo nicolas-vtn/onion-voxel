@@ -16,6 +16,7 @@ target_link_libraries(onion_voxel_server
 		winmm
 		ws2_32
 		nlohmann_json::nlohmann_json
+		FastNoiseLite
 
 		onion::event
 		onion_voxel_shared		

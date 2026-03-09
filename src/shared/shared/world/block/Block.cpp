@@ -9,6 +9,7 @@ namespace onion::voxel
 		table[static_cast<size_t>(BlockId::Air)] = true;
 		table[static_cast<size_t>(BlockId::Glass)] = true;
 		table[static_cast<size_t>(BlockId::OakLeaves)] = true;
+		table[static_cast<size_t>(BlockId::Water)] = true;
 		return table;
 	}();
 
@@ -32,7 +33,7 @@ namespace onion::voxel
 
 	bool Block::operator!=(const Block& other) const
 	{
-		return false;
+		return !(*this == other);
 	}
 
 	bool Block::IsTransparent(BlockId blockID)

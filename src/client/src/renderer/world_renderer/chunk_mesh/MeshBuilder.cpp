@@ -1,5 +1,9 @@
 #include "MeshBuilder.hpp"
 
+#include <numeric>
+
+#include <shared/utils/Stopwatch.hpp>
+
 namespace onion::voxel
 {
 	MeshBuilder::MeshBuilder(std::shared_ptr<WorldManager> worldManager, std::shared_ptr<TextureAtlas> textureAtlas)
@@ -145,15 +149,15 @@ namespace onion::voxel
 	{
 		std::array<bool, 6> visibility{};
 
-		// If block is transparent, all faces are visible
-		if (Block::IsTransparent(block.m_BlockID))
-		{
-			std::fill(visibility.begin(), visibility.end(), true);
-			return visibility;
-		}
-
 		for (int i = 0; i < 6; i++)
 		{
+			// Special case for water: if both the block and its neighbor are water, the face between them should not be rendered
+			if (block.m_BlockID == BlockId::Water && neighbors[i].m_BlockID == BlockId::Water)
+			{
+				visibility[i] = false;
+				continue;
+			}
+
 			// A face is visible if the neighboring block in that direction is transparent
 			visibility[i] = Block::IsTransparent(neighbors[i].m_BlockID);
 		}
@@ -167,6 +171,9 @@ namespace onion::voxel
 		std::shared_ptr<Chunk> chunk = chunkMesh->m_Chunk.lock();
 		if (!chunk)
 			return;
+
+		Stopwatch stopwatch;
+		stopwatch.Start();
 
 		const glm::ivec2 chunkPos = chunk->GetPosition();
 
@@ -377,6 +384,59 @@ namespace onion::voxel
 			mesh->SetDirty(false);
 			mesh->BuffersUpdated();
 		}
+
+		AddChunkMeshUpdateTime(stopwatch.ElapsedMs());
+		RecordExecution();
+	}
+
+	void MeshBuilder::AddChunkMeshUpdateTime(double timeMs)
+	{
+		std::lock_guard lock(m_ChunkMeshUpdateTimesMutex);
+		m_ChunkMeshUpdateTimes_ms.push_back(timeMs);
+
+		if (m_ChunkMeshUpdateTimes_ms.size() > m_MaxDurationsToStore)
+		{
+			m_ChunkMeshUpdateTimes_ms.pop_front();
+		}
+
+		double total = std::accumulate(m_ChunkMeshUpdateTimes_ms.begin(), m_ChunkMeshUpdateTimes_ms.end(), 0.0);
+		m_AverageChunkMeshUpdateTime.store(total / m_ChunkMeshUpdateTimes_ms.size());
+	}
+
+	double MeshBuilder::GetAverageChunkMeshUpdateTime() const
+	{
+		return m_AverageChunkMeshUpdateTime.load();
+	}
+
+	size_t MeshBuilder::GetChunkMeshUpdatesLastSeconds() const
+	{
+		std::lock_guard lock(m_ExecutionTimesMutex);
+		return m_ExecutionTimes.size();
+	}
+
+	double MeshBuilder::GetChunkMeshUpdatesPerSecond() const
+	{
+		std::lock_guard lock(m_ExecutionTimesMutex);
+
+		if (m_ExecutionTimes.empty())
+			return 0.0;
+
+		auto duration = std::chrono::duration<double>(m_Window).count();
+		return m_ExecutionTimes.size() / duration;
+	}
+
+	void MeshBuilder::RecordExecution()
+	{
+		auto now = std::chrono::steady_clock::now();
+
+		std::lock_guard lock(m_ExecutionTimesMutex);
+
+		m_ExecutionTimes.push_back(now);
+
+		auto cutoff = now - m_Window;
+
+		while (!m_ExecutionTimes.empty() && m_ExecutionTimes.front() < cutoff)
+			m_ExecutionTimes.pop_front();
 	}
 
 	void MeshBuilder::AddFace(SubChunkMesh& mesh,

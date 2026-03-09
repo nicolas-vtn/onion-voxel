@@ -24,6 +24,8 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
+		void Optimize(); // Optimize the chunk data (e.g., optimize subchunks, remove unused blocks from palette)
+
 		// ----- Getters / Setters -----
 		glm::ivec2 GetPosition() const;
 

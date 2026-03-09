@@ -35,4 +35,11 @@ namespace onion::voxel::Utils
 						  worldPosition.y,
 						  FloorMod(worldPosition.z, WorldConstants::SUBCHUNK_SIZE));
 	}
+
+	inline glm::ivec3 LocalToWorldPosition(const glm::ivec3& localPosition, const glm::ivec2& chunkPosition)
+	{
+		return glm::ivec3(chunkPosition.x * WorldConstants::SUBCHUNK_SIZE + localPosition.x,
+						  localPosition.y,
+						  chunkPosition.y * WorldConstants::SUBCHUNK_SIZE + localPosition.z);
+	}
 }; // namespace onion::voxel::Utils

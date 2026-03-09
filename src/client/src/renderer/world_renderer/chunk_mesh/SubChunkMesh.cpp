@@ -85,6 +85,42 @@ namespace onion::voxel
 		m_IsDirty = isDirty;
 	}
 
+	void SubChunkMesh::SetLightColor(const glm::vec3& lightColor)
+	{
+		s_LightColor = lightColor;
+		s_Shader.Use();
+		s_Shader.setVec3("u_LightColor", lightColor);
+	}
+
+	glm::vec3 SubChunkMesh::GetLightColor()
+	{
+		return s_LightColor;
+	}
+
+	void SubChunkMesh::SetUseFaceShading(bool useFaceShading)
+	{
+		s_UseFaceShading = useFaceShading;
+		s_Shader.Use();
+		s_Shader.setBool("u_UseFaceShading", useFaceShading);
+	}
+
+	bool SubChunkMesh::GetUseFaceShading()
+	{
+		return s_UseFaceShading;
+	}
+
+	void SubChunkMesh::SetUseOcclusion(bool useOcclusion)
+	{
+		s_UseOcclusion = useOcclusion;
+		s_Shader.Use();
+		s_Shader.setBool("u_UseOcclusion", useOcclusion);
+	}
+
+	bool SubChunkMesh::GetUseOcclusion()
+	{
+		return s_UseOcclusion;
+	}
+
 	void SubChunkMesh::BuffersUpdated()
 	{
 		m_AreBuffersDataUpToDate = false;

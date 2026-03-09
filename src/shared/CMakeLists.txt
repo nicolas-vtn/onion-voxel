@@ -9,7 +9,7 @@ add_library(onion_voxel_shared
  "shared/world/chunk/Chunk.cpp"
  "shared/world/world_manager/WorldManager.cpp"
 
- "shared/world/chunk/SubChunk.cpp" "shared/world/block/Block.cpp")
+ "shared/world/chunk/SubChunk.cpp" "shared/world/block/Block.cpp" "shared/network_messages/Serializer.cpp")
 
 target_link_libraries(onion_voxel_shared
 	PUBLIC

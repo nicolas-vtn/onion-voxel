@@ -19,6 +19,7 @@ include(FetchNlohmannJson)
 include(FetchImGui)
 include(FetchENet)
 include(FetchCereal)
+include(FetchFastNoiseLite)
 
 add_subdirectory(external/glad)
 

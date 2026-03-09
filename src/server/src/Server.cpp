@@ -141,7 +141,6 @@ namespace onion::voxel
 	void Server::Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk)
 	{
 		// Sends the new chunk to all connected clients
-
 		ChunkDataMsg chunkDataMsg = Serializer::SerializeChunk(chunk);
 		m_NetworkServer.Broadcast(chunkDataMsg);
 	}
@@ -149,6 +148,17 @@ namespace onion::voxel
 	void Server::Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk)
 	{
 		// For now, the client has the resposiblity to remove it's chunks.
+	}
+
+	void Server::Handle_BlocksChanged(const std::vector<std::pair<glm::ivec3, Block>>& changedBlocks)
+	{
+		BlocksChangedMsg blocksChangedMsg;
+		for (const auto& [worldPos, block] : changedBlocks)
+		{
+			blocksChangedMsg.ChangedBlocks.emplace_back(worldPos, Serializer::SerializeBlock(block));
+		}
+
+		m_NetworkServer.Broadcast(blocksChangedMsg);
 	}
 
 	void Server::GenerateChunksAroundPlayer(const glm::ivec2& playerChunkPosition)
@@ -260,6 +270,10 @@ namespace onion::voxel
 
 		m_WorldManagerEventHandles.push_back(m_WorldManager->ChunkRemoved.Subscribe(
 			[this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkRemoved(chunk); }));
+
+		m_WorldManagerEventHandles.push_back(m_WorldManager->BlocksChanged.Subscribe(
+			[this](const std::vector<std::pair<glm::ivec3, Block>>& changedBlocks)
+			{ Handle_BlocksChanged(changedBlocks); }));
 	}
 
 } // namespace onion::voxel
