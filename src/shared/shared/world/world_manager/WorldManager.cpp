@@ -417,6 +417,15 @@ namespace onion::voxel
 			}
 		}
 
+		// Sorts missing chunks from closest to farthest from the given chunk position
+		std::sort(missingChunks.begin(),
+				  missingChunks.end(),
+				  [&chunkPosition](const glm::ivec2& a, const glm::ivec2& b)
+				  {
+					  return glm::distance(glm::vec2(a), glm::vec2(chunkPosition)) <
+						  glm::distance(glm::vec2(b), glm::vec2(chunkPosition));
+				  });
+
 		// Trigger event to request missing chunks to be loaded
 		if (!missingChunks.empty())
 		{
