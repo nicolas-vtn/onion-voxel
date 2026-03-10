@@ -13,8 +13,6 @@ namespace onion::voxel
 		: m_WorldManager(worldManager), m_Camera(camera), m_MeshBuilder(worldManager, m_TextureAtlas)
 	{
 		SubscribeToWorldManagerEvents();
-
-		m_ThreadMeshBuilder = std::jthread([this](std::stop_token st) { MeshBuilderThreadFunction(st); });
 	};
 
 	WorldRenderer::~WorldRenderer() {};
@@ -328,24 +326,6 @@ namespace onion::voxel
 		m_HasShaderBeenInitialized = true;
 	}
 
-	void WorldRenderer::MeshBuilderThreadFunction(std::stop_token st)
-	{
-		while (!st.stop_requested())
-		{
-			std::shared_ptr<ChunkMesh> chunkMesh;
-
-			if (m_ChunkMeshesToRebuild.TryPop(chunkMesh))
-			{
-				m_MeshBuilder.UpdateChunkMeshAsync(chunkMesh);
-			}
-			else
-			{
-				// No chunks to build mesh for, sleep for a short time to avoid busy waiting
-				std::this_thread::sleep_for(std::chrono::milliseconds(10));
-			}
-		}
-	}
-
 	void WorldRenderer::RebuildDirtyChunkMeshesAsync()
 	{
 		std::shared_lock lock(m_MutexChunkMeshes);
@@ -353,8 +333,6 @@ namespace onion::voxel
 		{
 			if (chunkMesh->IsDirty())
 			{
-				chunkMesh->StartRebuilding();
-				//m_ChunkMeshesToRebuild.Push(chunkMesh);
 				m_MeshBuilder.UpdateChunkMeshAsync(chunkMesh);
 			}
 		}

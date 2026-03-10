@@ -198,7 +198,7 @@ namespace onion::voxel
 
 		// Acquire the lock to set the rebuilding flag and create a new stop source for this rebuild
 		std::lock_guard lock(chunkMesh->m_MutexRebuilding);
-		chunkMesh->m_IsRebuilding = true;
+		chunkMesh->StartRebuilding();
 		chunkMesh->m_RebuildStopSource = std::stop_source();
 		std::stop_token stopToken = chunkMesh->m_RebuildStopSource.get_token();
 

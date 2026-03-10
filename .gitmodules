@@ -13,3 +13,6 @@
 [submodule "deps/onion-threadpool"]
 	path = deps/onion-threadpool
 	url = https://github.com/nicolas-vtn/onion-threadpool.git
+[submodule "deps/onion-threadsafequeue"]
+	path = deps/onion-threadsafequeue
+	url = https://github.com/nicolas-vtn/onion-threadsafequeue.git

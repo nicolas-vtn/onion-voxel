@@ -2,10 +2,10 @@
 
 #include <memory>
 #include <shared_mutex>
-#include <thread>
 #include <unordered_map>
 
-#include <shared/thread_safe_queue/ThreadSafeQueue.hpp>
+#include <onion/ThreadSafeQueue.hpp>
+
 #include <shared/world/world_manager/WorldManager.hpp>
 
 #include "../Variables.hpp"
@@ -81,9 +81,6 @@ namespace onion::voxel
 
 		// ----- Mesh Building -----
 	  private:
-		ThreadSafeQueue<std::shared_ptr<ChunkMesh>> m_ChunkMeshesToRebuild;
-		std::jthread m_ThreadMeshBuilder;
-		void MeshBuilderThreadFunction(std::stop_token st);
 		MeshBuilder m_MeshBuilder;
 		void RebuildDirtyChunkMeshesAsync();
 

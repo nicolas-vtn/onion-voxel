@@ -71,6 +71,7 @@ target_link_libraries(OnionVoxel
 		onion::event
 		onion::logger
 		onion::timer
+		onion::threadsafequeue
 		onion::threadpool
 
         onion_voxel_server

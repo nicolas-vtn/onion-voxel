@@ -19,11 +19,11 @@ namespace onion::voxel
 	{
 		Stop();
 
-		//if (m_DispatchIncomingMessagesThread.joinable())
-		//{
-		//	m_DispatchIncomingMessagesThread.request_stop();
-		//	m_DispatchIncomingMessagesThread.join();
-		//}
+		if (m_DispatchIncomingMessagesThread.joinable())
+		{
+			m_DispatchIncomingMessagesThread.request_stop();
+			m_DispatchIncomingMessagesThread.join();
+		}
 
 		std::cout << "NetworkServer destroyed.\n";
 	}

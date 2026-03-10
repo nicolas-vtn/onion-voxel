@@ -8,7 +8,6 @@
 
 #include <onion/ThreadPool.hpp>
 
-#include <shared/thread_safe_queue/ThreadSafeQueue.hpp>
 #include <shared/world/schematic/Schematic.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 

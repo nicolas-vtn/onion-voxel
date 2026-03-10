@@ -7,9 +7,9 @@
 #include <enet/enet.h>
 
 #include <onion/Event.hpp>
+#include <onion/ThreadSafeQueue.hpp>
 
 #include <shared/network_messages/NetworkMessages.hpp>
-#include <shared/thread_safe_queue/ThreadSafeQueue.hpp>
 
 namespace onion::voxel
 {
