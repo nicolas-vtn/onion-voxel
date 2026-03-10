@@ -174,28 +174,27 @@ namespace onion::voxel
 		//std::cout << "Chunk added at position: (" << chunk->GetPosition().x << ", " << chunk->GetPosition().y << ")"
 		//		  << std::endl;
 
-		// Create a new chunk mesh for the added chunk and add it to the chunk meshes map
+		// If a chunk mesh already exists, just update it
 		const glm::ivec2 chunkPos = chunk->GetPosition();
-		std::shared_ptr<ChunkMesh> chunkMesh = std::make_shared<ChunkMesh>(chunkPos, chunk);
+		std::shared_ptr<ChunkMesh> chunkMesh;
 		{
 			std::unique_lock lock(m_MutexChunkMeshes);
-
-			// Check if a chunk mesh already exists for this chunk position
 			auto it = m_ChunkMeshes.find(chunkPos);
 			if (it != m_ChunkMeshes.end())
 			{
-				// If a chunk mesh already exists, mark it for deletion and remove it from the map
-				m_ChunkMeshesToDelete.Push(it->second);
-				m_ChunkMeshes.erase(it);
+				chunkMesh = it->second;
+				chunkMesh->ChangeChunk(chunk);
 			}
-
-			// Add the new chunk mesh to the map
-			m_ChunkMeshes[chunkPos] = chunkMesh;
+			else
+			{
+				chunkMesh = std::make_shared<ChunkMesh>(chunkPos, chunk);
+				m_ChunkMeshes.emplace(chunkPos, chunkMesh);
+			}
 		}
 
 		// Request the mesh builder to build the mesh for the new chunk mesh
-		//m_ChunkMeshesToRebuild.Push(chunkMesh);
-		m_MeshBuilder.UpdateChunkMeshAsync(chunkMesh);
+		if (chunkMesh)
+			m_MeshBuilder.UpdateChunkMeshAsync(chunkMesh);
 
 		// Mark neighboring chunk meshes as dirty so they will be rebuilt to update their faces that are adjacent to the new chunk
 		MarkNeighboringChunkMeshesDirty(chunkPos);

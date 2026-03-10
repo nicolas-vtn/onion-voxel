@@ -35,6 +35,8 @@ namespace onion::voxel
 		void StartRebuilding();
 		void FinishRebuilding();
 
+		void ChangeChunk(std::shared_ptr<Chunk> newChunk);
+
 		// ----- Getters / Setters -----
 	  public:
 		const glm::ivec2& GetChunkPosition() const;

@@ -65,6 +65,11 @@ namespace onion::voxel
 		m_IsRebuilding = false;
 	}
 
+	void ChunkMesh::ChangeChunk(std::shared_ptr<Chunk> newChunk)
+	{
+		m_Chunk = newChunk;
+	}
+
 	const glm::ivec2& ChunkMesh::GetChunkPosition() const
 	{
 		return m_ChunkPosition;
