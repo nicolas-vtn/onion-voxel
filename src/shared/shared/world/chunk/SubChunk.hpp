@@ -29,12 +29,12 @@ namespace onion::voxel
 		// ----- Getters / Setters -----
 	  public:
 		/// @brief Get the block index in the palette at the given local position within the subchunk
-		/// @param localPosition The local position within the subchunk (0 to SUBCHUNK_SIZE-1 in each axis)
+		/// @param localPosition The local position within the subchunk (0 to CHUNK_SIZE-1 in each axis)
 		/// @return The block index in the palette at the given local position
 		uint8_t GetBlockIndexInPalette(const glm::ivec3& localPosition) const;
 
 		/// @brief Set the block index in the palette at the given local position within the subchunk
-		/// @param localPosition The local position within the subchunk (0 to SUBCHUNK_SIZE-1 in each axis)
+		/// @param localPosition The local position within the subchunk (0 to CHUNK_SIZE-1 in each axis)
 		/// @param blockIndex The block index in the palette to set at the given local position
 		void SetBlockIndexInPalette(const glm::ivec3& localPosition, uint8_t blockIndex);
 
@@ -47,7 +47,7 @@ namespace onion::voxel
 
 		std::shared_ptr<
 			std::array<uint8_t,
-					   WorldConstants::SUBCHUNK_SIZE * WorldConstants::SUBCHUNK_SIZE * WorldConstants::SUBCHUNK_SIZE>>
+					   WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE>>
 			m_BlockIndexInPalette;
 	};
 } // namespace onion::voxel

@@ -141,6 +141,8 @@ namespace onion::voxel
 			m_LocalhostServer.reset();
 		}
 
+		m_WorldManager->ClearWorld();
+
 		m_Renderer.SetRenderState(Renderer::eRenderState::Menu);
 	}
 

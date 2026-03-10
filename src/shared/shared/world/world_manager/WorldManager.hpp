@@ -50,6 +50,8 @@ namespace onion::voxel
 
 		void RemoveAllChunks();
 
+		void ClearWorld();
+
 		Block GetBlock(const glm::ivec3& worldPosition) const;
 		bool SetBlock(const glm::ivec3& worldPosition, const Block& block, bool notify = true);
 		size_t SetBlocks(const std::vector<std::pair<glm::ivec3, Block>>& blocks, bool notify = true);

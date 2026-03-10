@@ -61,10 +61,10 @@ namespace onion::voxel
 		void UpdateChunkMesh(const std::shared_ptr<ChunkMesh> chunkMesh);
 
 		static void AddFace(SubChunkMesh& mesh,
-							const glm::vec3& v0,
-							const glm::vec3& v1,
-							const glm::vec3& v2,
-							const glm::vec3& v3,
+							const glm::ivec3& v0,
+							const glm::ivec3& v1,
+							const glm::ivec3& v2,
+							const glm::ivec3& v3,
 							BlockFace face,
 							const Block& block,
 							const FaceTexture& faceTexture,

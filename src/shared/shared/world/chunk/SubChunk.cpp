@@ -46,9 +46,9 @@ namespace onion::voxel
 
 	uint8_t SubChunk::GetBlockIndexInPalette(const glm::ivec3& localPosition) const
 	{
-		if (localPosition.x < 0 || localPosition.x >= WorldConstants::SUBCHUNK_SIZE || localPosition.y < 0 ||
-			localPosition.y >= WorldConstants::SUBCHUNK_SIZE || localPosition.z < 0 ||
-			localPosition.z >= WorldConstants::SUBCHUNK_SIZE)
+		if (localPosition.x < 0 || localPosition.x >= WorldConstants::CHUNK_SIZE || localPosition.y < 0 ||
+			localPosition.y >= WorldConstants::CHUNK_SIZE || localPosition.z < 0 ||
+			localPosition.z >= WorldConstants::CHUNK_SIZE)
 		{
 			throw std::out_of_range("SubChunk::GetBlock: Local position is out of bounds");
 		}
@@ -63,8 +63,8 @@ namespace onion::voxel
 			throw std::runtime_error("SubChunk::GetBlock: Block data is not initialized");
 		}
 
-		const size_t index = localPosition.x + localPosition.y * WorldConstants::SUBCHUNK_SIZE +
-			localPosition.z * WorldConstants::SUBCHUNK_SIZE * WorldConstants::SUBCHUNK_SIZE;
+		const size_t index = localPosition.x + localPosition.y * WorldConstants::CHUNK_SIZE +
+			localPosition.z * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE;
 
 		return (*m_BlockIndexInPalette)[index];
 	}
@@ -72,9 +72,9 @@ namespace onion::voxel
 	void SubChunk::SetBlockIndexInPalette(const glm::ivec3& localPosition, uint8_t blockIndex)
 	{
 
-		if (localPosition.x < 0 || localPosition.x >= WorldConstants::SUBCHUNK_SIZE || localPosition.y < 0 ||
-			localPosition.y >= WorldConstants::SUBCHUNK_SIZE || localPosition.z < 0 ||
-			localPosition.z >= WorldConstants::SUBCHUNK_SIZE)
+		if (localPosition.x < 0 || localPosition.x >= WorldConstants::CHUNK_SIZE || localPosition.y < 0 ||
+			localPosition.y >= WorldConstants::CHUNK_SIZE || localPosition.z < 0 ||
+			localPosition.z >= WorldConstants::CHUNK_SIZE)
 		{
 			throw std::out_of_range("SubChunk::SetBlock: Local position is out of bounds");
 		}
@@ -89,8 +89,8 @@ namespace onion::voxel
 			// Need to convert to non-mono block data
 			m_BlockIndexInPalette =
 				std::make_shared<std::array<uint8_t,
-											WorldConstants::SUBCHUNK_SIZE * WorldConstants::SUBCHUNK_SIZE *
-												WorldConstants::SUBCHUNK_SIZE>>();
+											WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE *
+												WorldConstants::CHUNK_SIZE>>();
 
 			m_BlockIndexInPalette->fill(m_MonoBlockIndexInPalette); // Fill with the mono block index
 			m_IsMonoBlock = false;									// No longer a mono block
@@ -101,8 +101,8 @@ namespace onion::voxel
 			throw std::runtime_error("SubChunk::SetBlock: Block data is not initialized");
 		}
 
-		const size_t index = localPosition.x + localPosition.y * WorldConstants::SUBCHUNK_SIZE +
-			localPosition.z * WorldConstants::SUBCHUNK_SIZE * WorldConstants::SUBCHUNK_SIZE;
+		const size_t index = localPosition.x + localPosition.y * WorldConstants::CHUNK_SIZE +
+			localPosition.z * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE;
 
 		(*m_BlockIndexInPalette)[index] = blockIndex;
 	}
@@ -122,15 +122,15 @@ namespace onion::voxel
 			// Need to convert to non-mono block data
 			m_BlockIndexInPalette =
 				std::make_shared<std::array<uint8_t,
-											WorldConstants::SUBCHUNK_SIZE * WorldConstants::SUBCHUNK_SIZE *
-												WorldConstants::SUBCHUNK_SIZE>>();
+											WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE *
+												WorldConstants::CHUNK_SIZE>>();
 
 			m_BlockIndexInPalette->fill(m_MonoBlockIndexInPalette); // Fill with the mono block index
 			m_IsMonoBlock = false;									// No longer a mono block
 		}
 
 		const size_t index =
-			x + y * WorldConstants::SUBCHUNK_SIZE + z * WorldConstants::SUBCHUNK_SIZE * WorldConstants::SUBCHUNK_SIZE;
+			x + y * WorldConstants::CHUNK_SIZE + z * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE;
 
 		(*m_BlockIndexInPalette)[index] = blockIndex;
 	}

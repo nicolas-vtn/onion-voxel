@@ -201,7 +201,7 @@ namespace onion::voxel
 		int z = start;
 		int y = start;
 
-		const int max = WorldConstants::SUBCHUNK_SIZE - 1;
+		const int max = WorldConstants::CHUNK_SIZE - 1;
 
 		// ---- Iterate all blocks ----
 		const int blockIdCount = GetBlockIdCount();
@@ -256,9 +256,9 @@ namespace onion::voxel
 		for (y = 0; y <= 0; y++)
 		{
 
-			for (int x = 0; x < WorldConstants::SUBCHUNK_SIZE; x++)
+			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
 			{
-				for (int z = 0; z < WorldConstants::SUBCHUNK_SIZE; z++)
+				for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
 				{
 					chunk->SetBlock(glm::ivec3(x, y, z), bedrock);
 				}
@@ -269,9 +269,9 @@ namespace onion::voxel
 		Block dirt{BlockId::Dirt};
 		for (y = 1; y <= 3; y++)
 		{
-			for (int x = 0; x < WorldConstants::SUBCHUNK_SIZE; x++)
+			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
 			{
-				for (int z = 0; z < WorldConstants::SUBCHUNK_SIZE; z++)
+				for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
 				{
 					chunk->SetBlock(glm::ivec3(x, y, z), dirt);
 				}
@@ -282,9 +282,9 @@ namespace onion::voxel
 		Block grass{BlockId::Grass};
 		for (y = 4; y <= 4; y++)
 		{
-			for (int x = 0; x < WorldConstants::SUBCHUNK_SIZE; x++)
+			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
 			{
-				for (int z = 0; z < WorldConstants::SUBCHUNK_SIZE; z++)
+				for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
 				{
 					chunk->SetBlock(glm::ivec3(x, y, z), grass);
 				}
@@ -302,7 +302,7 @@ namespace onion::voxel
 		// Creates the Chunk
 		auto chunk = std::make_shared<Chunk>(chunkPosition, 100);
 
-		constexpr int CHUNK_SIZE = WorldConstants::SUBCHUNK_SIZE;
+		constexpr int CHUNK_SIZE = WorldConstants::CHUNK_SIZE;
 
 		// Gets the height map
 		uint16_t heightMap[CHUNK_SIZE][CHUNK_SIZE] = {0};
@@ -381,12 +381,12 @@ namespace onion::voxel
 		}
 
 		// Adds trees
-		for (uint8_t x = 0; x < WorldConstants::SUBCHUNK_SIZE; ++x)
+		for (uint8_t x = 0; x < WorldConstants::CHUNK_SIZE; ++x)
 		{
-			for (uint8_t z = 0; z < WorldConstants::SUBCHUNK_SIZE; ++z)
+			for (uint8_t z = 0; z < WorldConstants::CHUNK_SIZE; ++z)
 			{
-				int realWorldX = (chunkPosition.x * WorldConstants::SUBCHUNK_SIZE + x);
-				int realWorldZ = (chunkPosition.y * WorldConstants::SUBCHUNK_SIZE + z);
+				int realWorldX = (chunkPosition.x * WorldConstants::CHUNK_SIZE + x);
+				int realWorldZ = (chunkPosition.y * WorldConstants::CHUNK_SIZE + z);
 				int height = heightMap[x][z];
 
 				if (height < m_AverageHeight)
@@ -415,9 +415,9 @@ namespace onion::voxel
 				{
 					// Every 0 0
 					// if (x == 0 && z == 0 && position.x == 0 && position.z == 0) {
-					glm::ivec3 topBlock{(chunkPosition.x * WorldConstants::SUBCHUNK_SIZE) + x,
+					glm::ivec3 topBlock{(chunkPosition.x * WorldConstants::CHUNK_SIZE) + x,
 										height - 1,
-										(chunkPosition.y * WorldConstants::SUBCHUNK_SIZE) + z};
+										(chunkPosition.y * WorldConstants::CHUNK_SIZE) + z};
 
 					Schematic tree = GenerateTree(topBlock); // Generate a tree at the top block position
 

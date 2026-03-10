@@ -131,6 +131,21 @@ namespace onion::voxel
 		}
 	}
 
+	void WorldManager::ClearWorld()
+	{
+		RemoveAllChunks();
+
+		{
+			std::unique_lock lock(m_MutexPlayersPosition);
+			m_PlayersPosition.clear();
+		}
+
+		{
+			std::unique_lock lock(m_MutexOutOfBoundsBlocks);
+			m_OutOfBoundsBlocks.clear();
+		}
+	}
+
 	bool WorldManager::IsChunkLoaded(const glm::ivec2& chunkPosition) const
 	{
 		std::shared_lock lock(m_MutexChunks);
@@ -192,9 +207,7 @@ namespace onion::voxel
 
 	void WorldManager::SetChunkPersistanceDistance(uint8_t distance)
 	{
-		bool forceRemoveDistantChunks = distance < m_ChunkPersistanceDistance;
 		m_ChunkPersistanceDistance = distance;
-
 		RemoveDistantChunks();
 	}
 

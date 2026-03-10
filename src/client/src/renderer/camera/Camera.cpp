@@ -97,7 +97,7 @@ namespace onion::voxel
 
 	glm::mat4 Camera::GetUntranslatedViewProjectionMatrix() const
 	{
-		glm::mat4 view = glm::lookAt(m_Position, m_Position + m_Front, m_Up);
+		glm::mat4 view = glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f) + m_Front, m_Up);
 		view[3] = glm::vec4(0, 0, 0, 1); // remove translation
 		return GetProjectionMatrix() * view;
 	}

@@ -17,6 +17,8 @@ namespace onion::voxel
 
 	Server::~Server()
 	{
+		m_WorldManager->ClearWorld();
+
 		m_NetworkServerEventHandles.clear();
 		m_WorldManagerEventHandles.clear();
 
@@ -46,6 +48,8 @@ namespace onion::voxel
 
 		// Apply configuration to the network server
 		m_NetworkServer.SetServerPort(m_Config.serverData.Port);
+		m_WorldManager->SetChunkPersistanceDistance(m_Config.serverData.SimulationDistance);
+		m_WorldManager->SetServerSimulationDistance(m_Config.serverData.SimulationDistance);
 	}
 
 	void Server::SaveConfiguration()

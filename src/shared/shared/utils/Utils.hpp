@@ -25,21 +25,21 @@ namespace onion::voxel::Utils
 
 	inline glm::ivec2 WorldToChunkPosition(const glm::ivec3& worldPosition)
 	{
-		return glm::ivec2(FloorDiv(worldPosition.x, WorldConstants::SUBCHUNK_SIZE),
-						  FloorDiv(worldPosition.z, WorldConstants::SUBCHUNK_SIZE));
+		return glm::ivec2(FloorDiv(worldPosition.x, WorldConstants::CHUNK_SIZE),
+						  FloorDiv(worldPosition.z, WorldConstants::CHUNK_SIZE));
 	}
 
 	inline glm::ivec3 WorldToLocalPosition(const glm::ivec3& worldPosition)
 	{
-		return glm::ivec3(FloorMod(worldPosition.x, WorldConstants::SUBCHUNK_SIZE),
+		return glm::ivec3(FloorMod(worldPosition.x, WorldConstants::CHUNK_SIZE),
 						  worldPosition.y,
-						  FloorMod(worldPosition.z, WorldConstants::SUBCHUNK_SIZE));
+						  FloorMod(worldPosition.z, WorldConstants::CHUNK_SIZE));
 	}
 
 	inline glm::ivec3 LocalToWorldPosition(const glm::ivec3& localPosition, const glm::ivec2& chunkPosition)
 	{
-		return glm::ivec3(chunkPosition.x * WorldConstants::SUBCHUNK_SIZE + localPosition.x,
+		return glm::ivec3(chunkPosition.x * WorldConstants::CHUNK_SIZE + localPosition.x,
 						  localPosition.y,
-						  chunkPosition.y * WorldConstants::SUBCHUNK_SIZE + localPosition.z);
+						  chunkPosition.y * WorldConstants::CHUNK_SIZE + localPosition.z);
 	}
 }; // namespace onion::voxel::Utils

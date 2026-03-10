@@ -221,3 +221,8 @@ void Shader::setMat4(const std::string& name, const glm::mat4& mat) const
 {
 	glUniformMatrix4fv(glGetUniformLocation(m_ProgramID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
+
+void onion::voxel::Shader::setIVec2(const std::string& name, const glm::ivec2& value) const
+{
+	glUniform2iv(glGetUniformLocation(m_ProgramID, name.c_str()), 1, &value[0]);
+}

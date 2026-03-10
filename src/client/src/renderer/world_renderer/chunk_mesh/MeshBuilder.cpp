@@ -224,7 +224,7 @@ namespace onion::voxel
 			newSubChunkMeshes.emplace_back(std::make_shared<SubChunkMesh>());
 		}
 
-		constexpr int SIZE = WorldConstants::SUBCHUNK_SIZE;
+		constexpr int SIZE = WorldConstants::CHUNK_SIZE;
 
 		// Gets the adjacent chunks.
 		std::shared_ptr<Chunk> adjacentPosX = m_WorldManager->GetChunk(glm::ivec2(chunkPos.x + 1, chunkPos.y));
@@ -331,22 +331,22 @@ namespace onion::voxel
 						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.m_BlockID);
 
 						// ------ Build Mesh ------
-						glm::vec3 p000(wx, wy, wz);
-						glm::vec3 p001(wx, wy, wz + 1);
-						glm::vec3 p010(wx, wy + 1, wz);
-						glm::vec3 p011(wx, wy + 1, wz + 1);
+						glm::ivec3 p000(x, wy, z);
+						glm::ivec3 p001(x, wy, z + 1);
+						glm::ivec3 p010(x, wy + 1, z);
+						glm::ivec3 p011(x, wy + 1, z + 1);
 
-						glm::vec3 p100(wx + 1, wy, wz);
-						glm::vec3 p101(wx + 1, wy, wz + 1);
-						glm::vec3 p110(wx + 1, wy + 1, wz);
-						glm::vec3 p111(wx + 1, wy + 1, wz + 1);
+						glm::ivec3 p100(x + 1, wy, z);
+						glm::ivec3 p101(x + 1, wy, z + 1);
+						glm::ivec3 p110(x + 1, wy + 1, z);
+						glm::ivec3 p111(x + 1, wy + 1, z + 1);
 
 						auto buildFace = [&](BlockFace worldFace,
 											 BlockFace textureFace,
-											 const glm::vec3& v0,
-											 const glm::vec3& v1,
-											 const glm::vec3& v2,
-											 const glm::vec3& v3)
+											 const glm::ivec3& v0,
+											 const glm::ivec3& v1,
+											 const glm::ivec3& v2,
+											 const glm::ivec3& v3)
 						{
 							const FaceTexture& faceTex = blockTextures.faces[(size_t) textureFace];
 
@@ -517,10 +517,10 @@ namespace onion::voxel
 	}
 
 	void MeshBuilder::AddFace(SubChunkMesh& mesh,
-							  const glm::vec3& v0,
-							  const glm::vec3& v1,
-							  const glm::vec3& v2,
-							  const glm::vec3& v3,
+							  const glm::ivec3& v0,
+							  const glm::ivec3& v1,
+							  const glm::ivec3& v2,
+							  const glm::ivec3& v3,
 							  BlockFace face,
 							  const Block& block,
 							  const FaceTexture& faceTexture,
@@ -585,13 +585,13 @@ namespace onion::voxel
 		// ------ VERTEX CREATION ------
 		uint16_t startIndex = static_cast<uint16_t>(vertices->size());
 
-		auto makeVertex = [&](const glm::vec3& p, const glm::vec2& uv)
+		auto makeVertex = [&](const glm::ivec3& p, const glm::vec2& uv)
 		{
 			SubChunkMesh::Vertex vert;
 
-			vert.x = p.x;
-			vert.y = p.y;
-			vert.z = p.z;
+			vert.x = static_cast<uint8_t>(p.x);
+			vert.y = static_cast<uint8_t>(p.y);
+			vert.z = static_cast<uint8_t>(p.z);
 
 			vert.texX = uv.x;
 			vert.texY = uv.y;

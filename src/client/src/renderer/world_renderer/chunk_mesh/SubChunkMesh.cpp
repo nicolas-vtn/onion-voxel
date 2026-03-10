@@ -173,16 +173,16 @@ namespace onion::voxel
 
 			// vertex attrib
 			glEnableVertexAttribArray(0); // Position
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glVertexAttribIPointer(0, 3, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, x));
 
 			glEnableVertexAttribArray(1); // Texture
 			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
 
 			glEnableVertexAttribArray(2); // Facing direction
-			glVertexAttribPointer(2, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, facing));
+			glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, facing));
 
 			glEnableVertexAttribArray(3); // Occlusion
-			glVertexAttribPointer(3, 1, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*) offsetof(Vertex, occlusion));
+			glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, occlusion));
 
 			glEnableVertexAttribArray(4); // Tint color
 			glVertexAttribPointer(4, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*) offsetof(Vertex, tintR));
@@ -211,16 +211,16 @@ namespace onion::voxel
 
 			// vertex attrib
 			glEnableVertexAttribArray(0); // Position
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glVertexAttribIPointer(0, 3, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, x));
 
 			glEnableVertexAttribArray(1); // Texture
 			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
 
 			glEnableVertexAttribArray(2); // Facing direction
-			glVertexAttribPointer(2, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, facing));
+			glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, facing));
 
 			glEnableVertexAttribArray(3); // Occlusion
-			glVertexAttribPointer(3, 1, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*) offsetof(Vertex, occlusion));
+			glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, occlusion));
 
 			glEnableVertexAttribArray(4); // Tint color
 			glVertexAttribPointer(4, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*) offsetof(Vertex, tintR));
@@ -251,16 +251,16 @@ namespace onion::voxel
 
 			// vertex attrib
 			glEnableVertexAttribArray(0); // Position
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glVertexAttribIPointer(0, 3, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, x));
 
 			glEnableVertexAttribArray(1); // Texture
 			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
 
 			glEnableVertexAttribArray(2); // Facing direction
-			glVertexAttribPointer(2, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, facing));
+			glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, facing));
 
 			glEnableVertexAttribArray(3); // Occlusion
-			glVertexAttribPointer(3, 1, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*) offsetof(Vertex, occlusion));
+			glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, occlusion));
 
 			glEnableVertexAttribArray(4); // Tint color
 			glVertexAttribPointer(4, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*) offsetof(Vertex, tintR));

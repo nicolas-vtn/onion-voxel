@@ -19,6 +19,11 @@ namespace onion::voxel
 
 	void ChunkMesh::RenderOpaque()
 	{
+		const glm::ivec2 chunkPos = GetChunkPosition();
+
+		SubChunkMesh::s_Shader.setIVec2(
+			"u_ChunkOffset", {chunkPos.x * WorldConstants::CHUNK_SIZE, chunkPos.y * WorldConstants::CHUNK_SIZE});
+
 		std::shared_lock lock(m_MutexSubChunkMeshes);
 		for (const auto& subChunkMesh : m_SubChunkMeshes)
 		{
@@ -28,6 +33,11 @@ namespace onion::voxel
 
 	void ChunkMesh::RenderCutout()
 	{
+		const glm::ivec2 chunkPos = GetChunkPosition();
+
+		SubChunkMesh::s_Shader.setIVec2(
+			"u_ChunkOffset", {chunkPos.x * WorldConstants::CHUNK_SIZE, chunkPos.y * WorldConstants::CHUNK_SIZE});
+
 		std::shared_lock lock(m_MutexSubChunkMeshes);
 		for (const auto& subChunkMesh : m_SubChunkMeshes)
 		{
@@ -37,6 +47,11 @@ namespace onion::voxel
 
 	void ChunkMesh::RenderTransparent()
 	{
+		const glm::ivec2 chunkPos = GetChunkPosition();
+
+		SubChunkMesh::s_Shader.setIVec2(
+			"u_ChunkOffset", {chunkPos.x * WorldConstants::CHUNK_SIZE, chunkPos.y * WorldConstants::CHUNK_SIZE});
+
 		std::shared_lock lock(m_MutexSubChunkMeshes);
 		for (const auto& subChunkMesh : m_SubChunkMeshes)
 		{

@@ -32,7 +32,9 @@ namespace onion::voxel
 
 		// Sets Uniforms
 		SubChunkMesh::s_Shader.Use();
-		SubChunkMesh::s_Shader.setMat4("u_ViewProjMatrix", viewProjMatrix);
+		//SubChunkMesh::s_Shader.setMat4("u_ViewProjMatrix", viewProjMatrix);
+		SubChunkMesh::s_Shader.setMat4("u_ViewProjMatrix", m_Camera->GetUntranslatedViewProjectionMatrix());
+		SubChunkMesh::s_Shader.setVec3("u_CameraPosition", m_Camera->GetPosition());
 		SubChunkMesh::s_Shader.setBool("u_RenderCutout", false);
 	}
 
@@ -229,7 +231,7 @@ namespace onion::voxel
 
 	inline std::pair<glm::vec3, glm::vec3> GetChunkCorners(const glm::ivec2& chunkPos, float maxY)
 	{
-		const float chunkSize = static_cast<float>(WorldConstants::SUBCHUNK_SIZE);
+		const float chunkSize = static_cast<float>(WorldConstants::CHUNK_SIZE);
 		const glm::vec3 worldPos = glm::vec3(chunkPos.x * chunkSize, 0.0f, chunkPos.y * chunkSize);
 		return {worldPos, worldPos + glm::vec3(chunkSize, maxY, chunkSize)};
 	}
@@ -255,7 +257,7 @@ namespace onion::voxel
 			return;
 		}
 
-		const float maxY = cameraChunk->GetSubChunkCount() * WorldConstants::SUBCHUNK_SIZE;
+		const float maxY = cameraChunk->GetSubChunkCount() * WorldConstants::CHUNK_SIZE;
 		const auto [minCorner, maxCorner] = GetChunkCorners(cameraChunkPos, maxY);
 
 		// Render Borders for the chunk of the camera
@@ -306,10 +308,10 @@ namespace onion::voxel
 		constexpr int subChunkLineWidth = 1;
 		if (cameraPos.y > 0.0f && cameraPos.y < maxY)
 		{
-			const int subChunkIndex = static_cast<int>(cameraPos.y) / WorldConstants::SUBCHUNK_SIZE;
-			const float y = (float) subChunkIndex * WorldConstants::SUBCHUNK_SIZE;
+			const int subChunkIndex = static_cast<int>(cameraPos.y) / WorldConstants::CHUNK_SIZE;
+			const float y = (float) subChunkIndex * WorldConstants::CHUNK_SIZE;
 			DebugDraws::DrawWorldBoxMinMax({minCorner.x, y, minCorner.z},
-										   {maxCorner.x, y + WorldConstants::SUBCHUNK_SIZE, maxCorner.z},
+										   {maxCorner.x, y + WorldConstants::CHUNK_SIZE, maxCorner.z},
 										   glm::vec4(subChunkLinesColor, bordersAlpha),
 										   subChunkLineWidth,
 										   false);

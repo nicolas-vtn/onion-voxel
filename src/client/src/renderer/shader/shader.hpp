@@ -56,6 +56,8 @@ namespace onion::voxel
 		void setMat3(const std::string& name, const glm::mat3& mat) const;
 		/// @brief Sets a glm::mat4 uniform variable in the shader program.
 		void setMat4(const std::string& name, const glm::mat4& mat) const;
+		/// @brief Sets a glm::ivec2 uniform variable in the shader program.
+		void setIVec2(const std::string& name, const glm::ivec2& value) const;
 
 	  private:
 		/// @brief Compiles the vertex and fragment shaders from their respective file paths and links them into a shader program. This is called internally when Use() is called for the first time. After compilation, the shader program ID is stored.

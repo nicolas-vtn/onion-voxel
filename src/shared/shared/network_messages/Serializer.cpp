@@ -72,8 +72,8 @@ namespace onion::voxel
 
 		sc.m_BlockIndexInPalette =
 			std::make_shared<std::array<uint8_t,
-										WorldConstants::SUBCHUNK_SIZE * WorldConstants::SUBCHUNK_SIZE *
-											WorldConstants::SUBCHUNK_SIZE>>();
+										WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE *
+											WorldConstants::CHUNK_SIZE>>();
 
 		auto& arr = *sc.m_BlockIndexInPalette;
 

@@ -106,7 +106,7 @@ namespace onion::voxel
 	  public:
 		struct Vertex
 		{
-			float x, y, z;	  // Position
+			uint8_t x, y, z;  // Position
 			float texX, texY; // Texture coordinates
 
 			uint8_t facing;				 // Facing direction (0-5 for the 6 faces of a cube)
