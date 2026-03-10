@@ -13,6 +13,11 @@ namespace onion::voxel
 		m_MainMenu_Button.SetText("Quit to Main Menu");
 	}
 
+	PausePanel::~PausePanel()
+	{
+		m_EventHandles.clear();
+	}
+
 	void PausePanel::Render()
 	{
 		// ---- Constants for Layout ----

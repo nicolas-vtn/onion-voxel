@@ -10,7 +10,7 @@ namespace onion::voxel
 		// ----- Constructor / Destructor -----
 	  public:
 		PausePanel(const std::string& name);
-		~PausePanel() override = default;
+		~PausePanel() override;
 
 		// ----- Public API -----
 	  public:

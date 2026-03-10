@@ -61,9 +61,6 @@ namespace onion::voxel
 		void SetServerInfo(std::shared_ptr<ServerInfo> serverInfo);
 		std::shared_ptr<ServerInfo> GetServerInfo() const;
 
-		void SetRenderDistance(uint32_t renderDistance);
-		uint32_t GetRenderDistance() const;
-
 		// ----- Events -----
 	  public:
 		Event<const std::filesystem::path&> RequestStartSingleplayerGame;
@@ -127,13 +124,10 @@ namespace onion::voxel
 		// ------ World Manager ------
 	  private:
 		std::shared_ptr<WorldManager> m_WorldManager;
-		void RemoveDistantChunks();
-		uint32_t m_RenderDistance = 5; // In chunks
 
 		// ------ World Renderer ------
 	  private:
 		std::shared_ptr<Camera> m_Camera;
-		glm::ivec2 m_LastCameraChunkPosition{INT32_MAX, INT32_MAX};
 		float m_CameraSpeed = 5.0f;
 		WorldRenderer m_WorldRenderer;
 		bool m_IsFreeCamera = true;
@@ -148,6 +142,7 @@ namespace onion::voxel
 		Gui m_Gui;
 		void SubscribeToGuiEvents();
 		std::vector<EventHandle> m_EventHandles;
+
 		void Handle_CursorStyleChangeRequest(const CursorStyle& style);
 		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
 		void Handle_GameResumeRequest(bool resume);

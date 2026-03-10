@@ -54,6 +54,8 @@ namespace onion::voxel
 										  const ClientInfoMsg& msg);
 		void Handle_PlayerInfoMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
 										  const PlayerInfoMsg& msg);
+		void Handle_PlayerRequestChunksMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
+												   const RequestChunksMsg& msg);
 
 		// ----- World Manager / Generation -----
 	  private:

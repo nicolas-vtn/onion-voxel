@@ -21,7 +21,10 @@ namespace onion::voxel
 		SubscribeToPannelsEvents();
 	}
 
-	Gui::~Gui() {}
+	Gui::~Gui()
+	{
+		m_EventHandles.clear();
+	}
 
 	void Gui::SubscribeToPannelsEvents()
 	{

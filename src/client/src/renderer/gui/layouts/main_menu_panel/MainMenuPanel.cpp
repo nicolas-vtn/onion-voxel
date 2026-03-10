@@ -24,6 +24,11 @@ namespace onion::voxel
 		m_QuitGame_Button.SetText("Quit Game");
 	}
 
+	MainMenuPanel::~MainMenuPanel()
+	{
+		m_EventHandles.clear();
+	}
+
 	void MainMenuPanel::Render()
 	{
 		// ---- Constants for Layout ----

@@ -17,6 +17,9 @@ namespace onion::voxel
 
 	Server::~Server()
 	{
+		m_NetworkServerEventHandles.clear();
+		m_WorldManagerEventHandles.clear();
+
 		Stop();
 	}
 
@@ -76,6 +79,10 @@ namespace onion::voxel
 				{
 					Handle_PlayerInfoMsgReceived(args, msg);
 				}
+				else if constexpr (std::is_same_v<T, RequestChunksMsg>)
+				{
+					Handle_PlayerRequestChunksMsgReceived(args, msg);
+				}
 				else
 				{
 					std::cout << "Received unhandled message type from client " << args.Sender << "\n";
@@ -102,12 +109,29 @@ namespace onion::voxel
 	void Server::Handle_PlayerInfoMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
 											  const PlayerInfoMsg& msg)
 	{
-		std::cout << "Received PlayerInfoMsg from client " << args.Sender << ": Username=" << msg.Username
-				  << ", UUID=" << msg.UUID << ", Position=" << msg.Position.x << "," << msg.Position.y << ","
-				  << msg.Position.z << "\n";
+		//std::cout << "Received PlayerInfoMsg from client " << args.Sender << ": Username=" << msg.Username
+		//		  << ", UUID=" << msg.UUID << ", Position=" << msg.Position.x << "," << msg.Position.y << ","
+		//		  << msg.Position.z << "\n";
 
 		// Update player position
 		UpdatePlayerPosition(args.Sender, msg.Position);
+	}
+
+	void Server::Handle_PlayerRequestChunksMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
+													   const RequestChunksMsg& msg)
+	{
+		std::cout << "Received RequestChunksMsg from client " << args.Sender << ": Requested "
+				  << msg.requestedChunks.size() << " chunks\n";
+
+		for (const auto& chunkPos : msg.requestedChunks)
+		{
+			auto chunk = m_WorldManager->GetChunk(chunkPos);
+			if (chunk)
+			{
+				ChunkDataMsg chunkDataMsg = Serializer::SerializeChunk(chunk);
+				m_NetworkServer.Send(args.Sender, chunkDataMsg);
+			}
+		}
 	}
 
 	void Server::Handle_ClientConnected(const NetworkServer::ClientConnectedEventArgs& args)

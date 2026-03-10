@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 #include <onion/Event.hpp>
+#include <onion/Timer.hpp>
 
 #include "../chunk/Chunk.hpp"
 
@@ -55,26 +56,54 @@ namespace onion::voxel
 		uint32_t GetSeed() const;
 		void SetSeed(uint32_t seed);
 
+		std::unordered_map<uint32_t, glm::vec3> GetPlayersPosition() const;
+		void SetPlayerPosition(uint32_t ClientHandle, const glm::vec3& position);
+
+		uint8_t GetChunkPersistanceDistance() const;
+		void SetChunkPersistanceDistance(uint8_t distance);
+
+		void SetServerSimulationDistance(uint8_t distance);
+
+		bool IsTriggeringEventMissingChunks() const;
+		void SetTriggeringEventMissingChunks(bool trigger);
+
 		// ----- Events -----
 	  public:
 		Event<const uint32_t&> SeedChanged;
 		Event<std::shared_ptr<Chunk>> ChunkAdded;
 		Event<std::shared_ptr<Chunk>> ChunkRemoved;
 		Event<const std::vector<std::pair<glm::ivec3, Block>>&> BlocksChanged;
+		Event<const std::vector<glm::ivec2>&> MissingChunksRequested;
 
 		// ----- Members -----
 	  private:
 		std::filesystem::path m_CurrentWorldPath;
 		std::atomic_uint32_t m_Seed{1};
+		std::atomic_uint8_t m_ChunkPersistanceDistance{5};
+		std::atomic_uint8_t m_ServerSimulationDistance{5};
+
+		mutable std::shared_mutex m_MutexPlayersPosition;
+		std::unordered_map<uint32_t, glm::vec3> m_PlayersPosition;
+		std::unordered_map<uint32_t, glm::ivec2> m_PlayersChunkPosition;
 
 		mutable std::shared_mutex m_MutexOutOfBoundsBlocks;
 		// Map of chunk position to list of out-of-bounds blocks that should be added to the chunk when it is added to the world
 		std::unordered_map<glm::ivec2, std::vector<std::pair<glm::ivec3, Block>>, IVec2Hash> m_OutOfBoundsBlocks;
+
+		mutable std::shared_mutex m_MutexChunks;
+		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, IVec2Hash> m_Chunks;
+
+		// ----- Periodic Tasks -----
+	  private:
+		Timer m_TimerPlaceOutOfBoundsBlocks;
 		void PlaceOutOfBoundsBlocks();
 		EventHandle m_ChunkAddedEventHandle;
 		void Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk);
 
-		mutable std::shared_mutex m_MutexChunks;
-		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, IVec2Hash> m_Chunks;
+		Timer m_TimerRequestMissingChunks;
+		void RequestMissingChunks() const;
+
+		Timer m_TimerRemoveDistantChunks;
+		void RemoveDistantChunks(bool force = false);
 	};
 } // namespace onion::voxel

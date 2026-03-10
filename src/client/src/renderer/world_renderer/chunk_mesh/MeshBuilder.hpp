@@ -21,6 +21,7 @@ namespace onion::voxel
 		// ----- Constructor / Destructor -----
 	  public:
 		MeshBuilder(std::shared_ptr<WorldManager> worldManager, std::shared_ptr<TextureAtlas> textureAtlas);
+		~MeshBuilder();
 
 		// ----- Public API -----
 	  public:

@@ -18,6 +18,7 @@ namespace onion::voxel
 			ChunkData,
 			PlayerInfos,
 			BlocksChanged,
+			RequestChunks,
 		};
 
 		eType Type = eType::None;

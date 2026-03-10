@@ -11,6 +11,11 @@ namespace onion::voxel
 	{
 	}
 
+	MeshBuilder::~MeshBuilder()
+	{
+		m_ThreadPool.Close();
+	}
+
 	glm::ivec3 Cross(const glm::ivec3& a, const glm::ivec3& b)
 	{
 		return glm::ivec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
@@ -193,13 +198,17 @@ namespace onion::voxel
 		// If the chunk mesh is already being rebuilt, we should stop the existing rebuild and start a new one
 		if (chunkMesh->m_IsRebuilding)
 		{
+			std::lock_guard lock(chunkMesh->m_MutexStopSource);
 			chunkMesh->m_RebuildStopSource.request_stop();
 		}
 
 		// Acquire the lock to set the rebuilding flag and create a new stop source for this rebuild
 		std::lock_guard lock(chunkMesh->m_MutexRebuilding);
 		chunkMesh->StartRebuilding();
-		chunkMesh->m_RebuildStopSource = std::stop_source();
+		{
+			std::lock_guard stopSourceLock(chunkMesh->m_MutexStopSource);
+			chunkMesh->m_RebuildStopSource = std::stop_source();
+		}
 		std::stop_token stopToken = chunkMesh->m_RebuildStopSource.get_token();
 
 		// Create a new vector of SubChunkMeshes to build the new meshes into.

@@ -12,7 +12,7 @@ namespace onion::voxel
 		// ----- Constructor / Destructor -----
 	  public:
 		MainMenuPanel(const std::string& name);
-		~MainMenuPanel() override = default;
+		~MainMenuPanel() override;
 
 		// ----- Public API -----
 	  public:

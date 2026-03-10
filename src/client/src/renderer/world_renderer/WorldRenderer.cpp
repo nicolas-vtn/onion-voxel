@@ -15,7 +15,10 @@ namespace onion::voxel
 		SubscribeToWorldManagerEvents();
 	};
 
-	WorldRenderer::~WorldRenderer() {};
+	WorldRenderer::~WorldRenderer()
+	{
+		m_EventHandles.clear();
+	};
 
 	void WorldRenderer::PrepareForRendering()
 	{
@@ -362,6 +365,21 @@ namespace onion::voxel
 		const double avgMeshBuildTime_ms = m_MeshBuilder.GetAverageChunkMeshUpdateTime();
 		ImGui::Text("Average Mesh Build Time: %.2f ms", avgMeshBuildTime_ms);
 		ImGui::Text("Chunk Mesh Updates per Second: %.2f", m_MeshBuilder.GetChunkMeshUpdatesPerSecond());
+
+		// ----- Render Distance -----
+		ImGui::Separator();
+		int chunkPersistanceDistance = m_WorldManager->GetChunkPersistanceDistance();
+		if (ImGui::SliderInt("Chunk Persistence Distance", (int*) &chunkPersistanceDistance, 1, 20))
+		{
+			m_WorldManager->SetChunkPersistanceDistance(static_cast<uint8_t>(chunkPersistanceDistance));
+		}
+
+		// ----- Clear all chunks button -----
+		ImGui::Separator();
+		if (ImGui::Button("Clear All Chunks"))
+		{
+			m_WorldManager->RemoveAllChunks();
+		}
 
 		// ----- Render Options -----
 		ImGui::Separator();

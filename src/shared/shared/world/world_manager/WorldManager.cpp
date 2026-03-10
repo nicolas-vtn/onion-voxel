@@ -7,8 +7,23 @@ namespace onion::voxel
 	WorldManager::WorldManager()
 	{
 		// Subscibe to it's own event to handle out-of-bounds blocks when a chunk is added
-		m_ChunkAddedEventHandle =
-			ChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkAdded(chunk); });
+		//m_ChunkAddedEventHandle =
+		//	ChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkAdded(chunk); });
+
+		// Start periodic task to place out-of-bounds blocks in chunks when they are added to the world
+		m_TimerPlaceOutOfBoundsBlocks.setTimeoutFunction([this]() { PlaceOutOfBoundsBlocks(); });
+		m_TimerPlaceOutOfBoundsBlocks.setElapsedPeriod(std::chrono::milliseconds(1000));
+		m_TimerPlaceOutOfBoundsBlocks.Start();
+
+		// Start periodic task to request missing chunks (chunks that should be loaded but are not) every second
+		m_TimerRequestMissingChunks.setTimeoutFunction([this]() { RequestMissingChunks(); });
+		m_TimerRequestMissingChunks.setElapsedPeriod(std::chrono::seconds(1));
+		m_TimerRequestMissingChunks.Start();
+
+		// Start periodic task to remove distant chunks (chunks that are too far away from all players) every X seconds
+		m_TimerRemoveDistantChunks.setTimeoutFunction([this]() { RemoveDistantChunks(); });
+		m_TimerRemoveDistantChunks.setElapsedPeriod(std::chrono::seconds(5));
+		m_TimerRemoveDistantChunks.Start();
 	}
 
 	WorldManager::~WorldManager() {}
@@ -143,6 +158,52 @@ namespace onion::voxel
 		SeedChanged.Trigger(seed);
 	}
 
+	std::unordered_map<uint32_t, glm::vec3> WorldManager::GetPlayersPosition() const
+	{
+		std::shared_lock lock(m_MutexPlayersPosition);
+		return m_PlayersPosition; // Return a copy of the players position map
+	}
+
+	void WorldManager::SetPlayerPosition(uint32_t ClientHandle, const glm::vec3& position)
+	{
+		std::unique_lock lock(m_MutexPlayersPosition);
+		m_PlayersPosition[ClientHandle] = position;
+	}
+
+	uint8_t WorldManager::GetChunkPersistanceDistance() const
+	{
+		return m_ChunkPersistanceDistance;
+	}
+
+	void WorldManager::SetChunkPersistanceDistance(uint8_t distance)
+	{
+		bool forceRemoveDistantChunks = distance < m_ChunkPersistanceDistance;
+		m_ChunkPersistanceDistance = distance;
+		RemoveDistantChunks(forceRemoveDistantChunks);
+	}
+
+	void WorldManager::SetServerSimulationDistance(uint8_t distance)
+	{
+		m_ServerSimulationDistance = distance;
+	}
+
+	bool WorldManager::IsTriggeringEventMissingChunks() const
+	{
+		return m_TimerRemoveDistantChunks.isRunning();
+	}
+
+	void WorldManager::SetTriggeringEventMissingChunks(bool trigger)
+	{
+		if (trigger)
+		{
+			m_TimerRemoveDistantChunks.Start();
+		}
+		else
+		{
+			m_TimerRemoveDistantChunks.Stop();
+		}
+	}
+
 	Block WorldManager::GetBlock(const glm::ivec3& worldPosition) const
 	{
 		// Calculate chunk position and local position within chunk
@@ -268,5 +329,113 @@ namespace onion::voxel
 	void WorldManager::Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk)
 	{
 		PlaceOutOfBoundsBlocks();
+	}
+
+	void WorldManager::RequestMissingChunks() const
+	{
+		std::vector<glm::ivec2> missingChunks;
+		auto playersPosition = GetPlayersPosition();
+		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, IVec2Hash> chunks = GetAllChunks();
+
+		// For each player, check the chunks within the persistance distance and mark them as missing if they are not loaded
+		int persistanceDistance = std::min(GetChunkPersistanceDistance(), m_ServerSimulationDistance.load());
+
+		for (const auto& [clientHandle, playerPos] : playersPosition)
+		{
+			glm::ivec2 playerChunkPos = Utils::WorldToChunkPosition(playerPos);
+
+			for (int x = -persistanceDistance; x <= persistanceDistance; x++)
+			{
+				for (int y = -persistanceDistance; y <= persistanceDistance; y++)
+				{
+					glm::ivec2 chunkPos = playerChunkPos + glm::ivec2(x, y);
+					if (chunks.find(chunkPos) == chunks.end())
+					{
+						missingChunks.push_back(chunkPos); // Mark chunk as missing if it is not loaded
+					}
+				}
+			}
+		}
+
+		// Trigger event to request missing chunks to be loaded
+		if (!missingChunks.empty())
+		{
+			MissingChunksRequested.Trigger(missingChunks);
+		}
+	}
+
+	void WorldManager::RemoveDistantChunks(bool force)
+	{
+		auto playersPosition = GetPlayersPosition();
+
+		// Calculate players chunk position map
+		std::unordered_map<uint32_t, glm::ivec2> playersChunkPosition;
+		for (const auto& [clientHandle, playerPos] : playersPosition)
+		{
+			playersChunkPosition[clientHandle] = Utils::WorldToChunkPosition(playerPos);
+		}
+
+		// Get a copy of the previous players chunk position map to compare with the new one
+		std::unordered_map<uint32_t, glm::ivec2> previousPlayersChunkPosition;
+		{
+			std::shared_lock lock(m_MutexPlayersPosition);
+			previousPlayersChunkPosition = m_PlayersChunkPosition; // Get a copy of the players chunk position map
+		}
+
+		// If players have not moved : early return
+		bool playersMoved = false;
+		if (!force && playersChunkPosition == previousPlayersChunkPosition)
+		{
+			return;
+		}
+
+		// Update players chunk position map
+		{
+			std::unique_lock lock(m_MutexPlayersPosition);
+			m_PlayersChunkPosition = std::move(playersChunkPosition);
+		}
+
+		// Initialize all chunks as not to be kept
+		std::unordered_map<glm::ivec2, bool, IVec2Hash> chunksToKeep;
+		{
+			std::shared_lock lock(m_MutexChunks);
+			for (const auto& [chunkPos, chunk] : m_Chunks)
+			{
+				chunksToKeep[chunkPos] = false;
+			}
+		}
+
+		// Mark chunks that are within the persistance distance of any player to be kept
+		int persistanceDistance = GetChunkPersistanceDistance();
+
+		for (const auto& [clientHandle, playerPos] : playersPosition)
+		{
+			glm::ivec2 playerChunkPos = Utils::WorldToChunkPosition(playerPos);
+
+			for (int x = -persistanceDistance; x <= persistanceDistance; ++x)
+			{
+				for (int y = -persistanceDistance; y <= persistanceDistance; ++y)
+				{
+					glm::ivec2 chunkPos = playerChunkPos + glm::ivec2(x, y);
+					chunksToKeep[chunkPos] = true; // Mark chunk as to be kept
+				}
+			}
+		}
+
+		// Collect chunks that are not to be kept for removal
+		std::vector<glm::ivec2> chunksToRemove;
+		for (const auto& [chunkPos, keep] : chunksToKeep)
+		{
+			if (!keep)
+			{
+				chunksToRemove.push_back(chunkPos); // Mark chunk for removal if it is not to be kept
+			}
+		}
+
+		// Remove chunks that are not to be kept
+		for (const auto& chunkPos : chunksToRemove)
+		{
+			RemoveChunk(chunkPos);
+		}
 	}
 } // namespace onion::voxel

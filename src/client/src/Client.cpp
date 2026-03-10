@@ -15,13 +15,21 @@ namespace onion::voxel
 
 		SubscribeToRendererEvents();
 		SubscribeToNetworkClientEvents();
+		SubscribeToWorldManagerEvents();
 
 		m_TimerSendPlayerInfos.setTimeoutFunction([this]() { SendPlayerInfosToServer(); });
 		m_TimerSendPlayerInfos.setElapsedPeriod(std::chrono::milliseconds(500));
 		m_TimerSendPlayerInfos.setRepeat(true);
 	}
 
-	Client::~Client() {}
+	Client::~Client()
+	{
+		m_RendererEventHandles.clear();
+		m_NetworkClientEventHandles.clear();
+		m_WorldManagerEventHandles.clear();
+
+		Stop();
+	}
 
 	void Client::Start()
 	{
@@ -74,7 +82,7 @@ namespace onion::voxel
 		m_Config.Load(m_ConfigFilePath);
 
 		// Apply configuration to the client
-		m_Renderer.SetRenderDistance(m_Config.clientData.RenderDistance);
+		m_WorldManager->SetChunkPersistanceDistance(m_Config.clientData.RenderDistance);
 	}
 
 	void Client::SaveConfiguration()
@@ -134,6 +142,20 @@ namespace onion::voxel
 		}
 
 		m_Renderer.SetRenderState(Renderer::eRenderState::Menu);
+	}
+
+	void Client::SubscribeToWorldManagerEvents()
+	{
+		m_WorldManagerEventHandles.push_back(m_WorldManager->MissingChunksRequested.Subscribe(
+			[this](const std::vector<glm::ivec2>& chunkPositions) { Handle_MissingChunksRequested(chunkPositions); }));
+	}
+
+	void Client::Handle_MissingChunksRequested(const std::vector<glm::ivec2>& chunkPositions)
+	{
+		RequestChunksMsg requestChunksMsg;
+		requestChunksMsg.requestedChunks = chunkPositions;
+
+		m_NetworkClient.Send(std::move(requestChunksMsg), false);
 	}
 
 	void Client::SubscribeToRendererEvents()
@@ -204,21 +226,23 @@ namespace onion::voxel
 		serverInfo->SimulationDistance = msg.SimulationDistance;
 
 		m_Renderer.SetServerInfo(serverInfo);
+		m_WorldManager->SetServerSimulationDistance(msg.SimulationDistance);
 	}
 
 	void Client::Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg)
 	{
 		std::shared_ptr<Chunk> chunk = Serializer::DeserializeChunk(msg);
 
-		// Checks if the chunk is in the render distance
+		// Checks if the chunk is in the persistance distance
 		glm::ivec2 chunkPosition = chunk->GetPosition();
 		glm::ivec2 playerChunkPosition = Utils::WorldToChunkPosition(m_Renderer.GetPlayerPosition());
 
 		//std::cout << "Received chunk at position: (" << chunkPosition.x << ", " << chunkPosition.y << ")\n";
 
-		const int renderDistance = m_Renderer.GetRenderDistance();
-		if (std::abs(playerChunkPosition.x - chunkPosition.x) <= renderDistance &&
-			std::abs(playerChunkPosition.y - chunkPosition.y) <= renderDistance)
+		const int persistanceDistance = m_WorldManager->GetChunkPersistanceDistance();
+
+		if (std::abs(playerChunkPosition.x - chunkPosition.x) <= persistanceDistance &&
+			std::abs(playerChunkPosition.y - chunkPosition.y) <= persistanceDistance)
 		{
 			m_WorldManager->AddChunk(chunk);
 		}

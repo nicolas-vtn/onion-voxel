@@ -49,6 +49,7 @@ namespace onion::voxel
 		std::atomic_bool m_IsDirty{true};
 		std::atomic_bool m_IsRebuilding{false};
 		std::mutex m_MutexRebuilding;
+		std::mutex m_MutexStopSource;
 		std::stop_source m_RebuildStopSource;
 
 		// ----- Members -----

@@ -52,31 +52,6 @@ namespace onion::voxel
 		void LoadConfiguration();
 		void SaveConfiguration();
 
-		// ----- Configuration (Server) -----
-	  private:
-		std::string m_ServerName;
-
-		// ----- Event Handling -----
-	  private:
-		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
-		void Handle_StopSingleplayerGameRequest(const std::filesystem::path& worldPath);
-
-		// ----- World Manager -----
-	  private:
-		std::shared_ptr<WorldManager> m_WorldManager = std::make_shared<WorldManager>();
-
-		// ----- Renderer -----
-	  private:
-		Renderer m_Renderer;
-		std::vector<EventHandle> m_RendererEventHandles;
-		void SubscribeToRendererEvents();
-
-		// ----- Logger -----
-	  private:
-		eLogLevel m_LogLevel = eLogLevel::All;
-		std::filesystem::path m_LogFile = "logs.txt";
-		Logger m_Logger;
-
 		// ----- Network Client -----
 	  private:
 		NetworkClient m_NetworkClient;
@@ -92,6 +67,35 @@ namespace onion::voxel
 
 		Timer m_TimerSendPlayerInfos;
 		void SendPlayerInfosToServer();
+
+		// ----- Configuration (Server) -----
+	  private:
+		std::string m_ServerName;
+
+		// ----- Event Handling -----
+	  private:
+		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
+		void Handle_StopSingleplayerGameRequest(const std::filesystem::path& worldPath);
+
+		// ----- World Manager -----
+	  private:
+		std::shared_ptr<WorldManager> m_WorldManager = std::make_shared<WorldManager>();
+		std::vector<EventHandle> m_WorldManagerEventHandles;
+		void SubscribeToWorldManagerEvents();
+
+		void Handle_MissingChunksRequested(const std::vector<glm::ivec2>& chunkPositions);
+
+		// ----- Renderer -----
+	  private:
+		Renderer m_Renderer;
+		std::vector<EventHandle> m_RendererEventHandles;
+		void SubscribeToRendererEvents();
+
+		// ----- Logger -----
+	  private:
+		eLogLevel m_LogLevel = eLogLevel::All;
+		std::filesystem::path m_LogFile = "logs.txt";
+		Logger m_Logger;
 
 		// ----- Localhost Server -----
 	  private:

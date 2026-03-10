@@ -13,7 +13,10 @@ namespace onion::voxel
 		Handle_SeedChanged(m_WorldManager->GetSeed());
 	}
 
-	WorldGenerator::~WorldGenerator() {}
+	WorldGenerator::~WorldGenerator()
+	{
+		m_WorldManagerEventHandles.clear();
+	}
 
 	void WorldGenerator::GenerateChunkAsync(const glm::ivec2& chunkPosition)
 	{

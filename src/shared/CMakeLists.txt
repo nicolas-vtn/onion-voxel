@@ -20,6 +20,7 @@ target_link_libraries(onion_voxel_shared
 
 		onion::threadsafequeue
 		onion::event
+		onion::timer
 )
 
 target_include_directories(onion_voxel_shared
