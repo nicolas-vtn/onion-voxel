@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
-
+#include <stdexcept>
 #include <vector>
 
 #include "../block/Block.hpp"
@@ -11,72 +11,56 @@ namespace onion::voxel
 	class Schematic
 	{
 	  public:
-		glm::ivec3 Origin; // Origin position of the schematic in the world
-
-		int SizeX = 0; // Size in X direction
-		int SizeY = 0; // Size in Y direction
-		int SizeZ = 0; // Size in Z direction
-
-		std::vector<std::vector<std::vector<Block>>> Blocks; // List of blocks in the schematic
-
-		Schematic(int sizeX, int sizeY, int sizeZ, glm::ivec3 origin)
-			: Origin(origin), SizeX(sizeX), SizeY(sizeY), SizeZ(sizeZ)
+		Schematic(glm::ivec3 size, glm::ivec3 origin = {})
+			: m_Size(size), m_Origin(origin), m_Blocks(size.x * size.y * size.z, Block(BlockId::Air))
 		{
-			// Initialize the Blocks vector with Air blocks
-			Blocks.resize(SizeX,
-						  std::vector<std::vector<Block>>(SizeY, std::vector<Block>(SizeZ, Block(BlockId::Air))));
 		}
 
-		void Resize(int newSizeX, int newSizeY, int newSizeZ)
-		{
-			// Resize the Blocks vector to the new size
-			Blocks.resize(newSizeX);
-			for (auto& vecY : Blocks)
-			{
-				vecY.resize(newSizeY);
-				for (auto& vecZ : vecY)
-				{
-					vecZ.resize(newSizeZ, Block(BlockId::Air));
-				}
-			}
+		const glm::ivec3& GetSize() const { return m_Size; }
+		const glm::ivec3& GetOrigin() const { return m_Origin; }
 
-			SizeX = newSizeX;
-			SizeY = newSizeY;
-			SizeZ = newSizeZ;
+		void SetOrigin(glm::ivec3 origin) { m_Origin = origin; }
+
+		Block GetBlock(glm::ivec3 pos) const
+		{
+			if (!IsInside(pos))
+				return Block(BlockId::Air);
+
+			return m_Blocks[Index(pos)];
 		}
 
-		Block GetBlockAt(int x, int y, int z) const
+		BlockId GetBlockId(glm::ivec3 pos) const
 		{
-			if (x < 0 || x >= SizeX || y < 0 || y >= SizeY || z < 0 || z >= SizeZ)
-			{
-				return Block(BlockId::Air); // Return void block if out of bounds
-			}
-			return Blocks[x][y][z]; // Return the block at the specified position
+			if (!IsInside(pos))
+				return BlockId::Air;
+
+			return m_Blocks[Index(pos)].m_BlockID;
 		}
 
-		BlockId GetBlockIdAt(int x, int y, int z) const
+		void SetBlock(glm::ivec3 pos, const Block& block)
 		{
-			if (x < 0 || x >= SizeX || y < 0 || y >= SizeY || z < 0 || z >= SizeZ)
-			{
-				return BlockId::Air; // Return air block if out of bounds
-			}
-			return Blocks[x][y][z].m_BlockID; // Return the block at the specified position
+			if (!IsInside(pos))
+				throw std::out_of_range("Schematic::SetBlock out of bounds");
+
+			m_Blocks[Index(pos)] = block;
 		}
 
-		void SetBlockAt(int x, int y, int z, const Block& block)
+		size_t GetBlockCount() const { return m_Blocks.size(); }
+
+		void Fill(Block block) { std::fill(m_Blocks.begin(), m_Blocks.end(), block); }
+
+		bool IsInside(glm::ivec3 pos) const
 		{
-
-			if (x < 0 || y < 0 || z < 0)
-			{
-				throw std::out_of_range("Coordinates must be non-negative");
-			}
-
-			if (x >= SizeX || y >= SizeY || z >= SizeZ)
-			{
-				this->Resize(std::max(SizeX, x + 1), std::max(SizeY, y + 1), std::max(SizeZ, z + 1));
-			}
-
-			Blocks[x][y][z] = block; // Set the block at the specified position
+			return pos.x >= 0 && pos.x < m_Size.x && pos.y >= 0 && pos.y < m_Size.y && pos.z >= 0 && pos.z < m_Size.z;
 		}
+
+	  private:
+		size_t Index(glm::ivec3 pos) const { return pos.x + m_Size.x * (pos.z + m_Size.z * pos.y); }
+
+	  private:
+		glm::ivec3 m_Size;
+		glm::ivec3 m_Origin;
+
+		std::vector<Block> m_Blocks;
 	};
 } // namespace onion::voxel

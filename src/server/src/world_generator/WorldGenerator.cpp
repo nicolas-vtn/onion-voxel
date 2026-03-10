@@ -427,16 +427,18 @@ namespace onion::voxel
 					Schematic tree = GenerateTree(treeBlock); // Generate a tree at the top block position
 
 					// Fuse the tree schematic into the chunk pile
-					for (int treeX = 0; treeX < tree.SizeX; treeX++)
+					const auto treeOrigin = tree.GetOrigin();
+					const auto treeSize = tree.GetSize();
+					for (int treeX = 0; treeX < treeSize.x; treeX++)
 					{
-						for (int treeY = 0; treeY < tree.SizeY; treeY++)
+						for (int treeY = 0; treeY < treeSize.y; treeY++)
 						{
-							for (int treeZ = 0; treeZ < tree.SizeZ; treeZ++)
+							for (int treeZ = 0; treeZ < treeSize.z; treeZ++)
 							{
 
-								Block block = tree.GetBlockAt(treeX, treeY, treeZ);
+								Block block = tree.GetBlock({treeX, treeY, treeZ});
 								const glm::ivec3 blockWorldPos = {
-									tree.Origin.x + treeX, tree.Origin.y + treeY, tree.Origin.z + treeZ};
+									treeOrigin.x + treeX, treeOrigin.y + treeY, treeOrigin.z + treeZ};
 
 								if (block.m_BlockID == BlockId::Air)
 								{
@@ -481,7 +483,7 @@ namespace onion::voxel
 
 		glm::ivec3 SchematicOrigin{treePosition.x - 2, treePosition.y, treePosition.z - 2};
 
-		Schematic treeSchematic(5, 10, 5, SchematicOrigin);
+		Schematic treeSchematic({5, 10, 5}, SchematicOrigin);
 
 		int minTreeHeight = 2;
 		int maxTreeHeight = 5;
@@ -507,7 +509,7 @@ namespace onion::voxel
 		for (int y = 0; y < treeHeight + 3; ++y)
 		{
 			// Vertical oak log
-			treeSchematic.SetBlockAt(2, y, 2, verticalOakLog); // Set the trunk block
+			treeSchematic.SetBlock({2, y, 2}, verticalOakLog); // Set the trunk block
 		}
 
 		// Generate the Leaves
@@ -517,9 +519,9 @@ namespace onion::voxel
 			{
 				for (int y = treeHeight; y < treeHeight + 2; y++)
 				{
-					if (treeSchematic.GetBlockIdAt(x, y, z) == BlockId::Air)
+					if (treeSchematic.GetBlockId({x, y, z}) == BlockId::Air)
 					{
-						treeSchematic.SetBlockAt(x, y, z, oakLeaves); // Set the leaves block
+						treeSchematic.SetBlock({x, y, z}, oakLeaves); // Set the leaves block
 					}
 
 					// 20% chance to NOT have leaves at the corners
@@ -528,7 +530,7 @@ namespace onion::voxel
 						if (dist(gen) <= 20)
 						{
 							// Set the corner leaves to air
-							treeSchematic.SetBlockAt(x, y, z, Block(BlockId::Air));
+							treeSchematic.SetBlock({x, y, z}, Block(BlockId::Air));
 						}
 					}
 				}
@@ -541,9 +543,9 @@ namespace onion::voxel
 			{
 				for (int y = treeHeight + 2; y <= treeHeight + 3; y++)
 				{
-					if (treeSchematic.GetBlockIdAt(x, y, z) == BlockId::Air)
+					if (treeSchematic.GetBlockId({x, y, z}) == BlockId::Air)
 					{
-						treeSchematic.SetBlockAt(x, y, z, oakLeaves); // Set the leaves block
+						treeSchematic.SetBlock({x, y, z}, oakLeaves); // Set the leaves block
 					}
 				}
 			}
