@@ -8,15 +8,12 @@ namespace onion::voxel::Utils
 {
 	inline int FloorDiv(int a, int b)
 	{
-		int q = a / b;
-		int r = a % b;
-		if (r < 0)
-			--q;
-		return q;
+		return (a >= 0) ? (a / b) : -((-a + b - 1) / b);
 	}
 
 	inline int FloorMod(int a, int b)
 	{
+		assert(b > 0);
 		int r = a % b;
 		if (r < 0)
 			r += b;

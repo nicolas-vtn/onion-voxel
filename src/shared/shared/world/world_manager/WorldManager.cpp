@@ -66,7 +66,7 @@ namespace onion::voxel
 	}
 
 	void WorldManager::AddChunk(const std::shared_ptr<Chunk> chunk,
-								const std::unordered_map<glm::ivec3, Block>& outOfBoundsBlocks)
+								const std::vector<std::pair<glm::ivec3, Block>>& outOfBoundsBlocks)
 	{
 		// Converts world position to chunk position + local position.
 		std::unordered_map<glm::ivec2, std::vector<std::pair<glm::ivec3, Block>>, IVec2Hash> outOfBoundsBlocksByChunk;
@@ -349,36 +349,45 @@ namespace onion::voxel
 
 	void WorldManager::PlaceOutOfBoundsBlocks()
 	{
+		std::vector<std::pair<std::shared_ptr<Chunk>, std::vector<std::pair<glm::ivec3, Block>>>> work;
 		std::vector<std::pair<glm::ivec3, Block>> blocksPlaced;
+
 		{
 			std::unique_lock lock(m_MutexOutOfBoundsBlocks);
+
 			for (auto it = m_OutOfBoundsBlocks.begin(); it != m_OutOfBoundsBlocks.end();)
 			{
-				const glm::ivec2& chunkPos = it->first;
-				std::shared_ptr<Chunk> chunk = GetChunk(chunkPos);
+				auto chunk = GetChunk(it->first);
+
 				if (chunk)
 				{
-					// Place out-of-bounds blocks in the chunk
-					for (const auto& [localPos, block] : it->second)
-					{
-						chunk->SetBlock(localPos, block);
-						const glm::ivec3 worldPos = Utils::LocalToWorldPosition(localPos, chunkPos);
-						blocksPlaced.emplace_back(worldPos, block);
-					}
-					// Remove the entry from the map after placing the blocks
+					work.emplace_back(chunk, std::move(it->second));
 					it = m_OutOfBoundsBlocks.erase(it);
 				}
 				else
 				{
-					++it; // Move to the next entry if the chunk is not loaded yet
+					++it;
 				}
 			}
 		}
 
-		if (!blocksPlaced.empty())
+		// ---- No locks held here ----
+
+		for (auto& [chunk, blocks] : work)
 		{
-			BlocksChanged.Trigger(blocksPlaced);
+			glm::ivec2 chunkPos = chunk->GetPosition();
+
+			for (auto& [localPos, block] : blocks)
+			{
+				chunk->SetBlock(localPos, block);
+
+				const glm::ivec3 worldPos = Utils::LocalToWorldPosition(localPos, chunkPos);
+				blocksPlaced.emplace_back(worldPos, block);
+			}
 		}
+
+		if (!blocksPlaced.empty())
+			BlocksChanged.Trigger(blocksPlaced);
 	}
 
 	void WorldManager::Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk)

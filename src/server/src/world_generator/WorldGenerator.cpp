@@ -413,13 +413,18 @@ namespace onion::voxel
 				// 5% chance to generate a tree
 				if (randomVal < 0.01f)
 				{
-					// Every 0 0
-					// if (x == 0 && z == 0 && position.x == 0 && position.z == 0) {
-					glm::ivec3 topBlock{(chunkPosition.x * WorldConstants::CHUNK_SIZE) + x,
-										height - 1,
-										(chunkPosition.y * WorldConstants::CHUNK_SIZE) + z};
+					glm::ivec3 treeBlock{(chunkPosition.x * WorldConstants::CHUNK_SIZE) + x,
+										 height + 1,
+										 (chunkPosition.y * WorldConstants::CHUNK_SIZE) + z};
 
-					Schematic tree = GenerateTree(topBlock); // Generate a tree at the top block position
+					// Sets a dirtblock under the tree if the top block is grass
+					Block block = chunk->GetBlock({x, height, z});
+					if (block.m_BlockID == BlockId::Grass)
+					{
+						chunk->SetBlock({x, height, z}, BlockId::Dirt);
+					}
+
+					Schematic tree = GenerateTree(treeBlock); // Generate a tree at the top block position
 
 					// Fuse the tree schematic into the chunk pile
 					for (int treeX = 0; treeX < tree.SizeX; treeX++)
@@ -453,7 +458,7 @@ namespace onion::voxel
 									// Tree block is outside the chunk pile bounds ...
 
 									// Add the block to the out-of-bounds blocks
-									genChunk.outOfBoundsBlocks[blockWorldPos] = block;
+									genChunk.outOfBoundsBlocks.emplace_back(blockWorldPos, block);
 								}
 							}
 						}
@@ -472,11 +477,11 @@ namespace onion::voxel
 
 	Schematic WorldGenerator::GenerateTree(const glm::ivec3& position) const
 	{
-		glm::ivec3 treePosition{position.x, position.y + 1, position.z};
+		glm::ivec3 treePosition{position.x, position.y, position.z};
 
-		glm::ivec3 SchematicOrigin{treePosition.x - 2, treePosition.y + 1, treePosition.z - 2};
+		glm::ivec3 SchematicOrigin{treePosition.x - 2, treePosition.y, treePosition.z - 2};
 
-		Schematic treeSchematic(5, 20, 5, SchematicOrigin);
+		Schematic treeSchematic(5, 10, 5, SchematicOrigin);
 
 		int minTreeHeight = 2;
 		int maxTreeHeight = 5;

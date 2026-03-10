@@ -45,7 +45,7 @@ namespace onion::voxel
 
 		void AddChunk(const std::shared_ptr<Chunk> chunk);
 		void AddChunk(const std::shared_ptr<Chunk> chunk,
-					  const std::unordered_map<glm::ivec3, Block>& outOfBoundsBlocks);
+					  const std::vector<std::pair<glm::ivec3, Block>>& outOfBoundsBlocks);
 		void RemoveChunk(const glm::ivec2& chunkPosition);
 
 		void RemoveAllChunks();

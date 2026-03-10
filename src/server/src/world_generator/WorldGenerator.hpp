@@ -38,7 +38,7 @@ namespace onion::voxel
 		struct GenChunk
 		{
 			std::shared_ptr<Chunk> chunk;
-			std::unordered_map<glm::ivec3, Block> outOfBoundsBlocks;
+			std::vector<std::pair<glm::ivec3, Block>> outOfBoundsBlocks = {};
 		};
 
 		// ----- Constructor / Destructor -----
