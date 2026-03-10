@@ -57,6 +57,7 @@ namespace onion::voxel
 
 		glm::mat4 GetProjectionMatrix() const;
 		glm::mat4 GetViewProjectionMatrix() const;
+		glm::mat4 GetUntranslatedViewProjectionMatrix() const;
 
 		void UpdateProjectionMatrix();
 
