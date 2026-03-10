@@ -15,6 +15,7 @@ namespace onion::voxel
 
 	WorldGenerator::~WorldGenerator()
 	{
+		m_ThreadPool.Close();
 		m_WorldManagerEventHandles.clear();
 	}
 

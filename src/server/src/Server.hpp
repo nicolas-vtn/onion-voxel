@@ -66,11 +66,9 @@ namespace onion::voxel
 		void Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk);
 		void Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk);
 		void Handle_BlocksChanged(const std::vector<std::pair<glm::ivec3, Block>>& changedBlocks);
+		void Handle_MissingChunksRequested(const std::vector<glm::ivec2>& missingChunkPositions);
 
 		WorldGenerator m_WorldGenerator;
-
-		void GenerateChunksAroundPlayer(const glm::ivec2& playerChunkPosition);
-		void RemoveUnusedChunks();
 
 		// ----- Players -----
 	  private:

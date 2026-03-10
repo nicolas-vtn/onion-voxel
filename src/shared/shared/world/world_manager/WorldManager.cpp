@@ -2,31 +2,26 @@
 
 #include "../../utils/Utils.hpp"
 
+#include <iostream>
+
 namespace onion::voxel
 {
 	WorldManager::WorldManager()
 	{
-		// Subscibe to it's own event to handle out-of-bounds blocks when a chunk is added
-		//m_ChunkAddedEventHandle =
-		//	ChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkAdded(chunk); });
-
-		// Start periodic task to place out-of-bounds blocks in chunks when they are added to the world
-		m_TimerPlaceOutOfBoundsBlocks.setTimeoutFunction([this]() { PlaceOutOfBoundsBlocks(); });
-		m_TimerPlaceOutOfBoundsBlocks.setElapsedPeriod(std::chrono::milliseconds(1000));
-		m_TimerPlaceOutOfBoundsBlocks.Start();
+		// Subscibe to it's own events
+		SubscribeToInternalEvents();
 
 		// Start periodic task to request missing chunks (chunks that should be loaded but are not) every second
-		m_TimerRequestMissingChunks.setTimeoutFunction([this]() { RequestMissingChunks(); });
+		m_TimerRequestMissingChunks.setTimeoutFunction([this]() { RequestAllMissingChunks(); });
 		m_TimerRequestMissingChunks.setElapsedPeriod(std::chrono::seconds(1));
 		m_TimerRequestMissingChunks.Start();
-
-		// Start periodic task to remove distant chunks (chunks that are too far away from all players) every X seconds
-		m_TimerRemoveDistantChunks.setTimeoutFunction([this]() { RemoveDistantChunks(); });
-		m_TimerRemoveDistantChunks.setElapsedPeriod(std::chrono::seconds(5));
-		m_TimerRemoveDistantChunks.Start();
 	}
 
-	WorldManager::~WorldManager() {}
+	WorldManager::~WorldManager()
+	{
+		m_InternalEventHandles.clear();
+		m_TimerRequestMissingChunks.Stop();
+	}
 
 	void WorldManager::LoadWorld(const std::filesystem::path& worldPath)
 	{
@@ -166,8 +161,28 @@ namespace onion::voxel
 
 	void WorldManager::SetPlayerPosition(uint32_t ClientHandle, const glm::vec3& position)
 	{
-		std::unique_lock lock(m_MutexPlayersPosition);
-		m_PlayersPosition[ClientHandle] = position;
+		glm::vec3 previousPosition;
+
+		{
+			std::lock_guard lock(m_MutexPlayersPosition);
+
+			previousPosition = m_PlayersPosition[ClientHandle];
+
+			if (position == previousPosition)
+			{
+				return; // Player hasn't moved.
+			}
+
+			m_PlayersPosition[ClientHandle] = position;
+		}
+
+		glm::ivec2 previousChunkPosition = Utils::WorldToChunkPosition(previousPosition);
+		glm::ivec2 newChunkPosition = Utils::WorldToChunkPosition(position);
+
+		if (previousChunkPosition != newChunkPosition)
+		{
+			PlayerChangedChunk.Trigger({ClientHandle, previousChunkPosition, newChunkPosition});
+		}
 	}
 
 	uint8_t WorldManager::GetChunkPersistanceDistance() const
@@ -179,7 +194,8 @@ namespace onion::voxel
 	{
 		bool forceRemoveDistantChunks = distance < m_ChunkPersistanceDistance;
 		m_ChunkPersistanceDistance = distance;
-		RemoveDistantChunks(forceRemoveDistantChunks);
+
+		RemoveDistantChunks();
 	}
 
 	void WorldManager::SetServerSimulationDistance(uint8_t distance)
@@ -189,19 +205,38 @@ namespace onion::voxel
 
 	bool WorldManager::IsTriggeringEventMissingChunks() const
 	{
-		return m_TimerRemoveDistantChunks.isRunning();
+		return m_TimerRequestMissingChunks.isRunning();
 	}
 
 	void WorldManager::SetTriggeringEventMissingChunks(bool trigger)
 	{
 		if (trigger)
 		{
-			m_TimerRemoveDistantChunks.Start();
+			m_TimerRequestMissingChunks.Start();
 		}
 		else
 		{
-			m_TimerRemoveDistantChunks.Stop();
+			m_TimerRequestMissingChunks.Stop();
 		}
+	}
+
+	void WorldManager::SubscribeToInternalEvents()
+	{
+		m_InternalEventHandles.push_back(PlayerChangedChunk.Subscribe([this](const PlayerChangedChunkEventArgs& args)
+																	  { Handle_PlayerChangedChunk(args); }));
+
+		m_InternalEventHandles.push_back(
+			ChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkAdded(chunk); }));
+	}
+
+	void WorldManager::Handle_PlayerChangedChunk(const PlayerChangedChunkEventArgs& args)
+	{
+		std::cout << "Player " << args.ClientHandle << " changed chunk from " << args.OldChunkPosition.x << ", "
+				  << args.OldChunkPosition.y << " to " << args.NewChunkPosition.x << ", " << args.NewChunkPosition.y
+				  << std::endl;
+
+		RemoveDistantChunks();
+		RequestMissingChunksAround(args.NewChunkPosition);
 	}
 
 	Block WorldManager::GetBlock(const glm::ivec3& worldPosition) const
@@ -282,6 +317,13 @@ namespace onion::voxel
 					}
 				}
 			}
+			else
+			{
+				// If chunk is not loaded, add blocks to out-of-bounds map so they can be placed when the chunk is loaded
+				std::unique_lock lock(m_MutexOutOfBoundsBlocks);
+				m_OutOfBoundsBlocks[chunkPos].insert(
+					m_OutOfBoundsBlocks[chunkPos].end(), blocksInChunk.begin(), blocksInChunk.end());
+			}
 		}
 
 		if (notify && blocksToNotify.size() > 0)
@@ -331,7 +373,25 @@ namespace onion::voxel
 		PlaceOutOfBoundsBlocks();
 	}
 
-	void WorldManager::RequestMissingChunks() const
+	void WorldManager::RequestAllMissingChunks() const
+	{
+		// Request missing chunks around each player
+		std::vector<glm::ivec2> missingChunks;
+		{
+			std::shared_lock lock(m_MutexPlayersPosition);
+			for (const auto& [clientHandle, position] : m_PlayersPosition)
+			{
+				missingChunks.emplace_back(Utils::WorldToChunkPosition(position));
+			}
+		}
+
+		for (const auto& chunkPos : missingChunks)
+		{
+			RequestMissingChunksAround(chunkPos);
+		}
+	}
+
+	void WorldManager::RequestMissingChunksAround(const glm::ivec2& chunkPosition) const
 	{
 		std::vector<glm::ivec2> missingChunks;
 		auto playersPosition = GetPlayersPosition();
@@ -364,36 +424,9 @@ namespace onion::voxel
 		}
 	}
 
-	void WorldManager::RemoveDistantChunks(bool force)
+	void WorldManager::RemoveDistantChunks()
 	{
 		auto playersPosition = GetPlayersPosition();
-
-		// Calculate players chunk position map
-		std::unordered_map<uint32_t, glm::ivec2> playersChunkPosition;
-		for (const auto& [clientHandle, playerPos] : playersPosition)
-		{
-			playersChunkPosition[clientHandle] = Utils::WorldToChunkPosition(playerPos);
-		}
-
-		// Get a copy of the previous players chunk position map to compare with the new one
-		std::unordered_map<uint32_t, glm::ivec2> previousPlayersChunkPosition;
-		{
-			std::shared_lock lock(m_MutexPlayersPosition);
-			previousPlayersChunkPosition = m_PlayersChunkPosition; // Get a copy of the players chunk position map
-		}
-
-		// If players have not moved : early return
-		bool playersMoved = false;
-		if (!force && playersChunkPosition == previousPlayersChunkPosition)
-		{
-			return;
-		}
-
-		// Update players chunk position map
-		{
-			std::unique_lock lock(m_MutexPlayersPosition);
-			m_PlayersChunkPosition = std::move(playersChunkPosition);
-		}
 
 		// Initialize all chunks as not to be kept
 		std::unordered_map<glm::ivec2, bool, IVec2Hash> chunksToKeep;

@@ -24,6 +24,15 @@ namespace onion::voxel
 
 	class WorldManager
 	{
+		// ----- Structs -----
+	  public:
+		struct PlayerChangedChunkEventArgs
+		{
+			uint32_t ClientHandle{0};
+			glm::ivec2 OldChunkPosition;
+			glm::ivec2 NewChunkPosition;
+		};
+
 		// ----- Constructor / Destructor -----
 	  public:
 		WorldManager();
@@ -75,6 +84,15 @@ namespace onion::voxel
 		Event<const std::vector<std::pair<glm::ivec3, Block>>&> BlocksChanged;
 		Event<const std::vector<glm::ivec2>&> MissingChunksRequested;
 
+	  private:
+		std::vector<EventHandle> m_InternalEventHandles;
+		void SubscribeToInternalEvents();
+
+		Event<const PlayerChangedChunkEventArgs&> PlayerChangedChunk;
+
+		void Handle_PlayerChangedChunk(const PlayerChangedChunkEventArgs& args);
+		void Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk);
+
 		// ----- Members -----
 	  private:
 		std::filesystem::path m_CurrentWorldPath;
@@ -84,7 +102,6 @@ namespace onion::voxel
 
 		mutable std::shared_mutex m_MutexPlayersPosition;
 		std::unordered_map<uint32_t, glm::vec3> m_PlayersPosition;
-		std::unordered_map<uint32_t, glm::ivec2> m_PlayersChunkPosition;
 
 		mutable std::shared_mutex m_MutexOutOfBoundsBlocks;
 		// Map of chunk position to list of out-of-bounds blocks that should be added to the chunk when it is added to the world
@@ -95,15 +112,12 @@ namespace onion::voxel
 
 		// ----- Periodic Tasks -----
 	  private:
-		Timer m_TimerPlaceOutOfBoundsBlocks;
 		void PlaceOutOfBoundsBlocks();
-		EventHandle m_ChunkAddedEventHandle;
-		void Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk);
 
 		Timer m_TimerRequestMissingChunks;
-		void RequestMissingChunks() const;
+		void RequestAllMissingChunks() const;
+		void RequestMissingChunksAround(const glm::ivec2& chunkPosition) const;
 
-		Timer m_TimerRemoveDistantChunks;
-		void RemoveDistantChunks(bool force = false);
+		void RemoveDistantChunks();
 	};
 } // namespace onion::voxel

@@ -120,8 +120,8 @@ namespace onion::voxel
 	void Server::Handle_PlayerRequestChunksMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
 													   const RequestChunksMsg& msg)
 	{
-		std::cout << "Received RequestChunksMsg from client " << args.Sender << ": Requested "
-				  << msg.requestedChunks.size() << " chunks\n";
+		//std::cout << "Received RequestChunksMsg from client " << args.Sender << ": Requested "
+		//		  << msg.requestedChunks.size() << " chunks\n";
 
 		for (const auto& chunkPos : msg.requestedChunks)
 		{
@@ -176,48 +176,11 @@ namespace onion::voxel
 		m_NetworkServer.Broadcast(blocksChangedMsg);
 	}
 
-	void Server::GenerateChunksAroundPlayer(const glm::ivec2& playerChunkPosition)
+	void Server::Handle_MissingChunksRequested(const std::vector<glm::ivec2>& missingChunkPositions)
 	{
-		const int simulationDistance = m_Config.serverData.SimulationDistance;
-		for (int x = playerChunkPosition.x - simulationDistance; x <= playerChunkPosition.x + simulationDistance; ++x)
+		for (const auto& chunkPos : missingChunkPositions)
 		{
-			for (int z = playerChunkPosition.y - simulationDistance; z <= playerChunkPosition.y + simulationDistance;
-				 ++z)
-			{
-				m_WorldGenerator.GenerateChunkAsync({x, z});
-			}
-		}
-	}
-
-	void Server::RemoveUnusedChunks()
-	{
-		// One unused chunk is a chunk that is outside the simulation distance of all players.
-		std::vector<glm::ivec2> chunksToRemove;
-		{
-			std::shared_lock lock(m_MutexPlayers);
-			for (const auto& [chunkPos, chunk] : m_WorldManager->GetAllChunks())
-			{
-				bool isChunkUsed = false;
-				for (const auto& [clientHandle, playerChunkPos] : m_PlayerChunkPositions)
-				{
-					const int simulationDistance = m_Config.serverData.SimulationDistance;
-					if (std::abs(playerChunkPos.x - chunkPos.x) <= simulationDistance &&
-						std::abs(playerChunkPos.y - chunkPos.y) <= simulationDistance)
-					{
-						isChunkUsed = true;
-						break;
-					}
-				}
-				if (!isChunkUsed)
-				{
-					chunksToRemove.push_back(chunkPos);
-				}
-			}
-		}
-
-		for (const auto& chunkPos : chunksToRemove)
-		{
-			m_WorldManager->RemoveChunk(chunkPos);
+			m_WorldGenerator.GenerateChunkAsync(chunkPos);
 		}
 	}
 
@@ -247,14 +210,8 @@ namespace onion::voxel
 
 			it->second.Position = newPosition;
 			m_PlayerChunkPositions[clientHandle] = playerChunkPos;
-		}
 
-		// lock released here
-
-		if (playerChunkPos != oldChunkPos)
-		{
-			RemoveUnusedChunks();
-			GenerateChunksAroundPlayer(playerChunkPos);
+			m_WorldManager->SetPlayerPosition(clientHandle, newPosition);
 		}
 	}
 
@@ -289,6 +246,10 @@ namespace onion::voxel
 		m_WorldManagerEventHandles.push_back(m_WorldManager->BlocksChanged.Subscribe(
 			[this](const std::vector<std::pair<glm::ivec3, Block>>& changedBlocks)
 			{ Handle_BlocksChanged(changedBlocks); }));
+
+		m_WorldManagerEventHandles.push_back(m_WorldManager->MissingChunksRequested.Subscribe(
+			[this](const std::vector<glm::ivec2>& missingChunkPositions)
+			{ Handle_MissingChunksRequested(missingChunkPositions); }));
 	}
 
 } // namespace onion::voxel
