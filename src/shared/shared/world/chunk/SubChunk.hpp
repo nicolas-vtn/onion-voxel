@@ -23,8 +23,9 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		void Optimize(); // Optimize the subchunk data (e.g., convert to mono block if all blocks are the same)
-		bool IsEmpty();	 // Check if the subchunk is empty (all blocks are air)
+		void Optimize();		  // Optimize the subchunk data (e.g., convert to mono block if all blocks are the same)
+		bool IsEmpty();			  // Check if the subchunk is empty (all blocks are air)
+		bool IsMonoBlock() const; // Check if the subchunk is made of a single block
 
 		// ----- Getters / Setters -----
 	  public:
@@ -46,8 +47,7 @@ namespace onion::voxel
 		uint8_t m_MonoBlockIndexInPalette = 0; // The block data for the mono block (if m_IsMonoBlock is true)
 
 		std::shared_ptr<
-			std::array<uint8_t,
-					   WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE>>
+			std::array<uint8_t, WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE>>
 			m_BlockIndexInPalette;
 	};
 } // namespace onion::voxel

@@ -64,6 +64,8 @@ namespace onion::voxel
 		Register(BlockId::Sand, "sand.png");
 
 		Register(BlockId::Gravel, "gravel.png");
+
+		Register(BlockId::Cobblestone, "cobblestone.png");
 	}
 
 	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures)

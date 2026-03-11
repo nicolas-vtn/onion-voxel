@@ -50,6 +50,7 @@ namespace onion::voxel
 
 		// ----- Static Helpers -----
 	  public:
+		static bool IsOpaque(BlockId blockID);
 		static bool IsTransparent(BlockId blockID);
 		static RotationType GetRotationType(BlockId blockID);
 

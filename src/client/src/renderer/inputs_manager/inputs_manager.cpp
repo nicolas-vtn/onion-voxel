@@ -1,6 +1,7 @@
 #include "inputs_manager.hpp"
 
 #include <iostream>
+#include <unordered_set>
 
 using namespace onion::voxel;
 
@@ -149,11 +150,31 @@ void InputsManager::PoolMouseInputs()
 
 void InputsManager::PollKeyboardInputs()
 {
+	const std::unordered_set<Key> mouseInputs = {Key::MouseButtonLeft,
+												 Key::MouseButtonRight,
+												 Key::MouseButtonMiddle,
+												 Key::MouseButton4,
+												 Key::MouseButton5,
+												 Key::MouseButton6,
+												 Key::MouseButton7,
+												 Key::MouseButton8};
+
 	std::lock_guard lock(m_MutexRegisteredInputs);
 	for (auto& [inputId, keyControl] : m_RegisteredInputs)
 	{
-		bool isKeyDown = glfwGetKey(m_Window, static_cast<int>(keyControl.key)) == GLFW_PRESS;
-		keyControl.Update(isKeyDown);
+		const Key key = keyControl.key;
+
+		// If it's a mouse button
+		if (mouseInputs.contains(key))
+		{
+			bool isKeyDown = glfwGetMouseButton(m_Window, static_cast<int>(key)) == GLFW_PRESS;
+			keyControl.Update(isKeyDown);
+		}
+		else
+		{
+			bool isKeyDown = glfwGetKey(m_Window, static_cast<int>(key)) == GLFW_PRESS;
+			keyControl.Update(isKeyDown);
+		}
 	}
 }
 

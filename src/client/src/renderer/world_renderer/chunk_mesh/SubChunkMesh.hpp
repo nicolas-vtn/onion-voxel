@@ -84,6 +84,9 @@ namespace onion::voxel
 		unsigned int VBO_Cutout = 0, VAO_Cutout = 0, EBO_Cutout = 0;
 		unsigned int VBO_Transparent = 0, VAO_Transparent = 0, EBO_Transparent = 0;
 
+		// Ambient occlusion map for the subchunk mesh, storing occlusion values for each vertex (0-255)
+		std::vector<uint8_t> m_OcclusionMap;
+
 		// ----- OpenGl Methods / Initialization -----
 	  private:
 		void InitOpenGlBuffers();
