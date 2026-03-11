@@ -351,40 +351,40 @@ namespace onion::voxel
 	{
 		const glm::ivec2 chunkPos = Utils::WorldToChunkPosition(blockPosition);
 
-		std::unordered_map<glm::ivec2, uint8_t, IVec2Hash> subChunkIndicesToMarkDirty;
+		std::unordered_map<glm::ivec2, std::vector<uint8_t>, IVec2Hash> subChunkIndicesToMarkDirty;
 
 		// Mark the subchunk mesh of the chunk that contains the block dirty
 		uint8_t subChunkIndex = blockPosition.y / WorldConstants::CHUNK_SIZE;
-		subChunkIndicesToMarkDirty.emplace(chunkPos, subChunkIndex);
+		subChunkIndicesToMarkDirty[chunkPos].push_back(subChunkIndex);
 
 		// Mark the neighboring subchunk mesh dirty if the block is on the edge of the chunk
 		const glm::ivec3 localPos = Utils::WorldToLocalPosition(blockPosition);
 
 		if (localPos.x == 0)
 		{
-			subChunkIndicesToMarkDirty.emplace(chunkPos + glm::ivec2(-1, 0), subChunkIndex);
+			subChunkIndicesToMarkDirty[chunkPos + glm::ivec2(-1, 0)].push_back(subChunkIndex);
 		}
 		else if (localPos.x == WorldConstants::CHUNK_SIZE - 1)
 		{
-			subChunkIndicesToMarkDirty.emplace(chunkPos + glm::ivec2(1, 0), subChunkIndex);
+			subChunkIndicesToMarkDirty[chunkPos + glm::ivec2(1, 0)].push_back(subChunkIndex);
 		}
 
 		if (localPos.y % WorldConstants::CHUNK_SIZE == 0)
 		{
-			subChunkIndicesToMarkDirty.emplace(chunkPos, subChunkIndex - 1);
+			subChunkIndicesToMarkDirty[chunkPos].push_back(subChunkIndex - 1);
 		}
 		else if (localPos.y % WorldConstants::CHUNK_SIZE == WorldConstants::CHUNK_SIZE - 1)
 		{
-			subChunkIndicesToMarkDirty.emplace(chunkPos, subChunkIndex + 1);
+			subChunkIndicesToMarkDirty[chunkPos].push_back(subChunkIndex + 1);
 		}
 
 		if (localPos.z == 0)
 		{
-			subChunkIndicesToMarkDirty.emplace(chunkPos + glm::ivec2(0, -1), subChunkIndex);
+			subChunkIndicesToMarkDirty[chunkPos + glm::ivec2(0, -1)].push_back(subChunkIndex);
 		}
 		else if (localPos.z == WorldConstants::CHUNK_SIZE - 1)
 		{
-			subChunkIndicesToMarkDirty.emplace(chunkPos + glm::ivec2(0, 1), subChunkIndex);
+			subChunkIndicesToMarkDirty[chunkPos + glm::ivec2(0, 1)].push_back(subChunkIndex);
 		}
 
 		std::shared_lock lock(m_MutexChunkMeshes);
@@ -393,7 +393,10 @@ namespace onion::voxel
 			auto it = m_ChunkMeshes.find(neighborChunkPos);
 			if (it != m_ChunkMeshes.end())
 			{
-				it->second->SetSubChunkMeshDirty(neighborSubChunkIndex, true);
+				for (uint8_t subChunkIndex : neighborSubChunkIndex)
+				{
+					it->second->SetSubChunkMeshDirty(subChunkIndex, true);
+				}
 			}
 		}
 	}

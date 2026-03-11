@@ -52,6 +52,9 @@ void main()
     vec4 texColor = texture(u_Atlas, TexCoord);
     vec3 finalColor = (1.0 - occlusionVal) * faceShading * u_LightColor * texColor.rgb * Tint;
 
+    // Debug Occlusion
+    // finalColor = vec3(1.0 - occlusionVal);
+
     if(u_RenderCutout && texColor.a < 0.5) {
         discard;
     } else {

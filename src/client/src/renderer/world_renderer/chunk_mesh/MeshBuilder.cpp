@@ -344,8 +344,15 @@ namespace onion::voxel
 						glm::ivec3 p110(x + 1, wy + 1, z);
 						glm::ivec3 p111(x + 1, wy + 1, z + 1);
 
-						auto AO = [&](int dx, int dy, int dz) -> float
-						{ return mesh->m_OcclusionMap[x + dx, y + dy, z + dz]; };
+						const int NX = SIZE + 1;
+						const int NY = SIZE + 1;
+						auto AO = [&](int dx, int dy, int dz) -> uint8_t
+						{
+							int ax = x + dx;
+							int ay = y + dy;
+							int az = z + dz;
+							return mesh->m_OcclusionMap[ax + NX * (ay + NY * az)];
+						};
 
 						uint8_t o000 = AO(0, 0, 0);
 						uint8_t o001 = AO(0, 0, 1);
@@ -527,14 +534,14 @@ namespace onion::voxel
 			chunk->GetBlock({0, subChunkIndex * WorldConstants::CHUNK_SIZE + 1, 0}).m_BlockID == BlockId::Air)
 			return;
 
-		constexpr int SX = WorldConstants::CHUNK_SIZE; // 16
-		constexpr int SY = WorldConstants::CHUNK_SIZE; // 16
-		constexpr int SZ = WorldConstants::CHUNK_SIZE; // 16
+		constexpr int SX = WorldConstants::CHUNK_SIZE;
+		constexpr int SY = WorldConstants::CHUNK_SIZE;
+		constexpr int SZ = WorldConstants::CHUNK_SIZE;
 
 		const int yMini = subChunkIndex * SY;
 
 		// 1) Build solid masks from subchunk (fast local reads, no locks)
-		using Row = uint16_t;	 // bits along X or Z or Y (16 wide)
+		using Row = uint64_t;	 // bits along X or Z or Y (16 wide)
 		Row solidX[SY][SZ] = {}; // [y][z] bits along x
 		Row solidZ[SY][SX] = {}; // [y][x] bits along z
 		Row solidY[SZ][SX] = {}; // [z][x] bits along y
@@ -545,9 +552,9 @@ namespace onion::voxel
 			const bool solid = Block::IsOpaque(mono.m_BlockID);
 			if (solid)
 			{
-				constexpr Row FULL_X = Row((SX == 16) ? 0xFFFFu : ((1u << SX) - 1u));
-				constexpr Row FULL_Z = Row((SZ == 16) ? 0xFFFFu : ((1u << SZ) - 1u));
-				constexpr Row FULL_Y = Row((SY == 16) ? 0xFFFFu : ((1u << SY) - 1u));
+				constexpr Row FULL_X = Row((1ull << SX) - 1ull);
+				constexpr Row FULL_Z = Row((1ull << SZ) - 1ull);
+				constexpr Row FULL_Y = Row((1ull << SY) - 1ull);
 
 				for (int y = 0; y < SY; ++y)
 				{
@@ -720,11 +727,11 @@ namespace onion::voxel
 			}
 		}
 
-		// Convert to float (×0.25) for your current API
+		static constexpr uint8_t AO_LUT[5] = {0, 64, 128, 192, 255};
 		std::vector<uint8_t> occlusionMap(occMap.size());
 		for (size_t i = 0; i < occMap.size(); ++i)
 		{
-			occlusionMap[i] = occMap[i] * 64; // 0, 64, 128, 192, 255
+			occlusionMap[i] = AO_LUT[occMap[i]]; // 0, 64, 128, 192, 255
 		}
 
 		subMesh->m_OcclusionMap = std::move(occlusionMap);
