@@ -31,9 +31,13 @@ namespace onion::voxel
 		void SetText(const std::string& text);
 		std::string GetText() const;
 
+		/// @brief Sets the size of the button. (In Pixels)
+		/// @param size The new size of the button in pixels.
 		void SetSize(const glm::ivec2& size);
 		glm::ivec2 GetSize() const;
 
+		/// @brief Sets the position of the button. (In Pixels)
+		/// @param pos The new position of the button in pixels.
 		void SetPosition(const glm::ivec2& pos);
 		glm::ivec2 GetPosition() const;
 

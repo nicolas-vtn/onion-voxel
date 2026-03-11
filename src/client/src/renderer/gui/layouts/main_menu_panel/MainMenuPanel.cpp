@@ -19,6 +19,7 @@ namespace onion::voxel
 
 		m_Singleplayer_Button.SetText("Singleplayer");
 		m_Multiplayer_Button.SetText("Multiplayer");
+		m_Multiplayer_Button.SetEnabled(false);
 		m_DemoPanel_Button.SetText("Demo Panel");
 		m_Options_Button.SetText("Options...");
 		m_QuitGame_Button.SetText("Quit Game");
@@ -226,16 +227,16 @@ namespace onion::voxel
 	void MainMenuPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(m_Singleplayer_Button.OnClick.Subscribe(
-			[this](const Button& sender) { RequestMenuNavigation.Trigger(eMenu::Singleplayer); }));
+			[this](const Button& sender) { RequestMenuNavigation.Trigger({this, eMenu::Singleplayer}); }));
 
 		m_EventHandles.push_back(m_Multiplayer_Button.OnClick.Subscribe(
-			[this](const Button& sender) { RequestMenuNavigation.Trigger(eMenu::Multiplayer); }));
+			[this](const Button& sender) { RequestMenuNavigation.Trigger({this, eMenu::Multiplayer}); }));
 
 		m_EventHandles.push_back(m_DemoPanel_Button.OnClick.Subscribe(
-			[this](const Button& sender) { RequestMenuNavigation.Trigger(eMenu::DemoPanel); }));
+			[this](const Button& sender) { RequestMenuNavigation.Trigger({this, eMenu::DemoPanel}); }));
 
 		m_EventHandles.push_back(m_Options_Button.OnClick.Subscribe(
-			[this](const Button& sender) { RequestMenuNavigation.Trigger(eMenu::Settings); }));
+			[this](const Button& sender) { RequestMenuNavigation.Trigger({this, eMenu::Options}); }));
 
 		m_EventHandles.push_back(
 			m_QuitGame_Button.OnClick.Subscribe([this](const Button& sender) { RequestQuitGame.Trigger(this); }));

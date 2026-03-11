@@ -20,14 +20,19 @@ namespace onion::voxel
 
 		// ----- Public Events -----
 	  public:
-		Event<bool> RequestGameResume;
-		Event<eMenu> RequestMenuNavigation;
-		Event<bool> RequestQuitToMainMenu;
+		Event<const GuiElement*> RequestBackToGame;
+		Event<const std::pair<const GuiElement*, eMenu>&> RequestMenuNavigation;
+		Event<const GuiElement*> RequestQuitToMainMenu;
 
 		// ----- Controls -----
 	  private:
-		Button m_Resume_Button;
+		Button m_BackToGame_Button;
+		Button m_Advancements_Button;
+		Button m_Statistics_Button;
+		Button m_GiveFeedback_Button;
+		Button m_ReportBugs_Button;
 		Button m_Options_Button;
+		Button m_OpenToLan_Button;
 		Button m_MainMenu_Button;
 
 		// ----- Internal Event Subscription and Handlers -----
@@ -35,7 +40,7 @@ namespace onion::voxel
 		std::vector<EventHandle> m_EventHandles;
 		void SubscribeToControlEvents();
 
-		void Handle_Resume_Click(const Button& sender);
+		void Handle_BackToGame_Click(const Button& sender);
 		void Handle_Options_Click(const Button& sender);
 		void Handle_MainMenu_Click(const Button& sender);
 	};

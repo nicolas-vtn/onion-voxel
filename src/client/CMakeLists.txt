@@ -37,6 +37,7 @@ add_executable(OnionVoxel
 	"src/renderer/gui/layouts/demo_panel/DemoPanel.cpp"
 	"src/renderer/gui/layouts/main_menu_panel/MainMenuPanel.cpp"
 	"src/renderer/gui/layouts/pause_panel/PausePanel.cpp"
+	"src/renderer/gui/layouts/options/OptionsPanel.cpp"
 
 	"src/renderer/gui/font/Font.cpp"
 	"src/renderer/gui/controls/sprite/Sprite.cpp"

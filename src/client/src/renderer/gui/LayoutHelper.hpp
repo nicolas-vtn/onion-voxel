@@ -18,11 +18,14 @@ namespace onion::voxel
 		int Rows = 1;
 		int Columns = 1;
 
-		/// @brief Get the size of each cell in the table, accounting for spacing
+		/// @brief Get the size of each cell in the table, accounting for spacing (In Pixels)
 		glm::ivec2 GetCellSize() const
 		{
-			return glm::ivec2(m_TableSize.x / Columns - (m_HorizontalSpacing * (Columns - 1)),
-							  m_TableSize.y / Rows - (m_VerticalSpacing * (Rows - 1)));
+			int totalHorizontalSpacing = (Columns - 1) * m_HorizontalSpacing;
+			int totalVerticalSpacing = (Rows - 1) * m_VerticalSpacing;
+
+			return glm::ivec2((m_TableSize.x - totalHorizontalSpacing) / Columns,
+							  (m_TableSize.y - totalVerticalSpacing) / Rows);
 		}
 
 		/// @brief Get the Center Position of the cell at the given row and column index (0-based)
@@ -30,7 +33,6 @@ namespace onion::voxel
 		/// @param column Column index (0-based)
 		glm::ivec2 GetElementPosition(int row, int column) const
 		{
-
 			bool isFirstRow = row == 0;
 			bool isFirstColumn = column == 0;
 

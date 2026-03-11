@@ -22,9 +22,12 @@ namespace onion::voxel
 		MainMenu,
 		Singleplayer,
 		Multiplayer,
-		Settings,
+		Options,
 		Gameplay,
-		Pause
+		Pause,
+		MusicAndSounds,
+		ResourcePacks,
+		Controls,
 	};
 
 	class GuiElement

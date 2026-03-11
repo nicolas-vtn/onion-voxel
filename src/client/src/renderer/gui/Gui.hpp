@@ -2,10 +2,12 @@
 
 #include "layouts/demo_panel/DemoPanel.hpp"
 #include "layouts/main_menu_panel/MainMenuPanel.hpp"
+#include "layouts/options/OptionsPanel.hpp"
 #include "layouts/pause_panel/PausePanel.hpp"
 
 #include <memory>
 #include <mutex>
+#include <stack>
 
 namespace onion::voxel
 {
@@ -30,6 +32,7 @@ namespace onion::voxel
 		// ----- Getters / Setters -----
 	  public:
 		void SetActiveMenu(eMenu menu);
+		void GoBackToPreviousMenu();
 		eMenu GetActiveMenu() const;
 		void SetGuiScale(int scale);
 		int GetGuiScale() const;
@@ -39,24 +42,27 @@ namespace onion::voxel
 		Event<const CursorStyle&> RequestCursorStyleChange;
 		Event<const std::filesystem::path&> RequestStartSingleplayerGame;
 		Event<bool> RequestQuitToMainMenu;
-		Event<bool> RequestGameResume;
+		Event<bool> RequestBackToGame;
+		Event<bool> RequestBack;
 
 		// ----- Panels -----
 	  private:
 		DemoPanel m_DemoPanel;
 		MainMenuPanel m_MainMenuPanel;
 		PausePanel m_PausePanel;
+		OptionsPanel m_OptionsPanel;
 
 		// ----- Panel Events Handling -----
 	  private:
 		std::vector<EventHandle> m_EventHandles;
 		void SubscribeToPannelsEvents();
 
-		void Handle_MenuNavigationRequest(const eMenu& menu);
+		void Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request);
 		void Handle_QuitGameRequest(const GuiElement* sender);
 		void Handle_CursorStyleChangeRequest(const CursorStyle& style);
-		void Handle_GameResumeRequest(bool resume);
-		void Handle_QuitToMainMenuRequest(bool quit);
+		void Handle_BackToGameRequest(const GuiElement* sender);
+		void Handle_QuitToMainMenuRequest(const GuiElement* sender);
+		void Handle_BackRequest(const GuiElement* sender);
 
 		// ----- Set Static States -----
 	  public:
@@ -67,6 +73,7 @@ namespace onion::voxel
 	  private:
 		mutable std::mutex m_MutexState;
 		eMenu m_ActiveMenu = eMenu::MainMenu;
+		std::stack<eMenu> m_MenuHistory;
 
 		// ----- ImGui menu -----
 	  private:

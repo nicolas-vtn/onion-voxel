@@ -470,8 +470,7 @@ namespace onion::voxel
 		m_EventHandles.push_back(m_Gui.RequestStartSingleplayerGame.Subscribe(
 			[this](const std::filesystem::path& worldPath) { Handle_StartSingleplayerGameRequest(worldPath); }));
 
-		m_EventHandles.push_back(
-			m_Gui.RequestGameResume.Subscribe([this](bool resume) { Handle_GameResumeRequest(resume); }));
+		m_EventHandles.push_back(m_Gui.RequestBackToGame.Subscribe([this](bool) { Handle_BackToGameRequest(); }));
 
 		m_EventHandles.push_back(
 			m_Gui.RequestQuitToMainMenu.Subscribe([this](bool quit) { Handle_QuitToMainMenuRequest(quit); }));
@@ -492,9 +491,9 @@ namespace onion::voxel
 		m_IsPaused = false;
 	}
 
-	void Renderer::Handle_GameResumeRequest(bool resume)
+	void Renderer::Handle_BackToGameRequest()
 	{
-		PauseGame(!resume);
+		PauseGame(false);
 	}
 
 	void Renderer::Handle_QuitToMainMenuRequest(bool quit)

@@ -16,7 +16,9 @@ namespace onion::voxel
 		GuiElement::Unload();
 	}
 
-	Gui::Gui() : m_DemoPanel("DemoPanel"), m_MainMenuPanel("MainMenuPanel"), m_PausePanel("PausePanel")
+	Gui::Gui()
+		: m_DemoPanel("DemoPanel"), m_MainMenuPanel("MainMenuPanel"), m_PausePanel("PausePanel"),
+		  m_OptionsPanel("OptionsPanel")
 	{
 		SubscribeToPannelsEvents();
 	}
@@ -32,26 +34,34 @@ namespace onion::voxel
 			[this](const CursorStyle& style) { Handle_CursorStyleChangeRequest(style); }));
 
 		m_EventHandles.push_back(m_MainMenuPanel.RequestMenuNavigation.Subscribe(
-			[this](const eMenu& menu) { Handle_MenuNavigationRequest(menu); }));
+			[this](const std::pair<const GuiElement*, eMenu>& request) { Handle_MenuNavigationRequest(request); }));
 
-		m_EventHandles.push_back(m_DemoPanel.RequestMenuNavigation.Subscribe([this](const eMenu& menu)
-																			 { Handle_MenuNavigationRequest(menu); }));
+		m_EventHandles.push_back(m_DemoPanel.RequestMenuNavigation.Subscribe(
+			[this](const std::pair<const GuiElement*, eMenu>& request) { Handle_MenuNavigationRequest(request); }));
 
 		m_EventHandles.push_back(m_MainMenuPanel.RequestQuitGame.Subscribe([this](const GuiElement* sender)
 																		   { Handle_QuitGameRequest(sender); }));
 
-		m_EventHandles.push_back(m_PausePanel.RequestMenuNavigation.Subscribe([this](const eMenu& menu)
-																			  { Handle_MenuNavigationRequest(menu); }));
+		m_EventHandles.push_back(m_PausePanel.RequestMenuNavigation.Subscribe(
+			[this](const std::pair<const GuiElement*, eMenu>& request) { Handle_MenuNavigationRequest(request); }));
 
-		m_EventHandles.push_back(
-			m_PausePanel.RequestQuitToMainMenu.Subscribe([this](bool quit) { Handle_QuitToMainMenuRequest(quit); }));
+		m_EventHandles.push_back(m_PausePanel.RequestQuitToMainMenu.Subscribe(
+			[this](const GuiElement* sender) { Handle_QuitToMainMenuRequest(sender); }));
 
-		m_EventHandles.push_back(
-			m_PausePanel.RequestGameResume.Subscribe([this](bool resume) { Handle_GameResumeRequest(resume); }));
+		m_EventHandles.push_back(m_PausePanel.RequestBackToGame.Subscribe([this](const GuiElement* sender)
+																		  { Handle_BackToGameRequest(sender); }));
+
+		m_EventHandles.push_back(m_OptionsPanel.RequestMenuNavigation.Subscribe(
+			[this](const std::pair<const GuiElement*, eMenu>& request) { Handle_MenuNavigationRequest(request); }));
+
+		m_EventHandles.push_back(m_OptionsPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
+																				{ Handle_BackRequest(sender); }));
 	}
 
-	void Gui::Handle_MenuNavigationRequest(const eMenu& menu)
+	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
 	{
+		const eMenu menu = request.second;
+
 		SetActiveMenu(menu);
 
 		// WIP : Temporary trigger
@@ -72,14 +82,19 @@ namespace onion::voxel
 		RequestCursorStyleChange.Trigger(style);
 	}
 
-	void Gui::Handle_GameResumeRequest(bool resume)
+	void Gui::Handle_BackToGameRequest(const GuiElement* sender)
 	{
-		RequestGameResume.Trigger(resume);
+		RequestBackToGame.Trigger(sender);
 	}
 
-	void Gui::Handle_QuitToMainMenuRequest(bool quit)
+	void Gui::Handle_QuitToMainMenuRequest(const GuiElement* sender)
 	{
-		RequestQuitToMainMenu.Trigger(quit);
+		RequestQuitToMainMenu.Trigger(sender);
+	}
+
+	void Gui::Handle_BackRequest(const GuiElement* sender)
+	{
+		GoBackToPreviousMenu();
 	}
 
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)
@@ -109,7 +124,7 @@ namespace onion::voxel
 								return "Singleplayer";
 							case eMenu::Multiplayer:
 								return "Multiplayer";
-							case eMenu::Settings:
+							case eMenu::Options:
 								return "Settings";
 							case eMenu::Gameplay:
 								return "Gameplay";
@@ -136,13 +151,57 @@ namespace onion::voxel
 
 	void Gui::SetActiveMenu(eMenu menu)
 	{
+		// Lock both mutexes to ensure thread safety when modifying the active menu and menu history.
 		std::lock_guard lock(m_MutexState);
+
+		// Store the previous menu before changing to the new one.
+		eMenu previousMenu = m_ActiveMenu;
 		m_ActiveMenu = menu;
 
+		// Clear the menu history if we have navigated to the main menu.
+		if (m_ActiveMenu == eMenu::MainMenu)
+		{
+			std::stack<eMenu>().swap(m_MenuHistory);
+		}
+		else
+		{
+			// If we are navigating to a different menu, add the previous menu to the history stack.
+			if (previousMenu != eMenu::None && previousMenu != m_ActiveMenu)
+			{
+				// Avoid pushing the same menu multiple times.
+				if (m_MenuHistory.empty() || m_MenuHistory.top() != previousMenu)
+				{
+					m_MenuHistory.push(previousMenu);
+				}
+			}
+		}
+
+		// Cycle the main menu splash text when navigating to the main menu.
 		if (m_ActiveMenu == eMenu::MainMenu)
 		{
 			m_MainMenuPanel.CycleSplashText();
 		}
+	}
+
+	void Gui::GoBackToPreviousMenu()
+	{
+		eMenu targetMenu;
+
+		{
+			std::lock_guard lock(m_MutexState);
+
+			if (m_MenuHistory.empty())
+			{
+				targetMenu = eMenu::MainMenu; // Default to main menu if history is empty
+			}
+			else
+			{
+				targetMenu = m_MenuHistory.top();
+				m_MenuHistory.pop();
+			}
+		}
+
+		SetActiveMenu(targetMenu);
 	}
 
 	eMenu Gui::GetActiveMenu() const
@@ -166,6 +225,7 @@ namespace onion::voxel
 		m_DemoPanel.Initialize();
 		m_MainMenuPanel.Initialize();
 		m_PausePanel.Initialize();
+		m_OptionsPanel.Initialize();
 	}
 
 	void Gui::Render()
@@ -183,6 +243,9 @@ namespace onion::voxel
 			case eMenu::Pause:
 				m_PausePanel.Render();
 				break;
+			case eMenu::Options:
+				m_OptionsPanel.Render();
+				break;
 			default:
 				break;
 		}
@@ -193,6 +256,7 @@ namespace onion::voxel
 		m_DemoPanel.Delete();
 		m_MainMenuPanel.Delete();
 		m_PausePanel.Delete();
+		m_OptionsPanel.Delete();
 	}
 
 } // namespace onion::voxel

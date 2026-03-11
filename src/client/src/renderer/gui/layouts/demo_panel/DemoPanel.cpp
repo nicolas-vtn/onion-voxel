@@ -134,7 +134,7 @@ namespace onion::voxel
 	void DemoPanel::HandleButtonMainMenuClick(const Button& button)
 	{
 		std::cerr << "Button '" + button.GetName() + "' Clicked." << std::endl;
-		RequestMenuNavigation.Trigger(eMenu::MainMenu);
+		RequestMenuNavigation.Trigger({this, eMenu::MainMenu});
 	}
 
 } // namespace onion::voxel

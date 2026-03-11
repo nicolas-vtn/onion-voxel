@@ -149,7 +149,7 @@ namespace onion::voxel
 
 		void Handle_CursorStyleChangeRequest(const CursorStyle& style);
 		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
-		void Handle_GameResumeRequest(bool resume);
+		void Handle_BackToGameRequest();
 		void Handle_QuitToMainMenuRequest(bool quit);
 
 		// ----- ImGui -----
