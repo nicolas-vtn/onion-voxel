@@ -10,6 +10,7 @@
 
 #include "../Variables.hpp"
 #include "../camera/camera.hpp"
+#include "../skybox/Skybox.hpp"
 #include "../texture_atlas/TextureAtlas.hpp"
 #include "chunk_mesh/ChunkMesh.hpp"
 #include "chunk_mesh/MeshBuilder.hpp"
@@ -36,6 +37,9 @@ namespace onion::voxel
 		void DeleteChunkMeshAsync(const glm::ivec2& chunkPos);
 
 		void DeleteChunkMeshes();
+
+		void Unload();
+		static void StaticUnload();
 
 		// ----- Getters / Setters -----
 	  public:
@@ -70,6 +74,10 @@ namespace onion::voxel
 		// ----- Camera -----
 	  private:
 		std::shared_ptr<Camera> m_Camera;
+
+		// ----- Skybox -----
+	  private:
+		Skybox m_Skybox;
 
 		// ----- Chunk Meshes -----
 	  private:

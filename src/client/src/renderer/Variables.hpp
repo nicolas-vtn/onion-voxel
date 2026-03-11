@@ -20,6 +20,18 @@ namespace onion::voxel
 		return assetsPath;
 	}
 
+	inline std::filesystem::path GetTexturesPath()
+	{
+		std::filesystem::path currentPath = std::filesystem::current_path();
+		std::filesystem::path texturesPath = currentPath / "assets" / "textures";
+		if (!std::filesystem::exists(texturesPath))
+		{
+			std::cerr << "WARNING: Textures directory not found at: " << texturesPath << std::endl;
+			throw std::runtime_error("Textures directory not found at: " + texturesPath.string());
+		}
+		return texturesPath;
+	}
+
 	inline std::filesystem::path GetMinecraftTexturesPath()
 	{
 		std::filesystem::path currentPath = std::filesystem::current_path();

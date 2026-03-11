@@ -19,7 +19,7 @@ namespace onion::voxel
 		/// @brief Constructs a texture object and loads the texture from the specified file path.
 		/// @param filePath The path to the texture file to load.
 		Texture(const std::filesystem::path& filePath);
-		Texture(const std::vector<unsigned char>& data, int width, int height, int channels);
+		Texture(const std::string& name, const std::vector<unsigned char>& data, int width, int height, int channels);
 		~Texture();
 
 		Texture(Texture&&) noexcept = default;

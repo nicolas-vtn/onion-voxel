@@ -186,8 +186,12 @@ namespace onion::voxel
 			m_DeltaTime = currentFrame - m_LastFrame;
 			m_LastFrame = currentFrame;
 
+			const glm::mat4 viewMatrix = m_Camera->GetViewMatrix();
+			const glm::mat4 projectionMatrix = m_Camera->GetProjectionMatrix();
+			const glm::mat4 viewProjectionMatrix = m_Camera->GetViewProjectionMatrix();
+
 			// DEBUG : Sets DebugDraws ViewProj Matrix
-			DebugDraws::SetViewProjMatrix(m_Camera->GetViewProjectionMatrix());
+			DebugDraws::SetViewProjMatrix(viewProjectionMatrix);
 
 			m_WorldManager->SetPlayerPosition(0, m_Camera->GetPosition());
 
@@ -216,8 +220,11 @@ namespace onion::voxel
 
 		m_Gui.Shutdown();
 		m_InputsManager.Delete();
+		m_WorldRenderer.Unload();
 
 		Gui::StaticShutdown();
+		WorldRenderer::StaticUnload();
+		DebugDraws::StaticUnload();
 
 		m_IsRunning.store(false);
 	}

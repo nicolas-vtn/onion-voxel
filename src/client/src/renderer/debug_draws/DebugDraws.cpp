@@ -10,6 +10,13 @@ namespace onion::voxel
 		s_LineShader.setMat4("u_ViewProj", s_ViewProjMatrix);
 	}
 
+	void DebugDraws::StaticUnload()
+	{
+		glDeleteVertexArrays(1, &s_VAOLine);
+		glDeleteBuffers(1, &s_VBOLine);
+		s_LineShader.Delete();
+	}
+
 	void DebugDraws::DrawWorldLine(
 		const glm::vec3& start, const glm::vec3& end, const glm::vec4& color, int widthPx, bool topMost)
 	{

@@ -50,7 +50,13 @@ add_executable(OnionVoxel
 	"src/renderer/texture_atlas/TextureAtlas.cpp"
 	"src/renderer/world_renderer/block_registry/BlockRegistry.cpp"
 
- "src/renderer/world_renderer/chunk_mesh/MeshBuilder.cpp" "src/renderer/debug_draws/DebugDraws.cpp")
+	"src/renderer/world_renderer/chunk_mesh/MeshBuilder.cpp"
+
+	"src/renderer/debug_draws/DebugDraws.cpp"
+
+	"src/renderer/skybox/Skybox.cpp"
+
+)
 
 if (WIN32)
     target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)

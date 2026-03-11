@@ -23,7 +23,8 @@ namespace onion::voxel
 		}
 	}
 
-	Texture::Texture(const std::vector<unsigned char>& data, int width, int height, int channels)
+	Texture::Texture(
+		const std::string& name, const std::vector<unsigned char>& data, int width, int height, int channels)
 		: m_Width(width), m_Height(height), m_NbrChannels(channels)
 	{
 		if (data.empty())
@@ -50,7 +51,7 @@ namespace onion::voxel
 		auto deleter = [](unsigned char* p) { delete[] p; };
 		std::unique_ptr<unsigned char[], PixelDeleter> ptr(subBuffer, deleter);
 
-		std::filesystem::path texturePath = "In-Memory Texture";
+		std::filesystem::path texturePath = name;
 
 		m_FilePath = texturePath;
 		m_Data = std::move(ptr);

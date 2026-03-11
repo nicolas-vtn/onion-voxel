@@ -24,6 +24,9 @@ namespace onion::voxel
 		/// @brief Sets the view-projection matrix to be used for drawing debug lines in world space. This should be called at the beginning of each frame with the current camera's view-projection matrix.
 		static void SetViewProjMatrix(const glm::mat4& viewProjMatrix);
 
+		/// @brief Unloads any resources used by the DebugDraws system. This should be called when the renderer is shutting down to clean up resources.
+		static void StaticUnload();
+
 		/// @brief Draws a line in world space.
 		/// @param start The starting point of the line in world coordinates.
 		/// @param end The ending point of the line in world coordinates.

@@ -18,6 +18,11 @@ namespace onion::voxel
 		m_Texture.Bind();
 	}
 
+	void TextureAtlas::Unload()
+	{
+		m_Texture.Delete();
+	}
+
 	TextureAtlas::TextureID TextureAtlas::GetTextureID(const std::string& name) const
 	{
 		auto it = m_NameToID.find(name);
@@ -114,7 +119,7 @@ namespace onion::voxel
 			m_Entries[id] = {{u0, v0}, {u1, v1}};
 		}
 
-		m_Texture = Texture(atlasPixels, m_AtlasSize, m_AtlasSize, 4);
+		m_Texture = Texture("TextureAtlas", atlasPixels, m_AtlasSize, m_AtlasSize, 4);
 	}
 
 } // namespace onion::voxel

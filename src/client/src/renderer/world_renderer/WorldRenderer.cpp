@@ -92,6 +92,14 @@ namespace onion::voxel
 
 	void WorldRenderer::Render()
 	{
+		// Matrix calculations
+		const glm::mat4 view = m_Camera->GetViewMatrix();
+		const glm::mat4 projection = m_Camera->GetProjectionMatrix();
+
+		// Render SkyBox
+		m_Skybox.Render(view, projection);
+
+		// Render Debug Panel
 		RenderDebugPanel();
 
 		if (!m_HasShaderBeenInitialized)
@@ -497,6 +505,21 @@ namespace onion::voxel
 		{
 			chunkMesh->Delete();
 		}
+	}
+
+	void WorldRenderer::Unload()
+	{
+		DeleteChunkMeshesAsync();
+		DeleteChunkMeshes();
+
+		m_Skybox.Unload();
+		m_TextureAtlas->Unload();
+	}
+
+	void WorldRenderer::StaticUnload()
+	{
+		SubChunkMesh::s_Shader.Delete();
+		SubChunkMesh::s_TextureAtlas.Delete();
 	}
 
 	uint64_t WorldRenderer::GetVertexCount() const
