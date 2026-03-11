@@ -80,6 +80,14 @@ namespace onion::voxel
 	/// @brief Configuration for a specific input, including settings for key repeat behavior and double-press detection.
 	struct InputConfig
 	{
+		InputConfig() = default;
+
+		InputConfig(bool enableKeyRepeat, float keyRepeatDelay, float keyRepeatInterval, float doublePressDelay)
+			: EnableKeyRepeat(enableKeyRepeat), KeyRepeatDelay(keyRepeatDelay), KeyRepeatInterval(keyRepeatInterval),
+			  DoublePressDelay(doublePressDelay)
+		{
+		}
+
 		/// @brief Indicates whether controlled key repeat is enabled when holding the key. If enabled, the key will repeat after a delay when held down.
 		bool EnableKeyRepeat = false;
 		/// @brief The delay in seconds before the key starts repeating when held down. This is only relevant if EnableKeyRepeat is true.

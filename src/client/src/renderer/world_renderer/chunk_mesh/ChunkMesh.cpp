@@ -111,11 +111,19 @@ namespace onion::voxel
 
 	void ChunkMesh::SetSubChunkMeshDirty(int subChunkIndex, bool isDirty)
 	{
+		assert(subChunkIndex >= 0 && "SubChunk index cannot be negative");
+
+		// If the subchunk index is out of range, we need to add new subchunk meshes until we have enough subchunk meshes to fit the index
+		if (subChunkIndex >= m_SubChunkMeshes.size())
+		{
+			std::unique_lock lock(m_MutexSubChunkMeshes);
+			while (m_SubChunkMeshes.size() <= subChunkIndex)
+			{
+				m_SubChunkMeshes.emplace_back(std::make_shared<SubChunkMesh>());
+			}
+		}
+
 		std::shared_lock lock(m_MutexSubChunkMeshes);
-
-		if (subChunkIndex < 0 || subChunkIndex >= m_SubChunkMeshes.size())
-			throw std::out_of_range("SubChunk index out of range");
-
 		if (m_SubChunkMeshes[subChunkIndex])
 		{
 			m_SubChunkMeshes[subChunkIndex]->SetDirty(isDirty);

@@ -105,6 +105,7 @@ namespace onion::voxel
 
 		void RegisterInputs();
 		void ProcessInputs(const std::shared_ptr<InputsSnapshot>& inputs);
+		void ProcessGameplayInputs(const std::shared_ptr<InputsSnapshot>& inputs);
 
 		int m_InputIdMoveForward = -1;
 		int m_InputIdMoveBackward = -1;
@@ -116,6 +117,8 @@ namespace onion::voxel
 		int m_InputIdPause = -1;
 		int m_InputIdUnfocus = -1;
 		int m_InputIdFocus = -1;
+
+		int m_InputPlaceBlock = -1;
 
 		// ----- Actions -----
 	  private:

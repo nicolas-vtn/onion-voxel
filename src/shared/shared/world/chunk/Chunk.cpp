@@ -40,6 +40,11 @@ namespace onion::voxel
 
 	Block Chunk::GetBlock(const glm::ivec3& localPosition) const
 	{
+		if (localPosition.y == -1)
+		{
+			return m_BlocksPalette[0]; // Air
+		}
+
 		// Check if localPosition is within bounds of the chunk
 		if (localPosition.x < 0 || localPosition.x >= WorldConstants::CHUNK_SIZE || localPosition.y < 0 ||
 			localPosition.z < 0 || localPosition.z >= WorldConstants::CHUNK_SIZE)
@@ -84,17 +89,17 @@ namespace onion::voxel
 
 		std::unique_lock lock(m_Mutex);
 
+		// Calculate which subchunk the local position is in
+		int subChunkIndex = localPosition.y / WorldConstants::CHUNK_SIZE;
+
 		// Fill the subchunks vector with empty subchunks until we have enough subchunks to fit the local position
-		while (m_SubChunks.size() <= localPosition.y / WorldConstants::CHUNK_SIZE)
+		while (m_SubChunks.size() <= subChunkIndex)
 		{
 			m_SubChunks.emplace_back();
 		}
 
 		// Add the block to the palette and get the block data index
 		uint8_t indexInPalette = AddBlockToPalette(block);
-
-		// Calculate which subchunk the local position is in
-		int subChunkIndex = localPosition.y / WorldConstants::CHUNK_SIZE;
 
 		// Get the subchunk
 		SubChunk& subChunk = m_SubChunks[subChunkIndex];
@@ -116,14 +121,25 @@ namespace onion::voxel
 		const int subChunkIndex = y / WorldConstants::CHUNK_SIZE;
 
 		// Set the block data in the subchunk
-		m_SubChunks[subChunkIndex].SetBlockIndexInPalette_Unsafe(
-			x, y % WorldConstants::CHUNK_SIZE, z, indexInPalette);
+		m_SubChunks[subChunkIndex].SetBlockIndexInPalette_Unsafe(x, y % WorldConstants::CHUNK_SIZE, z, indexInPalette);
 	}
 
 	int Chunk::GetSubChunkCount() const
 	{
 		std::shared_lock lock(m_Mutex);
 		return static_cast<int>(m_SubChunks.size());
+	}
+
+	bool Chunk::IsSubchunkMonoBlock(const int subChunkIndex) const
+	{
+		std::shared_lock lock(m_Mutex);
+
+		if (subChunkIndex < 0 || subChunkIndex >= m_SubChunks.size())
+		{
+			throw std::out_of_range("Subchunk index is out of bounds");
+		}
+
+		return m_SubChunks[subChunkIndex].IsMonoBlock();
 	}
 
 	uint8_t Chunk::AddBlockToPalette(const Block& block)

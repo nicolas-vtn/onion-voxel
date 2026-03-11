@@ -58,12 +58,14 @@ namespace onion::voxel
 
 		void Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk);
 		void Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk);
+		void Handle_BlocksChanged(const std::vector<std::pair<glm::ivec3, Block>>& blocks);
 
 		// ----- Internal Helpers -----
 	  private:
 		void MarkNeighboringChunkMeshesDirty(const glm::ivec2& chunkPosition);
 		void RenderChunkBorders();
 		void InitializeShaderVariables();
+		void MarkNeighboringSubChunkMeshesDirty(const glm::ivec3& blockPosition);
 
 		// ----- Camera -----
 	  private:

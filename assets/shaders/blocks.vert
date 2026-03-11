@@ -19,7 +19,8 @@ void main()
 {
     float occlusionMin = 0.1;
     float occlusionMax = 0.7;
-    float remappedOclusion = occlusionMin + (occlusionMax - occlusionMin) * aOcclusion;
+    float fOcclusion = float(aOcclusion) / 255.0;
+    float remappedOclusion = occlusionMin + (occlusionMax - occlusionMin) * fOcclusion;
 
     vec3 offsetChunk = vec3(u_ChunkOffset.x, 0, u_ChunkOffset.y);
     vec3 totalOffset = offsetChunk - u_CameraPosition;

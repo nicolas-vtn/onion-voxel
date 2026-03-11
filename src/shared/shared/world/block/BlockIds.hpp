@@ -17,11 +17,12 @@ namespace onion::voxel
 		Water = 9,
 		Sand = 10,
 		Gravel = 11,
+		Cobblestone = 12,
 	};
 
 	inline int GetBlockIdCount()
 	{
-		return 12;
+		return 13;
 	}
 
 } // namespace onion::voxel

@@ -36,6 +36,8 @@ namespace onion::voxel
 
 		int GetSubChunkCount() const;
 
+		bool IsSubchunkMonoBlock(const int subChunkIndex) const;
+
 		// ----- Members -----
 	  protected:
 		const glm::ivec2 m_Position;	   // Position of the chunk in chunk coordinates (Not in world coordinates)

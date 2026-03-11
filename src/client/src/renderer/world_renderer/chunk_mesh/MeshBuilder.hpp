@@ -43,7 +43,7 @@ namespace onion::voxel
 
 		// ----- Latency Metrics -----
 	  private:
-		size_t m_MaxDurationsToStore = 100;			  // Maximum number of durations to store for averaging
+		size_t m_MaxDurationsToStore = 1000;		  // Maximum number of durations to store for averaging
 		std::mutex m_ChunkMeshUpdateTimesMutex;		  // Mutex to protect access to the chunk mesh update times
 		std::deque<double> m_ChunkMeshUpdateTimes_ms; // Stores the time taken for each chunk mesh update
 		void AddChunkMeshUpdateTime(double timeMs);	  // Adds a new chunk mesh update time and updates the average
@@ -60,11 +60,23 @@ namespace onion::voxel
 	  private:
 		void UpdateChunkMesh(const std::shared_ptr<ChunkMesh> chunkMesh);
 
+		void BuildOcclusionMap(const std::shared_ptr<SubChunkMesh> subMesh,
+							   const int subChunkIndex,
+							   const std::shared_ptr<Chunk>& chunk,
+							   const std::shared_ptr<Chunk>& adjacentPosX,
+							   const std::shared_ptr<Chunk>& adjacentNegX,
+							   const std::shared_ptr<Chunk>& adjacentPosZ,
+							   const std::shared_ptr<Chunk>& adjacentNegZ);
+
 		static void AddFace(SubChunkMesh& mesh,
 							const glm::ivec3& v0,
 							const glm::ivec3& v1,
 							const glm::ivec3& v2,
 							const glm::ivec3& v3,
+							const uint8_t o0,
+							const uint8_t o1,
+							const uint8_t o2,
+							const uint8_t o3,
 							BlockFace face,
 							const Block& block,
 							const FaceTexture& faceTexture,

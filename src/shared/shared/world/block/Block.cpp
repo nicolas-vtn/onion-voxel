@@ -36,6 +36,11 @@ namespace onion::voxel
 		return !(*this == other);
 	}
 
+	bool Block::IsOpaque(BlockId blockID)
+	{
+		return !IsTransparent(blockID);
+	}
+
 	bool Block::IsTransparent(BlockId blockID)
 	{
 		return s_TransparencyLookupTable[static_cast<size_t>(blockID)];

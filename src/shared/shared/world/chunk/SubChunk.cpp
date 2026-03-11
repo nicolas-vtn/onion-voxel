@@ -44,6 +44,11 @@ namespace onion::voxel
 		return m_IsMonoBlock && m_MonoBlockIndexInPalette == 0;
 	}
 
+	bool voxel::SubChunk::IsMonoBlock() const
+	{
+		return m_IsMonoBlock;
+	}
+
 	uint8_t SubChunk::GetBlockIndexInPalette(const glm::ivec3& localPosition) const
 	{
 		if (localPosition.x < 0 || localPosition.x >= WorldConstants::CHUNK_SIZE || localPosition.y < 0 ||
@@ -87,10 +92,9 @@ namespace onion::voxel
 			}
 
 			// Need to convert to non-mono block data
-			m_BlockIndexInPalette =
-				std::make_shared<std::array<uint8_t,
-											WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE *
-												WorldConstants::CHUNK_SIZE>>();
+			m_BlockIndexInPalette = std::make_shared<
+				std::array<uint8_t,
+						   WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE>>();
 
 			m_BlockIndexInPalette->fill(m_MonoBlockIndexInPalette); // Fill with the mono block index
 			m_IsMonoBlock = false;									// No longer a mono block
@@ -120,10 +124,9 @@ namespace onion::voxel
 			}
 
 			// Need to convert to non-mono block data
-			m_BlockIndexInPalette =
-				std::make_shared<std::array<uint8_t,
-											WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE *
-												WorldConstants::CHUNK_SIZE>>();
+			m_BlockIndexInPalette = std::make_shared<
+				std::array<uint8_t,
+						   WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE>>();
 
 			m_BlockIndexInPalette->fill(m_MonoBlockIndexInPalette); // Fill with the mono block index
 			m_IsMonoBlock = false;									// No longer a mono block

@@ -167,6 +167,10 @@ namespace onion::voxel
 
 		while (!st.stop_requested() && !glfwWindowShouldClose(m_Window))
 		{
+			// Clear
+			glClearColor(0.1f, 0.1f, 0.12f, 1.f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 			// Start ImGui Frame
 			BeginImGuiFrame();
 
@@ -176,10 +180,6 @@ namespace onion::voxel
 
 			// Process Global Inputs
 			ProcessInputs(m_InputsSnapshot);
-
-			// Clear
-			glClearColor(0.1f, 0.1f, 0.12f, 1.f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			// Calculate Delta Time
 			double currentFrame = glfwGetTime();
@@ -281,6 +281,8 @@ namespace onion::voxel
 		m_InputIdUnfocus = m_InputsManager.RegisterInput(Key::KP8);
 		m_InputIdFocus = m_InputsManager.RegisterInput(Key::KP7);
 		m_InputIdPause = m_InputsManager.RegisterInput(Key::Escape);
+
+		m_InputPlaceBlock = m_InputsManager.RegisterInput(Key::A, InputConfig(true, 999999, 0, 0));
 	}
 
 	void Renderer::ProcessInputs(const std::shared_ptr<InputsSnapshot>& inputs)
@@ -309,6 +311,54 @@ namespace onion::voxel
 
 		// Process Camera Movement Inputs (Only if in Free Camera Mode)
 		UpdateCameraFromInputs(inputs);
+
+		if (m_RenderState == eRenderState::InGame && !m_IsPaused)
+			ProcessGameplayInputs(inputs);
+	}
+
+	void Renderer::ProcessGameplayInputs(const std::shared_ptr<InputsSnapshot>& inputs)
+	{
+		// Raycast from the camera's position.
+		glm::vec3 rayOrigin = m_Camera->GetPosition();
+		glm::vec3 rayDirection = m_Camera->GetFront();
+
+		Block hitBlock = Block(BlockId::Air);
+		glm::ivec3 blockPos{0};
+		glm::ivec3 prevBlockPos{0};
+		for (int i = 0; i < 100; i++)
+		{
+			float delta = 0.1f; // Step size for ray marching
+			glm::vec3 checkPos = rayOrigin + rayDirection * delta * static_cast<float>(i);
+			blockPos = glm::floor(checkPos);
+			hitBlock = m_WorldManager->GetBlock(blockPos);
+			if (hitBlock.m_BlockID != BlockId::Air)
+			{
+				break;
+			}
+			prevBlockPos = blockPos;
+		}
+
+		if (hitBlock.m_BlockID != BlockId::Air)
+		{
+			DebugDraws::DrawBlockOutline(blockPos, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);
+			//DebugDraws::DrawBlockOutline(prevBlockPos, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 3, true);
+		}
+
+		if (inputs->Mouse.LeftButtonPressed)
+		{
+			BlockId blockIdToRemove = BlockId::Air;
+			bool success = m_WorldManager->SetBlock(blockPos, blockIdToRemove, true);
+			std::cout << "Attempting to remove block at " << blockPos.x << ", " << blockPos.y << ", " << blockPos.z
+					  << " - Success: " << (success ? "Yes" : "No") << std::endl;
+		}
+
+		if (inputs->Mouse.RightButtonPressed)
+		{
+			BlockId blockIdToPlace = BlockId::Cobblestone;
+			bool success = m_WorldManager->SetBlock(prevBlockPos, blockIdToPlace, true);
+			std::cout << "Attempting to place block at " << prevBlockPos.x << ", " << prevBlockPos.y << ", "
+					  << prevBlockPos.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
+		}
 	}
 
 	void Renderer::PauseGame(bool pause)
