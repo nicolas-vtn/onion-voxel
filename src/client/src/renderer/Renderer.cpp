@@ -287,10 +287,12 @@ namespace onion::voxel
 
 		m_InputIdUnfocus = m_InputsManager.RegisterInput(Key::KP8);
 		m_InputIdFocus = m_InputsManager.RegisterInput(Key::KP7);
-		m_InputIdPause = m_InputsManager.RegisterInput(Key::Escape);
+		m_InputIdPause = m_InputsManager.RegisterInput(Key::Escape, InputConfig(true, 999999, 0, 0));
 
 		m_InputIdRemoveBlock = m_InputsManager.RegisterInput(Key::MouseButtonLeft, InputConfig(true));
 		m_InputIdPlaceBlock = m_InputsManager.RegisterInput(Key::MouseButtonRight, InputConfig(true));
+
+		m_InputIdGuiBack = m_InputsManager.RegisterInput(Key::Escape, InputConfig(true, 999999, 0, 0));
 	}
 
 	void Renderer::ProcessInputs(const std::shared_ptr<InputsSnapshot>& inputs)
@@ -316,6 +318,7 @@ namespace onion::voxel
 		}
 
 		GuiElement::SetInputsSnapshot(inputs);
+		GuiElement::s_IsBackPressed = inputs->GetKeyState(m_InputIdGuiBack).IsPressed;
 
 		// Process Camera Movement Inputs (Only if in Free Camera Mode)
 		UpdateCameraFromInputs(inputs);

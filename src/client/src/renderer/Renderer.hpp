@@ -121,6 +121,8 @@ namespace onion::voxel
 		int m_InputIdPlaceBlock = -1;
 		int m_InputIdRemoveBlock = -1;
 
+		int m_InputIdGuiBack = -1;
+
 		// ----- Actions -----
 	  private:
 		void PauseGame(bool pause);

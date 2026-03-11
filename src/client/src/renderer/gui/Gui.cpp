@@ -232,6 +232,16 @@ namespace onion::voxel
 	{
 		RenderDebugPanel();
 
+		{
+			// Reset the back button state if we have switched to a different menu since the last frame.
+			// Prevents the Pause menu from immediately navigating back to the game when we open it while the back button is pressed.
+			std::lock_guard lock(m_MutexState);
+			if (m_ActiveMenu != m_MenuPreviousFrame)
+			{
+				GuiElement::s_IsBackPressed = false;
+			}
+		}
+
 		switch (GetActiveMenu())
 		{
 			case eMenu::DemoPanel:
@@ -249,6 +259,9 @@ namespace onion::voxel
 			default:
 				break;
 		}
+
+		std::lock_guard lock(m_MutexState);
+		m_MenuPreviousFrame = m_ActiveMenu;
 	}
 
 	void Gui::Shutdown()

@@ -34,6 +34,12 @@ namespace onion::voxel
 
 	void PausePanel::Render()
 	{
+		if (s_IsBackPressed)
+		{
+			RequestBackToGame.Trigger(this);
+			return;
+		}
+
 		// ---- Constants for Layout ----
 		glm::vec2 buttonSizeRatio{0.415f, 0.08f};
 		glm::vec2 buttonSize{buttonSizeRatio.x * s_ScreenWidth, buttonSizeRatio.y * s_ScreenHeight};

@@ -74,6 +74,7 @@ namespace onion::voxel
 		mutable std::mutex m_MutexState;
 		eMenu m_ActiveMenu = eMenu::MainMenu;
 		std::stack<eMenu> m_MenuHistory;
+		eMenu m_MenuPreviousFrame = eMenu::None;
 
 		// ----- ImGui menu -----
 	  private:
