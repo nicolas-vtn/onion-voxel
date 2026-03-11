@@ -6,6 +6,15 @@ namespace onion::voxel
 	{
 		Unknown = GLFW_KEY_UNKNOWN,
 
+		MouseButtonLeft = GLFW_MOUSE_BUTTON_LEFT,
+		MouseButtonRight = GLFW_MOUSE_BUTTON_RIGHT,
+		MouseButtonMiddle = GLFW_MOUSE_BUTTON_MIDDLE,
+		MouseButton4 = GLFW_MOUSE_BUTTON_4,
+		MouseButton5 = GLFW_MOUSE_BUTTON_5,
+		MouseButton6 = GLFW_MOUSE_BUTTON_6,
+		MouseButton7 = GLFW_MOUSE_BUTTON_7,
+		MouseButton8 = GLFW_MOUSE_BUTTON_8,
+
 		// Printable keys
 
 		Space = GLFW_KEY_SPACE,

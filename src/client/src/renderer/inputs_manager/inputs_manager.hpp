@@ -82,6 +82,8 @@ namespace onion::voxel
 	{
 		InputConfig() = default;
 
+		InputConfig(bool repeat) : EnableKeyRepeat(repeat) {}
+
 		InputConfig(bool enableKeyRepeat, float keyRepeatDelay, float keyRepeatInterval, float doublePressDelay)
 			: EnableKeyRepeat(enableKeyRepeat), KeyRepeatDelay(keyRepeatDelay), KeyRepeatInterval(keyRepeatInterval),
 			  DoublePressDelay(doublePressDelay)

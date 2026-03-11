@@ -282,7 +282,8 @@ namespace onion::voxel
 		m_InputIdFocus = m_InputsManager.RegisterInput(Key::KP7);
 		m_InputIdPause = m_InputsManager.RegisterInput(Key::Escape);
 
-		m_InputPlaceBlock = m_InputsManager.RegisterInput(Key::A, InputConfig(true, 999999, 0, 0));
+		m_InputIdRemoveBlock = m_InputsManager.RegisterInput(Key::MouseButtonLeft, InputConfig(true));
+		m_InputIdPlaceBlock = m_InputsManager.RegisterInput(Key::MouseButtonRight, InputConfig(true));
 	}
 
 	void Renderer::ProcessInputs(const std::shared_ptr<InputsSnapshot>& inputs)
@@ -344,7 +345,7 @@ namespace onion::voxel
 			//DebugDraws::DrawBlockOutline(prevBlockPos, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 3, true);
 		}
 
-		if (inputs->Mouse.LeftButtonPressed)
+		if (inputs->GetKeyState(m_InputIdRemoveBlock).IsPressed)
 		{
 			BlockId blockIdToRemove = BlockId::Air;
 			bool success = m_WorldManager->SetBlock(blockPos, blockIdToRemove, true);
@@ -352,7 +353,7 @@ namespace onion::voxel
 					  << " - Success: " << (success ? "Yes" : "No") << std::endl;
 		}
 
-		if (inputs->Mouse.RightButtonPressed)
+		if (inputs->GetKeyState(m_InputIdPlaceBlock).IsPressed)
 		{
 			BlockId blockIdToPlace = BlockId::Cobblestone;
 			bool success = m_WorldManager->SetBlock(prevBlockPos, blockIdToPlace, true);

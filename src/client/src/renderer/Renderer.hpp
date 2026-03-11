@@ -118,7 +118,8 @@ namespace onion::voxel
 		int m_InputIdUnfocus = -1;
 		int m_InputIdFocus = -1;
 
-		int m_InputPlaceBlock = -1;
+		int m_InputIdPlaceBlock = -1;
+		int m_InputIdRemoveBlock = -1;
 
 		// ----- Actions -----
 	  private:
