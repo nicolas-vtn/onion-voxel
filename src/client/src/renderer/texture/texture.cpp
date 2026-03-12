@@ -60,6 +60,37 @@ namespace onion::voxel
 		m_NbrChannels = channels;
 	}
 
+	Texture::Texture(const std::string& name, const std::vector<unsigned char>& data)
+	{
+		if (data.empty())
+		{
+			throw std::runtime_error("Texture data is empty");
+		}
+
+		m_FilePath = name;
+
+		int width, height, channels;
+
+		stbi_set_flip_vertically_on_load(false);
+
+		unsigned char* pixels =
+			stbi_load_from_memory(data.data(), static_cast<int>(data.size()), &width, &height, &channels, 0);
+
+		if (!pixels)
+		{
+			const char* reason = stbi_failure_reason();
+			std::string error = reason ? reason : "Unknown error";
+
+			throw std::runtime_error("Failed to decode texture '" + name + "' from memory: " + error);
+		}
+
+		m_Width = width;
+		m_Height = height;
+		m_NbrChannels = channels;
+
+		m_Data = std::unique_ptr<unsigned char[], PixelDeleter>(pixels, FreePixels);
+	}
+
 	Texture::~Texture()
 	{
 		if (m_Data)

@@ -1,5 +1,11 @@
 #include "ResourcePacksPanel.hpp"
 
+#include <nlohmann/json.hpp>
+
+#include <unordered_set>
+
+#include <shared/zip_archive/ZipArchive.hpp>
+
 #include "../../../Variables.hpp"
 #include "../../LayoutHelper.hpp"
 
@@ -36,6 +42,13 @@ namespace onion::voxel
 
 	void ResourcePacksPanel::Render()
 	{
+		// Delete any resource pack infos that need to be deleted
+		ResourcePackInfo infoToDelete;
+		while (m_ResourcePacksInfosToDelete.TryPop(infoToDelete))
+		{
+			infoToDelete.Thumbnail->Delete();
+		}
+
 		if (s_IsBackPressed)
 		{
 			m_TimerScanResourcePacksFolder.Stop();
@@ -128,24 +141,58 @@ namespace onion::voxel
 
 		std::cout << "Scanning Resource Packs Folder: " << resourcePacksDirectory << std::endl;
 
-		for (auto& entry : std::filesystem::directory_iterator(resourcePacksDirectory))
+		std::unordered_set<std::string> packsOnDisk;
+
+		for (const auto& entry : std::filesystem::directory_iterator(resourcePacksDirectory))
 		{
-			if (entry.path().extension() == ".zip")
+			if (!entry.is_regular_file() || entry.path().extension() != ".zip")
+				continue;
+
+			std::string resourcePackName = entry.path().stem().string();
+			packsOnDisk.insert(resourcePackName);
+
+			if (ContainsResourcePack(resourcePackName))
+				continue;
+
+			ZipArchive zip(entry.path());
+
+			std::string packMcmeta = zip.GetFileText("pack.mcmeta");
+
+			nlohmann::json mcmetaJson = nlohmann::json::parse(packMcmeta);
+			std::string packDescription = mcmetaJson["pack"]["description"].get<std::string>();
+
+			std::string thumbnailName = resourcePackName + ".pack.png";
+			std::vector<unsigned char> thumbnailData = zip.GetFileData("pack.png");
+			Texture thumbnail(thumbnailName, thumbnailData);
+
+			ResourcePackInfo resourcePackInfo{
+				resourcePackName, packDescription, std::make_unique<Sprite>(thumbnailName, std::move(thumbnail))};
+
 			{
-				std::string resourcePackName = entry.path().stem().string();
+				std::lock_guard lock(m_MutexResourcePacks);
+				m_ResourcePacks.push_back(std::move(resourcePackInfo));
+			}
+		}
 
-				// Read "pack.mcmeta" text file from the zip.
-				std::string packDescription;
-				// ... To Do
+		// Remove packs that no longer exist on disk
+		{
+			std::lock_guard lock(m_MutexResourcePacks);
 
-				// Read "pack.png" image file from the zip and create a thumbnail texture.
-				// ... To Do
-				std::string thumbnailName = resourcePackName + ".pack.png";
-				std::vector<unsigned char> thumbnailData; // Load the thumbnail data from the zip file.
-				int width = 0, height = 0, channels = 0;
-				Texture thumbnail(thumbnailName, thumbnailData, width, height, channels);
+			auto it = m_ResourcePacks.begin();
+			while (it != m_ResourcePacks.end())
+			{
+				if (!packsOnDisk.contains(it->Name))
+				{
+					// Move the pack to the deletion queue
+					m_ResourcePacksInfosToDelete.Push(std::move(*it));
 
-				ResourcePackInfo resourcePackInfo{resourcePackName, packDescription, std::move(thumbnail)};
+					// Remove from vector
+					it = m_ResourcePacks.erase(it);
+				}
+				else
+				{
+					++it;
+				}
 			}
 		}
 	}
@@ -170,6 +217,19 @@ namespace onion::voxel
 	{
 		m_TimerScanResourcePacksFolder.Stop();
 		RequestBackNavigation.Trigger(this);
+	}
+
+	bool ResourcePacksPanel::ContainsResourcePack(const std::string& resourcePackName) const
+	{
+		std::lock_guard lock(m_MutexResourcePacks);
+		for (const auto& resourcePack : m_ResourcePacks)
+		{
+			if (resourcePack.Name == resourcePackName)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 } // namespace onion::voxel

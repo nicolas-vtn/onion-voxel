@@ -1,10 +1,16 @@
 #pragma once
 
+#include <mutex>
+#include <string>
+#include <vector>
+
+#include <onion/ThreadSafeQueue.hpp>
 #include <onion/Timer.hpp>
 
 #include "../../GuiElement.hpp"
 #include "../../controls/button/Button.hpp"
 #include "../../controls/label/Label.hpp"
+#include "../../controls/sprite/Sprite.hpp"
 
 namespace onion::voxel
 {
@@ -31,9 +37,9 @@ namespace onion::voxel
 	  private:
 		struct ResourcePackInfo
 		{
-			std::string name;
-			std::string description;
-			Texture thumbnail;
+			std::string Name;
+			std::string Description;
+			std::unique_ptr<Sprite> Thumbnail;
 		};
 
 		// ----- Controls -----
@@ -55,5 +61,11 @@ namespace onion::voxel
 		// ----- Internal Members -----
 	  private:
 		Timer m_TimerScanResourcePacksFolder;
+
+		mutable std::mutex m_MutexResourcePacks;
+		std::vector<ResourcePackInfo> m_ResourcePacks;
+		bool ContainsResourcePack(const std::string& resourcePackName) const;
+
+		ThreadSafeQueue<ResourcePackInfo> m_ResourcePacksInfosToDelete;
 	};
 } // namespace onion::voxel

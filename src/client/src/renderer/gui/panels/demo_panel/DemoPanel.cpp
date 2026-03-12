@@ -5,7 +5,7 @@ namespace onion::voxel
 
 	DemoPanel::DemoPanel(const std::string& name)
 		: GuiElement(name), m_Button("DemoButton"), m_Sprite("DemoSprite", m_SpritePath), m_Button2("DemoButton2"),
-		  m_ButtonMainMenu("MainMenuButton")
+		  m_ButtonMainMenu("MainMenuButton"), m_Checkbox("DemoCheckbox")
 	{
 
 		SubscribeToControlEvents();
@@ -80,6 +80,16 @@ namespace onion::voxel
 		m_ButtonMainMenu.SetPosition(buttonMainMenuPos);
 		m_ButtonMainMenu.SetSize(buttonSize);
 		m_ButtonMainMenu.Render();
+
+		// ---- Render Checkbox ----
+		float cbPositionXRatio = 0.1f;
+		float cbPositionYRatio = 0.17f;
+		const glm::vec2 cbPosition{s_ScreenWidth * cbPositionXRatio, s_ScreenHeight * cbPositionYRatio};
+		const glm::vec2 cbSize{40, 40};
+
+		m_Checkbox.SetPosition(cbPosition);
+		m_Checkbox.SetSize(cbSize);
+		m_Checkbox.Render();
 	}
 
 	void DemoPanel::Initialize()
@@ -88,6 +98,7 @@ namespace onion::voxel
 		m_Button2.Initialize();
 		m_ButtonMainMenu.Initialize();
 		m_Sprite.Initialize();
+		m_Checkbox.Initialize();
 
 		SetInitState(true);
 	}
@@ -98,40 +109,50 @@ namespace onion::voxel
 		m_Button2.Delete();
 		m_ButtonMainMenu.Delete();
 		m_Sprite.Delete();
+		m_Checkbox.Delete();
 
 		SetDeletedState(true);
 	}
 
 	void DemoPanel::SubscribeToControlEvents()
 	{
-		m_HandleButtonClick = m_Button.OnClick.Subscribe([this](const Button& button) { HandleButtonClick(button); });
+		m_HandleButtonClick = m_Button.OnClick.Subscribe([this](const Button& button) { Handle_ButtonClick(button); });
 
 		m_HandleButtonHoverEnter =
-			m_Button.OnHoverEnter.Subscribe([this](const Button& button) { HandleButtonHoverEnter(button); });
+			m_Button.OnHoverEnter.Subscribe([this](const Button& button) { Handle_ButtonHoverEnter(button); });
 
 		m_HandleButtonHoverLeave =
-			m_Button.OnHoverLeave.Subscribe([this](const Button& button) { HandleButtonHoverLeave(button); });
+			m_Button.OnHoverLeave.Subscribe([this](const Button& button) { Handle_ButtonHoverLeave(button); });
 
 		m_HandleButtonMainMenuClick =
-			m_ButtonMainMenu.OnClick.Subscribe([this](const Button& button) { HandleButtonMainMenuClick(button); });
+			m_ButtonMainMenu.OnClick.Subscribe([this](const Button& button) { Handle_ButtonMainMenuClick(button); });
+
+		m_HandleCheckboxCheckedChanged = m_Checkbox.OnCheckedChanged.Subscribe(
+			[this](const Checkbox& checkbox) { Handle_CheckboxCheckedChanged(checkbox); });
 	}
 
-	void DemoPanel::HandleButtonClick(const Button& button)
+	void DemoPanel::Handle_CheckboxCheckedChanged(const Checkbox& checkbox)
+	{
+		std::cout << "Checkbox '" + checkbox.GetName() + "' Checked Changed. New Value: " << checkbox.IsChecked()
+				  << std::endl;
+	}
+
+	void DemoPanel::Handle_ButtonClick(const Button& button)
 	{
 		std::cerr << "Button '" + button.GetName() + "' Clicked." << std::endl;
 	}
 
-	void DemoPanel::HandleButtonHoverEnter(const Button& button)
+	void DemoPanel::Handle_ButtonHoverEnter(const Button& button)
 	{
 		std::cout << "Button '" + button.GetName() + "' Hover Enter." << std::endl;
 	}
 
-	void DemoPanel::HandleButtonHoverLeave(const Button& button)
+	void DemoPanel::Handle_ButtonHoverLeave(const Button& button)
 	{
 		std::cout << "Button '" + button.GetName() + "' Hover Leave." << std::endl;
 	}
 
-	void DemoPanel::HandleButtonMainMenuClick(const Button& button)
+	void DemoPanel::Handle_ButtonMainMenuClick(const Button& button)
 	{
 		std::cerr << "Button '" + button.GetName() + "' Clicked." << std::endl;
 		RequestMenuNavigation.Trigger({this, eMenu::MainMenu});

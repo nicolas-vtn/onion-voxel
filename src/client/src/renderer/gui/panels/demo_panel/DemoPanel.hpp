@@ -2,6 +2,7 @@
 
 #include "../../GuiElement.hpp"
 #include "../../controls/button/Button.hpp"
+#include "../../controls/checkbox/Checkbox.hpp"
 #include "../../controls/sprite/Sprite.hpp"
 
 namespace onion::voxel
@@ -33,21 +34,25 @@ namespace onion::voxel
 		Button m_Button2;
 		Button m_ButtonMainMenu;
 		Sprite m_Sprite;
+		Checkbox m_Checkbox;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:
 		void SubscribeToControlEvents();
 
 		EventHandle m_HandleButtonClick;
-		void HandleButtonClick(const Button& button);
+		void Handle_ButtonClick(const Button& button);
 
 		EventHandle m_HandleButtonHoverEnter;
-		void HandleButtonHoverEnter(const Button& button);
+		void Handle_ButtonHoverEnter(const Button& button);
 
 		EventHandle m_HandleButtonHoverLeave;
-		void HandleButtonHoverLeave(const Button& button);
+		void Handle_ButtonHoverLeave(const Button& button);
 
 		EventHandle m_HandleButtonMainMenuClick;
-		void HandleButtonMainMenuClick(const Button& button);
+		void Handle_ButtonMainMenuClick(const Button& button);
+
+		EventHandle m_HandleCheckboxCheckedChanged;
+		void Handle_CheckboxCheckedChanged(const Checkbox& checkbox);
 	};
 } // namespace onion::voxel

@@ -11,12 +11,14 @@ add_library(onion_voxel_shared
  "shared/world/world_manager/WorldManager.cpp"
 
  "shared/network_messages/Serializer.cpp"
+ "shared/zip_archive/ZipArchive.cpp"
 )
 
 target_link_libraries(onion_voxel_shared
 	PUBLIC
 		cereal::cereal
 		glm
+		miniz
 
 		onion::threadsafequeue
 		onion::event

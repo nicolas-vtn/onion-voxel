@@ -11,6 +11,8 @@ std::vector<unsigned int> Sprite::s_Indices = {0, 1, 2, 2, 3, 0};
 
 Sprite::Sprite(const std::string& name, const std::string& spritePath) : GuiElement(name), m_Texture(spritePath) {}
 
+Sprite::Sprite(const std::string& name, Texture texture) : GuiElement(name), m_Texture(std::move(texture)) {}
+
 Sprite::~Sprite() {}
 
 void Sprite::Render()
