@@ -20,6 +20,7 @@ namespace onion::voxel
 		SubscribeToSpriteEvents();
 
 		m_Label.SetTextAlignment(Font::eTextAlignment::Center);
+		m_Label.SetZOffset(0.8f);
 	}
 
 	Button::~Button() {}

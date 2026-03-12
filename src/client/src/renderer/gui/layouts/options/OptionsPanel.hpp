@@ -2,6 +2,7 @@
 
 #include "../../GuiElement.hpp"
 #include "../../controls/button/Button.hpp"
+#include "../../controls/label/Label.hpp"
 
 namespace onion::voxel
 {
@@ -25,6 +26,7 @@ namespace onion::voxel
 
 		// ----- Controls -----
 	  private:
+		Label m_Title_Label;
 		Button m_FOV_Button;
 		Button m_Online_Button;
 		Button m_SkinCustomization_Button;

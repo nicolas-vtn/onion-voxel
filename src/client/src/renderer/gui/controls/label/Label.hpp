@@ -50,7 +50,12 @@ namespace onion::voxel
 		void SetTextColor(const glm::vec4& color);
 		glm::vec4 GetTextColor() const;
 
-		/// @brief Sets the offset of the text in the Z direction. In range [-1, 1], where -1 is the closest to the camera and 1 is the farthest from the camera.
+		/// @brief Sets the color of the shadow. The color is specified as a vec4. Red, Green, Blue, and Alpha components should be in the range [0, 1]
+		/// @param color The new color of the shadow.
+		void SetShadowColor(const glm::vec4& color);
+		glm::vec4 GetShadowColor() const;
+
+		/// @brief Sets the offset of the text in the Z direction. In range [-1, 1], where 1 is the closest to the camera and -1 is the farthest from the camera.
 		/// @param zOffset The new offset of the text in the Z direction.
 		void SetZOffset(float zOffset);
 		float GetZOffset() const;
@@ -74,8 +79,8 @@ namespace onion::voxel
 		Font::eTextAlignment m_TextAlignment{Font::eTextAlignment::Left};
 		glm::vec4 m_TextColor{1, 1, 1, 1};
 		glm::vec4 m_ShadowColor{0.246f, 0.246f, 0.246f, 1.f};
-		std::atomic_bool m_ShadowEnabled{false};
-		float m_zOffset{-0.5f};
+		std::atomic_bool m_ShadowEnabled{true};
+		float m_zOffset{0.5f};
 		float m_RotationDegrees{0.f};
 	};
 }; // namespace onion::voxel

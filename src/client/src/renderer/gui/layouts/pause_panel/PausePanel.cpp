@@ -5,25 +5,36 @@
 namespace onion::voxel
 {
 	PausePanel::PausePanel(const std::string& name)
-		: GuiElement(name), m_BackToGame_Button("BackToGame_Button"), m_Options_Button("Options_Button"),
-		  m_MainMenu_Button("MainMenu_Button"), m_Advancements_Button("Advancements_Button"),
-		  m_Statistics_Button("Statistics_Button"), m_GiveFeedback_Button("GiveFeedback_Button"),
-		  m_ReportBugs_Button("ReportBugs_Button"), m_OpenToLan_Button("OpenToLan_Button")
+		: GuiElement(name), m_Title_Label("PauseTitle_Label"), m_BackToGame_Button("BackToGame_Button"),
+		  m_Options_Button("Options_Button"), m_MainMenu_Button("MainMenu_Button"),
+		  m_Advancements_Button("Advancements_Button"), m_Statistics_Button("Statistics_Button"),
+		  m_GiveFeedback_Button("GiveFeedback_Button"), m_ReportBugs_Button("ReportBugs_Button"),
+		  m_OpenToLan_Button("OpenToLan_Button")
 	{
 		SubscribeToControlEvents();
 
+		m_Title_Label.SetText("Game Menu");
+		m_Title_Label.SetTextAlignment(Font::eTextAlignment::Center);
+
 		m_BackToGame_Button.SetText("Back to Game");
+
 		m_Advancements_Button.SetText("Advancements");
 		m_Advancements_Button.SetEnabled(false);
+
 		m_Statistics_Button.SetText("Statistics");
 		m_Statistics_Button.SetEnabled(false);
+
 		m_GiveFeedback_Button.SetText("Give Feedback");
 		m_GiveFeedback_Button.SetEnabled(false);
+
 		m_ReportBugs_Button.SetText("Report Bugs");
 		m_ReportBugs_Button.SetEnabled(false);
+
 		m_Options_Button.SetText("Options...");
+
 		m_OpenToLan_Button.SetText("Open to LAN");
 		m_OpenToLan_Button.SetEnabled(false);
+
 		m_MainMenu_Button.SetText("Save and Quit to Title");
 	}
 
@@ -48,20 +59,13 @@ namespace onion::voxel
 		float middleX = s_ScreenWidth * 0.5f;
 
 		// ---- Render Menu Title ----
-		const std::string titleText = "Game Menu";
-
-		float menuYOffsetRatio = (200.f - 23.f) / 1009.f;
+		constexpr float menuYOffsetRatio = (200.f - 23.f) / 1009.f;
 		glm::vec2 textPosition = {s_ScreenWidth / 2, s_ScreenHeight * menuYOffsetRatio};
 		float textHeight = s_ScreenHeight * (30.f / 1009.f);
-		glm::vec3 textColor{1.f, 1.f, 1.f};
-		float shadowOffset = textHeight / s_TextFont.GetGlyphSize().y;
-		glm::vec3 shadowColor{0.246f, 0.246f, 0.246f};
 
-		glm::vec2 shadowOffsetVec{shadowOffset, shadowOffset};
-
-		s_TextFont.RenderText(
-			titleText, Font::eTextAlignment::Center, textPosition + shadowOffsetVec, textHeight, shadowColor, 0.1f);
-		s_TextFont.RenderText(titleText, Font::eTextAlignment::Center, textPosition, textHeight, textColor, 0.2f);
+		m_Title_Label.SetPosition(textPosition);
+		m_Title_Label.SetTextHeight(textHeight);
+		m_Title_Label.Render();
 
 		// ---- Prepare Layout for Buttons ----
 		float tableXratio = 816.f / 1920.f;
@@ -133,6 +137,7 @@ namespace onion::voxel
 
 	void PausePanel::Initialize()
 	{
+		m_Title_Label.Initialize();
 		m_BackToGame_Button.Initialize();
 		m_Options_Button.Initialize();
 		m_MainMenu_Button.Initialize();
@@ -147,6 +152,7 @@ namespace onion::voxel
 
 	void PausePanel::Delete()
 	{
+		m_Title_Label.Delete();
 		m_BackToGame_Button.Delete();
 		m_Options_Button.Delete();
 		m_MainMenu_Button.Delete();

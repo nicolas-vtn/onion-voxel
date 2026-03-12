@@ -23,7 +23,7 @@ namespace onion::voxel
 								  m_Position + shadowOffsetVec,
 								  m_TextHeight,
 								  m_ShadowColor,
-								  m_zOffset + 0.01f,
+								  m_zOffset - 0.01f,
 								  m_RotationDegrees);
 		}
 
@@ -99,6 +99,18 @@ namespace onion::voxel
 	{
 		std::lock_guard lock(m_MutexState);
 		return m_TextColor;
+	}
+
+	void Label::SetShadowColor(const glm::vec4& color)
+	{
+		std::lock_guard lock(m_MutexState);
+		m_ShadowColor = color;
+	}
+
+	glm::vec4 Label::GetShadowColor() const
+	{
+		std::lock_guard lock(m_MutexState);
+		return m_ShadowColor;
 	}
 
 	void Label::SetZOffset(float zOffset)
