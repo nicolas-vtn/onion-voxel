@@ -59,6 +59,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_ResourcePacksPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																					  { Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_ResourcePacksPanel.RequestResourcePackChange.Subscribe(
+			[this](const std::string& resourcePackName) { Handle_ResourcePackChangeRequest(resourcePackName); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -98,6 +101,12 @@ namespace onion::voxel
 	void Gui::Handle_BackRequest(const GuiElement* sender)
 	{
 		GoBackToPreviousMenu();
+	}
+
+	void Gui::Handle_ResourcePackChangeRequest(const std::string& resourcePackName)
+	{
+		std::cout << "Selected Resource Pack: " << resourcePackName << std::endl;
+		SelectedResourcePackName = resourcePackName;
 	}
 
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)
@@ -169,6 +178,7 @@ namespace onion::voxel
 		if (m_ActiveMenu == eMenu::ResourcePacks)
 		{
 			m_ResourcePacksPanel.ScanResourcePacksFolder();
+			m_ResourcePacksPanel.SetCurrentlySelectedResourcePack(SelectedResourcePackName);
 		}
 	}
 

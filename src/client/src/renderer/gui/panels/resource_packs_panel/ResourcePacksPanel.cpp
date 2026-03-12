@@ -16,7 +16,8 @@ namespace onion::voxel
 	ResourcePacksPanel::ResourcePacksPanel(const std::string& name)
 		: GuiElement(name), m_Title_Label("ResourcePacksTitle_Label"),
 		  m_Description_Label("ResourcePacksDescription_Label"), m_OpenPackFolder_Button("OpenPackFolder_Button"),
-		  m_Done_Button("Done_Button")
+		  m_Done_Button("Done_Button"),
+		  m_DefaultResourcePack_Tile("DefaultResourcePack_Tile", m_DefaultResourcePackThumbnailPath)
 	{
 		SubscribeToControlEvents();
 
@@ -30,9 +31,14 @@ namespace onion::voxel
 		m_Description_Label.SetTextAlignment(Font::eTextAlignment::Center);
 		m_Description_Label.SetTextColor(s_ColorSecondaryText);
 
+		m_DefaultResourcePack_Tile.SetResourcePackName("Default");
+		m_DefaultResourcePack_Tile.SetResourcePackDescription("The default look and feel of Onion::Voxel (built-in)");
+
 		m_OpenPackFolder_Button.SetText("Open Pack Folder");
 
 		m_Done_Button.SetText("Done");
+
+		SetCurrentlySelectedResourcePack(SelectedResourcePackName);
 	}
 
 	ResourcePacksPanel::~ResourcePacksPanel()
@@ -83,17 +89,25 @@ namespace onion::voxel
 		// ---- Render Resource Pack Tiles ----
 		{
 			std::lock_guard lock(m_MutexResourcePacks);
-			float firstYratio = 0.35f;
+			float firstYratio = 0.25f;
 			float currentY = s_ScreenHeight * firstYratio;
 			float tileHeightRatio = 0.13f;
 			float tileWidthRatio = 0.6f;
 			glm::vec2 tileSize{s_ScreenWidth * tileWidthRatio, s_ScreenHeight * tileHeightRatio};
+			float spacingYratio = 1.2f;
+
+			// Render Default Resource Pack Tile
+			m_DefaultResourcePack_Tile.SetPosition({middleX, currentY});
+			m_DefaultResourcePack_Tile.SetSize(tileSize);
+			m_DefaultResourcePack_Tile.Render();
+			currentY += tileSize.y * spacingYratio; // Add some spacing after the default pack
+
 			for (const auto& resourcePackTile : m_ResourcePacksTiles)
 			{
 				resourcePackTile->SetPosition({middleX, currentY});
 				resourcePackTile->SetSize(tileSize);
 				resourcePackTile->Render();
-				currentY += tileSize.y * 1.1f; // Add some spacing between tiles
+				currentY += tileSize.y * spacingYratio; // Add some spacing between tiles
 			}
 		}
 
@@ -136,6 +150,7 @@ namespace onion::voxel
 		m_Description_Label.Initialize();
 		m_OpenPackFolder_Button.Initialize();
 		m_Done_Button.Initialize();
+		m_DefaultResourcePack_Tile.Initialize();
 
 		SetInitState(true);
 	}
@@ -146,6 +161,7 @@ namespace onion::voxel
 		m_Description_Label.Delete();
 		m_OpenPackFolder_Button.Delete();
 		m_Done_Button.Delete();
+		m_DefaultResourcePack_Tile.Delete();
 
 		{
 			std::lock_guard lock(m_MutexResourcePacks);
@@ -164,8 +180,6 @@ namespace onion::voxel
 		m_TimerScanResourcePacksFolder.Start();
 
 		const std::filesystem::path resourcePacksDirectory = GetResourcePacksDirectory();
-
-		std::cout << "Scanning Resource Packs Folder: " << resourcePacksDirectory << std::endl;
 
 		std::unordered_set<std::string> packsOnDisk;
 
@@ -197,6 +211,10 @@ namespace onion::voxel
 			resourcePackTile->SetResourcePackName(resourcePackName);
 			resourcePackTile->SetResourcePackDescription(packDescription);
 
+			// Subscribe to the tile's checked changed event
+			m_EventHandles.push_back(resourcePackTile->OnCheckedChanged.Subscribe(
+				[this](const ResourcePackTile& tile) { Handle_ResourcePackTileCheckedChanged(tile); }));
+
 			{
 				std::lock_guard lock(m_MutexResourcePacks);
 				m_ResourcePacksTiles.push_back(std::move(resourcePackTile));
@@ -226,6 +244,35 @@ namespace onion::voxel
 		}
 	}
 
+	void ResourcePacksPanel::SetCurrentlySelectedResourcePack(const std::string& resourcePackName)
+	{
+		if (resourcePackName == "Default")
+		{
+			m_DefaultResourcePack_Tile.SetChecked(true);
+		}
+
+		// Uncheck all other tiles and check the one that matches the selected resource pack
+		{
+			bool selectedDefaultPack = resourcePackName == m_DefaultResourcePack_Tile.GetResourcePackName();
+			m_DefaultResourcePack_Tile.SetChecked(selectedDefaultPack);
+
+			std::lock_guard lock(m_MutexResourcePacks);
+			for (const auto& resourcePackTile : m_ResourcePacksTiles)
+			{
+				bool isSelectedTile = resourcePackTile->GetResourcePackName() == resourcePackName;
+				resourcePackTile->SetChecked(isSelectedTile);
+			}
+		}
+
+		m_CurrentlySelectedResourcePackName = resourcePackName;
+	}
+
+	std::string ResourcePacksPanel::GetCurrentlySelectedResourcePack() const
+	{
+		std::lock_guard lock(m_MutexResourcePacks);
+		return m_CurrentlySelectedResourcePackName;
+	}
+
 	void ResourcePacksPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(m_OpenPackFolder_Button.OnClick.Subscribe([this](const Button& sender)
@@ -233,6 +280,39 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(
 			m_Done_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
+
+		m_EventHandles.push_back(m_DefaultResourcePack_Tile.OnCheckedChanged.Subscribe(
+			[this](const ResourcePackTile& tile) { Handle_ResourcePackTileCheckedChanged(tile); }));
+	}
+
+	void ResourcePacksPanel::Handle_ResourcePackTileCheckedChanged(const ResourcePackTile& tile)
+	{
+		if (tile.IsChecked())
+		{
+			SetCurrentlySelectedResourcePack(tile.GetResourcePackName());
+		}
+		else
+		{
+			// Checks if any tile is still checked
+			bool anyTileChecked = false;
+			{
+				std::lock_guard lock(m_MutexResourcePacks);
+				for (const auto& resourcePackTile : m_ResourcePacksTiles)
+				{
+					if (resourcePackTile->IsChecked())
+					{
+						anyTileChecked = true;
+						break;
+					}
+				}
+			}
+
+			// If no tiles are checked, select the default resource pack
+			if (!anyTileChecked)
+			{
+				SetCurrentlySelectedResourcePack(m_DefaultResourcePack_Tile.GetResourcePackName());
+			}
+		}
 	}
 
 	void ResourcePacksPanel::Handle_OpenPackFolder_Click(const Button& sender)
@@ -245,6 +325,7 @@ namespace onion::voxel
 	void ResourcePacksPanel::Handle_Done_Click(const Button& sender)
 	{
 		m_TimerScanResourcePacksFolder.Stop();
+		RequestResourcePackChange.Trigger(GetCurrentlySelectedResourcePack());
 		RequestBackNavigation.Trigger(this);
 	}
 

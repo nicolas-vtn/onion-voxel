@@ -57,6 +57,7 @@ namespace onion::voxel
 
 		// ----- Events Subscription and Handlers -----
 	  private:
+		std::vector<EventHandle> m_EventHandles;
 		void SubscribeToControlEvents();
 
 		void Handle_CheckboxCheckedChanged(const Checkbox& checkbox);

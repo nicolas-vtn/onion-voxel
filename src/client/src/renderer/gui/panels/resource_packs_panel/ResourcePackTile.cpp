@@ -119,8 +119,15 @@ namespace onion::voxel
 		return m_DescriptionLabel.GetText();
 	}
 
-	void ResourcePackTile::SubscribeToControlEvents() {}
+	void ResourcePackTile::SubscribeToControlEvents()
+	{
+		m_EventHandles.push_back(m_Checkbox.OnCheckedChanged.Subscribe([this](const Checkbox& checkbox)
+																	   { Handle_CheckboxCheckedChanged(checkbox); }));
+	}
 
-	void ResourcePackTile::Handle_CheckboxCheckedChanged(const Checkbox& checkbox) {}
+	void ResourcePackTile::Handle_CheckboxCheckedChanged(const Checkbox& checkbox)
+	{
+		OnCheckedChanged.Trigger(*this);
+	}
 
 } // namespace onion::voxel

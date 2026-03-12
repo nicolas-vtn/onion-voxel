@@ -65,6 +65,7 @@ namespace onion::voxel
 		void Handle_BackToGameRequest(const GuiElement* sender);
 		void Handle_QuitToMainMenuRequest(const GuiElement* sender);
 		void Handle_BackRequest(const GuiElement* sender);
+		void Handle_ResourcePackChangeRequest(const std::string& resourcePackName);
 
 		// ----- Set Static States -----
 	  public:
