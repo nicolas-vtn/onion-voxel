@@ -5,40 +5,54 @@
 namespace onion::voxel
 {
 	OptionsPanel::OptionsPanel(const std::string& name)
-		: GuiElement(name), m_FOV_Button("FOV_Button"), m_Online_Button("Online_Button"),
-		  m_SkinCustomization_Button("SkinCustomization_Button"), m_MusicAndSounds_Button("MusicAndSounds_Button"),
-		  m_VideoSettings_Button("VideoSettings_Button"), m_Controls_Button("Controls_Button"),
-		  m_Language_Button("Language_Button"), m_ChatSettings_Button("ChatSettings_Button"),
-		  m_ResourcePacks_Button("ResourcePacks_Button"),
+		: GuiElement(name), m_Title_Label("OptionsTitle_Label"), m_FOV_Button("FOV_Button"),
+		  m_Online_Button("Online_Button"), m_SkinCustomization_Button("SkinCustomization_Button"),
+		  m_MusicAndSounds_Button("MusicAndSounds_Button"), m_VideoSettings_Button("VideoSettings_Button"),
+		  m_Controls_Button("Controls_Button"), m_Language_Button("Language_Button"),
+		  m_ChatSettings_Button("ChatSettings_Button"), m_ResourcePacks_Button("ResourcePacks_Button"),
 		  m_AccessibilitySettings_Button("AccessibilitySettings_Button"), m_Telemetry_Button("Telemetry_Button"),
 		  m_Credits_Button("Credits_Button"), m_Done_Button("Done_Button")
 	{
 		SubscribeToControlEvents();
 
+		m_Title_Label.SetText("Options");
+		m_Title_Label.SetTextAlignment(Font::eTextAlignment::Center);
+
 		m_FOV_Button.SetText("FOV...");
 		m_FOV_Button.SetEnabled(false);
+
 		m_Online_Button.SetText("Online...");
 		m_Online_Button.SetEnabled(false);
+
 		m_SkinCustomization_Button.SetText("Skin Customization...");
 		m_SkinCustomization_Button.SetEnabled(false);
+
 		m_MusicAndSounds_Button.SetText("Music & Sounds...");
 		m_MusicAndSounds_Button.SetEnabled(false);
+
 		m_VideoSettings_Button.SetText("Video Settings...");
 		m_VideoSettings_Button.SetEnabled(false);
+
 		m_Controls_Button.SetText("Controls...");
 		m_Controls_Button.SetEnabled(false);
+
 		m_Language_Button.SetText("Language...");
 		m_Language_Button.SetEnabled(false);
+
 		m_ChatSettings_Button.SetText("Chat Settings...");
 		m_ChatSettings_Button.SetEnabled(false);
+
 		m_ResourcePacks_Button.SetText("Resource Packs...");
-		m_ResourcePacks_Button.SetEnabled(false);
+
 		m_AccessibilitySettings_Button.SetText("Accessibility Settings...");
 		m_AccessibilitySettings_Button.SetEnabled(false);
+
 		m_Telemetry_Button.SetText("Telemetry Data...");
 		m_Telemetry_Button.SetEnabled(false);
+
 		m_Credits_Button.SetText("Credits & Attribution...");
 		m_Credits_Button.SetEnabled(false);
+
 		m_Done_Button.SetText("Done");
 	}
 
@@ -56,38 +70,32 @@ namespace onion::voxel
 		}
 
 		// ---- Constants for Layout ----
-		glm::vec2 buttonSizeRatio{0.415f, 0.08f};
+		constexpr glm::vec2 buttonSizeRatio{0.415f, 0.08f};
 		glm::vec2 buttonSize{buttonSizeRatio.x * s_ScreenWidth, buttonSizeRatio.y * s_ScreenHeight};
-		float buttonYSpacingRatio = 94.f / 1009.f;
-		float firstButtonYPosRatio = 486.f / 1009.f;
+		constexpr float buttonYSpacingRatio = 94.f / 1009.f;
+		constexpr float firstButtonYPosRatio = 486.f / 1009.f;
 
 		// ---- Menu Title ----
-		const std::string titleText = "Options";
-		float menuYOffsetRatio = (85.f - 23.f) / 1009.f;
-		glm::vec2 textPosition = {s_ScreenWidth / 2, s_ScreenHeight * menuYOffsetRatio};
-		float textHeight = s_ScreenHeight * (30.f / 1009.f);
-		glm::vec3 textColor{1.f, 1.f, 1.f};
-		float shadowOffset = textHeight / s_TextFont.GetGlyphSize().y;
-		glm::vec3 shadowColor{0.246f, 0.246f, 0.246f};
+		constexpr float menuYOffsetRatio = (85.f - 23.f) / 1009.f;
+		glm::vec2 labelPosition = {s_ScreenWidth / 2, s_ScreenHeight * menuYOffsetRatio};
+		float textHeight = s_ScreenHeight * (31.f / 1009.f);
 
-		glm::vec2 shadowOffsetVec{shadowOffset, shadowOffset};
-
-		s_TextFont.RenderText(
-			titleText, Font::eTextAlignment::Center, textPosition + shadowOffsetVec, textHeight, shadowColor, 0.1f);
-		s_TextFont.RenderText(titleText, Font::eTextAlignment::Center, textPosition, textHeight, textColor, 0.2f);
+		m_Title_Label.SetPosition(labelPosition);
+		m_Title_Label.SetTextHeight(textHeight);
+		m_Title_Label.Render();
 
 		// ---- Prepare Layout for first 2 buttons ----
-		float tablesWidthRatio = 1229.f / 1920.f;
+		constexpr float tablesWidthRatio = 1229.f / 1920.f;
 		float tablesWidth = s_ScreenWidth * tablesWidthRatio;
-		float table1HeightRatio = 79.f / 1009.f;
+		constexpr float table1HeightRatio = 79.f / 1009.f;
 		float table1Height = s_ScreenHeight * table1HeightRatio;
 
-		float horizontalSpacingRatios = 33.f / 1920.f;
+		constexpr float horizontalSpacingRatios = 33.f / 1920.f;
 		float horizontalSpacings = s_ScreenWidth * horizontalSpacingRatios;
-		float verticalSpacingRatios = 17.f / 1009.f;
+		constexpr float verticalSpacingRatios = 17.f / 1009.f;
 		float verticalSpacings = s_ScreenHeight * verticalSpacingRatios;
 
-		float table1TopRatio = 138.f / 1009.f;
+		constexpr float table1TopRatio = 138.f / 1009.f;
 
 		glm::ivec2 topLeftOfTable1{s_ScreenWidth * 0.5 - (tablesWidth / 2), s_ScreenHeight * table1TopRatio};
 
@@ -188,6 +196,7 @@ namespace onion::voxel
 
 	void OptionsPanel::Initialize()
 	{
+		m_Title_Label.Initialize();
 		m_FOV_Button.Initialize();
 		m_Online_Button.Initialize();
 		m_SkinCustomization_Button.Initialize();
@@ -207,6 +216,7 @@ namespace onion::voxel
 
 	void OptionsPanel::Delete()
 	{
+		m_Title_Label.Delete();
 		m_FOV_Button.Delete();
 		m_Online_Button.Delete();
 		m_SkinCustomization_Button.Delete();

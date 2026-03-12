@@ -11,18 +11,34 @@ namespace onion::voxel
 	MainMenuPanel::MainMenuPanel(const std::string& name)
 		: GuiElement(name), m_Title_Sprite("Title", m_SpriteTitlePath.string()), m_Singleplayer_Button("Singleplayer"),
 		  m_Multiplayer_Button("Multiplayer"), m_DemoPanel_Button("Demo Panel"), m_Options_Button("Options"),
-		  m_QuitGame_Button("Quit Game")
+		  m_QuitGame_Button("Quit Game"), m_SplashText_Label("Splash Text"), m_Version_Label("Version"),
+		  m_Copyright_Label("Copyright")
 	{
 		SubscribeToControlEvents();
 		LoadSplashes();
 		CycleSplashText();
 
 		m_Singleplayer_Button.SetText("Singleplayer");
+
 		m_Multiplayer_Button.SetText("Multiplayer");
 		m_Multiplayer_Button.SetEnabled(false);
+
 		m_DemoPanel_Button.SetText("Demo Panel");
+
 		m_Options_Button.SetText("Options...");
+
 		m_QuitGame_Button.SetText("Quit Game");
+
+		m_SplashText_Label.SetTextColor({1.f, 1.f, 0.0f, 1.f});
+		m_SplashText_Label.SetShadowColor({0.246f, 0.246f, 0.0f, 1.f});
+		m_SplashText_Label.SetRotationDegrees(-25.f);
+		m_SplashText_Label.SetTextAlignment(Font::eTextAlignment::Center);
+
+		m_Version_Label.SetText("Voxel::Onion " + CLIENT_VERSION);
+		m_Version_Label.SetTextAlignment(Font::eTextAlignment::Left);
+
+		m_Copyright_Label.SetText("Uses Mojang's assets, DO NOT DISTRIBUTE.");
+		m_Copyright_Label.SetTextAlignment(Font::eTextAlignment::Right);
 	}
 
 	MainMenuPanel::~MainMenuPanel()
@@ -78,7 +94,7 @@ namespace onion::voxel
 		float horizontalSpacing = 0.02f * tableWidth;
 		float verticalSpacing = 0;
 
-		float tableButtonYPosRatio = 780.f / 1009.f;
+		constexpr float tableButtonYPosRatio = 780.f / 1009.f;
 
 		glm::ivec2 topLeftOfTable{s_ScreenWidth * 0.5 - (tableWidth / 2), s_ScreenHeight * tableButtonYPosRatio};
 
@@ -98,67 +114,40 @@ namespace onion::voxel
 		m_QuitGame_Button.SetSize(cellSize);
 		m_QuitGame_Button.Render();
 
-		// ---- Render Version Text ----
-		std::string versionText = "Voxel::Onion " + CLIENT_VERSION;
-		float textX = s_ScreenHeight * 0.01f;
-		float textY = s_ScreenHeight * 0.97f;
+		// ---- Render Version Label ----
+		float LabelY = s_ScreenHeight * 0.97f;
 		float textHeight = s_ScreenHeight * (28.f / 1009.f);
-		glm::vec3 textColor{1.f, 1.f, 1.f};
-		float shadowOffset = textHeight / s_TextFont.GetGlyphSize().y;
-		glm::vec3 shadowColor{0.246f, 0.246f, 0.246f};
 
-		glm::vec2 textPos{textX, textY};
-		glm::vec2 shadowOffsetVec{shadowOffset, shadowOffset};
+		float versionLabelX = s_ScreenHeight * 0.01f;
+		glm::vec2 versionLabelPos{versionLabelX, LabelY};
 
-		s_TextFont.RenderText(
-			versionText, Font::eTextAlignment::Left, textPos + shadowOffsetVec, textHeight, shadowColor, 0.1f);
-		s_TextFont.RenderText(versionText, Font::eTextAlignment::Left, textPos, textHeight, textColor, 0.2f);
+		m_Version_Label.SetPosition(versionLabelPos);
+		m_Version_Label.SetTextHeight(textHeight);
+		m_Version_Label.Render();
 
-		// ---- Render Copyright Text ----
-		std::string copyrightText = "Uses Mojang's assets, DO NOT DISTRIBUTE.";
-		glm::ivec2 textSize = s_TextFont.MeasureText(copyrightText, textHeight);
-		float copyrightTextX = s_ScreenWidth - textSize.x - (s_ScreenWidth * 0.01f);
+		// ---- Render Copyright Label ----
+		float copyrightLabelX = s_ScreenWidth - (s_ScreenWidth * 0.01f);
+		glm::vec2 copyrightLabelPos{copyrightLabelX, LabelY};
 
-		glm::vec2 copyrightTextPos{copyrightTextX, textY};
-		glm::vec2 copyrightShadowOffsetVec{shadowOffset, shadowOffset};
+		m_Copyright_Label.SetPosition(copyrightLabelPos);
+		m_Copyright_Label.SetTextHeight(textHeight);
+		m_Copyright_Label.Render();
 
-		s_TextFont.RenderText(copyrightText,
-							  Font::eTextAlignment::Left,
-							  copyrightTextPos + copyrightShadowOffsetVec,
-							  textHeight,
-							  shadowColor,
-							  0.1f);
-		s_TextFont.RenderText(copyrightText, Font::eTextAlignment::Left, copyrightTextPos, textHeight, textColor, 0.2f);
-
-		// ---- Render Splash Text ----
+		// ---- Render Splash Label ----
 		if (!m_Splashes.empty())
 		{
 			const std::string& splashText = m_Splashes[m_CurrentSplashIndex];
 			float splashTextHeight = textHeight * m_SplashTextPulse.GetValue(glfwTime);
 			glm::ivec2 splashTextSize = s_TextFont.MeasureText(splashText, splashTextHeight);
-			float splashTextXratioCenter = 1420.f / 1920.f;
-			float splashTextYratioCenter = 267.f / 1009.f;
-			glm::vec3 splashTextColor{1.f, 1.f, 0.0f};
-			glm::vec3 splashTextShadowColor = {0.246f, 0.246f, 0.0f};
-			glm::vec2 textCenter = {s_ScreenWidth * splashTextXratioCenter, s_ScreenHeight * splashTextYratioCenter};
-			float rotationDeg = -25.f;
-			glm::vec2 shadowOffsetSplash = glm::vec2(splashTextHeight / s_TextFont.GetGlyphSize().y);
+			constexpr float splashTextXratioCenter = 1420.f / 1920.f;
+			constexpr float splashTextYratioCenter = 267.f / 1009.f;
+			glm::vec2 splashLabelCenter = {s_ScreenWidth * splashTextXratioCenter,
+										   s_ScreenHeight * splashTextYratioCenter};
 
-			s_TextFont.RenderText(splashText,
-								  Font::eTextAlignment::Center,
-								  textCenter + shadowOffsetSplash,
-								  splashTextHeight,
-								  splashTextShadowColor,
-								  0.1f,
-								  rotationDeg);
-
-			s_TextFont.RenderText(splashText,
-								  Font::eTextAlignment::Center,
-								  textCenter,
-								  splashTextHeight,
-								  splashTextColor,
-								  0.2f,
-								  rotationDeg);
+			m_SplashText_Label.SetText(splashText);
+			m_SplashText_Label.SetTextHeight(splashTextHeight);
+			m_SplashText_Label.SetPosition(splashLabelCenter);
+			m_SplashText_Label.Render();
 		}
 	}
 
@@ -171,6 +160,9 @@ namespace onion::voxel
 		m_DemoPanel_Button.Initialize();
 		m_Options_Button.Initialize();
 		m_QuitGame_Button.Initialize();
+		m_SplashText_Label.Initialize();
+		m_Copyright_Label.Initialize();
+		m_Version_Label.Initialize();
 
 		SetInitState(true);
 	}
@@ -184,6 +176,9 @@ namespace onion::voxel
 		m_DemoPanel_Button.Delete();
 		m_Options_Button.Delete();
 		m_QuitGame_Button.Delete();
+		m_SplashText_Label.Delete();
+		m_Copyright_Label.Delete();
+		m_Version_Label.Delete();
 
 		SetDeletedState(true);
 	}

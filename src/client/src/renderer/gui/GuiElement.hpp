@@ -30,6 +30,8 @@ namespace onion::voxel
 		Controls,
 	};
 
+	std::string GetMenuName(eMenu menu);
+
 	class GuiElement
 	{
 		// ----- Constructor / Destructor -----
@@ -69,7 +71,9 @@ namespace onion::voxel
 		// ----- State Management -----
 	  protected:
 		void SetInitState(bool state);
+		bool HasBeenInit() const;
 		void SetDeletedState(bool state);
+		bool HasBeenDeleted() const;
 
 		// ----- Static Resources ----- (shared across all GUI elements)
 	  protected:
@@ -78,6 +82,10 @@ namespace onion::voxel
 		static glm::mat4 s_ProjectionMatrix;
 		static int s_ScreenWidth;
 		static int s_ScreenHeight;
+
+		static inline glm::vec3 s_ColorMainText{1.f, 1.f, 1.f};
+		static inline glm::vec3 s_ColorSecondaryText{0.5f, 0.5f, 0.5f};
+		static inline glm::vec3 s_ColorTertiaryText{0.333f, 0.333f, 0.333f};
 
 		static inline std::atomic_int s_GuiScale = 4;
 

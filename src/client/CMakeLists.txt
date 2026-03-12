@@ -32,16 +32,19 @@ add_executable(OnionVoxel
 
 	"src/renderer/gui/Gui.cpp"
 	"src/renderer/gui/GuiElement.cpp"
-	"src/renderer/gui/controls/button/Button.cpp"
 
-	"src/renderer/gui/layouts/demo_panel/DemoPanel.cpp"
-	"src/renderer/gui/layouts/main_menu_panel/MainMenuPanel.cpp"
-	"src/renderer/gui/layouts/pause_panel/PausePanel.cpp"
-	"src/renderer/gui/layouts/options/OptionsPanel.cpp"
-
-	"src/renderer/gui/font/Font.cpp"
-	"src/renderer/gui/controls/sprite/Sprite.cpp"
 	"src/renderer/gui/nine_slice_sprite/NineSliceSprite.cpp"
+	"src/renderer/gui/font/Font.cpp"
+
+	"src/renderer/gui/controls/button/Button.cpp"
+	"src/renderer/gui/controls/sprite/Sprite.cpp"
+	"src/renderer/gui/controls/label/Label.cpp"
+
+	"src/renderer/gui/panels/demo_panel/DemoPanel.cpp"
+	"src/renderer/gui/panels/main_menu_panel/MainMenuPanel.cpp"
+	"src/renderer/gui/panels/pause_panel/PausePanel.cpp"
+	"src/renderer/gui/panels/options_panel/OptionsPanel.cpp"
+	"src/renderer/gui/panels/resource_packs_panel/ResourcePacksPanel.cpp"
 
 	"src/renderer/world_renderer/WorldRenderer.cpp"
 	"src/renderer/camera/Camera.cpp"
@@ -57,7 +60,8 @@ add_executable(OnionVoxel
 
 	"src/renderer/skybox/Skybox.cpp"
 
-)
+
+ "src/renderer/gui/controls/checkbox/Checkbox.cpp" "src/renderer/gui/panels/resource_packs_panel/ResourcePackTile.cpp")
 
 if (WIN32)
     target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)

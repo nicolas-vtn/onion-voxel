@@ -3,6 +3,7 @@
 #include "../../../utils/SinusPulseGenerator.hpp"
 #include "../../GuiElement.hpp"
 #include "../../controls/button/Button.hpp"
+#include "../../controls/label/Label.hpp"
 #include "../../controls/sprite/Sprite.hpp"
 
 namespace onion::voxel
@@ -40,6 +41,9 @@ namespace onion::voxel
 		Button m_DemoPanel_Button;
 		Button m_Options_Button;
 		Button m_QuitGame_Button;
+		Label m_SplashText_Label;
+		Label m_Version_Label;
+		Label m_Copyright_Label;
 
 		// ----- Internal Values -----
 	  private:

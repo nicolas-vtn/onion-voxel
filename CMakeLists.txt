@@ -22,6 +22,7 @@ include(FetchImGui)
 include(FetchENet)
 include(FetchCereal)
 include(FetchFastNoiseLite)
+include(FetchMiniz)
 
 add_subdirectory(external/glad)
 

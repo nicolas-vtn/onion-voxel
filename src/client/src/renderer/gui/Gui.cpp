@@ -18,7 +18,7 @@ namespace onion::voxel
 
 	Gui::Gui()
 		: m_DemoPanel("DemoPanel"), m_MainMenuPanel("MainMenuPanel"), m_PausePanel("PausePanel"),
-		  m_OptionsPanel("OptionsPanel")
+		  m_OptionsPanel("OptionsPanel"), m_ResourcePacksPanel("ResourcePacksPanel")
 	{
 		SubscribeToPannelsEvents();
 	}
@@ -56,6 +56,12 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_OptionsPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																				{ Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_ResourcePacksPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
+																					  { Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_ResourcePacksPanel.RequestResourcePackChange.Subscribe(
+			[this](const std::string& resourcePackName) { Handle_ResourcePackChangeRequest(resourcePackName); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -97,6 +103,12 @@ namespace onion::voxel
 		GoBackToPreviousMenu();
 	}
 
+	void Gui::Handle_ResourcePackChangeRequest(const std::string& resourcePackName)
+	{
+		std::cout << "Selected Resource Pack: " << resourcePackName << std::endl;
+		SelectedResourcePackName = resourcePackName;
+	}
+
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)
 	{
 		GuiElement::SetInputsSnapshot(inputsSnapshot);
@@ -111,29 +123,7 @@ namespace onion::voxel
 	{
 		ImGui::Begin("Gui");
 
-		ImGui::Text("Active Menu: %s",
-					[this]()
-					{
-						switch (GetActiveMenu())
-						{
-							case eMenu::DemoPanel:
-								return "Demo Panel";
-							case eMenu::MainMenu:
-								return "Main Menu";
-							case eMenu::Singleplayer:
-								return "Singleplayer";
-							case eMenu::Multiplayer:
-								return "Multiplayer";
-							case eMenu::Options:
-								return "Settings";
-							case eMenu::Gameplay:
-								return "Gameplay";
-							case eMenu::Pause:
-								return "Pause Menu";
-							default:
-								return "None";
-						}
-					}());
+		ImGui::Text("Active Menu: %s", GetMenuName(GetActiveMenu()).c_str());
 
 		// ----- GuiElement Debug -----
 		if (ImGui::CollapsingHeader("GuiElement", ImGuiTreeNodeFlags_DefaultOpen))
@@ -149,7 +139,7 @@ namespace onion::voxel
 		ImGui::End();
 	}
 
-	void Gui::SetActiveMenu(eMenu menu)
+	void Gui::SetActiveMenu(eMenu menu, bool withHistory)
 	{
 		// Lock both mutexes to ensure thread safety when modifying the active menu and menu history.
 		std::lock_guard lock(m_MutexState);
@@ -165,13 +155,16 @@ namespace onion::voxel
 		}
 		else
 		{
-			// If we are navigating to a different menu, add the previous menu to the history stack.
-			if (previousMenu != eMenu::None && previousMenu != m_ActiveMenu)
+			if (withHistory)
 			{
-				// Avoid pushing the same menu multiple times.
-				if (m_MenuHistory.empty() || m_MenuHistory.top() != previousMenu)
+				// If we are navigating to a different menu, add the previous menu to the history stack.
+				if (previousMenu != eMenu::None && previousMenu != m_ActiveMenu)
 				{
-					m_MenuHistory.push(previousMenu);
+					// Avoid pushing the same menu multiple times.
+					if (m_MenuHistory.empty() || m_MenuHistory.top() != previousMenu)
+					{
+						m_MenuHistory.push(previousMenu);
+					}
 				}
 			}
 		}
@@ -180,6 +173,12 @@ namespace onion::voxel
 		if (m_ActiveMenu == eMenu::MainMenu)
 		{
 			m_MainMenuPanel.CycleSplashText();
+		}
+
+		if (m_ActiveMenu == eMenu::ResourcePacks)
+		{
+			m_ResourcePacksPanel.ScanResourcePacksFolder();
+			m_ResourcePacksPanel.SetCurrentlySelectedResourcePack(SelectedResourcePackName);
 		}
 	}
 
@@ -201,7 +200,7 @@ namespace onion::voxel
 			}
 		}
 
-		SetActiveMenu(targetMenu);
+		SetActiveMenu(targetMenu, false);
 	}
 
 	eMenu Gui::GetActiveMenu() const
@@ -226,6 +225,7 @@ namespace onion::voxel
 		m_MainMenuPanel.Initialize();
 		m_PausePanel.Initialize();
 		m_OptionsPanel.Initialize();
+		m_ResourcePacksPanel.Initialize();
 	}
 
 	void Gui::Render()
@@ -256,6 +256,9 @@ namespace onion::voxel
 			case eMenu::Options:
 				m_OptionsPanel.Render();
 				break;
+			case eMenu::ResourcePacks:
+				m_ResourcePacksPanel.Render();
+				break;
 			default:
 				break;
 		}
@@ -270,6 +273,7 @@ namespace onion::voxel
 		m_MainMenuPanel.Delete();
 		m_PausePanel.Delete();
 		m_OptionsPanel.Delete();
+		m_ResourcePacksPanel.Delete();
 	}
 
 } // namespace onion::voxel

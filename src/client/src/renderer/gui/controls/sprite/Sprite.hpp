@@ -17,6 +17,7 @@ namespace onion::voxel
 		// ----- Constructor / Destructor -----
 	  public:
 		Sprite(const std::string& name, const std::string& spritePath);
+		Sprite(const std::string& name, Texture texture);
 		~Sprite();
 
 		// ----- Public API -----

@@ -1,9 +1,10 @@
 #pragma once
 
-#include "layouts/demo_panel/DemoPanel.hpp"
-#include "layouts/main_menu_panel/MainMenuPanel.hpp"
-#include "layouts/options/OptionsPanel.hpp"
-#include "layouts/pause_panel/PausePanel.hpp"
+#include "panels/demo_panel/DemoPanel.hpp"
+#include "panels/main_menu_panel/MainMenuPanel.hpp"
+#include "panels/options_panel/OptionsPanel.hpp"
+#include "panels/pause_panel/PausePanel.hpp"
+#include "panels/resource_packs_panel/ResourcePacksPanel.hpp"
 
 #include <memory>
 #include <mutex>
@@ -31,7 +32,7 @@ namespace onion::voxel
 
 		// ----- Getters / Setters -----
 	  public:
-		void SetActiveMenu(eMenu menu);
+		void SetActiveMenu(eMenu menu, bool withHistory = true);
 		void GoBackToPreviousMenu();
 		eMenu GetActiveMenu() const;
 		void SetGuiScale(int scale);
@@ -51,6 +52,7 @@ namespace onion::voxel
 		MainMenuPanel m_MainMenuPanel;
 		PausePanel m_PausePanel;
 		OptionsPanel m_OptionsPanel;
+		ResourcePacksPanel m_ResourcePacksPanel;
 
 		// ----- Panel Events Handling -----
 	  private:
@@ -63,6 +65,7 @@ namespace onion::voxel
 		void Handle_BackToGameRequest(const GuiElement* sender);
 		void Handle_QuitToMainMenuRequest(const GuiElement* sender);
 		void Handle_BackRequest(const GuiElement* sender);
+		void Handle_ResourcePackChangeRequest(const std::string& resourcePackName);
 
 		// ----- Set Static States -----
 	  public:

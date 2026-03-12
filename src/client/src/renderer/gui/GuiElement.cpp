@@ -8,6 +8,35 @@
 namespace onion::voxel
 {
 
+	std::string GetMenuName(eMenu menu)
+	{
+		switch (menu)
+		{
+			case eMenu::DemoPanel:
+				return "Demo Panel";
+			case eMenu::MainMenu:
+				return "Main Menu";
+			case eMenu::Singleplayer:
+				return "Singleplayer";
+			case eMenu::Multiplayer:
+				return "Multiplayer";
+			case eMenu::Options:
+				return "Settings";
+			case eMenu::Gameplay:
+				return "Gameplay";
+			case eMenu::Pause:
+				return "Pause Menu";
+			case eMenu::MusicAndSounds:
+				return "Music & Sounds";
+			case eMenu::ResourcePacks:
+				return "Resource Packs";
+			case eMenu::Controls:
+				return "Controls";
+			default:
+				return "None";
+		}
+	}
+
 	// -------- Static Member Definitions --------
 
 	Shader GuiElement::s_ShaderSprites(GetAssetsPath() / "shaders/sprite.vert",
@@ -101,9 +130,19 @@ namespace onion::voxel
 		m_HasBeenInit.store(state);
 	}
 
+	bool GuiElement::HasBeenInit() const
+	{
+		return m_HasBeenInit;
+	}
+
 	void GuiElement::SetDeletedState(bool state)
 	{
 		m_HasBeenDeleted.store(state);
+	}
+
+	bool GuiElement::HasBeenDeleted() const
+	{
+		return m_HasBeenDeleted;
 	}
 
 	void GuiElement::SetGuiScale(int scale)
