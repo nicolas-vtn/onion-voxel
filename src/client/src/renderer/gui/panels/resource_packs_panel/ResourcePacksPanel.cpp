@@ -43,10 +43,10 @@ namespace onion::voxel
 	void ResourcePacksPanel::Render()
 	{
 		// Delete any resource pack infos that need to be deleted
-		ResourcePackInfo infoToDelete;
-		while (m_ResourcePacksInfosToDelete.TryPop(infoToDelete))
+		std::unique_ptr<ResourcePackTile> tileToDelete;
+		while (m_ResourcePackTilesToDelete.TryPop(tileToDelete))
 		{
-			infoToDelete.Thumbnail->Delete();
+			tileToDelete->Delete();
 		}
 
 		if (s_IsBackPressed)
@@ -79,6 +79,23 @@ namespace onion::voxel
 		m_Description_Label.SetPosition(textDescPosition);
 		m_Description_Label.SetTextHeight(textHeight);
 		m_Description_Label.Render();
+
+		// ---- Render Resource Pack Tiles ----
+		{
+			std::lock_guard lock(m_MutexResourcePacks);
+			float firstYratio = 0.35f;
+			float currentY = s_ScreenHeight * firstYratio;
+			float tileHeightRatio = 0.13f;
+			float tileWidthRatio = 0.6f;
+			glm::vec2 tileSize{s_ScreenWidth * tileWidthRatio, s_ScreenHeight * tileHeightRatio};
+			for (const auto& resourcePackTile : m_ResourcePacksTiles)
+			{
+				resourcePackTile->SetPosition({middleX, currentY});
+				resourcePackTile->SetSize(tileSize);
+				resourcePackTile->Render();
+				currentY += tileSize.y * 1.1f; // Add some spacing between tiles
+			}
+		}
 
 		// ---- Prepare Layout for first 2 buttons ----
 		constexpr float tablesWidthRatio = 1229.f / 1920.f;
@@ -130,6 +147,15 @@ namespace onion::voxel
 		m_OpenPackFolder_Button.Delete();
 		m_Done_Button.Delete();
 
+		{
+			std::lock_guard lock(m_MutexResourcePacks);
+			for (auto& resourcePackTile : m_ResourcePacksTiles)
+			{
+				resourcePackTile->Delete();
+			}
+			m_ResourcePacksTiles.clear();
+		}
+
 		SetDeletedState(true);
 	}
 
@@ -165,12 +191,15 @@ namespace onion::voxel
 			std::vector<unsigned char> thumbnailData = zip.GetFileData("pack.png");
 			Texture thumbnail(thumbnailName, thumbnailData);
 
-			ResourcePackInfo resourcePackInfo{
-				resourcePackName, packDescription, std::make_unique<Sprite>(thumbnailName, std::move(thumbnail))};
+			std::unique_ptr<ResourcePackTile> resourcePackTile =
+				std::make_unique<ResourcePackTile>(resourcePackName, std::move(thumbnail));
+
+			resourcePackTile->SetResourcePackName(resourcePackName);
+			resourcePackTile->SetResourcePackDescription(packDescription);
 
 			{
 				std::lock_guard lock(m_MutexResourcePacks);
-				m_ResourcePacks.push_back(std::move(resourcePackInfo));
+				m_ResourcePacksTiles.push_back(std::move(resourcePackTile));
 			}
 		}
 
@@ -178,16 +207,16 @@ namespace onion::voxel
 		{
 			std::lock_guard lock(m_MutexResourcePacks);
 
-			auto it = m_ResourcePacks.begin();
-			while (it != m_ResourcePacks.end())
+			auto it = m_ResourcePacksTiles.begin();
+			while (it != m_ResourcePacksTiles.end())
 			{
-				if (!packsOnDisk.contains(it->Name))
+				if (!packsOnDisk.contains((*it)->GetResourcePackName()))
 				{
 					// Move the pack to the deletion queue
-					m_ResourcePacksInfosToDelete.Push(std::move(*it));
+					m_ResourcePackTilesToDelete.Push(std::move(*it));
 
 					// Remove from vector
-					it = m_ResourcePacks.erase(it);
+					it = m_ResourcePacksTiles.erase(it);
 				}
 				else
 				{
@@ -222,9 +251,9 @@ namespace onion::voxel
 	bool ResourcePacksPanel::ContainsResourcePack(const std::string& resourcePackName) const
 	{
 		std::lock_guard lock(m_MutexResourcePacks);
-		for (const auto& resourcePack : m_ResourcePacks)
+		for (const auto& resourcePack : m_ResourcePacksTiles)
 		{
-			if (resourcePack.Name == resourcePackName)
+			if (resourcePack->GetResourcePackName() == resourcePackName)
 			{
 				return true;
 			}

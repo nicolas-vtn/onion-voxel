@@ -61,7 +61,7 @@ add_executable(OnionVoxel
 	"src/renderer/skybox/Skybox.cpp"
 
 
- "src/renderer/gui/controls/checkbox/Checkbox.cpp")
+ "src/renderer/gui/controls/checkbox/Checkbox.cpp" "src/renderer/gui/panels/resource_packs_panel/ResourcePackTile.cpp")
 
 if (WIN32)
     target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)

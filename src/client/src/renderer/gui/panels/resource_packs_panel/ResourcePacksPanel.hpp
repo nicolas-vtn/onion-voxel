@@ -12,6 +12,8 @@
 #include "../../controls/label/Label.hpp"
 #include "../../controls/sprite/Sprite.hpp"
 
+#include "ResourcePackTile.hpp"
+
 namespace onion::voxel
 {
 	class ResourcePacksPanel : public GuiElement
@@ -32,15 +34,6 @@ namespace onion::voxel
 		// ----- Public Events -----
 	  public:
 		Event<const GuiElement*> RequestBackNavigation;
-
-		// ----- Internal Structs -----
-	  private:
-		struct ResourcePackInfo
-		{
-			std::string Name;
-			std::string Description;
-			std::unique_ptr<Sprite> Thumbnail;
-		};
 
 		// ----- Controls -----
 	  private:
@@ -63,9 +56,9 @@ namespace onion::voxel
 		Timer m_TimerScanResourcePacksFolder;
 
 		mutable std::mutex m_MutexResourcePacks;
-		std::vector<ResourcePackInfo> m_ResourcePacks;
+		std::vector<std::unique_ptr<ResourcePackTile>> m_ResourcePacksTiles;
 		bool ContainsResourcePack(const std::string& resourcePackName) const;
 
-		ThreadSafeQueue<ResourcePackInfo> m_ResourcePacksInfosToDelete;
+		ThreadSafeQueue<std::unique_ptr<ResourcePackTile>> m_ResourcePackTilesToDelete;
 	};
 } // namespace onion::voxel

@@ -71,7 +71,9 @@ namespace onion::voxel
 		// ----- State Management -----
 	  protected:
 		void SetInitState(bool state);
+		bool HasBeenInit() const;
 		void SetDeletedState(bool state);
+		bool HasBeenDeleted() const;
 
 		// ----- Static Resources ----- (shared across all GUI elements)
 	  protected:

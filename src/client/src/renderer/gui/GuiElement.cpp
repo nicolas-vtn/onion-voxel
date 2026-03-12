@@ -130,9 +130,19 @@ namespace onion::voxel
 		m_HasBeenInit.store(state);
 	}
 
+	bool GuiElement::HasBeenInit() const
+	{
+		return m_HasBeenInit;
+	}
+
 	void GuiElement::SetDeletedState(bool state)
 	{
 		m_HasBeenDeleted.store(state);
+	}
+
+	bool GuiElement::HasBeenDeleted() const
+	{
+		return m_HasBeenDeleted;
 	}
 
 	void GuiElement::SetGuiScale(int scale)
