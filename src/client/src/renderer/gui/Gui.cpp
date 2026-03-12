@@ -114,29 +114,7 @@ namespace onion::voxel
 	{
 		ImGui::Begin("Gui");
 
-		ImGui::Text("Active Menu: %s",
-					[this]()
-					{
-						switch (GetActiveMenu())
-						{
-							case eMenu::DemoPanel:
-								return "Demo Panel";
-							case eMenu::MainMenu:
-								return "Main Menu";
-							case eMenu::Singleplayer:
-								return "Singleplayer";
-							case eMenu::Multiplayer:
-								return "Multiplayer";
-							case eMenu::Options:
-								return "Settings";
-							case eMenu::Gameplay:
-								return "Gameplay";
-							case eMenu::Pause:
-								return "Pause Menu";
-							default:
-								return "None";
-						}
-					}());
+		ImGui::Text("Active Menu: %s", GetMenuName(GetActiveMenu()).c_str());
 
 		// ----- GuiElement Debug -----
 		if (ImGui::CollapsingHeader("GuiElement", ImGuiTreeNodeFlags_DefaultOpen))
@@ -186,6 +164,11 @@ namespace onion::voxel
 		if (m_ActiveMenu == eMenu::MainMenu)
 		{
 			m_MainMenuPanel.CycleSplashText();
+		}
+
+		if (m_ActiveMenu == eMenu::ResourcePacks)
+		{
+			m_ResourcePacksPanel.ScanResourcePacksFolder();
 		}
 	}
 

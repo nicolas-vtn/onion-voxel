@@ -61,7 +61,7 @@ namespace onion::voxel
 		// ---- Render Menu Title ----
 		constexpr float menuYOffsetRatio = (200.f - 23.f) / 1009.f;
 		glm::vec2 textPosition = {s_ScreenWidth / 2, s_ScreenHeight * menuYOffsetRatio};
-		float textHeight = s_ScreenHeight * (30.f / 1009.f);
+		float textHeight = s_ScreenHeight * (31.f / 1009.f);
 
 		m_Title_Label.SetPosition(textPosition);
 		m_Title_Label.SetTextHeight(textHeight);

@@ -89,6 +89,11 @@ namespace onion::voxel
 		return m_TextAlignment;
 	}
 
+	void Label::SetTextColor(const glm::vec3& color)
+	{
+		SetTextColor(glm::vec4(color, 1.f));
+	}
+
 	void Label::SetTextColor(const glm::vec4& color)
 	{
 		std::lock_guard lock(m_MutexState);

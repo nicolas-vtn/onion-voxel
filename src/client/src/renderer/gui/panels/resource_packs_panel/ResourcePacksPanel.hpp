@@ -1,5 +1,7 @@
 #pragma once
 
+#include <onion/Timer.hpp>
+
 #include "../../GuiElement.hpp"
 #include "../../controls/button/Button.hpp"
 #include "../../controls/label/Label.hpp"
@@ -19,13 +21,25 @@ namespace onion::voxel
 		void Initialize() override;
 		void Delete() override;
 
+		void ScanResourcePacksFolder();
+
 		// ----- Public Events -----
 	  public:
 		Event<const GuiElement*> RequestBackNavigation;
 
+		// ----- Internal Structs -----
+	  private:
+		struct ResourcePackInfo
+		{
+			std::string name;
+			std::string description;
+			Texture thumbnail;
+		};
+
 		// ----- Controls -----
 	  private:
 		Label m_Title_Label;
+		Label m_Description_Label;
 
 		Button m_OpenPackFolder_Button;
 		Button m_Done_Button;
@@ -37,5 +51,9 @@ namespace onion::voxel
 
 		void Handle_OpenPackFolder_Click(const Button& sender);
 		void Handle_Done_Click(const Button& sender);
+
+		// ----- Internal Members -----
+	  private:
+		Timer m_TimerScanResourcePacksFolder;
 	};
 } // namespace onion::voxel

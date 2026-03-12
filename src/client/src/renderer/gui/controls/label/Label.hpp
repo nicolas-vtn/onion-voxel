@@ -45,6 +45,10 @@ namespace onion::voxel
 		void SetTextAlignment(Font::eTextAlignment alignment);
 		Font::eTextAlignment GetTextAlignment() const;
 
+		/// @brief Sets the color of the text. The color is specified as a vec3. Red, Green, and Blue components should be in the range [0, 1]. Alpha is implicitly set to 1.
+		/// @param color The new color of the text.
+		void SetTextColor(const glm::vec3& color);
+
 		/// @brief Sets the color of the text. The color is specified as a vec4. Red, Green, Blue, and Alpha components should be in the range [0, 1]
 		/// @param color The new color of the text.
 		void SetTextColor(const glm::vec4& color);

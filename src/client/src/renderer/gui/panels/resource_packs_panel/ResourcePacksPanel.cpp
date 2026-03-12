@@ -8,13 +8,21 @@
 namespace onion::voxel
 {
 	ResourcePacksPanel::ResourcePacksPanel(const std::string& name)
-		: GuiElement(name), m_Title_Label("ResourcePacksTitle_Label"), m_OpenPackFolder_Button("OpenPackFolder_Button"),
+		: GuiElement(name), m_Title_Label("ResourcePacksTitle_Label"),
+		  m_Description_Label("ResourcePacksDescription_Label"), m_OpenPackFolder_Button("OpenPackFolder_Button"),
 		  m_Done_Button("Done_Button")
 	{
 		SubscribeToControlEvents();
 
+		m_TimerScanResourcePacksFolder.setElapsedPeriod(std::chrono::seconds(1));
+		m_TimerScanResourcePacksFolder.setTimeoutFunction([this]() { ScanResourcePacksFolder(); });
+
 		m_Title_Label.SetText("Select Resource Packs");
 		m_Title_Label.SetTextAlignment(Font::eTextAlignment::Center);
+
+		m_Description_Label.SetText("Place .zip texture packs in the folder. Open with the button below.");
+		m_Description_Label.SetTextAlignment(Font::eTextAlignment::Center);
+		m_Description_Label.SetTextColor(s_ColorSecondaryText);
 
 		m_OpenPackFolder_Button.SetText("Open Pack Folder");
 
@@ -30,6 +38,7 @@ namespace onion::voxel
 	{
 		if (s_IsBackPressed)
 		{
+			m_TimerScanResourcePacksFolder.Stop();
 			RequestBackNavigation.Trigger(this);
 			return;
 		}
@@ -42,13 +51,21 @@ namespace onion::voxel
 		float middleX = s_ScreenWidth * 0.5f;
 
 		// ---- Render Menu Title ----
-		constexpr float menuYOffsetRatio = 0.0320f;
-		glm::vec2 textPosition = {s_ScreenWidth / 2, s_ScreenHeight * menuYOffsetRatio};
-		float textHeight = s_ScreenHeight * (30.f / 1009.f);
+		constexpr float titleYOffsetRatio = 0.0320f;
+		glm::vec2 textTitlePosition = {s_ScreenWidth / 2, s_ScreenHeight * titleYOffsetRatio};
+		float textHeight = s_ScreenHeight * (31.f / 1009.f);
 
-		m_Title_Label.SetPosition(textPosition);
+		m_Title_Label.SetPosition(textTitlePosition);
 		m_Title_Label.SetTextHeight(textHeight);
 		m_Title_Label.Render();
+
+		// ---- Render Description Label ----
+		constexpr float descYOffsetRatio = 0.0833f;
+		glm::vec2 textDescPosition = {s_ScreenWidth / 2, s_ScreenHeight * descYOffsetRatio};
+
+		m_Description_Label.SetPosition(textDescPosition);
+		m_Description_Label.SetTextHeight(textHeight);
+		m_Description_Label.Render();
 
 		// ---- Prepare Layout for first 2 buttons ----
 		constexpr float tablesWidthRatio = 1229.f / 1920.f;
@@ -86,6 +103,7 @@ namespace onion::voxel
 	void ResourcePacksPanel::Initialize()
 	{
 		m_Title_Label.Initialize();
+		m_Description_Label.Initialize();
 		m_OpenPackFolder_Button.Initialize();
 		m_Done_Button.Initialize();
 
@@ -95,10 +113,41 @@ namespace onion::voxel
 	void ResourcePacksPanel::Delete()
 	{
 		m_Title_Label.Delete();
+		m_Description_Label.Delete();
 		m_OpenPackFolder_Button.Delete();
 		m_Done_Button.Delete();
 
 		SetDeletedState(true);
+	}
+
+	void ResourcePacksPanel::ScanResourcePacksFolder()
+	{
+		m_TimerScanResourcePacksFolder.Start();
+
+		const std::filesystem::path resourcePacksDirectory = GetResourcePacksDirectory();
+
+		std::cout << "Scanning Resource Packs Folder: " << resourcePacksDirectory << std::endl;
+
+		for (auto& entry : std::filesystem::directory_iterator(resourcePacksDirectory))
+		{
+			if (entry.path().extension() == ".zip")
+			{
+				std::string resourcePackName = entry.path().stem().string();
+
+				// Read "pack.mcmeta" text file from the zip.
+				std::string packDescription;
+				// ... To Do
+
+				// Read "pack.png" image file from the zip and create a thumbnail texture.
+				// ... To Do
+				std::string thumbnailName = resourcePackName + ".pack.png";
+				std::vector<unsigned char> thumbnailData; // Load the thumbnail data from the zip file.
+				int width = 0, height = 0, channels = 0;
+				Texture thumbnail(thumbnailName, thumbnailData, width, height, channels);
+
+				ResourcePackInfo resourcePackInfo{resourcePackName, packDescription, std::move(thumbnail)};
+			}
+		}
 	}
 
 	void ResourcePacksPanel::SubscribeToControlEvents()
@@ -119,6 +168,7 @@ namespace onion::voxel
 
 	void ResourcePacksPanel::Handle_Done_Click(const Button& sender)
 	{
+		m_TimerScanResourcePacksFolder.Stop();
 		RequestBackNavigation.Trigger(this);
 	}
 
