@@ -43,7 +43,6 @@ namespace onion::voxel
 		m_ChatSettings_Button.SetEnabled(false);
 
 		m_ResourcePacks_Button.SetText("Resource Packs...");
-		m_ResourcePacks_Button.SetEnabled(false);
 
 		m_AccessibilitySettings_Button.SetText("Accessibility Settings...");
 		m_AccessibilitySettings_Button.SetEnabled(false);

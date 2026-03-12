@@ -18,7 +18,7 @@ namespace onion::voxel
 
 	Gui::Gui()
 		: m_DemoPanel("DemoPanel"), m_MainMenuPanel("MainMenuPanel"), m_PausePanel("PausePanel"),
-		  m_OptionsPanel("OptionsPanel")
+		  m_OptionsPanel("OptionsPanel"), m_ResourcePacksPanel("ResourcePacksPanel")
 	{
 		SubscribeToPannelsEvents();
 	}
@@ -56,6 +56,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_OptionsPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																				{ Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_ResourcePacksPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
+																					  { Handle_BackRequest(sender); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -149,7 +152,7 @@ namespace onion::voxel
 		ImGui::End();
 	}
 
-	void Gui::SetActiveMenu(eMenu menu)
+	void Gui::SetActiveMenu(eMenu menu, bool withHistory)
 	{
 		// Lock both mutexes to ensure thread safety when modifying the active menu and menu history.
 		std::lock_guard lock(m_MutexState);
@@ -165,13 +168,16 @@ namespace onion::voxel
 		}
 		else
 		{
-			// If we are navigating to a different menu, add the previous menu to the history stack.
-			if (previousMenu != eMenu::None && previousMenu != m_ActiveMenu)
+			if (withHistory)
 			{
-				// Avoid pushing the same menu multiple times.
-				if (m_MenuHistory.empty() || m_MenuHistory.top() != previousMenu)
+				// If we are navigating to a different menu, add the previous menu to the history stack.
+				if (previousMenu != eMenu::None && previousMenu != m_ActiveMenu)
 				{
-					m_MenuHistory.push(previousMenu);
+					// Avoid pushing the same menu multiple times.
+					if (m_MenuHistory.empty() || m_MenuHistory.top() != previousMenu)
+					{
+						m_MenuHistory.push(previousMenu);
+					}
 				}
 			}
 		}
@@ -201,7 +207,7 @@ namespace onion::voxel
 			}
 		}
 
-		SetActiveMenu(targetMenu);
+		SetActiveMenu(targetMenu, false);
 	}
 
 	eMenu Gui::GetActiveMenu() const
@@ -226,6 +232,7 @@ namespace onion::voxel
 		m_MainMenuPanel.Initialize();
 		m_PausePanel.Initialize();
 		m_OptionsPanel.Initialize();
+		m_ResourcePacksPanel.Initialize();
 	}
 
 	void Gui::Render()
@@ -256,6 +263,9 @@ namespace onion::voxel
 			case eMenu::Options:
 				m_OptionsPanel.Render();
 				break;
+			case eMenu::ResourcePacks:
+				m_ResourcePacksPanel.Render();
+				break;
 			default:
 				break;
 		}
@@ -270,6 +280,7 @@ namespace onion::voxel
 		m_MainMenuPanel.Delete();
 		m_PausePanel.Delete();
 		m_OptionsPanel.Delete();
+		m_ResourcePacksPanel.Delete();
 	}
 
 } // namespace onion::voxel

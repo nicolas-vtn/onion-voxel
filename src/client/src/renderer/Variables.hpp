@@ -56,4 +56,20 @@ namespace onion::voxel
 		return minecraftDataPath;
 	}
 
+	inline std::filesystem::path GetResourcePacksDirectory()
+	{
+		std::filesystem::path currentPath = std::filesystem::current_path();
+		std::filesystem::path resourcePacksPath = currentPath / "resourcepacks";
+
+		// Create the resource packs directory if it doesn't exist, since users will need to place their resource packs here.
+		std::filesystem::create_directories(resourcePacksPath);
+
+		if (!std::filesystem::exists(resourcePacksPath))
+		{
+			std::cerr << "WARNING: Resource packs directory not found at: " << resourcePacksPath << std::endl;
+			throw std::runtime_error("Resource packs directory not found at: " + resourcePacksPath.string());
+		}
+		return resourcePacksPath;
+	}
+
 } // namespace onion::voxel
