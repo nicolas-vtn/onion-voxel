@@ -14,9 +14,12 @@ namespace onion::voxel
 	Button::Button(const std::string& name)
 		: GuiElement(name), m_NineSliceSprite_Basic(name + "_9Slice_Basic", GetSpritePath_Basic()),
 		  m_NineSliceSprite_Disabled(name + "_9Slice_Disabled", GetSpritePath_Disabled()),
-		  m_NineSliceSprite_Highlighted(name + "_9Slice_Highlighted", GetSpritePath_Highlighted())
+		  m_NineSliceSprite_Highlighted(name + "_9Slice_Highlighted", GetSpritePath_Highlighted()),
+		  m_Label(name + "_Label")
 	{
 		SubscribeToSpriteEvents();
+
+		m_Label.SetTextAlignment(Font::eTextAlignment::Center);
 	}
 
 	Button::~Button() {}
@@ -51,38 +54,22 @@ namespace onion::voxel
 			m_NineSliceSprite_Disabled.Render();
 		}
 
-		// ----- Render Text -----
-		if (!m_Text.empty())
+		// ----- Render Label -----
+
+		glm::ivec2 size = GetSize();
+		if (m_IsPressed && m_IsEnabled)
 		{
-			glm::ivec2 size = GetSize();
-			if (m_IsPressed && m_IsEnabled)
-			{
-				size = glm::ivec2(glm::vec2(size) * m_ScaleFactorOnClick);
-			}
-
-			float textHeight = size.y / 2.5f;
-
-			glm::ivec2 textCenter = GetPosition();
-
-			// Render shadow
-			if (m_IsEnabled)
-			{
-				glm::ivec2 shadowOffset{textHeight / s_TextFont.GetGlyphSize().y,
-										textHeight / s_TextFont.GetGlyphSize().y};
-
-				glm::vec3 shadowColor = {0.246f, 0.246f, 0.246f};
-				s_TextFont.RenderText(
-					m_Text, Font::eTextAlignment::Center, textCenter + shadowOffset, textHeight, shadowColor, 0.1f);
-			}
-
-			// Render main text
-			glm::vec3 textColor = {1.f, 1.f, 1.f};
-			if (!m_IsEnabled)
-			{
-				textColor = {0.625f, 0.625f, 0.625f};
-			}
-			s_TextFont.RenderText(m_Text, Font::eTextAlignment::Center, textCenter, textHeight, textColor, 0.2f);
+			size = glm::ivec2(glm::vec2(size) * m_ScaleFactorOnClick);
 		}
+		float textHeight = size.y / 2.5f;
+
+		glm::ivec2 textCenter = GetPosition();
+
+		m_Label.SetPosition(textCenter);
+		m_Label.SetTextHeight(textHeight);
+		m_Label.EnableShadow(m_IsEnabled);
+
+		m_Label.Render();
 	}
 
 	void Button::Initialize()
@@ -90,6 +77,7 @@ namespace onion::voxel
 		m_NineSliceSprite_Basic.Initialize();
 		m_NineSliceSprite_Disabled.Initialize();
 		m_NineSliceSprite_Highlighted.Initialize();
+		m_Label.Initialize();
 
 		SetInitState(true);
 	}
@@ -99,21 +87,22 @@ namespace onion::voxel
 		m_NineSliceSprite_Basic.Delete();
 		m_NineSliceSprite_Disabled.Delete();
 		m_NineSliceSprite_Highlighted.Delete();
+		m_Label.Delete();
 
 		SetDeletedState(true);
 	}
 
 	void Button::SetText(const std::string& text)
 	{
-		if (text == m_Text)
+		if (m_Label.GetText() == text)
 			return;
 
-		m_Text = text;
+		m_Label.SetText(text);
 	}
 
 	std::string Button::GetText() const
 	{
-		return m_Text;
+		return m_Label.GetText();
 	}
 
 	void Button::SetSize(const glm::ivec2& size)

@@ -3,6 +3,7 @@
 #include "../../../texture/texture.hpp"
 #include "../../GuiElement.hpp"
 #include "../../nine_slice_sprite/NineSliceSprite.hpp"
+#include "../label/Label.hpp"
 
 #include <onion/Event.hpp>
 
@@ -66,13 +67,16 @@ namespace onion::voxel
 
 		// ----- Properties -----
 	  private:
-		std::string m_Text;
 		bool m_IsEnabled = true;
 
 		glm::ivec2 m_Position{0, 0};
 		glm::ivec2 m_Size{1, 1};
 		bool m_IsPressed = false;
 		float m_ScaleFactorOnClick = 0.95f;
+
+		// ----- Label -----
+	  private:
+		Label m_Label;
 
 		// ----- NineSliceSprites -----
 	  private:

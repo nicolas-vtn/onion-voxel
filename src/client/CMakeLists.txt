@@ -57,7 +57,7 @@ add_executable(OnionVoxel
 
 	"src/renderer/skybox/Skybox.cpp"
 
-)
+ "src/renderer/gui/controls/label/Label.cpp")
 
 if (WIN32)
     target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)
