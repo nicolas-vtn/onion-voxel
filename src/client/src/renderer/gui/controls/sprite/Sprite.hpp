@@ -14,9 +14,17 @@ namespace onion::voxel
 {
 	class Sprite : public GuiElement
 	{
+		// ----- Enums -----
+	  public:
+		enum class eOrigin
+		{
+			Asset,
+			ResourcePack
+		};
+
 		// ----- Constructor / Destructor -----
 	  public:
-		Sprite(const std::string& name, const std::string& spritePath);
+		Sprite(const std::string& name, const std::filesystem::path& spritePath, eOrigin origin);
 		Sprite(const std::string& name, Texture texture);
 		~Sprite();
 
@@ -25,6 +33,7 @@ namespace onion::voxel
 		void Render() override;
 		void Initialize() override;
 		void Delete() override;
+		void ReloadTextures() override;
 
 		// ----- Getters / Setters -----
 	  public:
@@ -37,10 +46,18 @@ namespace onion::voxel
 		int GetTextureWidth() const;
 		int GetTextureHeight() const;
 
+		void SetOrigin(eOrigin origin);
+		eOrigin GetOrigin() const;
+
+		void SwapTexture(Texture newTexture);
+
 		// ----- Properties -----
 	  public:
+		std::filesystem::path m_SpritePath;
 		glm::vec2 m_Position{0, 0};
 		glm::vec2 m_Size{1, 1};
+		eOrigin m_Origin = eOrigin::Asset;
+		bool m_UnreloadableTexture = false;
 
 		// ----- Texture -----
 	  private:

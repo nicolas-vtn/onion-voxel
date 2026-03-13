@@ -479,6 +479,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(
 			m_Gui.RequestQuitToMainMenu.Subscribe([this](bool quit) { Handle_QuitToMainMenuRequest(quit); }));
+
+		m_EventHandles.push_back(m_Gui.RequestResourcePackChange.Subscribe(
+			[this](const std::string& resourcePackName) { Handle_ResourcePackChangeRequest(resourcePackName); }));
 	}
 
 	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)
@@ -513,6 +516,14 @@ namespace onion::voxel
 
 			m_IsPaused = false;
 		}
+	}
+
+	void Renderer::Handle_ResourcePackChangeRequest(const std::string& resourcePackName)
+	{
+		EngineContext::Get().Assets->SetCurrentResourcePack(resourcePackName);
+
+		// Reload everything that uses assets
+		m_Gui.ReloadTextures();
 	}
 
 	void Renderer::InitImGui()

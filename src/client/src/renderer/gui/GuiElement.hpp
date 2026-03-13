@@ -8,6 +8,8 @@
 
 #include <onion/Event.hpp>
 
+#include <renderer/EngineContext.hpp>
+
 #include "../Variables.hpp"
 #include "../inputs_manager/inputs_manager.hpp"
 #include "../shader/shader.hpp"
@@ -44,6 +46,7 @@ namespace onion::voxel
 		virtual void Render() = 0;
 		virtual void Initialize() = 0;
 		virtual void Delete() = 0;
+		virtual void ReloadTextures() = 0;
 
 		// ----- Getters / Setters -----
 	  public:
@@ -94,6 +97,12 @@ namespace onion::voxel
 		// ----- Static Resources ----- (for text rendering)
 	  protected:
 		static Font s_TextFont;
+
+		static inline const std::filesystem::path s_BasePathGuiAssets =
+			std::filesystem::path("assets") / "minecraft" / "textures" / "gui";
+
+		static inline const std::filesystem::path s_PathFont =
+			std::filesystem::path("assets") / "minecraft" / "textures" / "font" / "ascii.png";
 
 		// ----- Instance Variables -----
 	  private:

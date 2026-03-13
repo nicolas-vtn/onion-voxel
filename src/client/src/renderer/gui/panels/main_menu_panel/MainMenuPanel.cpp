@@ -9,14 +9,12 @@
 namespace onion::voxel
 {
 	MainMenuPanel::MainMenuPanel(const std::string& name)
-		: GuiElement(name), m_Title_Sprite("Title", m_SpriteTitlePath.string()), m_Singleplayer_Button("Singleplayer"),
-		  m_Multiplayer_Button("Multiplayer"), m_DemoPanel_Button("Demo Panel"), m_Options_Button("Options"),
-		  m_QuitGame_Button("Quit Game"), m_SplashText_Label("Splash Text"), m_Version_Label("Version"),
-		  m_Copyright_Label("Copyright")
+		: GuiElement(name), m_Title_Sprite("Title", s_SpriteTitlePath, Sprite::eOrigin::Asset),
+		  m_Singleplayer_Button("Singleplayer"), m_Multiplayer_Button("Multiplayer"), m_DemoPanel_Button("Demo Panel"),
+		  m_Options_Button("Options"), m_QuitGame_Button("Quit Game"), m_SplashText_Label("Splash Text"),
+		  m_Version_Label("Version"), m_Copyright_Label("Copyright")
 	{
 		SubscribeToControlEvents();
-		LoadSplashes();
-		CycleSplashText();
 
 		m_Singleplayer_Button.SetText("Singleplayer");
 
@@ -153,6 +151,9 @@ namespace onion::voxel
 
 	void MainMenuPanel::Initialize()
 	{
+		LoadSplashes();
+		CycleSplashText();
+
 		m_Title_Sprite.Initialize();
 
 		m_Singleplayer_Button.Initialize();
@@ -183,6 +184,19 @@ namespace onion::voxel
 		SetDeletedState(true);
 	}
 
+	void MainMenuPanel::ReloadTextures()
+	{
+		m_Title_Sprite.ReloadTextures();
+		m_Singleplayer_Button.ReloadTextures();
+		m_Multiplayer_Button.ReloadTextures();
+		m_DemoPanel_Button.ReloadTextures();
+		m_Options_Button.ReloadTextures();
+		m_QuitGame_Button.ReloadTextures();
+		m_SplashText_Label.ReloadTextures();
+		m_Copyright_Label.ReloadTextures();
+		m_Version_Label.ReloadTextures();
+	}
+
 	void MainMenuPanel::CycleSplashText()
 	{
 		if (m_Splashes.empty())
@@ -199,11 +213,14 @@ namespace onion::voxel
 	void MainMenuPanel::LoadSplashes()
 	{
 		m_Splashes.clear();
-		std::ifstream file(m_SplashScreenTextPath);
 
-		if (!file.is_open())
+		std::string splashesContent = EngineContext::Get().Assets->GetFileText(s_SplashScreenTextPath);
+
+		std::istringstream file(splashesContent);
+
+		if (!file)
 		{
-			std::cerr << "Failed to open splashes file: " << m_SplashScreenTextPath << std::endl;
+			std::cerr << "Failed to open splashes file: " << s_SplashScreenTextPath << std::endl;
 			return;
 		}
 
@@ -215,8 +232,6 @@ namespace onion::voxel
 				m_Splashes.push_back(line);
 			}
 		}
-
-		file.close();
 	}
 
 	void MainMenuPanel::SubscribeToControlEvents()

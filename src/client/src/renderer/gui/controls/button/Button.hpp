@@ -26,6 +26,7 @@ namespace onion::voxel
 		void Initialize() override;
 		void Render() override;
 		void Delete() override;
+		void ReloadTextures() override;
 
 		// ----- Getters / Setters -----
 	  public:
@@ -86,9 +87,18 @@ namespace onion::voxel
 
 		// ----- Static Helpers -----
 	  private:
-		static std::filesystem::path GetSpritePath_Basic();
-		static std::filesystem::path GetSpritePath_Disabled();
-		static std::filesystem::path GetSpritePath_Highlighted();
+		static inline const std::filesystem::path s_SpritePathFromGui =
+			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "button.png";
+
+		static inline const std::filesystem::path s_SpritePathFromGui_Disabled =
+			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "button_disabled.png";
+
+		static inline const std::filesystem::path s_SpritePathFromGui_Highlighted =
+			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "button_highlighted.png";
+
+		//static std::filesystem::path GetSpritePath_Basic();
+		//static std::filesystem::path GetSpritePath_Disabled();
+		//static std::filesystem::path GetSpritePath_Highlighted();
 
 		// ----- DEBUG -----
 	  private:

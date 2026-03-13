@@ -3,11 +3,14 @@
 namespace onion::voxel
 {
 	Checkbox::Checkbox(const std::string& name)
-		: GuiElement(name), m_Checkbox_Sprite("Checkbox_Sprite", m_CheckboxSpritePath),
-		  m_CheckboxHighlighted_Sprite("CheckboxHighlighted_Sprite", m_CheckboxHighlightedSpritePath),
-		  m_CheckboxSelected_Sprite("CheckboxSelected_Sprite", m_CheckboxSelectedSpritePath),
+		: GuiElement(name), m_Checkbox_Sprite("Checkbox_Sprite", s_SpritePathFromGui, Sprite::eOrigin::ResourcePack),
+		  m_CheckboxHighlighted_Sprite(
+			  "CheckboxHighlighted_Sprite", s_SpritePathFromGui_Highlighted, Sprite::eOrigin::ResourcePack),
+		  m_CheckboxSelected_Sprite(
+			  "CheckboxSelected_Sprite", s_SpritePathFromGui_Selected, Sprite::eOrigin::ResourcePack),
 		  m_CheckboxSelectedHighlighted_Sprite("CheckboxSelectedHighlighted_Sprite",
-											   m_CheckboxSelectedHighlightedSpritePath)
+											   s_SpritePathFromGui_SelectedHighlighted,
+											   Sprite::eOrigin::ResourcePack)
 	{
 	}
 
@@ -50,6 +53,8 @@ namespace onion::voxel
 		m_CheckboxHighlighted_Sprite.Initialize();
 		m_CheckboxSelected_Sprite.Initialize();
 		m_CheckboxSelectedHighlighted_Sprite.Initialize();
+
+		SetInitState(true);
 	}
 
 	void Checkbox::Delete()
@@ -58,6 +63,16 @@ namespace onion::voxel
 		m_CheckboxHighlighted_Sprite.Delete();
 		m_CheckboxSelected_Sprite.Delete();
 		m_CheckboxSelectedHighlighted_Sprite.Delete();
+
+		SetDeletedState(true);
+	}
+
+	void Checkbox::ReloadTextures()
+	{
+		m_Checkbox_Sprite.ReloadTextures();
+		m_CheckboxHighlighted_Sprite.ReloadTextures();
+		m_CheckboxSelected_Sprite.ReloadTextures();
+		m_CheckboxSelectedHighlighted_Sprite.ReloadTextures();
 	}
 
 	void Checkbox::SetSize(const glm::vec2& size)

@@ -16,7 +16,7 @@ namespace onion::voxel
 	{
 		// ----- Constructor / Destructor -----
 	  public:
-		ResourcePackTile(const std::string& name, Texture texture);
+		ResourcePackTile(const std::string& name, Texture texture = Texture());
 		~ResourcePackTile();
 
 		// ----- Public API -----
@@ -24,6 +24,7 @@ namespace onion::voxel
 		void Render() override;
 		void Initialize() override;
 		void Delete() override;
+		void ReloadTextures() override;
 
 		// ----- Public Events -----
 	  public:
@@ -68,5 +69,8 @@ namespace onion::voxel
 		Sprite m_Thumbnail;
 		Label m_NameLabel;
 		Label m_DescriptionLabel;
+
+		static inline const std::filesystem::path s_DefaultResourcePackThumbnailPath =
+			std::filesystem::path("textures") / "default_pack.png";
 	};
 }; // namespace onion::voxel

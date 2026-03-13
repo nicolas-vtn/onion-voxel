@@ -20,6 +20,7 @@ namespace onion::voxel
 		void Render() override;
 		void Initialize() override;
 		void Delete() override;
+		void ReloadTextures() override;
 
 		void CycleSplashText();
 
@@ -30,8 +31,10 @@ namespace onion::voxel
 
 		// ----- Properties -----
 	  private:
-		std::filesystem::path m_SpriteTitlePath = GetAssetsPath() / "textures" / "OnionVoxelTitle2.png";
-		std::filesystem::path m_SplashScreenTextPath = GetMinecraftDataPath() / "texts" / "splashes.txt";
+		static inline const std::filesystem::path s_SpriteTitlePath =
+			std::filesystem::path("textures") / "OnionVoxelTitle2.png";
+		static inline const std::filesystem::path s_SplashScreenTextPath =
+			std::filesystem::path("minecraft") / "texts" / "splashes.txt";
 
 		// ----- Controls -----
 	  private:

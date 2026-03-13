@@ -11,11 +11,10 @@
 
 namespace onion::voxel
 {
-
 	NineSliceSprite::NineSliceSprite(const std::string& name, const std::filesystem::path& spritePath)
 		: GuiElement(name), m_PathSprite(spritePath)
 	{
-		LoadTextures(spritePath);
+		//LoadTextures(spritePath);
 	}
 
 	NineSliceSprite::~NineSliceSprite()
@@ -36,18 +35,17 @@ namespace onion::voxel
 
 		m_PathSprite = spritePath;
 
-		if (!std::filesystem::exists(spritePath))
-		{
-			std::cerr << "Error: Sprite file does not exist: " << spritePath << std::endl;
-			throw std::runtime_error("Sprite file does not exist: " + spritePath.string());
-		}
+		// Delete existing textures if they exist
+		DeleteTextures();
 
 		// Loads the texture
-		Texture loadedTexture(spritePath);
+		std::vector<unsigned char> spriteData = EngineContext::Get().Assets->GetResourcePackFileBinary(spritePath);
+		Texture loadedTexture(GetName() + "_Texture", spriteData);
 
 		// Loads Metadata
 		m_PathSpriteMetadata = spritePath.parent_path() / (spritePath.filename().string() + ".mcmeta");
-		m_NineSliceMetadata = ReadMetadataFromFile(m_PathSpriteMetadata);
+		std::string metadataContent = EngineContext::Get().Assets->GetResourcePackFileText(m_PathSpriteMetadata);
+		m_NineSliceMetadata = ReadMetadataFromContent(metadataContent);
 
 		// Get the pixel coordinates of the borders in the original texture
 		int x0 = 0;
@@ -76,6 +74,7 @@ namespace onion::voxel
 
 	void voxel::NineSliceSprite::Initialize()
 	{
+		LoadTextures(m_PathSprite);
 		GenerateBuffers();
 		InitBuffers();
 	}
@@ -159,17 +158,14 @@ namespace onion::voxel
 
 	void NineSliceSprite::Delete()
 	{
-		m_TextureTopLeft.Delete();
-		m_TextureTop.Delete();
-		m_TextureTopRight.Delete();
-		m_TextureLeft.Delete();
-		m_TextureCenter.Delete();
-		m_TextureRight.Delete();
-		m_TextureBottomLeft.Delete();
-		m_TextureBottom.Delete();
-		m_TextureBottomRight.Delete();
+		DeleteTextures();
 
 		DeleteBuffers();
+	}
+
+	void voxel::NineSliceSprite::ReloadTextures()
+	{
+		LoadTextures(m_PathSprite);
 	}
 
 	bool voxel::NineSliceSprite::IsHovered() const
@@ -224,6 +220,19 @@ namespace onion::voxel
 
 		m_Size = size;
 		m_MeshDirty = true;
+	}
+
+	void voxel::NineSliceSprite::DeleteTextures()
+	{
+		m_TextureTopLeft.Delete();
+		m_TextureTop.Delete();
+		m_TextureTopRight.Delete();
+		m_TextureLeft.Delete();
+		m_TextureCenter.Delete();
+		m_TextureRight.Delete();
+		m_TextureBottomLeft.Delete();
+		m_TextureBottom.Delete();
+		m_TextureBottomRight.Delete();
 	}
 
 	void NineSliceSprite::PullEvents()
@@ -536,23 +545,9 @@ namespace onion::voxel
 		m_Vertices_BottomRight.clear();
 	}
 
-	inline NineSliceSprite::NineSliceMetadata
-	NineSliceSprite::ReadMetadataFromFile(const std::filesystem::path& pathMetadataFile)
+	inline NineSliceSprite::NineSliceMetadata NineSliceSprite::ReadMetadataFromContent(const std::string& content)
 	{
-		if (!std::filesystem::exists(pathMetadataFile))
-		{
-			std::cerr << "Error: Sprite metadata file does not exist: " << pathMetadataFile << std::endl;
-			throw std::runtime_error("Sprite metadata file does not exist: " + pathMetadataFile.string());
-		}
-
-		std::ifstream file(pathMetadataFile);
-		if (!file.is_open())
-		{
-			throw std::runtime_error("Failed to open metadata file: " + pathMetadataFile.string());
-		}
-
-		nlohmann::json json;
-		file >> json;
+		nlohmann::json json = nlohmann::json::parse(content);
 
 		try
 		{
@@ -595,9 +590,31 @@ namespace onion::voxel
 		}
 		catch (const std::exception& e)
 		{
-			throw std::runtime_error("Invalid nine-slice metadata format in file: " + pathMetadataFile.string() +
+			throw std::runtime_error("Invalid nine-slice metadata format in file: " + content +
 									 " | Reason: " + e.what());
 		}
+	}
+
+	inline NineSliceSprite::NineSliceMetadata
+	NineSliceSprite::ReadMetadataFromFile(const std::filesystem::path& pathMetadataFile)
+	{
+		if (!std::filesystem::exists(pathMetadataFile))
+		{
+			std::cerr << "Error: Metadata file does not exist: " << pathMetadataFile << std::endl;
+			throw std::runtime_error("Metadata file does not exist: " + pathMetadataFile.string());
+		}
+
+		std::ifstream file(pathMetadataFile);
+		if (!file.is_open())
+		{
+			std::cerr << "Error: Failed to open metadata file: " << pathMetadataFile << std::endl;
+			throw std::runtime_error("Failed to open metadata file: " + pathMetadataFile.string());
+		}
+
+		std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		file.close();
+
+		return ReadMetadataFromContent(content);
 	}
 
 	void NineSliceSprite::BuildNineSliceMesh()

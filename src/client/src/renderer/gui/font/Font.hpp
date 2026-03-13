@@ -1,5 +1,7 @@
 #pragma once
 
+#include <renderer/EngineContext.hpp>
+
 #include "../../shader/shader.hpp"
 #include "../../texture/texture.hpp"
 
@@ -40,6 +42,8 @@ namespace onion::voxel
 		void Load();
 		/// @brief Deletes the font texture and OpenGL buffers. This should be called when the font is no longer needed to free up resources.
 		void Unload();
+		/// @brief Reloads the font textures.
+		void Reload();
 
 		/// @brief Sets the projection matrix to be used for rendering text. This should be called whenever the screen size changes to update the projection matrix accordingly.
 		static void SetProjectionMatrix(const glm::mat4& projection);

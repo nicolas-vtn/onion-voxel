@@ -159,6 +159,7 @@ namespace onion::voxel
 		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
 		void Handle_BackToGameRequest();
 		void Handle_QuitToMainMenuRequest(bool quit);
+		void Handle_ResourcePackChangeRequest(const std::string& resourcePackName);
 
 		// ----- ImGui -----
 	  private:

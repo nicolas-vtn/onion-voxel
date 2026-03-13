@@ -8,7 +8,7 @@ namespace onion::voxel
 {
 	inline const std::string CLIENT_VERSION = "0.1.0";
 
-	inline std::string SelectedResourcePackName = "Default";
+	//inline std::string SelectedResourcePackName = "Default";
 
 	inline std::filesystem::path GetAssetsPath()
 	{

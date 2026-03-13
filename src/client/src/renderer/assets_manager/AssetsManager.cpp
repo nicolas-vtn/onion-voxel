@@ -97,4 +97,14 @@ namespace onion::voxel
 		return m_ResourcePackManager.GetCurrentResourcePack();
 	}
 
+	std::filesystem::path AssetsManager::GetAssetsDirectory() const
+	{
+		return m_AssetsDirectory;
+	}
+
+	std::filesystem::path AssetsManager::GetResourcePacksDirectory() const
+	{
+		return m_AssetsDirectory / "resourcepacks";
+	}
+
 } // namespace onion::voxel

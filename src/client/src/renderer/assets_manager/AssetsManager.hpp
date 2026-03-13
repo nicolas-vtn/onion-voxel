@@ -22,6 +22,9 @@ namespace onion::voxel
 		void SetCurrentResourcePack(const std::string& resourcePack);
 		std::string GetCurrentResourcePack() const;
 
+		std::filesystem::path GetAssetsDirectory() const;
+		std::filesystem::path GetResourcePacksDirectory() const;
+
 		// ----- Private Methods / Members -----
 	  private:
 		std::filesystem::path m_AssetsDirectory;

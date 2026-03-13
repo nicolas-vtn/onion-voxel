@@ -24,6 +24,7 @@ namespace onion::voxel
 		void Render() override;
 		void Initialize() override;
 		void Delete() override;
+		void ReloadTextures() override;
 
 		// ----- Getters / Setters -----
 	  public:

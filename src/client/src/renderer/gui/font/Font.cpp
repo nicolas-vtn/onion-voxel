@@ -15,9 +15,8 @@ glm::mat4 Font::s_ProjectionMatrix{1.0f};
 // -------- Constructor / Destructor --------
 
 Font::Font(const std::filesystem::path& fontFilePath, int atlasCols, int atlasRows)
-	: m_FontFilePath(fontFilePath), m_TextureAtlas(fontFilePath), m_AtlasCols(atlasCols), m_AtlasRows(atlasRows)
+	: m_FontFilePath(fontFilePath), m_AtlasCols(atlasCols), m_AtlasRows(atlasRows)
 {
-	InitializeGlyphs();
 }
 
 Font::~Font() {}
@@ -26,6 +25,8 @@ Font::~Font() {}
 
 void Font::Load()
 {
+	InitializeGlyphs();
+
 	m_TextureAtlas.Bind(); // Upload texture
 	s_ShaderFont.Use();
 	s_ShaderFont.setInt("uTexture", m_TextureAtlas.TextureID());
@@ -36,6 +37,16 @@ void Font::Unload()
 {
 	m_TextureAtlas.Delete();
 	DeleteBuffers();
+}
+
+void onion::voxel::Font::Reload()
+{
+	Unload();
+
+	std::vector<unsigned char> data = EngineContext::Get().Assets->GetResourcePackFileBinary(m_FontFilePath);
+	m_TextureAtlas = Texture(m_FontFilePath.string(), data);
+
+	Load();
 }
 
 void Font::StaticInitialize() {}

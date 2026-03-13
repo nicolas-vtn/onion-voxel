@@ -29,6 +29,7 @@ namespace onion::voxel
 		void Initialize();
 		void Render();
 		void Shutdown();
+		void ReloadTextures();
 
 		// ----- Getters / Setters -----
 	  public:
@@ -45,6 +46,7 @@ namespace onion::voxel
 		Event<bool> RequestQuitToMainMenu;
 		Event<bool> RequestBackToGame;
 		Event<bool> RequestBack;
+		Event<const std::string&> RequestResourcePackChange;
 
 		// ----- Panels -----
 	  private:
