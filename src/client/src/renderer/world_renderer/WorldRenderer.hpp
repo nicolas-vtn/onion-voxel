@@ -68,7 +68,7 @@ namespace onion::voxel
 
 		void Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk);
 		void Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk);
-		void Handle_BlocksChanged(const std::vector<std::pair<glm::ivec3, Block>>& blocks);
+		void Handle_BlocksChanged(const WorldManager::BlocksChangedEventArgs& args);
 
 		// ----- Internal Helpers -----
 	  private:

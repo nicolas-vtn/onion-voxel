@@ -269,37 +269,18 @@ namespace onion::voxel
 		}
 	}
 
-	bool WorldManager::SetBlock(const glm::ivec3& worldPosition, const Block& block, bool notify)
+	bool WorldManager::SetBlock(const glm::ivec3& worldPosition,
+								const Block& block,
+								BlocksChangedEventArgs::eOrigin origin,
+								bool notify)
 	{
-		// Calculate chunk position and local position within chunk
-		glm::ivec2 chunkPosition = Utils::WorldToChunkPosition(worldPosition);
-
-		std::shared_ptr<Chunk> chunk = GetChunk(chunkPosition);
-
-		glm::ivec3 localPosition = Utils::WorldToLocalPosition(worldPosition);
-		if (chunk)
-		{
-			if (chunk->GetBlock(localPosition) == block)
-			{
-				return false; // Block is already the same, no need to set or trigger event
-			}
-
-			chunk->SetBlock(localPosition, block);
-
-			if (notify)
-			{
-				BlocksChanged.Trigger(std::vector<std::pair<glm::ivec3, Block>>{{worldPosition, block}});
-			}
-
-			return true;
-		}
-		else
-		{
-			return false; // Chunk not found
-		}
+		int blockPlaced = SetBlocks({{worldPosition, block}}, origin, notify);
+		return blockPlaced > 0;
 	}
 
-	size_t WorldManager::SetBlocks(const std::vector<std::pair<glm::ivec3, Block>>& blocks, bool notify)
+	size_t WorldManager::SetBlocks(const std::vector<std::pair<glm::ivec3, Block>>& blocks,
+								   BlocksChangedEventArgs::eOrigin origin,
+								   bool notify)
 	{
 		std::unordered_map<glm::ivec2, std::vector<std::pair<glm::ivec3, Block>>, IVec2Hash> blocksByChunk;
 		std::vector<std::pair<glm::ivec3, Block>> blocksToNotify;
@@ -339,12 +320,16 @@ namespace onion::voxel
 			}
 		}
 
-		if (notify && blocksToNotify.size() > 0)
+		int numBlocksSet = blocksToNotify.size();
+		if (notify && numBlocksSet > 0)
 		{
-			BlocksChanged.Trigger(blocksToNotify);
+			BlocksChangedEventArgs args;
+			args.ChangedBlocks = std::move(blocksToNotify);
+			args.Origin = origin;
+			BlocksChanged.Trigger(args);
 		}
 
-		return blocksToNotify.size();
+		return numBlocksSet;
 	}
 
 	void WorldManager::PlaceOutOfBoundsBlocks()
@@ -387,7 +372,12 @@ namespace onion::voxel
 		}
 
 		if (!blocksPlaced.empty())
-			BlocksChanged.Trigger(blocksPlaced);
+		{
+			BlocksChangedEventArgs args;
+			args.ChangedBlocks = std::move(blocksPlaced);
+			args.Origin = BlocksChangedEventArgs::eOrigin::OutOfBoundsPlaced;
+			BlocksChanged.Trigger(args);
+		}
 	}
 
 	void WorldManager::Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk)

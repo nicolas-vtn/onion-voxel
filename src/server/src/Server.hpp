@@ -56,6 +56,8 @@ namespace onion::voxel
 										  const PlayerInfoMsg& msg);
 		void Handle_PlayerRequestChunksMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
 												   const RequestChunksMsg& msg);
+		void Handle_BlocksChangedMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
+											 const BlocksChangedMsg& msg);
 
 		// ----- World Manager / Generation -----
 	  private:
@@ -65,7 +67,7 @@ namespace onion::voxel
 
 		void Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk);
 		void Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk);
-		void Handle_BlocksChanged(const std::vector<std::pair<glm::ivec3, Block>>& changedBlocks);
+		void Handle_BlocksChanged(const WorldManager::BlocksChangedEventArgs& args);
 		void Handle_MissingChunksRequested(const std::vector<glm::ivec2>& missingChunkPositions);
 
 		WorldGenerator m_WorldGenerator;

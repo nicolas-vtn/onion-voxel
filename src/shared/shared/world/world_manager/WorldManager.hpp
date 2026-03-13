@@ -33,6 +33,21 @@ namespace onion::voxel
 			glm::ivec2 NewChunkPosition;
 		};
 
+		struct BlocksChangedEventArgs
+		{
+			enum class eOrigin
+			{
+				Unknown,
+				PlayerAction,
+				ServerRequest,
+				ClientRequest,
+				OutOfBoundsPlaced,
+			};
+
+			std::vector<std::pair<glm::ivec3, Block>> ChangedBlocks;
+			eOrigin Origin{eOrigin::Unknown};
+		};
+
 		// ----- Constructor / Destructor -----
 	  public:
 		WorldManager();
@@ -53,8 +68,13 @@ namespace onion::voxel
 		void ClearWorld();
 
 		Block GetBlock(const glm::ivec3& worldPosition) const;
-		bool SetBlock(const glm::ivec3& worldPosition, const Block& block, bool notify = true);
-		size_t SetBlocks(const std::vector<std::pair<glm::ivec3, Block>>& blocks, bool notify = true);
+		bool SetBlock(const glm::ivec3& worldPosition,
+					  const Block& block,
+					  BlocksChangedEventArgs::eOrigin origin,
+					  bool notify = true);
+		size_t SetBlocks(const std::vector<std::pair<glm::ivec3, Block>>& blocks,
+						 BlocksChangedEventArgs::eOrigin origin,
+						 bool notify = true);
 
 		bool IsChunkLoaded(const glm::ivec2& chunkPosition) const;
 		std::shared_ptr<Chunk> GetChunk(const glm::ivec2& chunkPosition) const;
@@ -83,7 +103,7 @@ namespace onion::voxel
 		Event<const uint32_t&> SeedChanged;
 		Event<std::shared_ptr<Chunk>> ChunkAdded;
 		Event<std::shared_ptr<Chunk>> ChunkRemoved;
-		Event<const std::vector<std::pair<glm::ivec3, Block>>&> BlocksChanged;
+		Event<const BlocksChangedEventArgs&> BlocksChanged;
 		Event<const std::vector<glm::ivec2>&> MissingChunksRequested;
 
 	  private:

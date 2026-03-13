@@ -84,6 +84,7 @@ namespace onion::voxel
 		void SubscribeToWorldManagerEvents();
 
 		void Handle_MissingChunksRequested(const std::vector<glm::ivec2>& chunkPositions);
+		void Handle_BlocksChanged(const WorldManager::BlocksChangedEventArgs& args);
 
 		// ----- Renderer -----
 	  private:

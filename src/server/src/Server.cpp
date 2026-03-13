@@ -87,6 +87,10 @@ namespace onion::voxel
 				{
 					Handle_PlayerRequestChunksMsgReceived(args, msg);
 				}
+				else if constexpr (std::is_same_v<T, BlocksChangedMsg>)
+				{
+					Handle_BlocksChangedMsgReceived(args, msg);
+				}
 				else
 				{
 					std::cout << "Received unhandled message type from client " << args.Sender << "\n";
@@ -138,6 +142,25 @@ namespace onion::voxel
 		}
 	}
 
+	void Server::Handle_BlocksChangedMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
+												 const BlocksChangedMsg& msg)
+	{
+		// Retreve ClientId
+		uint32_t clientHandle = args.Sender;
+
+		std::cout << "Received BlocksChangedMsg from client " << clientHandle << ": " << msg.ChangedBlocks.size()
+				  << " changed blocks\n";
+
+		std::vector<std::pair<glm::ivec3, Block>> changedBlocks;
+		for (const auto& [worldPos, blockDTO] : msg.ChangedBlocks)
+		{
+			changedBlocks.emplace_back(worldPos, Serializer::DeserializeBlock(blockDTO));
+		}
+
+		size_t blocksSet = m_WorldManager->SetBlocks(
+			changedBlocks, WorldManager::BlocksChangedEventArgs::eOrigin::ClientRequest, true);
+	}
+
 	void Server::Handle_ClientConnected(const NetworkServer::ClientConnectedEventArgs& args)
 	{
 		std::cout << "New client connected: " << args.Client << " (" << args.Username << ", " << args.UUID << ", "
@@ -169,10 +192,10 @@ namespace onion::voxel
 		// For now, the client has the resposiblity to remove it's chunks.
 	}
 
-	void Server::Handle_BlocksChanged(const std::vector<std::pair<glm::ivec3, Block>>& changedBlocks)
+	void Server::Handle_BlocksChanged(const WorldManager::BlocksChangedEventArgs& args)
 	{
 		BlocksChangedMsg blocksChangedMsg;
-		for (const auto& [worldPos, block] : changedBlocks)
+		for (const auto& [worldPos, block] : args.ChangedBlocks)
 		{
 			blocksChangedMsg.ChangedBlocks.emplace_back(worldPos, Serializer::SerializeBlock(block));
 		}
@@ -248,8 +271,7 @@ namespace onion::voxel
 			[this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkRemoved(chunk); }));
 
 		m_WorldManagerEventHandles.push_back(m_WorldManager->BlocksChanged.Subscribe(
-			[this](const std::vector<std::pair<glm::ivec3, Block>>& changedBlocks)
-			{ Handle_BlocksChanged(changedBlocks); }));
+			[this](const WorldManager::BlocksChangedEventArgs& args) { Handle_BlocksChanged(args); }));
 
 		m_WorldManagerEventHandles.push_back(m_WorldManager->MissingChunksRequested.Subscribe(
 			[this](const std::vector<glm::ivec2>& missingChunkPositions)

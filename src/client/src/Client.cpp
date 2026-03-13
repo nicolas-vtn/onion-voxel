@@ -150,6 +150,9 @@ namespace onion::voxel
 	{
 		m_WorldManagerEventHandles.push_back(m_WorldManager->MissingChunksRequested.Subscribe(
 			[this](const std::vector<glm::ivec2>& chunkPositions) { Handle_MissingChunksRequested(chunkPositions); }));
+
+		m_WorldManagerEventHandles.push_back(m_WorldManager->BlocksChanged.Subscribe(
+			[this](const WorldManager::BlocksChangedEventArgs& args) { Handle_BlocksChanged(args); }));
 	}
 
 	void Client::Handle_MissingChunksRequested(const std::vector<glm::ivec2>& chunkPositions)
@@ -158,6 +161,26 @@ namespace onion::voxel
 		requestChunksMsg.requestedChunks = chunkPositions;
 
 		m_NetworkClient.Send(std::move(requestChunksMsg), false);
+	}
+
+	void Client::Handle_BlocksChanged(const WorldManager::BlocksChangedEventArgs& args)
+	{
+		// Do not send back to server ()
+		if (args.Origin == WorldManager::BlocksChangedEventArgs::eOrigin::OutOfBoundsPlaced)
+		{
+			return;
+		}
+
+		std::vector<std::pair<glm::ivec3, BlockDTO>> changedBlocksDTO;
+		for (const auto& [worldPos, block] : args.ChangedBlocks)
+		{
+			changedBlocksDTO.emplace_back(worldPos, Serializer::SerializeBlock(block));
+		}
+
+		BlocksChangedMsg blocksChangedMsg;
+		blocksChangedMsg.ChangedBlocks = std::move(changedBlocksDTO);
+
+		m_NetworkClient.Send(std::move(blocksChangedMsg), true);
 	}
 
 	void Client::SubscribeToRendererEvents()
@@ -258,9 +281,10 @@ namespace onion::voxel
 			changedBlocks.emplace_back(worldPos, Serializer::DeserializeBlock(blockDTO));
 		}
 
-		size_t blocksSet = m_WorldManager->SetBlocks(changedBlocks, false);
+		std::cout << "Received BlocksChangedMsg: " << changedBlocks.size() << " changed blocks\n";
 
-		//std::cout << "Set " << blocksSet << " blocks out of " << changedBlocks.size() << std::endl;
+		size_t blocksSet = m_WorldManager->SetBlocks(
+			changedBlocks, WorldManager::BlocksChangedEventArgs::eOrigin::ServerRequest, false);
 	}
 
 	void Client::SendPlayerInfosToServer()

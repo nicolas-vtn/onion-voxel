@@ -202,7 +202,7 @@ namespace onion::voxel
 																		{ Handle_ChunkRemoved(chunk); }));
 
 		m_EventHandles.push_back(m_WorldManager->BlocksChanged.Subscribe(
-			[this](const std::vector<std::pair<glm::ivec3, Block>>& blocks) { Handle_BlocksChanged(blocks); }));
+			[this](const WorldManager::BlocksChangedEventArgs& args) { Handle_BlocksChanged(args); }));
 	}
 
 	void WorldRenderer::Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk)
@@ -252,9 +252,9 @@ namespace onion::voxel
 		MarkNeighboringChunkMeshesDirty(chunkPos);
 	}
 
-	void WorldRenderer::Handle_BlocksChanged(const std::vector<std::pair<glm::ivec3, Block>>& blocks)
+	void WorldRenderer::Handle_BlocksChanged(const WorldManager::BlocksChangedEventArgs& args)
 	{
-		for (const auto& [worldPos, block] : blocks)
+		for (const auto& [worldPos, block] : args.ChangedBlocks)
 		{
 			MarkNeighboringSubChunkMeshesDirty(worldPos);
 		}

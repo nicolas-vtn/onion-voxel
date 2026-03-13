@@ -361,7 +361,8 @@ namespace onion::voxel
 		if (inputs->GetKeyState(m_InputIdRemoveBlock).IsPressed)
 		{
 			BlockId blockIdToRemove = BlockId::Air;
-			bool success = m_WorldManager->SetBlock(blockPos, blockIdToRemove, true);
+			bool success = m_WorldManager->SetBlock(
+				blockPos, blockIdToRemove, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
 			std::cout << "Attempting to remove block at " << blockPos.x << ", " << blockPos.y << ", " << blockPos.z
 					  << " - Success: " << (success ? "Yes" : "No") << std::endl;
 		}
@@ -369,7 +370,8 @@ namespace onion::voxel
 		if (inputs->GetKeyState(m_InputIdPlaceBlock).IsPressed)
 		{
 			BlockId blockIdToPlace = BlockId::Cobblestone;
-			bool success = m_WorldManager->SetBlock(prevBlockPos, blockIdToPlace, true);
+			bool success = m_WorldManager->SetBlock(
+				prevBlockPos, blockIdToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
 			std::cout << "Attempting to place block at " << prevBlockPos.x << ", " << prevBlockPos.y << ", "
 					  << prevBlockPos.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
 		}
