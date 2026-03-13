@@ -78,7 +78,7 @@ namespace onion::voxel
 		{
 			std::string Username;
 			std::string UUID;
-			uint32_t ClientHandle;
+			uint32_t ClientHandle = 0;
 			glm::vec3 Position{99999.0f, 99999.0f, 99999.0f};
 		};
 

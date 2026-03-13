@@ -14,10 +14,10 @@ namespace onion::voxel
 	{
 		static constexpr MessageHeader::eType StaticType = MessageHeader::eType::ServerInfo;
 
-		uint32_t ClientHandle;
+		uint32_t ClientHandle = 0;
 
 		std::string ServerName;
-		int SimulationDistance;
+		int SimulationDistance = 0;
 
 		template <class Archive> void serialize(Archive& ar) { ar(ServerName, ClientHandle, SimulationDistance); }
 	};

@@ -21,21 +21,21 @@ namespace onion::voxel
 		return glm::ivec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
 	}
 
-	static inline glm::ivec3 OrientationToVector(Block::Orientation o)
+	static inline glm::ivec3 OrientationToVector(BlockState::Orientation o)
 	{
 		switch (o)
 		{
-			case Block::Orientation::North:
+			case BlockState::Orientation::North:
 				return {0, 0, 1};
-			case Block::Orientation::South:
+			case BlockState::Orientation::South:
 				return {0, 0, -1};
-			case Block::Orientation::East:
+			case BlockState::Orientation::East:
 				return {1, 0, 0};
-			case Block::Orientation::West:
+			case BlockState::Orientation::West:
 				return {-1, 0, 0};
-			case Block::Orientation::Up:
+			case BlockState::Orientation::Up:
 				return {0, 1, 0};
-			case Block::Orientation::Down:
+			case BlockState::Orientation::Down:
 				return {0, -1, 0};
 			default:
 				return {0, 0, 0};
@@ -63,15 +63,15 @@ namespace onion::voxel
 		}
 	}
 
-	static inline BlockFace GetTextureFaceForWorldFace(BlockFace worldFace, const Block& block)
+	static inline BlockFace GetTextureFaceForWorldFace(BlockFace worldFace, const BlockState& block)
 	{
-		if (block.m_Facing == Block::Orientation::None || block.m_Top == Block::Orientation::None)
+		if (block.Facing == BlockState::Orientation::None || block.Top == BlockState::Orientation::None)
 		{
 			return worldFace;
 		}
 
-		glm::ivec3 forward = OrientationToVector(block.m_Facing);
-		glm::ivec3 up = OrientationToVector(block.m_Top);
+		glm::ivec3 forward = OrientationToVector(block.Facing);
+		glm::ivec3 up = OrientationToVector(block.Top);
 		glm::ivec3 right = Cross(forward, up);
 
 		glm::ivec3 worldDir = FaceToVector(worldFace);
@@ -94,15 +94,15 @@ namespace onion::voxel
 		return BlockFace::Front;
 	}
 
-	static int GetRotationSteps(const Block& block, BlockFace worldFace)
+	static int GetRotationSteps(const BlockState& block, BlockFace worldFace)
 	{
-		if (block.m_Facing == Block::Orientation::None || block.m_Facing == Block::Orientation::Up ||
-			block.m_Facing == Block::Orientation::Down)
+		if (block.Facing == BlockState::Orientation::None || block.Facing == BlockState::Orientation::Up ||
+			block.Facing == BlockState::Orientation::Down)
 		{
 			return 0;
 		}
 
-		if (block.m_Facing == Block::Orientation::North || block.m_Facing == Block::Orientation::South)
+		if (block.Facing == BlockState::Orientation::North || block.Facing == BlockState::Orientation::South)
 		{
 			if (worldFace == BlockFace::Left || worldFace == BlockFace::Right)
 				return 1;
@@ -150,20 +150,20 @@ namespace onion::voxel
 		}
 	}
 
-	std::array<bool, 6> GetFaceVisibility(const Block& block, const std::array<Block, 6>& neighbors)
+	std::array<bool, 6> GetFaceVisibility(const BlockState& block, const std::array<BlockState, 6>& neighbors)
 	{
 		std::array<bool, 6> visibility{};
 
 		for (int i = 0; i < 6; i++)
 		{
 			// Water is only visible when next to air
-			if (block.m_BlockID == BlockId::Water && neighbors[i].m_BlockID != BlockId::Air)
+			if (block.ID == BlockId::Water && neighbors[i].ID != BlockId::Air)
 			{
 				visibility[i] = false;
 				continue;
 			}
 
-			if (block.m_BlockID == BlockId::OakLeaves && neighbors[i].m_BlockID == BlockId::OakLeaves)
+			if (block.ID == BlockId::OakLeaves && neighbors[i].ID == BlockId::OakLeaves)
 			{
 				if (i == (int) BlockFace::Top || i == (int) BlockFace::Left || i == (int) BlockFace::Back)
 				{
@@ -175,7 +175,7 @@ namespace onion::voxel
 			}
 
 			// A face is visible if the neighboring block in that direction is transparent
-			visibility[i] = Block::IsTransparent(block.m_BlockID) || Block::IsTransparent(neighbors[i].m_BlockID);
+			visibility[i] = BlockState::IsTransparent(block.ID) || BlockState::IsTransparent(neighbors[i].ID);
 		}
 
 		return visibility;
@@ -258,9 +258,9 @@ namespace onion::voxel
 					for (int x = 0; x < SIZE; x++)
 					{
 						const glm::ivec3 localPos(x, SIZE * sub + y, z);
-						Block block = chunk->GetBlock(localPos);
+						BlockState block = chunk->GetBlock(localPos);
 
-						if (block.m_BlockID == BlockId::Air)
+						if (block.ID == BlockId::Air)
 							continue;
 
 						// ------ Calculate World Position -----
@@ -269,19 +269,20 @@ namespace onion::voxel
 						float wz = chunkPos.y * SIZE + z;
 
 						// ------ Get Neighboring Blocks ------
-						std::array<Block, 6> neighbors;
+						std::array<BlockState, 6> neighbors;
 
 						// Top (+y)
 						if (localPos.y + 1 < subChunkCount * SIZE)
 							neighbors[(int) BlockFace::Top] = chunk->GetBlock(glm::ivec3(x, localPos.y + 1, z));
 						else
-							neighbors[(int) BlockFace::Top] = Block(BlockId::Air); // Air block if above the world
+							neighbors[(int) BlockFace::Top] = BlockState(BlockId::Air); // Air block if above the world
 
 						// Bottom (-y)
 						if (localPos.y - 1 >= 0)
 							neighbors[(int) BlockFace::Bottom] = chunk->GetBlock(glm::ivec3(x, localPos.y - 1, z));
 						else
-							neighbors[(int) BlockFace::Bottom] = Block(BlockId::Air); // Air block if below the world
+							neighbors[(int) BlockFace::Bottom] =
+								BlockState(BlockId::Air); // Air block if below the world
 
 						// Front (+z)
 						if (z + 1 < SIZE)
@@ -290,7 +291,7 @@ namespace onion::voxel
 						{
 							neighbors[(int) BlockFace::Front] = adjacentPosZ
 								? adjacentPosZ->GetBlock(glm::ivec3(x, localPos.y, 0))
-								: Block(BlockId::Stone);
+								: BlockState(BlockId::Stone);
 						}
 
 						// Back (-z)
@@ -300,7 +301,7 @@ namespace onion::voxel
 						{
 							neighbors[(int) BlockFace::Back] = adjacentNegZ
 								? adjacentNegZ->GetBlock(glm::ivec3(x, localPos.y, SIZE - 1))
-								: Block(BlockId::Stone);
+								: BlockState(BlockId::Stone);
 						}
 
 						// Right (+x)
@@ -310,7 +311,7 @@ namespace onion::voxel
 						{
 							neighbors[(int) BlockFace::Right] = adjacentPosX
 								? adjacentPosX->GetBlock(glm::ivec3(0, localPos.y, z))
-								: Block(BlockId::Stone);
+								: BlockState(BlockId::Stone);
 						}
 
 						// Left (-x)
@@ -320,7 +321,7 @@ namespace onion::voxel
 						{
 							neighbors[(int) BlockFace::Left] = adjacentNegX
 								? adjacentNegX->GetBlock(glm::ivec3(SIZE - 1, localPos.y, z))
-								: Block(BlockId::Stone);
+								: BlockState(BlockId::Stone);
 						}
 
 						// ------ Determine Face Visibility ------
@@ -331,7 +332,7 @@ namespace onion::voxel
 							continue;
 
 						// ------ Get Block Textures ------
-						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.m_BlockID);
+						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.ID);
 
 						// ------ Build Mesh ------
 						glm::ivec3 p000(x, wy, z);
@@ -530,8 +531,7 @@ namespace onion::voxel
 
 		// No Occlusion map on air chunks
 		bool isMonoBlock = chunk->IsSubchunkMonoBlock(subChunkIndex);
-		if (isMonoBlock &&
-			chunk->GetBlock({0, subChunkIndex * WorldConstants::CHUNK_SIZE + 1, 0}).m_BlockID == BlockId::Air)
+		if (isMonoBlock && chunk->GetBlock({0, subChunkIndex * WorldConstants::CHUNK_SIZE + 1, 0}).ID == BlockId::Air)
 			return;
 
 		constexpr int SX = WorldConstants::CHUNK_SIZE;
@@ -549,7 +549,7 @@ namespace onion::voxel
 		if (isMonoBlock)
 		{
 			const auto mono = chunk->GetBlock({0, yMini, 0});
-			const bool solid = Block::IsOpaque(mono.m_BlockID);
+			const bool solid = BlockState::IsOpaque(mono.ID);
 			if (solid)
 			{
 				constexpr Row FULL_X = Row((1ull << SX) - 1ull);
@@ -578,9 +578,8 @@ namespace onion::voxel
 					for (int x = 0; x < SX; ++x)
 					{
 						const BlockId id =
-							chunk->GetBlock({static_cast<int>(x), static_cast<int>(y) + yMini, static_cast<int>(z)})
-								.m_BlockID;
-						const bool s = Block::IsOpaque(id);
+							chunk->GetBlock({static_cast<int>(x), static_cast<int>(y) + yMini, static_cast<int>(z)}).ID;
+						const bool s = BlockState::IsOpaque(id);
 						rowX |= Row(s) << x;		 // along X in [y][z]
 						solidZ[y][x] |= Row(s) << z; // along Z in [y][x]
 						solidY[z][x] |= Row(s) << y; // along Y in [z][x]
@@ -608,14 +607,13 @@ namespace onion::voxel
 				// X-
 				{
 					BlockId blockId =
-						adjacentNegX ? adjacentNegX->GetBlock({SX - 1, ly + yMini, lz}).m_BlockID : BlockId::Stone;
-					nbrXneg[ly][lz] = Block::IsOpaque(blockId) ? 1 : 0;
+						adjacentNegX ? adjacentNegX->GetBlock({SX - 1, ly + yMini, lz}).ID : BlockId::Stone;
+					nbrXneg[ly][lz] = BlockState::IsOpaque(blockId) ? 1 : 0;
 				}
 				// X+
 				{
-					BlockId blockId =
-						adjacentPosX ? adjacentPosX->GetBlock({0, ly + yMini, lz}).m_BlockID : BlockId::Stone;
-					nbrXpos[ly][lz] = Block::IsOpaque(blockId) ? 1 : 0;
+					BlockId blockId = adjacentPosX ? adjacentPosX->GetBlock({0, ly + yMini, lz}).ID : BlockId::Stone;
+					nbrXpos[ly][lz] = BlockState::IsOpaque(blockId) ? 1 : 0;
 				}
 			}
 		}
@@ -629,14 +627,13 @@ namespace onion::voxel
 				// Z-
 				{
 					BlockId blockId =
-						adjacentNegZ ? adjacentNegZ->GetBlock({lx, ly + yMini, SZ - 1}).m_BlockID : BlockId::Stone;
-					nbrZneg[ly][lx] = Block::IsOpaque(blockId) ? 1 : 0;
+						adjacentNegZ ? adjacentNegZ->GetBlock({lx, ly + yMini, SZ - 1}).ID : BlockId::Stone;
+					nbrZneg[ly][lx] = BlockState::IsOpaque(blockId) ? 1 : 0;
 				}
 				// Z+
 				{
-					BlockId blockId =
-						adjacentPosZ ? adjacentPosZ->GetBlock({lx, ly + yMini, 0}).m_BlockID : BlockId::Stone;
-					nbrZpos[ly][lx] = Block::IsOpaque(blockId) ? 1 : 0;
+					BlockId blockId = adjacentPosZ ? adjacentPosZ->GetBlock({lx, ly + yMini, 0}).ID : BlockId::Stone;
+					nbrZpos[ly][lx] = BlockState::IsOpaque(blockId) ? 1 : 0;
 				}
 			}
 		}
@@ -648,13 +645,13 @@ namespace onion::voxel
 			{
 				// Y-
 				{
-					BlockId blockId = chunk->GetBlock({lx, yMini - 1, lz}).m_BlockID;
-					nbrYneg[lz][lx] = Block::IsOpaque(blockId) ? 1 : 0;
+					BlockId blockId = chunk->GetBlock({lx, yMini - 1, lz}).ID;
+					nbrYneg[lz][lx] = BlockState::IsOpaque(blockId) ? 1 : 0;
 				}
 				// Y+
 				{
-					BlockId blockId = chunk->GetBlock({lx, yMini + SY, lz}).m_BlockID;
-					nbrYpos[lz][lx] = Block::IsOpaque(blockId) ? 1 : 0;
+					BlockId blockId = chunk->GetBlock({lx, yMini + SY, lz}).ID;
+					nbrYpos[lz][lx] = BlockState::IsOpaque(blockId) ? 1 : 0;
 				}
 			}
 		}
@@ -822,10 +819,10 @@ namespace onion::voxel
 							  const uint8_t o2,
 							  const uint8_t o3,
 							  BlockFace face,
-							  const Block& block,
+							  const BlockState& block,
 							  const FaceTexture& faceTexture,
 							  const TextureAtlas::AtlasEntry& uv,
-							  Block::RotationType rotationType)
+							  BlockState::RotationType rotationType)
 	{
 		std::vector<SubChunkMesh::Vertex>* vertices = nullptr;
 		std::vector<uint16_t>* indices = nullptr;
@@ -855,7 +852,7 @@ namespace onion::voxel
 		glm::vec2 uv2{uv.uvMax.x, uv.uvMax.y};
 		glm::vec2 uv3{uv.uvMin.x, uv.uvMax.y};
 
-		if (rotationType == Block::RotationType::Pillar)
+		if (rotationType == BlockState::RotationType::Pillar)
 		{
 			int rotationSteps = GetRotationSteps(block, face);
 			RotateUVs(uv0, uv1, uv2, uv3, rotationSteps);

@@ -336,44 +336,47 @@ namespace onion::voxel
 		glm::vec3 rayOrigin = m_Camera->GetPosition();
 		glm::vec3 rayDirection = m_Camera->GetFront();
 
-		Block hitBlock = Block(BlockId::Air);
-		glm::ivec3 blockPos{0};
-		glm::ivec3 prevBlockPos{0};
+		Block hitBlock = Block(glm::ivec3(), BlockId::Air);
+		Block prevBlock = Block(glm::ivec3(), BlockId::Air);
 		for (int i = 0; i < 100; i++)
 		{
 			float delta = 0.1f; // Step size for ray marching
 			glm::vec3 checkPos = rayOrigin + rayDirection * delta * static_cast<float>(i);
-			blockPos = glm::floor(checkPos);
-			hitBlock = m_WorldManager->GetBlock(blockPos);
-			if (hitBlock.m_BlockID != BlockId::Air)
+			hitBlock.Position = glm::floor(checkPos);
+			hitBlock.State = m_WorldManager->GetBlock(hitBlock.Position);
+			if (hitBlock.ID() != BlockId::Air)
 			{
 				break;
 			}
-			prevBlockPos = blockPos;
+			prevBlock = hitBlock;
 		}
 
-		if (hitBlock.m_BlockID != BlockId::Air)
+		if (hitBlock.ID() != BlockId::Air)
 		{
-			DebugDraws::DrawBlockOutline(blockPos, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);
+			DebugDraws::DrawBlockOutline(hitBlock.Position, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);
 			//DebugDraws::DrawBlockOutline(prevBlockPos, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 3, true);
 		}
 
 		if (inputs->GetKeyState(m_InputIdRemoveBlock).IsPressed)
 		{
-			BlockId blockIdToRemove = BlockId::Air;
+			Block airBlockToPlace = Block(hitBlock.Position, BlockId::Air);
+
 			bool success = m_WorldManager->SetBlock(
-				blockPos, blockIdToRemove, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
-			std::cout << "Attempting to remove block at " << blockPos.x << ", " << blockPos.y << ", " << blockPos.z
-					  << " - Success: " << (success ? "Yes" : "No") << std::endl;
+				airBlockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
+
+			std::cout << "Attempting to remove block at " << hitBlock.Position.x << ", " << hitBlock.Position.y << ", "
+					  << hitBlock.Position.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
 		}
 
 		if (inputs->GetKeyState(m_InputIdPlaceBlock).IsPressed)
 		{
-			BlockId blockIdToPlace = BlockId::Cobblestone;
+			Block blockToPlace = Block(prevBlock.Position, BlockId::Cobblestone);
+
 			bool success = m_WorldManager->SetBlock(
-				prevBlockPos, blockIdToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
-			std::cout << "Attempting to place block at " << prevBlockPos.x << ", " << prevBlockPos.y << ", "
-					  << prevBlockPos.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
+				blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
+
+			std::cout << "Attempting to place block at " << prevBlock.Position.x << ", " << prevBlock.Position.y << ", "
+					  << prevBlock.Position.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
 		}
 	}
 

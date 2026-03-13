@@ -82,9 +82,9 @@ namespace onion::voxel
 							const uint8_t o2,
 							const uint8_t o3,
 							BlockFace face,
-							const Block& block,
+							const BlockState& block,
 							const FaceTexture& faceTexture,
 							const TextureAtlas::AtlasEntry& uv,
-							Block::RotationType rotationType);
+							BlockState::RotationType rotationType);
 	};
 } // namespace onion::voxel

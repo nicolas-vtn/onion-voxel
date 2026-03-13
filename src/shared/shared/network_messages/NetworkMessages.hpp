@@ -10,6 +10,7 @@
 #include "server_info_msg/ServerInfoMsg.hpp"
 
 #include "DTOs/BlockDTO.hpp"
+#include "DTOs/BlockStateDTO.hpp"
 #include "DTOs/SubChunkDTO.hpp"
 
 #include <variant>

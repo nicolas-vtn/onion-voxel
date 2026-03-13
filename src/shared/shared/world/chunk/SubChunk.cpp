@@ -51,22 +51,17 @@ namespace onion::voxel
 
 	uint8_t SubChunk::GetBlockIndexInPalette(const glm::ivec3& localPosition) const
 	{
-		if (localPosition.x < 0 || localPosition.x >= WorldConstants::CHUNK_SIZE || localPosition.y < 0 ||
-			localPosition.y >= WorldConstants::CHUNK_SIZE || localPosition.z < 0 ||
-			localPosition.z >= WorldConstants::CHUNK_SIZE)
-		{
-			throw std::out_of_range("SubChunk::GetBlock: Local position is out of bounds");
-		}
+		// Check if the local position is within bounds
+		assert(localPosition.x >= 0 && localPosition.x < WorldConstants::CHUNK_SIZE);
+		assert(localPosition.y >= 0 && localPosition.y < WorldConstants::CHUNK_SIZE);
+		assert(localPosition.z >= 0 && localPosition.z < WorldConstants::CHUNK_SIZE);
 
 		if (m_IsMonoBlock)
 		{
 			return m_MonoBlockIndexInPalette; // Return the mono block index in the palette
 		}
 
-		if (!m_BlockIndexInPalette)
-		{
-			throw std::runtime_error("SubChunk::GetBlock: Block data is not initialized");
-		}
+		assert(m_BlockIndexInPalette);
 
 		const size_t index = localPosition.x + localPosition.y * WorldConstants::CHUNK_SIZE +
 			localPosition.z * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE;
@@ -76,13 +71,10 @@ namespace onion::voxel
 
 	void SubChunk::SetBlockIndexInPalette(const glm::ivec3& localPosition, uint8_t blockIndex)
 	{
-
-		if (localPosition.x < 0 || localPosition.x >= WorldConstants::CHUNK_SIZE || localPosition.y < 0 ||
-			localPosition.y >= WorldConstants::CHUNK_SIZE || localPosition.z < 0 ||
-			localPosition.z >= WorldConstants::CHUNK_SIZE)
-		{
-			throw std::out_of_range("SubChunk::SetBlock: Local position is out of bounds");
-		}
+		// Check if the local position is within bounds
+		assert(localPosition.x >= 0 && localPosition.x < WorldConstants::CHUNK_SIZE);
+		assert(localPosition.y >= 0 && localPosition.y < WorldConstants::CHUNK_SIZE);
+		assert(localPosition.z >= 0 && localPosition.z < WorldConstants::CHUNK_SIZE);
 
 		if (m_IsMonoBlock)
 		{
@@ -100,10 +92,7 @@ namespace onion::voxel
 			m_IsMonoBlock = false;									// No longer a mono block
 		}
 
-		if (!m_BlockIndexInPalette)
-		{
-			throw std::runtime_error("SubChunk::SetBlock: Block data is not initialized");
-		}
+		assert(m_BlockIndexInPalette);
 
 		const size_t index = localPosition.x + localPosition.y * WorldConstants::CHUNK_SIZE +
 			localPosition.z * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE;

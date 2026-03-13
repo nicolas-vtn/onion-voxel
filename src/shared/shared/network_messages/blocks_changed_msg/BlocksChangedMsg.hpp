@@ -20,7 +20,7 @@ namespace onion::voxel
 		static constexpr MessageHeader::eType StaticType = MessageHeader::eType::BlocksChanged;
 
 		// List of changed blocks with their world positions
-		std::vector<std::pair<glm::ivec3, BlockDTO>> ChangedBlocks;
+		std::vector<BlockDTO> ChangedBlocks;
 
 		template <class Archive> void serialize(Archive& ar) { ar(ChangedBlocks); }
 	};

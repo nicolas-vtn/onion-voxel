@@ -89,26 +89,26 @@ namespace onion::voxel
 
 	struct OrientationPair
 	{
-		Block::Orientation facing;
-		Block::Orientation top;
+		BlockState::Orientation facing;
+		BlockState::Orientation top;
 	};
 
 	static std::vector<OrientationPair> GetOrientationPairs(BlockId id)
 	{
-		using O = Block::Orientation;
+		using O = BlockState::Orientation;
 
 		std::vector<OrientationPair> pairs;
 		pairs.reserve(6);
 
-		switch (Block::GetRotationType(id))
+		switch (BlockState::GetRotationType(id))
 		{
-			case Block::RotationType::None:
+			case BlockState::RotationType::None:
 				{
 					pairs.push_back({O::None, O::None});
 					break;
 				}
 
-			case Block::RotationType::Facing:
+			case BlockState::RotationType::Facing:
 				{
 					pairs.push_back({O::North, O::Up});
 					pairs.push_back({O::South, O::Up});
@@ -117,7 +117,7 @@ namespace onion::voxel
 					break;
 				}
 
-			case Block::RotationType::Pillar:
+			case BlockState::RotationType::Pillar:
 				{
 					pairs.push_back({O::Up, O::North});
 					pairs.push_back({O::Down, O::North});
@@ -129,7 +129,7 @@ namespace onion::voxel
 					break;
 				}
 
-			case Block::RotationType::Horizontal:
+			case BlockState::RotationType::Horizontal:
 				{
 					pairs.push_back({O::North, O::Up});
 					pairs.push_back({O::South, O::Up});
@@ -152,40 +152,40 @@ namespace onion::voxel
 		constexpr int start = 1;   // avoid borders
 
 		// ---- All orientations except None ----
-		std::vector<Block::Orientation> orientations = {Block::Orientation::Up,
-														Block::Orientation::Down,
-														Block::Orientation::North,
-														Block::Orientation::South,
-														Block::Orientation::East,
-														Block::Orientation::West};
+		std::vector<BlockState::Orientation> orientations = {BlockState::Orientation::Up,
+															 BlockState::Orientation::Down,
+															 BlockState::Orientation::North,
+															 BlockState::Orientation::South,
+															 BlockState::Orientation::East,
+															 BlockState::Orientation::West};
 
 		// ---- Build valid (Facing, Top) pairs ----
 
 		std::vector<OrientationPair> orientationPairs;
 
-		auto IsPerpendicular = [](Block::Orientation a, Block::Orientation b)
+		auto IsPerpendicular = [](BlockState::Orientation a, BlockState::Orientation b)
 		{
 			if (a == b)
 				return false;
 
-			auto opposite = [](Block::Orientation o)
+			auto opposite = [](BlockState::Orientation o)
 			{
 				switch (o)
 				{
-					case Block::Orientation::Up:
-						return Block::Orientation::Down;
-					case Block::Orientation::Down:
-						return Block::Orientation::Up;
-					case Block::Orientation::North:
-						return Block::Orientation::South;
-					case Block::Orientation::South:
-						return Block::Orientation::North;
-					case Block::Orientation::East:
-						return Block::Orientation::West;
-					case Block::Orientation::West:
-						return Block::Orientation::East;
+					case BlockState::Orientation::Up:
+						return BlockState::Orientation::Down;
+					case BlockState::Orientation::Down:
+						return BlockState::Orientation::Up;
+					case BlockState::Orientation::North:
+						return BlockState::Orientation::South;
+					case BlockState::Orientation::South:
+						return BlockState::Orientation::North;
+					case BlockState::Orientation::East:
+						return BlockState::Orientation::West;
+					case BlockState::Orientation::West:
+						return BlockState::Orientation::East;
 					default:
-						return Block::Orientation::None;
+						return BlockState::Orientation::None;
 				}
 			};
 
@@ -230,9 +230,9 @@ namespace onion::voxel
 				if (y >= 100)
 					return genChunk;
 
-				Block block{id};
-				block.m_Facing = pair.facing;
-				block.m_Top = pair.top;
+				BlockState block{id};
+				block.Facing = pair.facing;
+				block.Top = pair.top;
 
 				chunk->SetBlock({x, y, z}, block);
 
@@ -252,7 +252,7 @@ namespace onion::voxel
 		int y = 0;
 
 		// Bedrock layer
-		Block bedrock{BlockId::Bedrock};
+		BlockState bedrock{BlockId::Bedrock};
 		for (y = 0; y <= 0; y++)
 		{
 
@@ -266,7 +266,7 @@ namespace onion::voxel
 		}
 
 		// 3 Dirt layers
-		Block dirt{BlockId::Dirt};
+		BlockState dirt{BlockId::Dirt};
 		for (y = 1; y <= 3; y++)
 		{
 			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
@@ -279,7 +279,7 @@ namespace onion::voxel
 		}
 
 		// Grass layer
-		Block grass{BlockId::Grass};
+		BlockState grass{BlockId::Grass};
 		for (y = 4; y <= 4; y++)
 		{
 			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
@@ -335,21 +335,38 @@ namespace onion::voxel
 				{
 					for (uint16_t y = 0; y < m_WorldHeight; ++y)
 					{
+						//if (y == 0)
+						//{
+						//	chunk->SetBlock({x, y, z}, BlockId::Bedrock); // Set bedrock at the bottom
+						//}
+						//else if (y == height)
+						//{
+						//	chunk->SetBlock({x, y, z}, BlockId::Grass); // Set grass block at the top
+						//}
+						//else if (y == height - 1 || y == height - 2)
+						//{
+						//	chunk->SetBlock({x, y, z}, BlockId::Dirt); // Set dirt blocks below the grass
+						//}
+						//else if (y < height)
+						//{
+						//	chunk->SetBlock({x, y, z}, BlockId::Stone); // Set stone below the grass
+						//}
+
 						if (y == 0)
 						{
-							chunk->SetBlock({x, y, z}, BlockId::Bedrock); // Set bedrock at the bottom
+							chunk->SetBlock_Unsafe(x, y, z, BlockId::Bedrock); // Set bedrock at the bottom
 						}
 						else if (y == height)
 						{
-							chunk->SetBlock({x, y, z}, BlockId::Grass); // Set grass block at the top
+							chunk->SetBlock_Unsafe(x, y, z, BlockId::Grass); // Set grass block at the top
 						}
 						else if (y == height - 1 || y == height - 2)
 						{
-							chunk->SetBlock({x, y, z}, BlockId::Dirt); // Set dirt blocks below the grass
+							chunk->SetBlock_Unsafe(x, y, z, BlockId::Dirt); // Set dirt blocks below the grass
 						}
 						else if (y < height)
 						{
-							chunk->SetBlock({x, y, z}, BlockId::Stone); // Set stone below the grass
+							chunk->SetBlock_Unsafe(x, y, z, BlockId::Stone); // Set stone below the grass
 						}
 					}
 				}
@@ -359,21 +376,38 @@ namespace onion::voxel
 				{
 					for (uint16_t y = 0; y < m_WorldHeight; ++y)
 					{
+						//if (y == 0)
+						//{
+						//	chunk->SetBlock({x, y, z}, BlockId::Bedrock); // Set bedrock at the bottom
+						//}
+						//else if (y == height || y == height - 1)
+						//{
+						//	chunk->SetBlock({x, y, z}, BlockId::Gravel); // Set gravel blocks below the sea level
+						//}
+						//else if (y < height)
+						//{
+						//	chunk->SetBlock({x, y, z}, BlockId::Stone); // Set stone below the gravel
+						//}
+						//else if (y > height && y < m_AverageHeight)
+						//{
+						//	chunk->SetBlock({x, y, z}, BlockId::Water); // Set water above the gravel
+						//}
+
 						if (y == 0)
 						{
-							chunk->SetBlock({x, y, z}, BlockId::Bedrock); // Set bedrock at the bottom
+							chunk->SetBlock_Unsafe(x, y, z, BlockId::Bedrock); // Set bedrock at the bottom
 						}
 						else if (y == height || y == height - 1)
 						{
-							chunk->SetBlock({x, y, z}, BlockId::Gravel); // Set gravel blocks below the sea level
+							chunk->SetBlock_Unsafe(x, y, z, BlockId::Gravel); // Set gravel blocks below the sea level
 						}
 						else if (y < height)
 						{
-							chunk->SetBlock({x, y, z}, BlockId::Stone); // Set stone below the gravel
+							chunk->SetBlock_Unsafe(x, y, z, BlockId::Stone); // Set stone below the gravel
 						}
 						else if (y > height && y < m_AverageHeight)
 						{
-							chunk->SetBlock({x, y, z}, BlockId::Water); // Set water above the gravel
+							chunk->SetBlock_Unsafe(x, y, z, BlockId::Water); // Set water above the gravel
 						}
 					}
 				}
@@ -418,8 +452,8 @@ namespace onion::voxel
 										 (chunkPosition.y * WorldConstants::CHUNK_SIZE) + z};
 
 					// Sets a dirtblock under the tree if the top block is grass
-					Block block = chunk->GetBlock({x, height, z});
-					if (block.m_BlockID == BlockId::Grass)
+					BlockState block = chunk->GetBlock({x, height, z});
+					if (block.ID == BlockId::Grass)
 					{
 						chunk->SetBlock({x, height, z}, BlockId::Dirt);
 					}
@@ -436,11 +470,11 @@ namespace onion::voxel
 							for (int treeZ = 0; treeZ < treeSize.z; treeZ++)
 							{
 
-								Block block = tree.GetBlock({treeX, treeY, treeZ});
+								BlockState block = tree.GetBlock({treeX, treeY, treeZ});
 								const glm::ivec3 blockWorldPos = {
 									treeOrigin.x + treeX, treeOrigin.y + treeY, treeOrigin.z + treeZ};
 
-								if (block.m_BlockID == BlockId::Air)
+								if (block.ID == BlockId::Air)
 								{
 									continue; // Skip air blocks
 								}
@@ -502,8 +536,9 @@ namespace onion::voxel
 		static std::uniform_int_distribution<int> dist(1, 100);
 
 		// Creates the block palette for the tree
-		Block verticalOakLog = Block(BlockId::OakLog, Block::Orientation::Up, Block::Orientation::North);
-		Block oakLeaves = Block(BlockId::OakLeaves);
+		BlockState verticalOakLog =
+			BlockState(BlockId::OakLog, BlockState::Orientation::Up, BlockState::Orientation::North);
+		BlockState oakLeaves = BlockState(BlockId::OakLeaves);
 
 		// Generate the Logs
 		for (int y = 0; y < treeHeight + 3; ++y)
@@ -530,7 +565,7 @@ namespace onion::voxel
 						if (dist(gen) <= 20)
 						{
 							// Set the corner leaves to air
-							treeSchematic.SetBlock({x, y, z}, Block(BlockId::Air));
+							treeSchematic.SetBlock({x, y, z}, BlockState(BlockId::Air));
 						}
 					}
 				}

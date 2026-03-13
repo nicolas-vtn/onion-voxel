@@ -20,6 +20,11 @@ namespace onion::voxel
 		static SubChunkDTO SerializeSubChunk(const SubChunk& sc);
 		static SubChunk DeserializeSubChunk(const SubChunkDTO& dto);
 
+		// ----- BLOCK STATE -----
+	  public:
+		static BlockStateDTO SerializeBlockState(const BlockState& block);
+		static BlockState DeserializeBlockState(const BlockStateDTO& dto);
+
 		// ----- BLOCK -----
 	  public:
 		static BlockDTO SerializeBlock(const Block& block);

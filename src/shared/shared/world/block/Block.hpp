@@ -2,39 +2,17 @@
 
 #include <glm/glm.hpp>
 
-#include <vector>
-
 #include "BlockIds.hpp"
+#include "BlockState.hpp"
 
 namespace onion::voxel
 {
 	class Block
 	{
-		// ----- Enums -----
-	  public:
-		enum class Orientation
-		{
-			None,
-			Up,
-			Down,
-			North,
-			South,
-			East,
-			West
-		};
-
-		enum class RotationType
-		{
-			None,		// Dirt, stone
-			Horizontal, // Furnace, chest
-			Pillar,		// Rotatable along X/Y/Z
-			Facing,		// Observers, pistons
-		};
-
 		// ----- Constructor / Destructor -----
 	  public:
-		Block() = default;
-		Block(BlockId blockID, Orientation facing = Orientation::None, Orientation top = Orientation::None);
+		Block();
+		Block(const glm::ivec3& position, const BlockState& state);
 		~Block() = default;
 
 		// ----- Operators -----
@@ -44,21 +22,17 @@ namespace onion::voxel
 
 		// ----- Members -----
 	  public:
-		BlockId m_BlockID = BlockId::Air; // The block ID (type) of this block
-		Orientation m_Facing = Orientation::None;
-		Orientation m_Top = Orientation::None;
+		glm::ivec3 Position{};
+		BlockState State{};
 
-		// ----- Static Helpers -----
+		// ----- Getters -----
 	  public:
-		static bool IsOpaque(BlockId blockID);
-		static bool IsTransparent(BlockId blockID);
-		static RotationType GetRotationType(BlockId blockID);
+		bool IsOpaque() const;
+		bool IsTransparent() const;
+		BlockState::RotationType GetRotationType() const;
 
-		// ----- Static Members -----
-	  private:
-		static const std::vector<bool>
-			s_TransparencyLookupTable; // A lookup table for block transparency, indexed by BlockId
-		static const std::vector<RotationType>
-			s_RotationTypeLookupTable; // A lookup table for block rotation types, indexed by BlockId
+		BlockId ID() const { return State.ID; }
+		BlockState::Orientation Facing() const { return State.Facing; }
+		BlockState::Orientation Top() const { return State.Top; }
 	};
 } // namespace onion::voxel

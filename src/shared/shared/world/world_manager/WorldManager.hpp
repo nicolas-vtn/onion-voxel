@@ -44,7 +44,7 @@ namespace onion::voxel
 				OutOfBoundsPlaced,
 			};
 
-			std::vector<std::pair<glm::ivec3, Block>> ChangedBlocks;
+			std::vector<Block> ChangedBlocks;
 			eOrigin Origin{eOrigin::Unknown};
 		};
 
@@ -59,22 +59,16 @@ namespace onion::voxel
 		void UnloadWorld();
 
 		void AddChunk(const std::shared_ptr<Chunk> chunk);
-		void AddChunk(const std::shared_ptr<Chunk> chunk,
-					  const std::vector<std::pair<glm::ivec3, Block>>& outOfBoundsBlocks);
+		void AddChunk(const std::shared_ptr<Chunk> chunk, const std::vector<Block>& outOfBoundsBlocks);
 		void RemoveChunk(const glm::ivec2& chunkPosition);
 
 		void RemoveAllChunks();
 
 		void ClearWorld();
 
-		Block GetBlock(const glm::ivec3& worldPosition) const;
-		bool SetBlock(const glm::ivec3& worldPosition,
-					  const Block& block,
-					  BlocksChangedEventArgs::eOrigin origin,
-					  bool notify = true);
-		size_t SetBlocks(const std::vector<std::pair<glm::ivec3, Block>>& blocks,
-						 BlocksChangedEventArgs::eOrigin origin,
-						 bool notify = true);
+		BlockState GetBlock(const glm::ivec3& worldPosition) const;
+		bool SetBlock(const Block& block, BlocksChangedEventArgs::eOrigin origin, bool notify = true);
+		size_t SetBlocks(const std::vector<Block>& blocks, BlocksChangedEventArgs::eOrigin origin, bool notify = true);
 
 		bool IsChunkLoaded(const glm::ivec2& chunkPosition) const;
 		std::shared_ptr<Chunk> GetChunk(const glm::ivec2& chunkPosition) const;
@@ -127,7 +121,7 @@ namespace onion::voxel
 
 		mutable std::shared_mutex m_MutexOutOfBoundsBlocks;
 		// Map of chunk position to list of out-of-bounds blocks that should be added to the chunk when it is added to the world
-		std::unordered_map<glm::ivec2, std::vector<std::pair<glm::ivec3, Block>>, IVec2Hash> m_OutOfBoundsBlocks;
+		std::unordered_map<glm::ivec2, std::vector<Block>, IVec2Hash> m_OutOfBoundsBlocks;
 
 		mutable std::shared_mutex m_MutexChunks;
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, IVec2Hash> m_Chunks;

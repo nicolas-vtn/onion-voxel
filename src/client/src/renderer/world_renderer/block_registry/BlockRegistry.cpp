@@ -101,7 +101,7 @@ namespace onion::voxel
 	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures)
 	{
 		BlockTextures tex;
-		tex.rotationType = Block::GetRotationType(id);
+		tex.rotationType = BlockState::GetRotationType(id);
 
 		for (size_t i = 0; i < 6; i++)
 		{

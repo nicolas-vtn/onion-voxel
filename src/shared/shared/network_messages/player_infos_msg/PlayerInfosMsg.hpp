@@ -19,7 +19,7 @@ namespace onion::voxel
 		std::string Username;
 		std::string UUID;
 
-		glm::vec3 Position;
+		glm::vec3 Position{};
 
 		template <class Archive> void serialize(Archive& ar) { ar(Username, UUID, Position); }
 	};

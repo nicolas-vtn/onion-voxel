@@ -2,33 +2,13 @@
 
 namespace onion::voxel
 {
-	// ----- Static Initialization -----
-	const std::vector<bool> Block::s_TransparencyLookupTable = []()
-	{
-		std::vector<bool> table(static_cast<size_t>(GetBlockIdCount()), false);
-		table[static_cast<size_t>(BlockId::Air)] = true;
-		table[static_cast<size_t>(BlockId::Glass)] = true;
-		table[static_cast<size_t>(BlockId::OakLeaves)] = true;
-		table[static_cast<size_t>(BlockId::Water)] = true;
-		return table;
-	}();
+	Block::Block() : Position(0), State(BlockState(BlockId::Air)) {}
 
-	const std::vector<Block::RotationType> Block::s_RotationTypeLookupTable = []()
-	{
-		std::vector<RotationType> table(static_cast<size_t>(GetBlockIdCount()), RotationType::None);
-		table[static_cast<size_t>(BlockId::Furnace)] = RotationType::Horizontal;
-		table[static_cast<size_t>(BlockId::OakLog)] = RotationType::Pillar;
-		return table;
-	}();
-
-	Block::Block(BlockId blockID, Orientation facing, Orientation top)
-		: m_BlockID(blockID), m_Facing(facing), m_Top(top)
-	{
-	}
+	Block::Block(const glm::ivec3& position, const BlockState& state) : Position(position), State(state) {}
 
 	bool Block::operator==(const Block& other) const
 	{
-		return m_BlockID == other.m_BlockID && m_Facing == other.m_Facing && m_Top == other.m_Top;
+		return Position == other.Position && State == other.State;
 	}
 
 	bool Block::operator!=(const Block& other) const
@@ -36,18 +16,18 @@ namespace onion::voxel
 		return !(*this == other);
 	}
 
-	bool Block::IsOpaque(BlockId blockID)
+	bool Block::IsOpaque() const
 	{
-		return !IsTransparent(blockID);
+		return BlockState::IsOpaque(State.ID);
 	}
 
-	bool Block::IsTransparent(BlockId blockID)
+	bool Block::IsTransparent() const
 	{
-		return s_TransparencyLookupTable[static_cast<size_t>(blockID)];
+		return BlockState::IsTransparent(State.ID);
 	}
 
-	Block::RotationType Block::GetRotationType(BlockId blockID)
+	BlockState::RotationType Block::GetRotationType() const
 	{
-		return s_RotationTypeLookupTable[static_cast<size_t>(blockID)];
+		return BlockState::GetRotationType(State.ID);
 	}
 } // namespace onion::voxel

@@ -70,10 +70,9 @@ namespace onion::voxel
 		if (sc.m_IsMonoBlock)
 			return sc;
 
-		sc.m_BlockIndexInPalette =
-			std::make_shared<std::array<uint8_t,
-										WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE *
-											WorldConstants::CHUNK_SIZE>>();
+		sc.m_BlockIndexInPalette = std::make_shared<
+			std::array<uint8_t,
+					   WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE>>();
 
 		auto& arr = *sc.m_BlockIndexInPalette;
 
@@ -109,9 +108,9 @@ namespace onion::voxel
 
 		msg.Palette.reserve(chunk->m_BlocksPalette.size());
 
-		for (const Block& block : chunk->m_BlocksPalette)
+		for (const BlockState& block : chunk->m_BlocksPalette)
 		{
-			msg.Palette.emplace_back(SerializeBlock(block));
+			msg.Palette.emplace_back(SerializeBlockState(block));
 		}
 
 		msg.SubChunks.reserve(chunk->m_SubChunks.size());
@@ -133,9 +132,9 @@ namespace onion::voxel
 
 			chunk->m_BlocksPalette.clear();
 
-			for (const BlockDTO& dto : msg.Palette)
+			for (const BlockStateDTO& dto : msg.Palette)
 			{
-				chunk->m_BlocksPalette.emplace_back(DeserializeBlock(dto));
+				chunk->m_BlocksPalette.emplace_back(DeserializeBlockState(dto));
 			}
 
 			chunk->m_SubChunks.clear();
@@ -149,12 +148,31 @@ namespace onion::voxel
 		return chunk;
 	};
 
+	BlockStateDTO Serializer::SerializeBlockState(const BlockState& block)
+	{
+		BlockStateDTO dto;
+		dto.id = (uint16_t) block.ID;
+		dto.facing = (uint8_t) block.Facing;
+		dto.top = (uint8_t) block.Top;
+
+		return dto;
+	}
+
+	BlockState Serializer::DeserializeBlockState(const BlockStateDTO& dto)
+	{
+		BlockState block;
+		block.ID = (BlockId) dto.id;
+		block.Facing = (BlockState::Orientation) dto.facing;
+		block.Top = (BlockState::Orientation) dto.top;
+
+		return block;
+	}
+
 	BlockDTO Serializer::SerializeBlock(const Block& block)
 	{
 		BlockDTO dto;
-		dto.id = (uint16_t) block.m_BlockID;
-		dto.facing = (uint8_t) block.m_Facing;
-		dto.top = (uint8_t) block.m_Top;
+		dto.position = block.Position;
+		dto.state = SerializeBlockState(block.State);
 
 		return dto;
 	}
@@ -162,9 +180,8 @@ namespace onion::voxel
 	Block Serializer::DeserializeBlock(const BlockDTO& dto)
 	{
 		Block block;
-		block.m_BlockID = (BlockId) dto.id;
-		block.m_Facing = (Block::Orientation) dto.facing;
-		block.m_Top = (Block::Orientation) dto.top;
+		block.Position = dto.position;
+		block.State = DeserializeBlockState(dto.state);
 
 		return block;
 	}

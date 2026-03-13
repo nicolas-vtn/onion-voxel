@@ -151,10 +151,10 @@ namespace onion::voxel
 		std::cout << "Received BlocksChangedMsg from client " << clientHandle << ": " << msg.ChangedBlocks.size()
 				  << " changed blocks\n";
 
-		std::vector<std::pair<glm::ivec3, Block>> changedBlocks;
-		for (const auto& [worldPos, blockDTO] : msg.ChangedBlocks)
+		std::vector<Block> changedBlocks;
+		for (const auto& blockDTO : msg.ChangedBlocks)
 		{
-			changedBlocks.emplace_back(worldPos, Serializer::DeserializeBlock(blockDTO));
+			changedBlocks.emplace_back(Serializer::DeserializeBlock(blockDTO));
 		}
 
 		size_t blocksSet = m_WorldManager->SetBlocks(
@@ -195,9 +195,9 @@ namespace onion::voxel
 	void Server::Handle_BlocksChanged(const WorldManager::BlocksChangedEventArgs& args)
 	{
 		BlocksChangedMsg blocksChangedMsg;
-		for (const auto& [worldPos, block] : args.ChangedBlocks)
+		for (const auto& block : args.ChangedBlocks)
 		{
-			blocksChangedMsg.ChangedBlocks.emplace_back(worldPos, Serializer::SerializeBlock(block));
+			blocksChangedMsg.ChangedBlocks.emplace_back(Serializer::SerializeBlock(block));
 		}
 
 		m_NetworkServer.Broadcast(blocksChangedMsg);

@@ -28,8 +28,8 @@ namespace onion::voxel
 	{
 		std::string Name;
 		std::string Address;
-		int Port;
-		int SimulationDistance;
+		int Port = 0;
+		int SimulationDistance = 0;
 	};
 
 	class Renderer

@@ -16,10 +16,10 @@ namespace onion::voxel
 	{
 		static constexpr MessageHeader::eType StaticType = MessageHeader::eType::ChunkData;
 
-		glm::ivec2 Position;
+		glm::ivec2 Position{};
 
 		std::vector<SubChunkDTO> SubChunks;
-		std::vector<BlockDTO> Palette;
+		std::vector<BlockStateDTO> Palette;
 
 		template <class Archive> void serialize(Archive& ar) { ar(Position, SubChunks, Palette); }
 	};

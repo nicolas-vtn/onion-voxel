@@ -171,10 +171,10 @@ namespace onion::voxel
 			return;
 		}
 
-		std::vector<std::pair<glm::ivec3, BlockDTO>> changedBlocksDTO;
-		for (const auto& [worldPos, block] : args.ChangedBlocks)
+		std::vector<BlockDTO> changedBlocksDTO;
+		for (const auto& block : args.ChangedBlocks)
 		{
-			changedBlocksDTO.emplace_back(worldPos, Serializer::SerializeBlock(block));
+			changedBlocksDTO.emplace_back(Serializer::SerializeBlock(block));
 		}
 
 		BlocksChangedMsg blocksChangedMsg;
@@ -275,13 +275,13 @@ namespace onion::voxel
 
 	void Client::Handle_BlocksChangedMessageReceived(const BlocksChangedMsg& msg)
 	{
-		std::vector<std::pair<glm::ivec3, Block>> changedBlocks;
-		for (const auto& [worldPos, blockDTO] : msg.ChangedBlocks)
+		std::vector<Block> changedBlocks;
+		for (const auto& blockDTO : msg.ChangedBlocks)
 		{
-			changedBlocks.emplace_back(worldPos, Serializer::DeserializeBlock(blockDTO));
+			changedBlocks.emplace_back(Serializer::DeserializeBlock(blockDTO));
 		}
 
-		std::cout << "Received BlocksChangedMsg: " << changedBlocks.size() << " changed blocks\n";
+		//std::cout << "Received BlocksChangedMsg: " << changedBlocks.size() << " changed blocks\n";
 
 		size_t blocksSet = m_WorldManager->SetBlocks(
 			changedBlocks, WorldManager::BlocksChangedEventArgs::eOrigin::ServerRequest, false);

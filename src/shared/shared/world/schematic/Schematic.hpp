@@ -12,7 +12,7 @@ namespace onion::voxel
 	{
 	  public:
 		Schematic(glm::ivec3 size, glm::ivec3 origin = {})
-			: m_Size(size), m_Origin(origin), m_Blocks(size.x * size.y * size.z, Block(BlockId::Air))
+			: m_Size(size), m_Origin(origin), m_Blocks(size.x * size.y * size.z, BlockState(BlockId::Air))
 		{
 		}
 
@@ -21,10 +21,10 @@ namespace onion::voxel
 
 		void SetOrigin(glm::ivec3 origin) { m_Origin = origin; }
 
-		Block GetBlock(glm::ivec3 pos) const
+		BlockState GetBlock(glm::ivec3 pos) const
 		{
 			if (!IsInside(pos))
-				return Block(BlockId::Air);
+				return BlockState(BlockId::Air);
 
 			return m_Blocks[Index(pos)];
 		}
@@ -34,10 +34,10 @@ namespace onion::voxel
 			if (!IsInside(pos))
 				return BlockId::Air;
 
-			return m_Blocks[Index(pos)].m_BlockID;
+			return m_Blocks[Index(pos)].ID;
 		}
 
-		void SetBlock(glm::ivec3 pos, const Block& block)
+		void SetBlock(glm::ivec3 pos, const BlockState& block)
 		{
 			if (!IsInside(pos))
 				throw std::out_of_range("Schematic::SetBlock out of bounds");
@@ -47,7 +47,7 @@ namespace onion::voxel
 
 		size_t GetBlockCount() const { return m_Blocks.size(); }
 
-		void Fill(Block block) { std::fill(m_Blocks.begin(), m_Blocks.end(), block); }
+		void Fill(BlockState block) { std::fill(m_Blocks.begin(), m_Blocks.end(), block); }
 
 		bool IsInside(glm::ivec3 pos) const
 		{
@@ -61,6 +61,6 @@ namespace onion::voxel
 		glm::ivec3 m_Size;
 		glm::ivec3 m_Origin;
 
-		std::vector<Block> m_Blocks;
+		std::vector<BlockState> m_Blocks;
 	};
 } // namespace onion::voxel

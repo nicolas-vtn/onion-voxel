@@ -1,5 +1,6 @@
 #include "Chunk.hpp"
 
+#include <cassert>
 #include <stdexcept>
 
 namespace onion::voxel
@@ -9,7 +10,7 @@ namespace onion::voxel
 		m_SubChunks.resize(subChunkCount);
 	}
 
-	Chunk::Chunk(glm::ivec2 position, std::vector<SubChunk> subChunks, std::vector<Block> blocksPalette)
+	Chunk::Chunk(glm::ivec2 position, std::vector<SubChunk> subChunks, std::vector<BlockState> blocksPalette)
 		: m_Position(position), m_SubChunks(std::move(subChunks)), m_BlocksPalette(std::move(blocksPalette))
 	{
 	}
@@ -38,54 +39,37 @@ namespace onion::voxel
 		return m_Position;
 	}
 
-	Block Chunk::GetBlock(const glm::ivec3& localPosition) const
+	BlockState Chunk::GetBlock(const glm::ivec3& localPosition) const
 	{
-		if (localPosition.y == -1)
-		{
-			return m_BlocksPalette[0]; // Air
-		}
-
-		// Check if localPosition is within bounds of the chunk
-		if (localPosition.x < 0 || localPosition.x >= WorldConstants::CHUNK_SIZE || localPosition.y < 0 ||
-			localPosition.z < 0 || localPosition.z >= WorldConstants::CHUNK_SIZE)
-		{
-			// Out of bounds, throw
-			throw std::out_of_range("Local position is out of bounds of the chunk");
-		}
+		assert(localPosition.x >= 0 && localPosition.x < WorldConstants::CHUNK_SIZE);
+		assert(localPosition.z >= 0 && localPosition.z < WorldConstants::CHUNK_SIZE);
 
 		std::shared_lock lock(m_Mutex);
 
-		// Calculate which subchunk the local position is in
-		int subChunkIndex = localPosition.y / WorldConstants::CHUNK_SIZE;
+		const int subChunkIndex = localPosition.y / WorldConstants::CHUNK_SIZE;
 
-		if (subChunkIndex >= m_SubChunks.size())
+		// Checks subChunkIndex < 0 AND subChunkIndex >= size
+		if (localPosition.y < 0 || subChunkIndex >= m_SubChunks.size())
 		{
-			return m_BlocksPalette[0]; // Air
+			return BlockState(BlockId::Air);
 		}
 
-		// Get the subchunk
 		const SubChunk& subChunk = m_SubChunks[subChunkIndex];
 
-		// Calculate the local position within the subchunk
-		glm::ivec3 localPositionInSubChunk{
-			localPosition.x, localPosition.y % WorldConstants::CHUNK_SIZE, localPosition.z};
+		const glm::ivec3 local{localPosition.x, localPosition.y % WorldConstants::CHUNK_SIZE, localPosition.z};
 
-		// Get the block data from the subchunk
-		uint8_t blockIndex = subChunk.GetBlockIndexInPalette(localPositionInSubChunk);
+		const uint8_t blockIndex = subChunk.GetBlockIndexInPalette(local);
 
-		// Convert block data to Block and return
 		return m_BlocksPalette[blockIndex];
 	}
 
-	void Chunk::SetBlock(const glm::ivec3& localPosition, const Block& block)
+	void Chunk::SetBlock(const glm::ivec3& localPosition, const BlockState& block)
 	{
 		// Check if localPosition is within bounds of the chunk
-		if (localPosition.x < 0 || localPosition.x >= WorldConstants::CHUNK_SIZE || localPosition.y < 0 ||
-			localPosition.z < 0 || localPosition.z >= WorldConstants::CHUNK_SIZE)
-		{
-			// Out of bounds, throw
-			throw std::out_of_range("Local position is out of bounds of the chunk");
-		}
+		// Check if localPosition is within bounds of the chunk
+		assert(localPosition.x >= 0 && localPosition.x < WorldConstants::CHUNK_SIZE);
+		assert(localPosition.y >= 0);
+		assert(localPosition.z >= 0 && localPosition.z < WorldConstants::CHUNK_SIZE);
 
 		std::unique_lock lock(m_Mutex);
 
@@ -112,7 +96,7 @@ namespace onion::voxel
 		subChunk.SetBlockIndexInPalette(localPositionInSubChunk, indexInPalette);
 	}
 
-	void voxel::Chunk::SetBlock_Unsafe(const uint8_t x, const uint8_t y, const uint8_t z, const Block& block)
+	void voxel::Chunk::SetBlock_Unsafe(const uint8_t x, const uint8_t y, const uint8_t z, const BlockState& block)
 	{
 		// Add the block to the palette and get the block data index
 		const uint8_t indexInPalette = AddBlockToPalette(block);
@@ -142,7 +126,7 @@ namespace onion::voxel
 		return m_SubChunks[subChunkIndex].IsMonoBlock();
 	}
 
-	uint8_t Chunk::AddBlockToPalette(const Block& block)
+	uint8_t Chunk::AddBlockToPalette(const BlockState& block)
 	{
 		// Checks if the block is already in the block palette, if not add it and get the new block data index
 		auto it = std::find(m_BlocksPalette.begin(), m_BlocksPalette.end(), block);

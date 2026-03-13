@@ -3,14 +3,16 @@
 #include <cereal/archives/binary.hpp>
 #include <cereal/cereal.hpp>
 
+#include "../GlmSerialization.hpp"
+#include "BlockStateDTO.hpp"
+
 namespace onion::voxel
 {
 	struct BlockDTO
 	{
-		uint16_t id;
-		uint8_t facing;
-		uint8_t top;
+		glm::ivec3 position{};
+		BlockStateDTO state{};
 
-		template <class Archive> void serialize(Archive& ar) { ar(id, facing, top); }
+		template <class Archive> void serialize(Archive& ar) { ar(position, state); }
 	};
 } // namespace onion::voxel

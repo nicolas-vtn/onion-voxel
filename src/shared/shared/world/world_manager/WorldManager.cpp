@@ -65,16 +65,14 @@ namespace onion::voxel
 		ChunkAdded.Trigger(chunk);
 	}
 
-	void WorldManager::AddChunk(const std::shared_ptr<Chunk> chunk,
-								const std::vector<std::pair<glm::ivec3, Block>>& outOfBoundsBlocks)
+	void WorldManager::AddChunk(const std::shared_ptr<Chunk> chunk, const std::vector<Block>& outOfBoundsBlocks)
 	{
 		// Converts world position to chunk position + local position.
-		std::unordered_map<glm::ivec2, std::vector<std::pair<glm::ivec3, Block>>, IVec2Hash> outOfBoundsBlocksByChunk;
-		for (const auto& [worldPos, block] : outOfBoundsBlocks)
+		std::unordered_map<glm::ivec2, std::vector<Block>, IVec2Hash> outOfBoundsBlocksByChunk;
+		for (const auto& block : outOfBoundsBlocks)
 		{
-			glm::ivec2 chunkPos = Utils::WorldToChunkPosition(worldPos);
-			glm::ivec3 localPos = Utils::WorldToLocalPosition(worldPos);
-			outOfBoundsBlocksByChunk[chunkPos].emplace_back(localPos, block);
+			glm::ivec2 chunkPos = Utils::WorldToChunkPosition(block.Position);
+			outOfBoundsBlocksByChunk[chunkPos].push_back(block);
 		}
 
 		// Add out-of-bounds blocks to the map so they can be placed in the chunk when it is added to the world
@@ -252,7 +250,7 @@ namespace onion::voxel
 		RequestMissingChunksAround(args.NewChunkPosition);
 	}
 
-	Block WorldManager::GetBlock(const glm::ivec3& worldPosition) const
+	BlockState WorldManager::GetBlock(const glm::ivec3& worldPosition) const
 	{
 		// Calculate chunk position and local position within chunk
 		glm::ivec2 chunkPosition = Utils::WorldToChunkPosition(worldPosition);
@@ -265,31 +263,27 @@ namespace onion::voxel
 		}
 		else
 		{
-			return Block(); // Air block if chunk not found
+			return BlockState(); // Air block if chunk not found
 		}
 	}
 
-	bool WorldManager::SetBlock(const glm::ivec3& worldPosition,
-								const Block& block,
-								BlocksChangedEventArgs::eOrigin origin,
-								bool notify)
+	bool WorldManager::SetBlock(const Block& block, BlocksChangedEventArgs::eOrigin origin, bool notify)
 	{
-		int blockPlaced = SetBlocks({{worldPosition, block}}, origin, notify);
+		int blockPlaced = SetBlocks({block}, origin, notify);
 		return blockPlaced > 0;
 	}
 
-	size_t WorldManager::SetBlocks(const std::vector<std::pair<glm::ivec3, Block>>& blocks,
-								   BlocksChangedEventArgs::eOrigin origin,
-								   bool notify)
+	size_t
+	WorldManager::SetBlocks(const std::vector<Block>& blocks, BlocksChangedEventArgs::eOrigin origin, bool notify)
 	{
 		std::unordered_map<glm::ivec2, std::vector<std::pair<glm::ivec3, Block>>, IVec2Hash> blocksByChunk;
-		std::vector<std::pair<glm::ivec3, Block>> blocksToNotify;
+		std::vector<Block> blocksToNotify;
 
 		// Group blocks by chunk
-		for (const auto& [worldPos, block] : blocks)
+		for (const auto& block : blocks)
 		{
-			glm::ivec2 chunkPos = Utils::WorldToChunkPosition(worldPos);
-			glm::ivec3 localPos = Utils::WorldToLocalPosition(worldPos);
+			glm::ivec2 chunkPos = Utils::WorldToChunkPosition(block.Position);
+			glm::ivec3 localPos = Utils::WorldToLocalPosition(block.Position);
 			blocksByChunk[chunkPos].emplace_back(localPos, block);
 		}
 
@@ -301,13 +295,13 @@ namespace onion::voxel
 			{
 				for (const auto& [localPos, block] : blocksInChunk)
 				{
-					Block currentBlock = chunk->GetBlock(localPos);
-					if (currentBlock != block)
+					BlockState currentBlock = chunk->GetBlock(localPos);
+					if (currentBlock != block.State)
 					{
-						chunk->SetBlock(localPos, block);
+						chunk->SetBlock(localPos, block.State);
 
 						const glm::ivec3 worldPos = Utils::LocalToWorldPosition(localPos, chunkPos);
-						blocksToNotify.emplace_back(worldPos, block);
+						blocksToNotify.push_back(block);
 					}
 				}
 			}
@@ -315,8 +309,11 @@ namespace onion::voxel
 			{
 				// If chunk is not loaded, add blocks to out-of-bounds map so they can be placed when the chunk is loaded
 				std::unique_lock lock(m_MutexOutOfBoundsBlocks);
-				m_OutOfBoundsBlocks[chunkPos].insert(
-					m_OutOfBoundsBlocks[chunkPos].end(), blocksInChunk.begin(), blocksInChunk.end());
+
+				for (const auto& [localPos, block] : blocksInChunk)
+				{
+					m_OutOfBoundsBlocks[chunkPos].push_back(block);
+				}
 			}
 		}
 
@@ -334,8 +331,8 @@ namespace onion::voxel
 
 	void WorldManager::PlaceOutOfBoundsBlocks()
 	{
-		std::vector<std::pair<std::shared_ptr<Chunk>, std::vector<std::pair<glm::ivec3, Block>>>> work;
-		std::vector<std::pair<glm::ivec3, Block>> blocksPlaced;
+		std::vector<std::pair<std::shared_ptr<Chunk>, std::vector<Block>>> work;
+		std::vector<Block> blocksPlaced;
 
 		{
 			std::unique_lock lock(m_MutexOutOfBoundsBlocks);
@@ -362,12 +359,13 @@ namespace onion::voxel
 		{
 			glm::ivec2 chunkPos = chunk->GetPosition();
 
-			for (auto& [localPos, block] : blocks)
+			for (auto& block : blocks)
 			{
-				chunk->SetBlock(localPos, block);
+				glm::ivec3 localPos = Utils::WorldToLocalPosition(block.Position);
+				chunk->SetBlock(localPos, block.State);
 
 				const glm::ivec3 worldPos = Utils::LocalToWorldPosition(localPos, chunkPos);
-				blocksPlaced.emplace_back(worldPos, block);
+				blocksPlaced.push_back(block);
 			}
 		}
 
