@@ -161,7 +161,7 @@ namespace onion::voxel
 		m_TextureAtlas->ReloadTextures(m_MeshBuilder.GetAllRegisteredTextureNames());
 
 		// Mark all chunk meshes as dirty so they will be rebuilt with the new texture atlas UVs
-		MarkAllChunkMeshesDirty();
+		// MarkAllChunkMeshesDirty();
 	}
 
 	void WorldRenderer::MarkAllChunkMeshesDirty()
@@ -549,7 +549,6 @@ namespace onion::voxel
 	void WorldRenderer::StaticUnload()
 	{
 		SubChunkMesh::s_Shader.Delete();
-		SubChunkMesh::s_TextureAtlas.Delete();
 	}
 
 	uint64_t WorldRenderer::GetVertexCount() const

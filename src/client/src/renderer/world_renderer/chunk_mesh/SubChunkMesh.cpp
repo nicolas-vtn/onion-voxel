@@ -10,8 +10,6 @@ namespace onion::voxel
 		GetAssetsPath() / "shaders" / "blocks.frag",
 	};
 
-	Texture SubChunkMesh::s_TextureAtlas;
-
 	// ----- Constructor / Destructor -----
 
 	SubChunkMesh::SubChunkMesh() {}
@@ -326,17 +324,6 @@ namespace onion::voxel
 		if (!m_NeedsToPrepareRendering)
 		{
 			return; // Already prepared for rendering
-		}
-
-		if (!s_TextureAtlas.HasBeenLoaded())
-		{
-			std::filesystem::path textureAtlasPath = GetMinecraftTexturesPath() / "block" / "dirt.png";
-
-			s_TextureAtlas.LoadFromFile(textureAtlasPath);
-
-			// Set the Texture Unit to 0 for the atlas
-			s_Shader.Use();
-			s_Shader.setInt("u_Atlas", 0);
 		}
 
 		if (!m_AreBuffersGenerated)

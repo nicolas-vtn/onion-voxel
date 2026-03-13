@@ -98,7 +98,6 @@ namespace onion::voxel
 		// ----- Static Shader & Texture -----
 	  public:
 		static Shader s_Shader;
-		static Texture s_TextureAtlas;
 
 	  private:
 		static inline glm::vec3 s_LightColor{1.0f, 1.0f, 1.0f};

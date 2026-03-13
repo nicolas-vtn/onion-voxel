@@ -34,7 +34,7 @@ namespace onion::voxel
 		static inline const std::filesystem::path s_SpriteTitlePath =
 			std::filesystem::path("textures") / "OnionVoxelTitle2.png";
 		static inline const std::filesystem::path s_SplashScreenTextPath =
-			std::filesystem::path("minecraft") / "texts" / "splashes.txt";
+			std::filesystem::path("texts") / "splashes.txt";
 
 		// ----- Controls -----
 	  private:
