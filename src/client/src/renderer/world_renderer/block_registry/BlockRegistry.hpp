@@ -66,18 +66,29 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		void Register(BlockId id, const std::array<TextureInfo, 6>& textures);
-		void Register(BlockId id, const TextureInfo& texture);
-		void Register(BlockId id, const std::string& texture);
-
-		void SetOverlay(BlockId id, BlockFace face, const TextureInfo& texture);
-
+		void Initialize();
+		void ReloadTextures();
 		const std::unordered_set<std::string>& GetAllTextureNames() const;
-
 		const BlockTextures& Get(BlockId id) const;
+
+		// ----- Private Methods -----
+	  private:
+		void PreRegister(BlockId id, const TextureInfo& texture);
+		void PreRegister(BlockId id, const std::string& texture);
+		void PreRegister(BlockId id, const std::array<TextureInfo, 6>& textures);
+
+		void PreSetOverlay(BlockId id, BlockFace face, const TextureInfo& texture);
+
+		// ----- Real Registrations -----
+	  private:
+		void Register(BlockId id, const std::array<TextureInfo, 6>& textures);
+		void SetOverlay(BlockId id, BlockFace face, const TextureInfo& texture);
 
 		// ----- Private Members -----
 	  private:
+		std::vector<std::pair<BlockId, std::array<TextureInfo, 6>>> m_Registrations;
+		std::vector<std::tuple<BlockId, BlockFace, TextureInfo>> m_RegistrationsOverlays;
+
 		std::unordered_map<BlockId, BlockTextures> m_Blocks;
 		std::shared_ptr<TextureAtlas> m_Atlas;
 		std::unordered_set<std::string> m_AllTextureNames;

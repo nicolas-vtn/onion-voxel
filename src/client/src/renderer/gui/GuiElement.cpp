@@ -108,7 +108,6 @@ namespace onion::voxel
 	void GuiElement::Load()
 	{
 		Font::StaticInitialize();
-		s_TextFont.Load();
 	}
 
 	void GuiElement::Unload()

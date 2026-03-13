@@ -165,6 +165,7 @@ namespace onion::voxel
 		Gui::SetScreenSize(m_WindowWidth, m_WindowHeight);
 
 		m_Gui.Initialize();
+		m_WorldRenderer.Initialize();
 		SubscribeToGuiEvents();
 
 		while (!st.stop_requested() && !glfwWindowShouldClose(m_Window))
@@ -524,6 +525,7 @@ namespace onion::voxel
 
 		// Reload everything that uses assets
 		m_Gui.ReloadTextures();
+		m_WorldRenderer.ReloadTextures();
 	}
 
 	void Renderer::InitImGui()

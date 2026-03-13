@@ -12,9 +12,9 @@ namespace onion::voxel
 		// Left
 		// Right
 
-		Register(BlockId::Stone, "stone.png");
+		PreRegister(BlockId::Stone, "stone.png");
 
-		Register(BlockId::Dirt, "dirt.png");
+		PreRegister(BlockId::Dirt, "dirt.png");
 
 		std::array<TextureInfo, 6> grassTextures = {
 			TextureInfo{"grass_block_top.png", TintType::Grass, TextureType::Opaque},
@@ -23,49 +23,79 @@ namespace onion::voxel
 			TextureInfo{"grass_block_side.png", TintType::None, TextureType::Opaque},
 			TextureInfo{"grass_block_side.png", TintType::None, TextureType::Opaque},
 			TextureInfo{"grass_block_side.png", TintType::None, TextureType::Opaque}};
-		Register(BlockId::Grass, grassTextures);
-		SetOverlay(BlockId::Grass,
-				   BlockFace::Front,
-				   TextureInfo{"grass_block_side_overlay.png", TintType::Grass, TextureType::Cutout});
-		SetOverlay(BlockId::Grass,
-				   BlockFace::Back,
-				   TextureInfo{"grass_block_side_overlay.png", TintType::Grass, TextureType::Cutout});
-		SetOverlay(BlockId::Grass,
-				   BlockFace::Left,
-				   TextureInfo{"grass_block_side_overlay.png", TintType::Grass, TextureType::Cutout});
-		SetOverlay(BlockId::Grass,
-				   BlockFace::Right,
-				   TextureInfo{"grass_block_side_overlay.png", TintType::Grass, TextureType::Cutout});
+		PreRegister(BlockId::Grass, grassTextures);
+		PreSetOverlay(BlockId::Grass,
+					  BlockFace::Front,
+					  TextureInfo{"grass_block_side_overlay.png", TintType::Grass, TextureType::Cutout});
+		PreSetOverlay(BlockId::Grass,
+					  BlockFace::Back,
+					  TextureInfo{"grass_block_side_overlay.png", TintType::Grass, TextureType::Cutout});
+		PreSetOverlay(BlockId::Grass,
+					  BlockFace::Left,
+					  TextureInfo{"grass_block_side_overlay.png", TintType::Grass, TextureType::Cutout});
+		PreSetOverlay(BlockId::Grass,
+					  BlockFace::Right,
+					  TextureInfo{"grass_block_side_overlay.png", TintType::Grass, TextureType::Cutout});
 
-		Register(BlockId::Glass, TextureInfo{"light_blue_stained_glass.png", TintType::None, TextureType::Transparent});
+		PreRegister(BlockId::Glass,
+					TextureInfo{"light_blue_stained_glass.png", TintType::None, TextureType::Transparent});
+		PreRegister(BlockId::OakLog,
+					{TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque},
+					 TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque},
+					 TextureInfo{"oak_log_top.png", TintType::None, TextureType::Opaque},
+					 TextureInfo{"oak_log_top.png", TintType::None, TextureType::Opaque},
+					 TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque},
+					 TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque}});
 
-		Register(BlockId::OakLog,
-				 {TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque},
-				  TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque},
-				  TextureInfo{"oak_log_top.png", TintType::None, TextureType::Opaque},
-				  TextureInfo{"oak_log_top.png", TintType::None, TextureType::Opaque},
-				  TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque},
-				  TextureInfo{"oak_log.png", TintType::None, TextureType::Opaque}});
+		PreRegister(BlockId::OakLeaves, TextureInfo{"oak_leaves.png", TintType::Foliage, TextureType::Cutout});
 
-		Register(BlockId::OakLeaves, TextureInfo{"oak_leaves.png", TintType::Foliage, TextureType::Cutout});
+		PreRegister(BlockId::Furnace,
+					{TextureInfo{"furnace_top.png", TintType::None, TextureType::Opaque},
+					 TextureInfo{"furnace_top.png", TintType::None, TextureType::Opaque},
+					 TextureInfo{"furnace_front.png", TintType::None, TextureType::Opaque},
+					 TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque},
+					 TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque},
+					 TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque}});
 
-		Register(BlockId::Furnace,
-				 {TextureInfo{"furnace_top.png", TintType::None, TextureType::Opaque},
-				  TextureInfo{"furnace_top.png", TintType::None, TextureType::Opaque},
-				  TextureInfo{"furnace_front.png", TintType::None, TextureType::Opaque},
-				  TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque},
-				  TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque},
-				  TextureInfo{"furnace_side.png", TintType::None, TextureType::Opaque}});
+		PreRegister(BlockId::Bedrock, "bedrock.png");
 
-		Register(BlockId::Bedrock, "bedrock.png");
+		PreRegister(BlockId::Water, TextureInfo{"water_still.png", TintType::Water, TextureType::Transparent});
 
-		Register(BlockId::Water, TextureInfo{"water_still.png", TintType::Water, TextureType::Transparent});
+		PreRegister(BlockId::Sand, "sand.png");
 
-		Register(BlockId::Sand, "sand.png");
+		PreRegister(BlockId::Gravel, "gravel.png");
 
-		Register(BlockId::Gravel, "gravel.png");
+		PreRegister(BlockId::Cobblestone, "cobblestone.png");
+	}
 
-		Register(BlockId::Cobblestone, "cobblestone.png");
+	void BlockRegistry::PreRegister(BlockId id, const std::array<TextureInfo, 6>& textures)
+	{
+		for (const auto& texture : textures)
+		{
+			m_AllTextureNames.insert(texture.name);
+		}
+
+		m_Registrations.emplace_back(id, textures);
+	}
+
+	void BlockRegistry::PreRegister(BlockId id, const TextureInfo& texture)
+	{
+		std::array<TextureInfo, 6> textures;
+		textures.fill(texture);
+		PreRegister(id, textures);
+	}
+
+	void BlockRegistry::PreRegister(BlockId id, const std::string& texture)
+	{
+		std::array<TextureInfo, 6> textures;
+		textures.fill({texture});
+		PreRegister(id, textures);
+	}
+
+	void BlockRegistry::PreSetOverlay(BlockId id, BlockFace face, const TextureInfo& texture)
+	{
+		m_AllTextureNames.insert(texture.name);
+		m_RegistrationsOverlays.emplace_back(id, face, texture);
 	}
 
 	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures)
@@ -85,20 +115,6 @@ namespace onion::voxel
 		m_Blocks[id] = tex;
 	}
 
-	void BlockRegistry::Register(BlockId id, const TextureInfo& texture)
-	{
-		std::array<TextureInfo, 6> textures;
-		textures.fill(texture);
-		Register(id, textures);
-	}
-
-	void BlockRegistry::Register(BlockId id, const std::string& texture)
-	{
-		std::array<TextureInfo, 6> textures;
-		textures.fill({texture});
-		Register(id, textures);
-	}
-
 	void BlockRegistry::SetOverlay(BlockId id, BlockFace face, const TextureInfo& texture)
 	{
 		auto it = m_Blocks.find(id);
@@ -113,6 +129,29 @@ namespace onion::voxel
 		it->second.overlay[static_cast<size_t>(face)].textureType = texture.textureType;
 
 		m_AllTextureNames.insert(texture.name);
+	}
+
+	void BlockRegistry::Initialize()
+	{
+		ReloadTextures();
+	}
+
+	void BlockRegistry::ReloadTextures()
+	{
+		// Clear existing data
+		m_Blocks.clear();
+
+		// Process pending registrations
+		for (const auto& [id, textures] : m_Registrations)
+		{
+			Register(id, textures);
+		}
+
+		// Process pending overlays
+		for (const auto& [id, face, texture] : m_RegistrationsOverlays)
+		{
+			SetOverlay(id, face, texture);
+		}
 	}
 
 	const std::unordered_set<std::string>& BlockRegistry::GetAllTextureNames() const

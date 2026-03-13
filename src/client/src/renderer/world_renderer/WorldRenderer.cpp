@@ -20,6 +20,12 @@ namespace onion::voxel
 		m_EventHandles.clear();
 	};
 
+	void WorldRenderer::Initialize()
+	{
+		m_TextureAtlas->Initialize(m_MeshBuilder.GetAllRegisteredTextureNames());
+		m_MeshBuilder.Initialize();
+	}
+
 	void WorldRenderer::PrepareForRendering()
 	{
 		// Get Camera projection, view and ProjView Matix
@@ -147,6 +153,23 @@ namespace onion::voxel
 		}
 
 		ResetOpenGLState();
+	}
+
+	void WorldRenderer::ReloadTextures()
+	{
+		m_TextureAtlas->ReloadTextures(m_MeshBuilder.GetAllRegisteredTextureNames());
+
+		// Mark all chunk meshes as dirty so they will be rebuilt with the new texture atlas UVs
+		MarkAllChunkMeshesDirty();
+	}
+
+	void WorldRenderer::MarkAllChunkMeshesDirty()
+	{
+		std::shared_lock lock(m_MutexChunkMeshes);
+		for (const auto& [chunkPos, chunkMesh] : m_ChunkMeshes)
+		{
+			chunkMesh->SetAllSubChunkMeshesDirty(true);
+		}
 	}
 
 	void WorldRenderer::DeleteChunkMeshesAsync()
@@ -454,6 +477,12 @@ namespace onion::voxel
 			m_WorldManager->SetChunkPersistanceDistance(static_cast<uint8_t>(chunkPersistanceDistance));
 		}
 
+		// ----- Re Mesh all Chunks -----
+		ImGui::Separator();
+		if (ImGui::Button("Re Mesh All Chunks"))
+		{
+			MarkAllChunkMeshesDirty();
+		}
 		// ----- Clear all chunks button -----
 		ImGui::Separator();
 		if (ImGui::Button("Clear All Chunks"))

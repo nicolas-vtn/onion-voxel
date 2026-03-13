@@ -26,12 +26,18 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
+		void Initialize();
+
 		void PrepareForRendering();
 		void PrepareForRenderingOpaque();
 		void PrepareForRenderingCutout();
 		void PrepareForRenderingTransparent();
 		void ResetOpenGLState();
 		void Render();
+
+		void ReloadTextures();
+
+		void MarkAllChunkMeshesDirty();
 
 		void DeleteChunkMeshesAsync();
 		void DeleteChunkMeshAsync(const glm::ivec2& chunkPos);
@@ -86,8 +92,7 @@ namespace onion::voxel
 
 		// ----- Texture Atlas and Block Registry -----
 	  private:
-		std::shared_ptr<TextureAtlas> m_TextureAtlas =
-			std::make_shared<TextureAtlas>(GetMinecraftTexturesPath() / "block");
+		std::shared_ptr<TextureAtlas> m_TextureAtlas = std::make_shared<TextureAtlas>();
 
 		// ----- Mesh Building -----
 	  private:

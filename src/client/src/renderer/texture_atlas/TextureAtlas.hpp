@@ -5,7 +5,9 @@
 #include <filesystem>
 #include <string>
 #include <unordered_map>
-#include <vector>
+#include <unordered_set>
+
+#include <renderer/EngineContext.hpp>
 
 #include "../texture/texture.hpp"
 
@@ -25,11 +27,14 @@ namespace onion::voxel
 
 		// ----- Constructor / Destructor -----
 	  public:
-		TextureAtlas(const std::filesystem::path& directory);
+		TextureAtlas();
 
 		// ----- Public API -----
 	  public:
 		void Bind() const;
+
+		void Initialize(const std::unordered_set<std::string>& textureNames);
+		void ReloadTextures(const std::unordered_set<std::string>& textureNames);
 
 		void Unload();
 
@@ -40,17 +45,11 @@ namespace onion::voxel
 
 		// ----- Private Methods -----
 	  private:
-		void ScanTextures();
-		void BuildAtlas();
+		void BuildAtlas(const std::unordered_set<std::string>& textureNames);
 
 		// ----- Private Members -----
 	  private:
-		std::filesystem::path m_Directory;
-
-		std::vector<std::filesystem::path> m_TextureFiles;
-
 		std::unordered_map<std::string, TextureID> m_NameToID;
-
 		std::vector<AtlasEntry> m_Entries;
 
 		// ----- Texture Atlas Info -----
@@ -59,6 +58,11 @@ namespace onion::voxel
 
 		int m_TextureSize = 16;
 		int m_AtlasSize = 0;
+
+		// ----- Constants -----
+	  private:
+		static inline const std::filesystem::path s_BlockDirectory =
+			std::filesystem::path("assets") / "minecraft" / "textures" / "block";
 	};
 
 } // namespace onion::voxel

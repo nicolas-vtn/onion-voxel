@@ -751,6 +751,11 @@ namespace onion::voxel
 		m_AverageChunkMeshUpdateTime.store(total / m_ChunkMeshUpdateTimes_ms.size());
 	}
 
+	void MeshBuilder::Initialize()
+	{
+		m_BlockRegistry.Initialize();
+	}
+
 	void MeshBuilder::UpdateChunkMeshAsync(const std::shared_ptr<ChunkMesh> chunkMesh)
 	{
 		m_ThreadPool.Dispatch([this, chunkMesh]() { UpdateChunkMesh(chunkMesh); });
@@ -786,6 +791,11 @@ namespace onion::voxel
 	void MeshBuilder::SetMeshBuilderThreadCount(size_t count)
 	{
 		m_ThreadPool.SetPoolsCount(count);
+	}
+
+	const std::unordered_set<std::string>& MeshBuilder::GetAllRegisteredTextureNames() const
+	{
+		return m_BlockRegistry.GetAllTextureNames();
 	}
 
 	void MeshBuilder::RecordExecution()

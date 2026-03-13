@@ -25,6 +25,8 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
+		void Initialize();
+
 		void UpdateChunkMeshAsync(const std::shared_ptr<ChunkMesh> chunkMesh);
 		double GetAverageChunkMeshUpdateTime() const; // Returns the average time taken for chunk mesh updates in ms
 		size_t GetChunkMeshUpdatesLastSeconds() const;
@@ -32,6 +34,8 @@ namespace onion::voxel
 
 		size_t GetMeshBuilderThreadCount() const;
 		void SetMeshBuilderThreadCount(size_t count);
+
+		const std::unordered_set<std::string>& GetAllRegisteredTextureNames() const;
 
 		// ----- Private Members -----
 	  private:
