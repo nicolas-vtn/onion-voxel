@@ -22,6 +22,7 @@ namespace onion::voxel
 		void Render() override;
 		void Initialize() override;
 		void Delete() override;
+		void ReloadTextures() override;
 
 		// ----- Public Events -----
 	  public:
@@ -54,20 +55,21 @@ namespace onion::voxel
 
 		// ----- Sprites -----
 	  private:
-		std::filesystem::path m_CheckboxSpritePath =
-			GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "checkbox.png";
+		static inline const std::filesystem::path s_SpritePathFromGui =
+			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "checkbox.png";
+
+		static inline const std::filesystem::path s_SpritePathFromGui_Highlighted =
+			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "checkbox_highlighted.png";
+
+		static inline const std::filesystem::path s_SpritePathFromGui_Selected =
+			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "checkbox_selected.png";
+
+		static inline const std::filesystem::path s_SpritePathFromGui_SelectedHighlighted =
+			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "checkbox_selected_highlighted.png";
+
 		Sprite m_Checkbox_Sprite;
-
-		std::filesystem::path m_CheckboxHighlightedSpritePath =
-			GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "checkbox_highlighted.png";
 		Sprite m_CheckboxHighlighted_Sprite;
-
-		std::filesystem::path m_CheckboxSelectedSpritePath =
-			GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "checkbox_selected.png";
 		Sprite m_CheckboxSelected_Sprite;
-
-		std::filesystem::path m_CheckboxSelectedHighlightedSpritePath =
-			GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "checkbox_selected_highlighted.png";
 		Sprite m_CheckboxSelectedHighlighted_Sprite;
 	};
 }; // namespace onion::voxel

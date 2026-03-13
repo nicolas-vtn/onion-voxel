@@ -29,7 +29,7 @@ namespace onion::voxel
 
 		std::string GetFileText(const std::filesystem::path& filePath) const;
 
-		std::vector<unsigned char> GetFileData(const std::filesystem::path& filePath) const;
+		std::vector<unsigned char> GetFileBinary(const std::filesystem::path& filePath) const;
 
 		// ------------ Private Members ------------
 	  private:

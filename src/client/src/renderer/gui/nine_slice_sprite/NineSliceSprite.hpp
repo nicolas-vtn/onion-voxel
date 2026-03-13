@@ -49,6 +49,7 @@ namespace onion::voxel
 		void Initialize() override;
 		void Render() override;
 		void Delete() override;
+		void ReloadTextures() override;
 
 		void PullEvents();
 
@@ -95,6 +96,8 @@ namespace onion::voxel
 
 		// ----- Nine Slice Textures -----
 	  private:
+		void DeleteTextures();
+
 		Texture m_TextureTopLeft;
 		Texture m_TextureTop;
 		Texture m_TextureTopRight;
@@ -158,6 +161,7 @@ namespace onion::voxel
 		// ----- Helpers -----
 	  private:
 		inline static NineSliceMetadata ReadMetadataFromFile(const std::filesystem::path& pathMetadataFile);
+		inline static NineSliceMetadata ReadMetadataFromContent(const std::string& content);
 
 		void BuildNineSliceMesh();
 		void BuildVertices();

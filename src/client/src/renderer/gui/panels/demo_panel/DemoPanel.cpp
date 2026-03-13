@@ -4,8 +4,8 @@ namespace onion::voxel
 {
 
 	DemoPanel::DemoPanel(const std::string& name)
-		: GuiElement(name), m_Button("DemoButton"), m_Sprite("DemoSprite", m_SpritePath), m_Button2("DemoButton2"),
-		  m_ButtonMainMenu("MainMenuButton"), m_Checkbox("DemoCheckbox")
+		: GuiElement(name), m_Button("DemoButton"), m_Sprite("DemoSprite", m_SpritePath, Sprite::eOrigin::Asset),
+		  m_Button2("DemoButton2"), m_ButtonMainMenu("MainMenuButton"), m_Checkbox("DemoCheckbox")
 	{
 
 		SubscribeToControlEvents();
@@ -112,6 +112,15 @@ namespace onion::voxel
 		m_Checkbox.Delete();
 
 		SetDeletedState(true);
+	}
+
+	void DemoPanel::ReloadTextures()
+	{
+		m_Button.ReloadTextures();
+		m_Button2.ReloadTextures();
+		m_ButtonMainMenu.ReloadTextures();
+		m_Sprite.ReloadTextures();
+		m_Checkbox.ReloadTextures();
 	}
 
 	void DemoPanel::SubscribeToControlEvents()

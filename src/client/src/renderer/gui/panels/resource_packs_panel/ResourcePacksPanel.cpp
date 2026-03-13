@@ -16,8 +16,7 @@ namespace onion::voxel
 	ResourcePacksPanel::ResourcePacksPanel(const std::string& name)
 		: GuiElement(name), m_Title_Label("ResourcePacksTitle_Label"),
 		  m_Description_Label("ResourcePacksDescription_Label"), m_OpenPackFolder_Button("OpenPackFolder_Button"),
-		  m_Done_Button("Done_Button"),
-		  m_DefaultResourcePack_Tile("DefaultResourcePack_Tile", m_DefaultResourcePackThumbnailPath)
+		  m_Done_Button("Done_Button"), m_DefaultResourcePack_Tile("DefaultResourcePack_Tile")
 	{
 		SubscribeToControlEvents();
 
@@ -38,7 +37,7 @@ namespace onion::voxel
 
 		m_Done_Button.SetText("Done");
 
-		SetCurrentlySelectedResourcePack(SelectedResourcePackName);
+		SetCurrentlySelectedResourcePack("Default");
 	}
 
 	ResourcePacksPanel::~ResourcePacksPanel()
@@ -175,11 +174,25 @@ namespace onion::voxel
 		SetDeletedState(true);
 	}
 
+	void ResourcePacksPanel::ReloadTextures()
+	{
+		m_Title_Label.ReloadTextures();
+		m_Description_Label.ReloadTextures();
+		m_OpenPackFolder_Button.ReloadTextures();
+		m_Done_Button.ReloadTextures();
+		m_DefaultResourcePack_Tile.ReloadTextures();
+		std::lock_guard lock(m_MutexResourcePacks);
+		for (auto& resourcePackTile : m_ResourcePacksTiles)
+		{
+			resourcePackTile->ReloadTextures();
+		}
+	}
+
 	void ResourcePacksPanel::ScanResourcePacksFolder()
 	{
 		m_TimerScanResourcePacksFolder.Start();
 
-		const std::filesystem::path resourcePacksDirectory = GetResourcePacksDirectory();
+		const std::filesystem::path resourcePacksDirectory = EngineContext::Get().Assets->GetResourcePacksDirectory();
 
 		std::unordered_set<std::string> packsOnDisk;
 
@@ -189,6 +202,10 @@ namespace onion::voxel
 				continue;
 
 			std::string resourcePackName = entry.path().stem().string();
+
+			if (resourcePackName == "Default")
+				continue;
+
 			packsOnDisk.insert(resourcePackName);
 
 			if (ContainsResourcePack(resourcePackName))
@@ -202,7 +219,7 @@ namespace onion::voxel
 			std::string packDescription = mcmetaJson["pack"]["description"].get<std::string>();
 
 			std::string thumbnailName = resourcePackName + ".pack.png";
-			std::vector<unsigned char> thumbnailData = zip.GetFileData("pack.png");
+			std::vector<unsigned char> thumbnailData = zip.GetFileBinary("pack.png");
 			Texture thumbnail(thumbnailName, thumbnailData);
 
 			std::unique_ptr<ResourcePackTile> resourcePackTile =

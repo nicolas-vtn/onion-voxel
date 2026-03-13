@@ -23,6 +23,8 @@ namespace onion::voxel
 		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), 800, 600)),
 		  m_WorldRenderer(worldManager, m_Camera)
 	{
+		// Sets the Engine Context
+		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager);
 	}
 
 	Renderer::~Renderer()
@@ -163,6 +165,7 @@ namespace onion::voxel
 		Gui::SetScreenSize(m_WindowWidth, m_WindowHeight);
 
 		m_Gui.Initialize();
+		m_WorldRenderer.Initialize();
 		SubscribeToGuiEvents();
 
 		while (!st.stop_requested() && !glfwWindowShouldClose(m_Window))
@@ -477,6 +480,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(
 			m_Gui.RequestQuitToMainMenu.Subscribe([this](bool quit) { Handle_QuitToMainMenuRequest(quit); }));
+
+		m_EventHandles.push_back(m_Gui.RequestResourcePackChange.Subscribe(
+			[this](const std::string& resourcePackName) { Handle_ResourcePackChangeRequest(resourcePackName); }));
 	}
 
 	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)
@@ -511,6 +517,15 @@ namespace onion::voxel
 
 			m_IsPaused = false;
 		}
+	}
+
+	void Renderer::Handle_ResourcePackChangeRequest(const std::string& resourcePackName)
+	{
+		EngineContext::Get().Assets->SetCurrentResourcePack(resourcePackName);
+
+		// Reload everything that uses assets
+		m_Gui.ReloadTextures();
+		m_WorldRenderer.ReloadTextures();
 	}
 
 	void Renderer::InitImGui()

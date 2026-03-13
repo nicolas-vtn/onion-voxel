@@ -7,15 +7,21 @@
 namespace onion::voxel
 {
 
-	TextureAtlas::TextureAtlas(const std::filesystem::path& directory) : m_Directory(directory)
-	{
-		ScanTextures();
-		BuildAtlas();
-	}
+	TextureAtlas::TextureAtlas() {}
 
 	void TextureAtlas::Bind() const
 	{
 		m_Texture.Bind();
+	}
+
+	void TextureAtlas::Initialize(const std::unordered_set<std::string>& textureNames)
+	{
+		BuildAtlas(textureNames);
+	}
+
+	void TextureAtlas::ReloadTextures(const std::unordered_set<std::string>& textureNames)
+	{
+		BuildAtlas(textureNames);
 	}
 
 	void TextureAtlas::Unload()
@@ -41,20 +47,11 @@ namespace onion::voxel
 		return m_Entries[id];
 	}
 
-	void TextureAtlas::ScanTextures()
+	void TextureAtlas::BuildAtlas(const std::unordered_set<std::string>& textureNames)
 	{
-		for (auto& entry : std::filesystem::directory_iterator(m_Directory))
-		{
-			if (entry.path().extension() == ".png")
-			{
-				m_TextureFiles.push_back(entry.path());
-			}
-		}
-	}
+		m_Texture.Delete();
 
-	void TextureAtlas::BuildAtlas()
-	{
-		size_t count = m_TextureFiles.size();
+		size_t count = textureNames.size();
 
 		int grid = (int) std::ceil(std::sqrt((float) count));
 
@@ -63,12 +60,16 @@ namespace onion::voxel
 			int w, h, channels;
 
 			stbi_set_flip_vertically_on_load(true);
-			unsigned char* pixels = stbi_load((m_Directory / "stone.png").string().c_str(), &w, &h, &channels, 4);
 
-			if (!pixels)
+			std::filesystem::path texturePath = s_BlockDirectory / *textureNames.begin();
+			std::vector<unsigned char> pixels = EngineContext::Get().Assets->GetResourcePackFileBinary(texturePath);
+
+			unsigned char* data = stbi_load_from_memory(pixels.data(), (int) pixels.size(), &w, &h, &channels, 4);
+
+			if (!data)
 				throw std::runtime_error("Failed loading texture");
 
-			stbi_image_free(pixels);
+			stbi_image_free(data);
 
 			m_TextureSize = w;
 		}
@@ -90,7 +91,13 @@ namespace onion::voxel
 			int w, h, channels;
 
 			stbi_set_flip_vertically_on_load(true);
-			unsigned char* pixels = stbi_load(m_TextureFiles[i].string().c_str(), &w, &h, &channels, 4);
+
+			auto it = textureNames.begin();
+			std::advance(it, i);
+			std::filesystem::path texturePath = s_BlockDirectory / *it;
+			std::vector<unsigned char> data = EngineContext::Get().Assets->GetResourcePackFileBinary(texturePath);
+
+			unsigned char* pixels = stbi_load_from_memory(data.data(), (int) data.size(), &w, &h, &channels, 4);
 
 			if (!pixels)
 				throw std::runtime_error("Failed loading texture");
@@ -106,7 +113,7 @@ namespace onion::voxel
 
 			TextureID id = (TextureID) i;
 
-			std::string name = m_TextureFiles[i].filename().string();
+			std::string name = *it;
 
 			m_NameToID[name] = id;
 

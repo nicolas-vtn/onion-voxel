@@ -33,12 +33,18 @@ namespace onion::voxel
 
 	void Label::Initialize()
 	{
+		ReloadTextures();
 		SetInitState(true);
 	}
 
 	void Label::Delete()
 	{
 		SetDeletedState(true);
+	}
+
+	void Label::ReloadTextures()
+	{
+		s_TextFont.Reload();
 	}
 
 	void Label::SetText(const std::string& text)

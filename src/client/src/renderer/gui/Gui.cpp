@@ -106,7 +106,8 @@ namespace onion::voxel
 	void Gui::Handle_ResourcePackChangeRequest(const std::string& resourcePackName)
 	{
 		std::cout << "Selected Resource Pack: " << resourcePackName << std::endl;
-		SelectedResourcePackName = resourcePackName;
+
+		RequestResourcePackChange.Trigger(resourcePackName);
 	}
 
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)
@@ -178,7 +179,8 @@ namespace onion::voxel
 		if (m_ActiveMenu == eMenu::ResourcePacks)
 		{
 			m_ResourcePacksPanel.ScanResourcePacksFolder();
-			m_ResourcePacksPanel.SetCurrentlySelectedResourcePack(SelectedResourcePackName);
+			std::string selectedResourcePackName = EngineContext::Get().Assets->GetCurrentResourcePack();
+			m_ResourcePacksPanel.SetCurrentlySelectedResourcePack(selectedResourcePackName);
 		}
 	}
 
@@ -274,6 +276,15 @@ namespace onion::voxel
 		m_PausePanel.Delete();
 		m_OptionsPanel.Delete();
 		m_ResourcePacksPanel.Delete();
+	}
+
+	void Gui::ReloadTextures()
+	{
+		m_DemoPanel.ReloadTextures();
+		m_MainMenuPanel.ReloadTextures();
+		m_PausePanel.ReloadTextures();
+		m_OptionsPanel.ReloadTextures();
+		m_ResourcePacksPanel.ReloadTextures();
 	}
 
 } // namespace onion::voxel

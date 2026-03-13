@@ -28,6 +28,7 @@ namespace onion::voxel
 		void Render() override;
 		void Initialize() override;
 		void Delete() override;
+		void ReloadTextures() override;
 
 		void ScanResourcePacksFolder();
 
@@ -44,7 +45,6 @@ namespace onion::voxel
 		Label m_Title_Label;
 		Label m_Description_Label;
 
-		std::filesystem::path m_DefaultResourcePackThumbnailPath = GetTexturesPath() / "default_pack.png";
 		ResourcePackTile m_DefaultResourcePack_Tile;
 
 		Button m_OpenPackFolder_Button;

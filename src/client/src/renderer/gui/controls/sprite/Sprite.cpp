@@ -9,9 +9,15 @@ std::vector<Sprite::Vertex> Sprite::s_Vertices = {
 
 std::vector<unsigned int> Sprite::s_Indices = {0, 1, 2, 2, 3, 0};
 
-Sprite::Sprite(const std::string& name, const std::string& spritePath) : GuiElement(name), m_Texture(spritePath) {}
+Sprite::Sprite(const std::string& name, const std::filesystem::path& spritePath, eOrigin origin)
+	: GuiElement(name), m_Origin(origin), m_SpritePath(spritePath)
+{
+}
 
-Sprite::Sprite(const std::string& name, Texture texture) : GuiElement(name), m_Texture(std::move(texture)) {}
+Sprite::Sprite(const std::string& name, Texture texture) : GuiElement(name), m_Texture(std::move(texture))
+{
+	m_UnreloadableTexture = true;
+}
 
 Sprite::~Sprite() {}
 
@@ -44,6 +50,7 @@ void Sprite::Initialize()
 {
 	GenerateBuffers();
 	InitBuffers();
+	ReloadTextures();
 
 	SetInitState(true);
 }
@@ -53,6 +60,28 @@ void Sprite::Delete()
 	m_Texture.Delete();
 	DeleteBuffers();
 	SetDeletedState(true);
+}
+
+void onion::voxel::Sprite::ReloadTextures()
+{
+	if (m_UnreloadableTexture)
+		return;
+
+	// Delete previous texture
+	m_Texture.Delete();
+
+	// Load new texture data from the appropriate source based on the origin
+	std::vector<unsigned char> data;
+	if (m_Origin == eOrigin::Asset)
+	{
+		data = EngineContext::Get().Assets->GetFileBinary(m_SpritePath);
+	}
+	else
+	{
+		data = EngineContext::Get().Assets->GetResourcePackFileBinary(m_SpritePath);
+	}
+
+	m_Texture = Texture(m_SpritePath.string(), data);
 }
 
 void Sprite::SetSize(const glm::vec2& size)
@@ -83,6 +112,22 @@ int Sprite::GetTextureWidth() const
 int Sprite::GetTextureHeight() const
 {
 	return m_Texture.Height();
+}
+
+void onion::voxel::Sprite::SetOrigin(eOrigin origin)
+{
+	m_Origin = origin;
+}
+
+onion::voxel::Sprite::eOrigin onion::voxel::Sprite::GetOrigin() const
+{
+	return m_Origin;
+}
+
+void onion::voxel::Sprite::SwapTexture(Texture newTexture)
+{
+	m_Texture.Delete();
+	m_Texture = std::move(newTexture);
 }
 
 void Sprite::GenerateBuffers()

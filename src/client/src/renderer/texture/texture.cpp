@@ -166,6 +166,15 @@ namespace onion::voxel
 			GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
 			glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
 		}
+		else if (m_NbrChannels == 2)
+		{
+			srcFormat = GL_RG;
+			internalFormat = GL_RG8;
+
+			// Luminance + Alpha → grayscale + alpha
+			GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_GREEN};
+			glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+		}
 		else if (m_NbrChannels == 3)
 		{
 			srcFormat = GL_RGB;
@@ -220,6 +229,17 @@ namespace onion::voxel
 	using PixelDeleter = void (*)(unsigned char*);
 	std::unique_ptr<unsigned char[], PixelDeleter> Texture::GetData() const
 	{
+		if (m_Data)
+		{
+			// Return a copy of the data to ensure the original is not modified or freed by the caller
+			size_t dataSize =
+				static_cast<size_t>(m_Width) * static_cast<size_t>(m_Height) * static_cast<size_t>(m_NbrChannels);
+			unsigned char* dataCopy = new unsigned char[dataSize];
+			std::memcpy(dataCopy, m_Data.get(), dataSize);
+			return std::unique_ptr<unsigned char[], PixelDeleter>(dataCopy, FreePixels);
+		}
+
+		// Fallback : Try to load data from disk
 		if (!std::filesystem::exists(m_FilePath))
 		{
 			std::cerr << "[TEXTURE] [ERROR] : Texture file does not exist: " << m_FilePath << std::endl;

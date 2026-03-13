@@ -45,7 +45,7 @@ namespace onion::voxel
 	Shader GuiElement::s_ShaderNineSliceSprites(GetAssetsPath() / "shaders/nine_slice_sprite.vert",
 												GetAssetsPath() / "shaders/nine_slice_sprite.frag");
 
-	Font GuiElement::s_TextFont{(GetMinecraftTexturesPath() / "font/ascii.png").string(), 16, 16};
+	Font GuiElement::s_TextFont{s_PathFont, 16, 16};
 
 	Event<const CursorStyle&> GuiElement::RequestCursorStyleChange;
 
@@ -108,7 +108,6 @@ namespace onion::voxel
 	void GuiElement::Load()
 	{
 		Font::StaticInitialize();
-		s_TextFont.Load();
 	}
 
 	void GuiElement::Unload()

@@ -165,6 +165,19 @@ namespace onion::voxel
 		SetDeletedState(true);
 	}
 
+	void PausePanel::ReloadTextures()
+	{
+		m_Title_Label.ReloadTextures();
+		m_BackToGame_Button.ReloadTextures();
+		m_Options_Button.ReloadTextures();
+		m_MainMenu_Button.ReloadTextures();
+		m_Advancements_Button.ReloadTextures();
+		m_Statistics_Button.ReloadTextures();
+		m_GiveFeedback_Button.ReloadTextures();
+		m_ReportBugs_Button.ReloadTextures();
+		m_OpenToLan_Button.ReloadTextures();
+	}
+
 	void PausePanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(

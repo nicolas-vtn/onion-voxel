@@ -12,9 +12,9 @@ namespace onion::voxel
 	// -------- Constructor --------
 
 	Button::Button(const std::string& name)
-		: GuiElement(name), m_NineSliceSprite_Basic(name + "_9Slice_Basic", GetSpritePath_Basic()),
-		  m_NineSliceSprite_Disabled(name + "_9Slice_Disabled", GetSpritePath_Disabled()),
-		  m_NineSliceSprite_Highlighted(name + "_9Slice_Highlighted", GetSpritePath_Highlighted()),
+		: GuiElement(name), m_NineSliceSprite_Basic(name + "_9Slice_Basic", s_SpritePathFromGui),
+		  m_NineSliceSprite_Disabled(name + "_9Slice_Disabled", s_SpritePathFromGui_Disabled),
+		  m_NineSliceSprite_Highlighted(name + "_9Slice_Highlighted", s_SpritePathFromGui_Highlighted),
 		  m_Label(name + "_Label")
 	{
 		SubscribeToSpriteEvents();
@@ -91,6 +91,13 @@ namespace onion::voxel
 		m_Label.Delete();
 
 		SetDeletedState(true);
+	}
+
+	void Button::ReloadTextures()
+	{
+		m_NineSliceSprite_Basic.ReloadTextures();
+		m_NineSliceSprite_Disabled.ReloadTextures();
+		m_NineSliceSprite_Highlighted.ReloadTextures();
 	}
 
 	void Button::SetText(const std::string& text)
@@ -214,20 +221,20 @@ namespace onion::voxel
 		OnHoverLeave.Trigger(*this);
 	}
 
-	std::filesystem::path Button::GetSpritePath_Basic()
-	{
-		return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button.png";
-	}
+	//std::filesystem::path Button::GetSpritePath_Basic()
+	//{
+	//	return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button.png";
+	//}
 
-	std::filesystem::path Button::GetSpritePath_Disabled()
-	{
-		return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button_disabled.png";
-	}
+	//std::filesystem::path Button::GetSpritePath_Disabled()
+	//{
+	//	return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button_disabled.png";
+	//}
 
-	std::filesystem::path Button::GetSpritePath_Highlighted()
-	{
-		return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button_highlighted.png";
-	}
+	//std::filesystem::path Button::GetSpritePath_Highlighted()
+	//{
+	//	return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button_highlighted.png";
+	//}
 
 	void Button::RenderImGuiDebug()
 	{

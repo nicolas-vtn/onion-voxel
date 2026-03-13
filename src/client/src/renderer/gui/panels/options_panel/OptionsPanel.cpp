@@ -234,6 +234,24 @@ namespace onion::voxel
 		SetDeletedState(true);
 	}
 
+	void OptionsPanel::ReloadTextures()
+	{
+		m_Title_Label.ReloadTextures();
+		m_FOV_Button.ReloadTextures();
+		m_Online_Button.ReloadTextures();
+		m_SkinCustomization_Button.ReloadTextures();
+		m_MusicAndSounds_Button.ReloadTextures();
+		m_VideoSettings_Button.ReloadTextures();
+		m_Controls_Button.ReloadTextures();
+		m_Language_Button.ReloadTextures();
+		m_ChatSettings_Button.ReloadTextures();
+		m_ResourcePacks_Button.ReloadTextures();
+		m_AccessibilitySettings_Button.ReloadTextures();
+		m_Telemetry_Button.ReloadTextures();
+		m_Credits_Button.ReloadTextures();
+		m_Done_Button.ReloadTextures();
+	}
+
 	void OptionsPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(m_MusicAndSounds_Button.OnClick.Subscribe([this](const Button& sender)

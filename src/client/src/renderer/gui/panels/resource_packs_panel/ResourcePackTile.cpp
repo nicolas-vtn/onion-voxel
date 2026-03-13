@@ -53,6 +53,14 @@ namespace onion::voxel
 
 	void ResourcePackTile::Initialize()
 	{
+		if (m_Thumbnail.GetTextureHeight() == -1)
+		{
+			// Failed to load the thumbnail texture, use the default one instead
+			std::vector<unsigned char> thumbnailData =
+				EngineContext::Get().Assets->GetFileBinary(s_DefaultResourcePackThumbnailPath);
+			m_Thumbnail.SwapTexture(Texture(s_DefaultResourcePackThumbnailPath.string(), thumbnailData));
+		}
+
 		m_Thumbnail.Initialize();
 		m_Checkbox.Initialize();
 		m_NameLabel.Initialize();
@@ -67,6 +75,11 @@ namespace onion::voxel
 		m_NameLabel.Delete();
 		m_DescriptionLabel.Delete();
 		SetDeletedState(true);
+	}
+
+	void ResourcePackTile::ReloadTextures()
+	{
+		m_Checkbox.ReloadTextures();
 	}
 
 	void ResourcePackTile::SetSize(const glm::vec2& size)
