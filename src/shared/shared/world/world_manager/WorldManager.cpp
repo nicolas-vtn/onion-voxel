@@ -1,6 +1,6 @@
 #include "WorldManager.hpp"
 
-#include "../../utils/Utils.hpp"
+#include <shared/utils/Utils.hpp>
 
 #include <iostream>
 

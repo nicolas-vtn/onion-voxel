@@ -9,11 +9,10 @@
 #include <onion/Event.hpp>
 
 #include <renderer/EngineContext.hpp>
-
-#include "../Variables.hpp"
-#include "../inputs_manager/inputs_manager.hpp"
-#include "../shader/shader.hpp"
-#include "font/font.hpp"
+#include <renderer/Variables.hpp>
+#include <renderer/gui/font/Font.hpp>
+#include <renderer/inputs_manager/inputs_manager.hpp>
+#include <renderer/shader/shader.hpp>
 
 namespace onion::voxel
 {

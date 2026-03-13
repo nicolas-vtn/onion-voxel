@@ -5,7 +5,8 @@
 #include <shared_mutex>
 #include <vector>
 
-#include "../block/Block.hpp"
+#include <shared/world/block/Block.hpp>
+
 #include "SubChunk.hpp"
 
 namespace onion::voxel

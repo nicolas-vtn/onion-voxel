@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-#include "../WorldConstants.hpp"
+#include <shared/world/WorldConstants.hpp>
 
 namespace onion::voxel
 {

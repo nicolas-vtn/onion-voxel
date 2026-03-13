@@ -8,12 +8,12 @@
 
 #include <shared/world/world_manager/WorldManager.hpp>
 
-#include "../Variables.hpp"
-#include "../camera/camera.hpp"
-#include "../skybox/Skybox.hpp"
-#include "../texture_atlas/TextureAtlas.hpp"
-#include "chunk_mesh/ChunkMesh.hpp"
-#include "chunk_mesh/MeshBuilder.hpp"
+#include <renderer/Variables.hpp>
+#include <renderer/camera/camera.hpp>
+#include <renderer/skybox/Skybox.hpp>
+#include <renderer/texture_atlas/TextureAtlas.hpp>
+#include <renderer/world_renderer/chunk_mesh/ChunkMesh.hpp>
+#include <renderer/world_renderer/chunk_mesh/MeshBuilder.hpp>
 
 namespace onion::voxel
 {

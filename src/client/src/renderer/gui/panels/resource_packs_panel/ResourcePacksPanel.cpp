@@ -6,8 +6,8 @@
 
 #include <shared/zip_archive/ZipArchive.hpp>
 
-#include "../../../Variables.hpp"
-#include "../../LayoutHelper.hpp"
+#include <renderer/Variables.hpp>
+#include <renderer/gui/LayoutHelper.hpp>
 
 #include <windows.h>
 

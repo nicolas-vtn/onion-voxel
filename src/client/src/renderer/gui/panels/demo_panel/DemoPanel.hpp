@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../../GuiElement.hpp"
-#include "../../controls/button/Button.hpp"
-#include "../../controls/checkbox/Checkbox.hpp"
-#include "../../controls/sprite/Sprite.hpp"
+#include <renderer/gui/GuiElement.hpp>
+#include <renderer/gui/controls/button/Button.hpp>
+#include <renderer/gui/controls/checkbox/Checkbox.hpp>
+#include <renderer/gui/controls/sprite/Sprite.hpp>
 
 namespace onion::voxel
 {

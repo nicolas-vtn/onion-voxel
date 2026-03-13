@@ -1,9 +1,10 @@
 #pragma once
 
-#include "../../../texture/texture.hpp"
-#include "../../GuiElement.hpp"
-#include "../../nine_slice_sprite/NineSliceSprite.hpp"
-#include "../label/Label.hpp"
+#include <renderer/gui/GuiElement.hpp>
+#include <renderer/gui/controls/label/Label.hpp>
+#include <renderer/gui/nine_slice_sprite/NineSliceSprite.hpp>
+
+#include <renderer/texture/texture.hpp>
 
 #include <onion/Event.hpp>
 

@@ -1,6 +1,6 @@
 #include "OptionsPanel.hpp"
 
-#include "../../LayoutHelper.hpp"
+#include <renderer/gui/LayoutHelper.hpp>
 
 namespace onion::voxel
 {

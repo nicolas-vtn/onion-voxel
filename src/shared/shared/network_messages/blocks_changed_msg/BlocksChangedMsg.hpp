@@ -9,9 +9,9 @@
 #include <utility>
 #include <vector>
 
-#include "../DTOs/DTOs.hpp"
-#include "../GlmSerialization.hpp"
-#include "../MessageHeader.hpp"
+#include <shared/network_messages/DTOs/DTOs.hpp>
+#include <shared/network_messages/GlmSerialization.hpp>
+#include <shared/network_messages/MessageHeader.hpp>
 
 namespace onion::voxel
 {

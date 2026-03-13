@@ -6,7 +6,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "../../texture_atlas/TextureAtlas.hpp"
+#include <renderer/texture_atlas/TextureAtlas.hpp>
+
 #include <shared/world/block/Block.hpp>
 
 namespace onion::voxel

@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-#include "../world/WorldConstants.hpp"
+#include <shared/world/WorldConstants.hpp>
 
 namespace onion::voxel::Utils
 {

@@ -10,7 +10,7 @@
 #include <onion/Event.hpp>
 #include <onion/Timer.hpp>
 
-#include "../chunk/Chunk.hpp"
+#include <shared/world/chunk/Chunk.hpp>
 
 namespace onion::voxel
 {

@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 
-#include "../MessageHeader.hpp"
+#include <shared/network_messages/MessageHeader.hpp>
 
 namespace onion::voxel
 {

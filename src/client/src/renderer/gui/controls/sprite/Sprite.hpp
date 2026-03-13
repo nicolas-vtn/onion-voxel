@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../../texture/texture.hpp"
-#include "../../GuiElement.hpp"
+#include <renderer/gui/GuiElement.hpp>
+#include <renderer/texture/texture.hpp>
 
 #include <onion/Event.hpp>
 

@@ -4,8 +4,9 @@
 
 #include <iostream>
 
-#include "../debug_draws/DebugDraws.hpp"
 #include <shared/utils/Utils.hpp>
+
+#include <renderer/debug_draws/DebugDraws.hpp>
 
 namespace onion::voxel
 {

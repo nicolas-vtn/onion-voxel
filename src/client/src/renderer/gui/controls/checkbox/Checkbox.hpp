@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../GuiElement.hpp"
-#include "../sprite/Sprite.hpp"
+#include <renderer/gui/GuiElement.hpp>
+#include <renderer/gui/controls/sprite/Sprite.hpp>
 
 #include <onion/Event.hpp>
 

@@ -1,6 +1,6 @@
 #include "SubChunkMesh.hpp"
 
-#include "../../Variables.hpp"
+#include <renderer/Variables.hpp>
 
 namespace onion::voxel
 {

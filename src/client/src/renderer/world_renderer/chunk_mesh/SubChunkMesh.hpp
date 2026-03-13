@@ -6,8 +6,8 @@
 
 #include <glm/glm.hpp>
 
-#include "../../shader/shader.hpp"
-#include "../../texture/texture.hpp"
+#include <renderer/shader/shader.hpp>
+#include <renderer/texture/texture.hpp>
 
 #include <atomic>
 #include <mutex>

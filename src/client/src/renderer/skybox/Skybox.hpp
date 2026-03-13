@@ -1,10 +1,9 @@
 #pragma once
 
-#include "../shader/shader.hpp"
-
 #include <filesystem>
 
-#include "../Variables.hpp"
+#include <renderer/Variables.hpp>
+#include <renderer/shader/shader.hpp>
 
 namespace onion::voxel
 {

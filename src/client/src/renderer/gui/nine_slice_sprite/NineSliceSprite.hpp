@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../../Variables.hpp"
-#include "../../shader/shader.hpp"
-#include "../../texture/texture.hpp"
-#include "../GuiElement.hpp"
+#include <renderer/Variables.hpp>
+#include <renderer/gui/GuiElement.hpp>
+#include <renderer/shader/shader.hpp>
+#include <renderer/texture/texture.hpp>
 
 #include <onion/Event.hpp>
 

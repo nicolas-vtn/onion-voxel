@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "../block/Block.hpp"
+#include <shared/world/block/Block.hpp>
 
 namespace onion::voxel
 {

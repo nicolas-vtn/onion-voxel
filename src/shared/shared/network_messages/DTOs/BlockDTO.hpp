@@ -3,7 +3,8 @@
 #include <cereal/archives/binary.hpp>
 #include <cereal/cereal.hpp>
 
-#include "../GlmSerialization.hpp"
+#include <shared/network_messages/GlmSerialization.hpp>
+
 #include "BlockStateDTO.hpp"
 
 namespace onion::voxel

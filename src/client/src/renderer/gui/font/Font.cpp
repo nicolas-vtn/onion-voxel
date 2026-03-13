@@ -1,6 +1,6 @@
 #include "font.hpp"
 
-#include "../../Variables.hpp"
+#include <renderer/Variables.hpp>
 
 #include <glm/gtc/matrix_transform.hpp>
 

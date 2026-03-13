@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../GuiElement.hpp"
-#include "../../controls/button/Button.hpp"
-#include "../../controls/label/Label.hpp"
+#include <renderer/gui/GuiElement.hpp>
+#include <renderer/gui/controls/button/Button.hpp>
+#include <renderer/gui/controls/label/Label.hpp>
 
 namespace onion::voxel
 {

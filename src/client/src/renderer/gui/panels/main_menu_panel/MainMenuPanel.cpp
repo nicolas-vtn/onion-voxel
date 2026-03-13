@@ -1,6 +1,6 @@
 #include "MainMenuPanel.hpp"
 
-#include "../../LayoutHelper.hpp"
+#include <renderer/gui/LayoutHelper.hpp>
 
 #include <fstream>
 #include <iostream>

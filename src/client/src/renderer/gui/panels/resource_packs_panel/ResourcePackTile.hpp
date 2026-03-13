@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../../GuiElement.hpp"
-#include "../../controls/checkbox/Checkbox.hpp"
-#include "../../controls/label/Label.hpp"
-#include "../../controls/sprite/Sprite.hpp"
+#include <renderer/gui/GuiElement.hpp>
+#include <renderer/gui/controls/checkbox/Checkbox.hpp>
+#include <renderer/gui/controls/label/Label.hpp>
+#include <renderer/gui/controls/sprite/Sprite.hpp>
 
 #include <onion/Event.hpp>
 

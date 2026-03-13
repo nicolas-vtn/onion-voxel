@@ -2,8 +2,8 @@
 
 #include <renderer/EngineContext.hpp>
 
-#include "../../shader/shader.hpp"
-#include "../../texture/texture.hpp"
+#include <renderer/shader/shader.hpp>
+#include <renderer/texture/texture.hpp>
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>

@@ -6,8 +6,8 @@
 
 #include <glm/glm.hpp>
 
-#include "../Variables.hpp"
-#include "../shader/shader.hpp"
+#include <renderer/Variables.hpp>
+#include <renderer/shader/shader.hpp>
 
 namespace onion::voxel
 {

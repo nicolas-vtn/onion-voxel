@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../GuiElement.hpp"
+#include <renderer/gui/GuiElement.hpp>
 
 #include <onion/Event.hpp>
 

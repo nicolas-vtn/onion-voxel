@@ -8,8 +8,7 @@
 #include <unordered_set>
 
 #include <renderer/EngineContext.hpp>
-
-#include "../texture/texture.hpp"
+#include <renderer/texture/texture.hpp>
 
 namespace onion::voxel
 {
