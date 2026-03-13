@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "../../texture_atlas/TextureAtlas.hpp"
 #include <shared/world/block/Block.hpp>
@@ -71,11 +72,14 @@ namespace onion::voxel
 
 		void SetOverlay(BlockId id, BlockFace face, const TextureInfo& texture);
 
+		const std::unordered_set<std::string>& GetAllTextureNames() const;
+
 		const BlockTextures& Get(BlockId id) const;
 
 		// ----- Private Members -----
 	  private:
 		std::unordered_map<BlockId, BlockTextures> m_Blocks;
 		std::shared_ptr<TextureAtlas> m_Atlas;
+		std::unordered_set<std::string> m_AllTextureNames;
 	};
 } // namespace onion::voxel

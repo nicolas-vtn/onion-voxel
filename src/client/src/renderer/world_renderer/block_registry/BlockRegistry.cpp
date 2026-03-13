@@ -78,6 +78,8 @@ namespace onion::voxel
 			tex.faces[i].texture = m_Atlas->GetTextureID(textures[i].name);
 			tex.faces[i].tintType = textures[i].tintType;
 			tex.faces[i].textureType = textures[i].textureType;
+
+			m_AllTextureNames.insert(textures[i].name);
 		}
 
 		m_Blocks[id] = tex;
@@ -109,6 +111,13 @@ namespace onion::voxel
 		it->second.overlay[static_cast<size_t>(face)].texture = m_Atlas->GetTextureID(texture.name);
 		it->second.overlay[static_cast<size_t>(face)].tintType = texture.tintType;
 		it->second.overlay[static_cast<size_t>(face)].textureType = texture.textureType;
+
+		m_AllTextureNames.insert(texture.name);
+	}
+
+	const std::unordered_set<std::string>& BlockRegistry::GetAllTextureNames() const
+	{
+		return m_AllTextureNames;
 	}
 
 	const BlockTextures& BlockRegistry::Get(BlockId id) const

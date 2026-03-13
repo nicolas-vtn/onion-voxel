@@ -23,6 +23,8 @@ namespace onion::voxel
 		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), 800, 600)),
 		  m_WorldRenderer(worldManager, m_Camera)
 	{
+		// Sets the Engine Context
+		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager);
 	}
 
 	Renderer::~Renderer()

@@ -20,6 +20,8 @@
 #include "inputs_manager/inputs_manager.hpp"
 #include "world_renderer/WorldRenderer.hpp"
 
+#include "EngineContext.hpp"
+
 namespace onion::voxel
 {
 	struct ServerInfo
@@ -126,6 +128,10 @@ namespace onion::voxel
 		// ----- Actions -----
 	  private:
 		void PauseGame(bool pause);
+
+		// ----- Resource Pack Manager -----
+	  private:
+		AssetsManager m_AssetsManager;
 
 		// ------ World Manager ------
 	  private:

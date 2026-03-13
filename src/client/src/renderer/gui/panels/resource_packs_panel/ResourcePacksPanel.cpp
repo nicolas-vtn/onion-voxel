@@ -202,7 +202,7 @@ namespace onion::voxel
 			std::string packDescription = mcmetaJson["pack"]["description"].get<std::string>();
 
 			std::string thumbnailName = resourcePackName + ".pack.png";
-			std::vector<unsigned char> thumbnailData = zip.GetFileData("pack.png");
+			std::vector<unsigned char> thumbnailData = zip.GetFileBinary("pack.png");
 			Texture thumbnail(thumbnailName, thumbnailData);
 
 			std::unique_ptr<ResourcePackTile> resourcePackTile =

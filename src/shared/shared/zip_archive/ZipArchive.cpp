@@ -102,7 +102,7 @@ namespace onion::voxel
 		return result;
 	}
 
-	std::vector<unsigned char> ZipArchive::GetFileData(const std::filesystem::path& filePath) const
+	std::vector<unsigned char> ZipArchive::GetFileBinary(const std::filesystem::path& filePath) const
 	{
 		size_t size = 0;
 
