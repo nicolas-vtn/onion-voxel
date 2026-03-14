@@ -293,6 +293,19 @@ namespace onion::voxel
 			}
 		}
 
+		// Poppy layer
+		BlockState poppy{BlockId::Poppy};
+		for (y = 5; y <= 5; y++)
+		{
+			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
+			{
+				for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
+				{
+					chunk->SetBlock(glm::ivec3(x, y, z), poppy);
+				}
+			}
+		}
+
 		return genChunk;
 	}
 

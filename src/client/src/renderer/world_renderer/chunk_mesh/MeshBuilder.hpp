@@ -61,6 +61,24 @@ namespace onion::voxel
 		std::deque<std::chrono::steady_clock::time_point> m_ExecutionTimes;
 		void RecordExecution();
 
+		// ----- Private Structs -----
+	  private:
+		struct FaceBuildDesc
+		{
+			Face face;
+
+			const glm::vec3* v[4];
+			const uint8_t* o[4];
+
+			bool reverseWinding = false; // vertices should be added in reverse order (for correct backface culling)
+		};
+
+		struct PointsAndOcclusion
+		{
+			glm::vec3 p000, p001, p010, p011, p100, p101, p110, p111;
+			uint8_t o000, o001, o010, o011, o100, o101, o110, o111;
+		};
+
 		// ----- Private Methods -----
 	  private:
 		void UpdateChunkMesh(const std::shared_ptr<ChunkMesh> chunkMesh);
@@ -77,30 +95,22 @@ namespace onion::voxel
 							  SubChunkMesh& mesh,
 							  const BlockState& block,
 							  const BlockTextures& blockTextures,
-							  BlockFace worldFace,
-							  BlockFace textureFace,
-							  const glm::ivec3& v0,
-							  const glm::ivec3& v1,
-							  const glm::ivec3& v2,
-							  const glm::ivec3& v3,
-							  uint8_t o0,
-							  uint8_t o1,
-							  uint8_t o2,
-							  uint8_t o3);
+							  const FaceBuildDesc& faceDesc);
 
 		static void AddFace(SubChunkMesh& mesh,
-							const glm::ivec3& v0,
-							const glm::ivec3& v1,
-							const glm::ivec3& v2,
-							const glm::ivec3& v3,
-							const uint8_t o0,
-							const uint8_t o1,
-							const uint8_t o2,
-							const uint8_t o3,
-							BlockFace face,
+							const FaceBuildDesc& f,
 							const BlockState& block,
 							const FaceTexture& faceTexture,
 							const TextureAtlas::AtlasEntry& uv,
 							BlockState::RotationType rotationType);
+
+		PointsAndOcclusion GetPointsAndOcclusion(
+			const BlockTextures& blockTextures, SubChunkMesh* mesh, const int lx, const int wy, const int lz);
+		PointsAndOcclusion GetPointsAndOcclusionForBlock(SubChunkMesh* mesh, const int lx, const int wy, const int lz);
+		PointsAndOcclusion GetPointsAndOcclusionForCross(SubChunkMesh* mesh, const int lx, const int wy, const int lz);
+
+		std::vector<FaceBuildDesc> GetFaceBuildDescs(const BlockTextures& blockTextures, const PointsAndOcclusion& pao);
+		std::vector<FaceBuildDesc> GetBlockFaceBuildDescs(const PointsAndOcclusion& pao);
+		std::vector<FaceBuildDesc> GetCrossFaceBuildDescs(const PointsAndOcclusion& pao);
 	};
 } // namespace onion::voxel

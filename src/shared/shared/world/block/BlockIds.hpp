@@ -6,23 +6,36 @@ namespace onion::voxel
 	enum class BlockId : uint8_t
 	{
 		Air = 0,
-		Dirt = 1,
-		Grass = 2,
-		Stone = 3,
-		Glass = 4,
-		OakLog = 5,
-		OakLeaves = 6,
-		Furnace = 7,
-		Bedrock = 8,
-		Water = 9,
-		Sand = 10,
-		Gravel = 11,
-		Cobblestone = 12,
+		Dirt,
+		Grass,
+		Stone,
+		Glass,
+		OakLog,
+		OakLeaves,
+		Furnace,
+		Bedrock,
+		Water,
+		Sand,
+		Gravel,
+		Cobblestone,
+		Poppy,
+		Dandelion,
+		BrownMushroom,
+		RedMushroom,
+		Cobweb,
+		Kelp,
+		DeadBush,
+		OakSapling,
+		ShortGrass,
+		RedTulip,
+		OrangeTulip,
+		WhiteTulip,
+		PinkTulip,
 	};
 
 	inline int GetBlockIdCount()
 	{
-		return 13;
+		return 26;
 	}
 
 } // namespace onion::voxel

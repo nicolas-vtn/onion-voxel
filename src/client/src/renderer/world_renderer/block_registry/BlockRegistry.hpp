@@ -12,7 +12,7 @@
 
 namespace onion::voxel
 {
-	enum class BlockFace : uint8_t
+	enum class Face : uint8_t
 	{
 		Top,
 		Bottom,
@@ -23,7 +23,7 @@ namespace onion::voxel
 		Count
 	};
 
-	enum class TintType : uint8_t
+	enum class Tint : uint8_t
 	{
 		None,
 		Grass,
@@ -31,32 +31,39 @@ namespace onion::voxel
 		Water
 	};
 
-	enum class TextureType : uint8_t
+	enum class Transparency : uint8_t
 	{
 		Opaque,
 		Cutout,
 		Transparent
 	};
 
+	enum class Model : uint8_t
+	{
+		Block,
+		Cross
+	};
+
 	struct FaceTexture
 	{
 		TextureAtlas::TextureID texture = 0;
-		TintType tintType = TintType::None;
-		TextureType textureType = TextureType::Opaque;
+		Tint tintType = Tint::None;
+		Transparency textureType = Transparency::Opaque;
 	};
 
 	struct TextureInfo
 	{
 		std::string name;
-		TintType tintType = TintType::None;
-		TextureType textureType = TextureType::Opaque;
+		Tint tintType = Tint::None;
+		Transparency textureType = Transparency::Opaque;
 	};
 
 	struct BlockTextures
 	{
-		std::array<FaceTexture, (size_t) BlockFace::Count> faces;
-		std::array<FaceTexture, (size_t) BlockFace::Count> overlay;
+		std::array<FaceTexture, (size_t) Face::Count> faces;
+		std::array<FaceTexture, (size_t) Face::Count> overlay;
 		BlockState::RotationType rotationType = BlockState::RotationType::None;
+		Model textureModel = Model::Block;
 	};
 
 	class BlockRegistry
@@ -74,21 +81,35 @@ namespace onion::voxel
 
 		// ----- Private Methods -----
 	  private:
-		void PreRegister(BlockId id, const TextureInfo& texture);
-		void PreRegister(BlockId id, const std::string& texture);
-		void PreRegister(BlockId id, const std::array<TextureInfo, 6>& textures);
+		void PreRegister(BlockId id, const TextureInfo& texture, Model textureModel = Model::Block);
+		void PreRegister(BlockId id, const std::string& texture, Model textureModel = Model::Block);
+		void PreRegister(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel = Model::Block);
 
-		void PreSetOverlay(BlockId id, BlockFace face, const TextureInfo& texture);
+		void PreSetOverlay(BlockId id, Face face, const TextureInfo& texture);
 
 		// ----- Real Registrations -----
 	  private:
-		void Register(BlockId id, const std::array<TextureInfo, 6>& textures);
-		void SetOverlay(BlockId id, BlockFace face, const TextureInfo& texture);
+		void Register(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel = Model::Block);
+		void SetOverlay(BlockId id, Face face, const TextureInfo& texture);
 
 		// ----- Private Members -----
 	  private:
-		std::vector<std::pair<BlockId, std::array<TextureInfo, 6>>> m_Registrations;
-		std::vector<std::tuple<BlockId, BlockFace, TextureInfo>> m_RegistrationsOverlays;
+		struct PreRegistration
+		{
+			BlockId id;
+			std::array<TextureInfo, 6> textures;
+			Model textureModel;
+		};
+
+		struct PreOverlayRegistration
+		{
+			BlockId id;
+			Face face;
+			TextureInfo texture;
+		};
+
+		std::vector<PreRegistration> m_Registrations;
+		std::vector<PreOverlayRegistration> m_RegistrationsOverlays;
 
 		std::unordered_map<BlockId, BlockTextures> m_Blocks;
 		std::shared_ptr<TextureAtlas> m_Atlas;

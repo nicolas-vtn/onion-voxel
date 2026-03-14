@@ -10,6 +10,19 @@ namespace onion::voxel
 		table[static_cast<size_t>(BlockId::Glass)] = true;
 		table[static_cast<size_t>(BlockId::OakLeaves)] = true;
 		table[static_cast<size_t>(BlockId::Water)] = true;
+		table[static_cast<size_t>(BlockId::Poppy)] = true;
+		table[static_cast<size_t>(BlockId::Dandelion)] = true;
+		table[static_cast<size_t>(BlockId::BrownMushroom)] = true;
+		table[static_cast<size_t>(BlockId::RedMushroom)] = true;
+		table[static_cast<size_t>(BlockId::Cobweb)] = true;
+		table[static_cast<size_t>(BlockId::Kelp)] = true;
+		table[static_cast<size_t>(BlockId::DeadBush)] = true;
+		table[static_cast<size_t>(BlockId::OakSapling)] = true;
+		table[static_cast<size_t>(BlockId::ShortGrass)] = true;
+		table[static_cast<size_t>(BlockId::RedTulip)] = true;
+		table[static_cast<size_t>(BlockId::OrangeTulip)] = true;
+		table[static_cast<size_t>(BlockId::WhiteTulip)] = true;
+		table[static_cast<size_t>(BlockId::PinkTulip)] = true;
 		return table;
 	}();
 

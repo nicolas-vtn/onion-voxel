@@ -42,28 +42,28 @@ namespace onion::voxel
 		}
 	}
 
-	static inline glm::ivec3 FaceToVector(BlockFace f)
+	static inline glm::ivec3 FaceToVector(Face f)
 	{
 		switch (f)
 		{
-			case BlockFace::Front:
+			case Face::Front:
 				return {0, 0, 1};
-			case BlockFace::Back:
+			case Face::Back:
 				return {0, 0, -1};
-			case BlockFace::Right:
+			case Face::Right:
 				return {1, 0, 0};
-			case BlockFace::Left:
+			case Face::Left:
 				return {-1, 0, 0};
-			case BlockFace::Top:
+			case Face::Top:
 				return {0, 1, 0};
-			case BlockFace::Bottom:
+			case Face::Bottom:
 				return {0, -1, 0};
 			default:
 				return {0, 0, 0};
 		}
 	}
 
-	static inline BlockFace GetTextureFaceForWorldFace(BlockFace worldFace, const BlockState& block)
+	static inline Face GetTextureFaceForWorldFace(Face worldFace, const BlockState& block)
 	{
 		if (block.Facing == BlockState::Orientation::None || block.Top == BlockState::Orientation::None)
 		{
@@ -77,24 +77,24 @@ namespace onion::voxel
 		glm::ivec3 worldDir = FaceToVector(worldFace);
 
 		if (worldDir == forward)
-			return BlockFace::Front;
+			return Face::Front;
 		if (worldDir == -forward)
-			return BlockFace::Back;
+			return Face::Back;
 
 		if (worldDir == up)
-			return BlockFace::Top;
+			return Face::Top;
 		if (worldDir == -up)
-			return BlockFace::Bottom;
+			return Face::Bottom;
 
 		if (worldDir == right)
-			return BlockFace::Right;
+			return Face::Right;
 		if (worldDir == -right)
-			return BlockFace::Left;
+			return Face::Left;
 
-		return BlockFace::Front;
+		return Face::Front;
 	}
 
-	static int GetRotationSteps(const BlockState& block, BlockFace worldFace)
+	static int GetRotationSteps(const BlockState& block, Face worldFace)
 	{
 		if (block.Facing == BlockState::Orientation::None || block.Facing == BlockState::Orientation::Up ||
 			block.Facing == BlockState::Orientation::Down)
@@ -104,7 +104,7 @@ namespace onion::voxel
 
 		if (block.Facing == BlockState::Orientation::North || block.Facing == BlockState::Orientation::South)
 		{
-			if (worldFace == BlockFace::Left || worldFace == BlockFace::Right)
+			if (worldFace == Face::Left || worldFace == Face::Right)
 				return 1;
 			else
 				return 0;
@@ -165,7 +165,7 @@ namespace onion::voxel
 
 			if (block.ID == BlockId::OakLeaves && neighbors[i].ID == BlockId::OakLeaves)
 			{
-				if (i == (int) BlockFace::Top || i == (int) BlockFace::Left || i == (int) BlockFace::Back)
+				if (i == (int) Face::Top || i == (int) Face::Left || i == (int) Face::Back)
 				{
 					visibility[i] = true;
 					continue;
@@ -273,53 +273,52 @@ namespace onion::voxel
 
 						// Top (+y)
 						if (localPos.y + 1 < subChunkCount * SIZE)
-							neighbors[(int) BlockFace::Top] = chunk->GetBlock(glm::ivec3(x, localPos.y + 1, z));
+							neighbors[(int) Face::Top] = chunk->GetBlock(glm::ivec3(x, localPos.y + 1, z));
 						else
-							neighbors[(int) BlockFace::Top] = BlockState(BlockId::Air); // Air block if above the world
+							neighbors[(int) Face::Top] = BlockState(BlockId::Air); // Air block if above the world
 
 						// Bottom (-y)
 						if (localPos.y - 1 >= 0)
-							neighbors[(int) BlockFace::Bottom] = chunk->GetBlock(glm::ivec3(x, localPos.y - 1, z));
+							neighbors[(int) Face::Bottom] = chunk->GetBlock(glm::ivec3(x, localPos.y - 1, z));
 						else
-							neighbors[(int) BlockFace::Bottom] =
-								BlockState(BlockId::Air); // Air block if below the world
+							neighbors[(int) Face::Bottom] = BlockState(BlockId::Air); // Air block if below the world
 
 						// Front (+z)
 						if (z + 1 < SIZE)
-							neighbors[(int) BlockFace::Front] = chunk->GetBlock(glm::ivec3(x, localPos.y, z + 1));
+							neighbors[(int) Face::Front] = chunk->GetBlock(glm::ivec3(x, localPos.y, z + 1));
 						else
 						{
-							neighbors[(int) BlockFace::Front] = adjacentPosZ
+							neighbors[(int) Face::Front] = adjacentPosZ
 								? adjacentPosZ->GetBlock(glm::ivec3(x, localPos.y, 0))
 								: BlockState(BlockId::Stone);
 						}
 
 						// Back (-z)
 						if (z - 1 >= 0)
-							neighbors[(int) BlockFace::Back] = chunk->GetBlock(glm::ivec3(x, localPos.y, z - 1));
+							neighbors[(int) Face::Back] = chunk->GetBlock(glm::ivec3(x, localPos.y, z - 1));
 						else
 						{
-							neighbors[(int) BlockFace::Back] = adjacentNegZ
+							neighbors[(int) Face::Back] = adjacentNegZ
 								? adjacentNegZ->GetBlock(glm::ivec3(x, localPos.y, SIZE - 1))
 								: BlockState(BlockId::Stone);
 						}
 
 						// Right (+x)
 						if (x + 1 < SIZE)
-							neighbors[(int) BlockFace::Right] = chunk->GetBlock(glm::ivec3(x + 1, localPos.y, z));
+							neighbors[(int) Face::Right] = chunk->GetBlock(glm::ivec3(x + 1, localPos.y, z));
 						else
 						{
-							neighbors[(int) BlockFace::Right] = adjacentPosX
+							neighbors[(int) Face::Right] = adjacentPosX
 								? adjacentPosX->GetBlock(glm::ivec3(0, localPos.y, z))
 								: BlockState(BlockId::Stone);
 						}
 
 						// Left (-x)
 						if (x - 1 >= 0)
-							neighbors[(int) BlockFace::Left] = chunk->GetBlock(glm::ivec3(x - 1, localPos.y, z));
+							neighbors[(int) Face::Left] = chunk->GetBlock(glm::ivec3(x - 1, localPos.y, z));
 						else
 						{
-							neighbors[(int) BlockFace::Left] = adjacentNegX
+							neighbors[(int) Face::Left] = adjacentNegX
 								? adjacentNegX->GetBlock(glm::ivec3(SIZE - 1, localPos.y, z))
 								: BlockState(BlockId::Stone);
 						}
@@ -335,53 +334,10 @@ namespace onion::voxel
 						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.ID);
 
 						// ------ Prepare Poins / OA ------
-						glm::ivec3 p000(x, wy, z);
-						glm::ivec3 p001(x, wy, z + 1);
-						glm::ivec3 p010(x, wy + 1, z);
-						glm::ivec3 p011(x, wy + 1, z + 1);
-
-						glm::ivec3 p100(x + 1, wy, z);
-						glm::ivec3 p101(x + 1, wy, z + 1);
-						glm::ivec3 p110(x + 1, wy + 1, z);
-						glm::ivec3 p111(x + 1, wy + 1, z + 1);
-
-						const int NX = SIZE + 1;
-						const int NY = SIZE + 1;
-						auto AO = [&](int dx, int dy, int dz) -> uint8_t
-						{
-							int ax = x + dx;
-							int ay = y + dy;
-							int az = z + dz;
-							return mesh->m_OcclusionMap[ax + NX * (ay + NY * az)];
-						};
-
-						uint8_t o000 = AO(0, 0, 0);
-						uint8_t o001 = AO(0, 0, 1);
-						uint8_t o010 = AO(0, 1, 0);
-						uint8_t o011 = AO(0, 1, 1);
-
-						uint8_t o100 = AO(1, 0, 0);
-						uint8_t o101 = AO(1, 0, 1);
-						uint8_t o110 = AO(1, 1, 0);
-						uint8_t o111 = AO(1, 1, 1);
+						PointsAndOcclusion pao = GetPointsAndOcclusion(blockTextures, mesh.get(), x, wy, z);
 
 						// ------ Build Mesh ------
-						struct FaceBuildDesc
-						{
-							BlockFace face;
-
-							const glm::ivec3* v[4];
-							const uint8_t* o[4];
-						};
-
-						FaceBuildDesc faces[] = {
-							{BlockFace::Top, {&p011, &p111, &p110, &p010}, {&o011, &o111, &o110, &o010}},
-							{BlockFace::Bottom, {&p000, &p100, &p101, &p001}, {&o000, &o100, &o101, &o001}},
-							{BlockFace::Front, {&p001, &p101, &p111, &p011}, {&o001, &o101, &o111, &o011}},
-							{BlockFace::Back, {&p100, &p000, &p010, &p110}, {&o100, &o000, &o010, &o110}},
-							{BlockFace::Right, {&p101, &p100, &p110, &p111}, {&o101, &o100, &o110, &o111}},
-							{BlockFace::Left, {&p000, &p001, &p011, &p010}, {&o000, &o001, &o011, &o010}},
-						};
+						std::vector<FaceBuildDesc> faces = GetFaceBuildDescs(blockTextures, pao);
 
 						for (const auto& f : faces)
 						{
@@ -390,20 +346,7 @@ namespace onion::voxel
 							if (!faceVisible[idx])
 								continue;
 
-							BuildFace(*m_TextureAtlas,
-									  *mesh,
-									  block,
-									  blockTextures,
-									  f.face,
-									  GetTextureFaceForWorldFace(f.face, block),
-									  *f.v[0],
-									  *f.v[1],
-									  *f.v[2],
-									  *f.v[3],
-									  *f.o[0],
-									  *f.o[1],
-									  *f.o[2],
-									  *f.o[3]);
+							BuildFace(*m_TextureAtlas, *mesh, block, blockTextures, f);
 						}
 					}
 
@@ -639,32 +582,23 @@ namespace onion::voxel
 								SubChunkMesh& mesh,
 								const BlockState& block,
 								const BlockTextures& blockTextures,
-								BlockFace worldFace,
-								BlockFace textureFace,
-								const glm::ivec3& v0,
-								const glm::ivec3& v1,
-								const glm::ivec3& v2,
-								const glm::ivec3& v3,
-								uint8_t o0,
-								uint8_t o1,
-								uint8_t o2,
-								uint8_t o3)
+								const FaceBuildDesc& f)
 	{
+		const Face textureFace = GetTextureFaceForWorldFace(f.face, block);
 		const FaceTexture& faceTex = blockTextures.faces[(size_t) textureFace];
 
 		auto uv = textureAtlas.GetAtlasEntry(faceTex.texture);
 
-		AddFace(mesh, v0, v1, v2, v3, o0, o1, o2, o3, worldFace, block, faceTex, uv, blockTextures.rotationType);
+		AddFace(mesh, f, block, faceTex, uv, blockTextures.rotationType);
 
 		// Overlay pass
-		const FaceTexture& overlay = blockTextures.overlay[(size_t) textureFace];
+		const FaceTexture& overlay = blockTextures.overlay[(size_t) f.face];
 
 		if (overlay.texture != 0)
 		{
 			auto uvOverlay = textureAtlas.GetAtlasEntry(overlay.texture);
 
-			AddFace(
-				mesh, v0, v1, v2, v3, o0, o1, o2, o3, worldFace, block, overlay, uvOverlay, blockTextures.rotationType);
+			AddFace(mesh, f, block, overlay, uvOverlay, blockTextures.rotationType);
 		}
 	}
 
@@ -744,15 +678,7 @@ namespace onion::voxel
 	}
 
 	void MeshBuilder::AddFace(SubChunkMesh& mesh,
-							  const glm::ivec3& v0,
-							  const glm::ivec3& v1,
-							  const glm::ivec3& v2,
-							  const glm::ivec3& v3,
-							  const uint8_t o0,
-							  const uint8_t o1,
-							  const uint8_t o2,
-							  const uint8_t o3,
-							  BlockFace face,
+							  const FaceBuildDesc& f,
 							  const BlockState& block,
 							  const FaceTexture& faceTexture,
 							  const TextureAtlas::AtlasEntry& uv,
@@ -763,17 +689,17 @@ namespace onion::voxel
 
 		switch (faceTexture.textureType)
 		{
-			case TextureType::Opaque:
+			case Transparency::Opaque:
 				vertices = &mesh.m_VerticesOpaque;
 				indices = &mesh.m_IndicesOpaque;
 				break;
 
-			case TextureType::Cutout:
+			case Transparency::Cutout:
 				vertices = &mesh.m_VerticesCutout;
 				indices = &mesh.m_IndicesCutout;
 				break;
 
-			case TextureType::Transparent:
+			case Transparency::Transparent:
 				vertices = &mesh.m_VerticesTransparent;
 				indices = &mesh.m_IndicesTransparent;
 				break;
@@ -788,7 +714,7 @@ namespace onion::voxel
 
 		if (rotationType == BlockState::RotationType::Pillar)
 		{
-			int rotationSteps = GetRotationSteps(block, face);
+			int rotationSteps = GetRotationSteps(block, f.face);
 			RotateUVs(uv0, uv1, uv2, uv3, rotationSteps);
 		}
 
@@ -797,15 +723,15 @@ namespace onion::voxel
 
 		switch (faceTexture.tintType)
 		{
-			case TintType::Grass:
+			case Tint::Grass:
 				tint = glm::ivec3(95, 190, 60);
 				break;
 
-			case TintType::Foliage:
+			case Tint::Foliage:
 				tint = glm::ivec3(60, 170, 50);
 				break;
 
-			case TintType::Water:
+			case Tint::Water:
 				tint = glm::ivec3(77, 128, 255);
 				break;
 
@@ -827,7 +753,7 @@ namespace onion::voxel
 			vert.texX = uv.x;
 			vert.texY = uv.y;
 
-			vert.facing = static_cast<uint8_t>(face);
+			vert.facing = static_cast<uint8_t>(f.face);
 			vert.occlusion = occlusion;
 
 			vert.tintR = static_cast<uint8_t>(tint.r);
@@ -838,18 +764,162 @@ namespace onion::voxel
 		};
 
 		// ------ Add vertices -----
-		vertices->push_back(makeVertex(v0, uv0, o0));
-		vertices->push_back(makeVertex(v1, uv1, o1));
-		vertices->push_back(makeVertex(v2, uv2, o2));
-		vertices->push_back(makeVertex(v3, uv3, o3));
+		vertices->push_back(makeVertex(*f.v[0], uv0, *f.o[0]));
+		vertices->push_back(makeVertex(*f.v[1], uv1, *f.o[1]));
+		vertices->push_back(makeVertex(*f.v[2], uv2, *f.o[2]));
+		vertices->push_back(makeVertex(*f.v[3], uv3, *f.o[3]));
 
 		// ------ Add indices -----
-		indices->push_back(startIndex + 0);
-		indices->push_back(startIndex + 1);
-		indices->push_back(startIndex + 2);
+		if (!f.reverseWinding)
+		{
+			indices->push_back(startIndex + 0);
+			indices->push_back(startIndex + 1);
+			indices->push_back(startIndex + 2);
 
-		indices->push_back(startIndex + 2);
-		indices->push_back(startIndex + 3);
-		indices->push_back(startIndex + 0);
+			indices->push_back(startIndex + 2);
+			indices->push_back(startIndex + 3);
+			indices->push_back(startIndex + 0);
+		}
+		else
+		{
+			indices->push_back(startIndex + 0);
+			indices->push_back(startIndex + 3);
+			indices->push_back(startIndex + 2);
+
+			indices->push_back(startIndex + 2);
+			indices->push_back(startIndex + 1);
+			indices->push_back(startIndex + 0);
+		}
 	}
+
+	MeshBuilder::PointsAndOcclusion MeshBuilder::GetPointsAndOcclusion(
+		const BlockTextures& blockTextures, SubChunkMesh* mesh, const int lx, const int wy, const int lz)
+	{
+		switch (blockTextures.textureModel)
+		{
+			case Model::Block:
+				return GetPointsAndOcclusionForBlock(mesh, lx, wy, lz);
+			case Model::Cross:
+				return GetPointsAndOcclusionForCross(mesh, lx, wy, lz);
+			default:
+				assert(false && "Unknown TextureModel");
+				return PointsAndOcclusion();
+		}
+	}
+
+	MeshBuilder::PointsAndOcclusion
+	MeshBuilder::GetPointsAndOcclusionForBlock(SubChunkMesh* mesh, const int lx, const int wy, const int lz)
+	{
+		PointsAndOcclusion result;
+
+		result.p000 = glm::vec3(lx, wy, lz);
+		result.p001 = glm::vec3(lx, wy, lz + 1);
+		result.p010 = glm::vec3(lx, wy + 1, lz);
+		result.p011 = glm::vec3(lx, wy + 1, lz + 1);
+
+		result.p100 = glm::vec3(lx + 1, wy, lz);
+		result.p101 = glm::vec3(lx + 1, wy, lz + 1);
+		result.p110 = glm::vec3(lx + 1, wy + 1, lz);
+		result.p111 = glm::vec3(lx + 1, wy + 1, lz + 1);
+
+		const int NX = WorldConstants::CHUNK_SIZE + 1;
+		const int NY = WorldConstants::CHUNK_SIZE + 1;
+		auto AO = [&](int dx, int dy, int dz) -> uint8_t
+		{
+			int ax = lx + dx;
+			int ay = wy + dy;
+			int az = lz + dz;
+			return mesh->m_OcclusionMap[ax + NX * (ay + NY * az)];
+		};
+
+		result.o000 = AO(0, 0, 0);
+		result.o001 = AO(0, 0, 1);
+		result.o010 = AO(0, 1, 0);
+		result.o011 = AO(0, 1, 1);
+
+		result.o100 = AO(1, 0, 0);
+		result.o101 = AO(1, 0, 1);
+		result.o110 = AO(1, 1, 0);
+		result.o111 = AO(1, 1, 1);
+
+		return result;
+	}
+
+	MeshBuilder::PointsAndOcclusion
+	MeshBuilder::GetPointsAndOcclusionForCross(SubChunkMesh* mesh, const int lx, const int wy, const int lz)
+	{
+		PointsAndOcclusion result;
+		result.p000 = glm::vec3(lx, wy, lz);
+		result.p001 = glm::vec3(lx, wy, lz + 1);
+		result.p010 = glm::vec3(lx, wy + 1, lz);
+		result.p011 = glm::vec3(lx, wy + 1, lz + 1);
+		result.p100 = glm::vec3(lx + 1, wy, lz);
+		result.p101 = glm::vec3(lx + 1, wy, lz + 1);
+		result.p110 = glm::vec3(lx + 1, wy + 1, lz);
+		result.p111 = glm::vec3(lx + 1, wy + 1, lz + 1);
+		result.o000 = 0;
+		result.o001 = 0;
+		result.o010 = 0;
+		result.o011 = 0;
+		result.o100 = 0;
+		result.o101 = 0;
+		result.o110 = 0;
+		result.o111 = 0;
+		return result;
+	}
+
+	std::vector<MeshBuilder::FaceBuildDesc> MeshBuilder::GetFaceBuildDescs(const BlockTextures& blockTextures,
+																		   const PointsAndOcclusion& pao)
+	{
+		switch (blockTextures.textureModel)
+		{
+			case Model::Block:
+				return GetBlockFaceBuildDescs(pao);
+			case Model::Cross:
+				return GetCrossFaceBuildDescs(pao);
+			default:
+				assert(false && "Unknown TextureModel");
+				return std::vector<FaceBuildDesc>();
+		}
+	}
+
+	std::vector<MeshBuilder::FaceBuildDesc> MeshBuilder::GetBlockFaceBuildDescs(const PointsAndOcclusion& pao)
+	{
+		return {
+			{Face::Top, {&pao.p011, &pao.p111, &pao.p110, &pao.p010}, {&pao.o011, &pao.o111, &pao.o110, &pao.o010}},
+			{Face::Bottom, {&pao.p000, &pao.p100, &pao.p101, &pao.p001}, {&pao.o000, &pao.o100, &pao.o101, &pao.o001}},
+			{Face::Front, {&pao.p001, &pao.p101, &pao.p111, &pao.p011}, {&pao.o001, &pao.o101, &pao.o111, &pao.o011}},
+			{Face::Back, {&pao.p100, &pao.p000, &pao.p010, &pao.p110}, {&pao.o100, &pao.o000, &pao.o010, &pao.o110}},
+			{Face::Right, {&pao.p101, &pao.p100, &pao.p110, &pao.p111}, {&pao.o101, &pao.o100, &pao.o110, &pao.o111}},
+			{Face::Left, {&pao.p000, &pao.p001, &pao.p011, &pao.p010}, {&pao.o000, &pao.o001, &pao.o011, &pao.o010}},
+		};
+	}
+
+	std::vector<MeshBuilder::FaceBuildDesc> MeshBuilder::GetCrossFaceBuildDescs(const PointsAndOcclusion& pao)
+	{
+		// The cross model consists of two quads that intersect each other. Each quad has a front and back face (For correct FACE CULLING)
+		return {
+			// Plane 1
+			FaceBuildDesc{
+				Face::Top, {&pao.p000, &pao.p101, &pao.p111, &pao.p010}, {&pao.o000, &pao.o101, &pao.o111, &pao.o010}},
+
+			// Plane 2
+			FaceBuildDesc{
+				Face::Top, {&pao.p100, &pao.p001, &pao.p011, &pao.p110}, {&pao.o100, &pao.o001, &pao.o011, &pao.o110}},
+
+			// Plane 1
+			FaceBuildDesc{Face::Top,
+						  {&pao.p000, &pao.p101, &pao.p111, &pao.p010},
+						  {&pao.o000, &pao.o101, &pao.o111, &pao.o010},
+						  true},
+
+			// Plane 2
+			FaceBuildDesc{Face::Top,
+						  {&pao.p100, &pao.p001, &pao.p011, &pao.p110},
+						  {&pao.o100, &pao.o001, &pao.o011, &pao.o110},
+						  true},
+
+		};
+	}
+
 } // namespace onion::voxel

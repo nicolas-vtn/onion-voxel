@@ -75,7 +75,7 @@ namespace onion::voxel
 			Classic
 		};
 
-		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::Classic;
+		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::Superflat;
 
 		// ----- Chunk Generation Thread -----
 	  private:
