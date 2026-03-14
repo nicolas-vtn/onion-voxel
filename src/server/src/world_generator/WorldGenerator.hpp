@@ -9,6 +9,7 @@
 
 #include <onion/ThreadPool.hpp>
 
+#include <shared/world/World.hpp>
 #include <shared/world/schematic/Schematic.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
@@ -21,6 +22,18 @@ namespace onion::voxel
 {
 	class WorldGenerator
 	{
+	  public:
+		struct BiomeSeed
+		{
+			float dist;
+			Biome biome;
+		};
+
+		struct BiomeBlend
+		{
+			BiomeSeed seeds[3];
+			float weights[3];
+		};
 
 		// ----- Structs -----
 	  public:
@@ -61,10 +74,11 @@ namespace onion::voxel
 		{
 			DemoBlocks,
 			Superflat,
-			Classic
+			Classic,
+			BiomeVisualizer,
 		};
 
-		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::Classic;
+		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::BiomeVisualizer;
 
 		// ----- Chunk Generation Thread -----
 	  private:
@@ -75,6 +89,7 @@ namespace onion::voxel
 		GenChunk GenerateChunk_DemoBlocks(const glm::ivec2& chunkPosition);
 		GenChunk GenerateChunk_Superflat(const glm::ivec2& chunkPosition);
 		GenChunk GenerateChunk_Classic(const glm::ivec2& chunkPosition);
+		GenChunk GenerateChunk_BiomeVisualizer(const glm::ivec2& chunkPosition);
 
 		// ----- Structures Generation -----
 	  private:
@@ -82,6 +97,7 @@ namespace onion::voxel
 		bool ShouldGenerateShortGrass(const glm::ivec3& position) const;
 		bool ShouldGenerateFlower(const glm::ivec3& position) const;
 		BlockId GetFlowerType(const glm::ivec3& position) const;
+		BiomeBlend GetBiome(const glm::ivec3& pos) const;
 
 		// ------------ STRUCTURES ------------
 		static void MergeSchematicInChunk(const Schematic& schematic,
@@ -99,13 +115,25 @@ namespace onion::voxel
 		FastNoiseLite::NoiseType m_NoiseType = FastNoiseLite::NoiseType_OpenSimplex2;
 
 		FastNoiseLite m_NoiseContinent;
-		float m_FrequencyContinent = 0.0006f; // Frequency of the noise (controls "zoom" of the terrain)
+		float m_FrequencyContinent = 0.0006f; // Smaller = smoother, larger = more rugged
 
 		FastNoiseLite m_NoiseMountain;
-		float m_FrequencyMountain = 0.003f; // Frequency of the noise (controls "zoom" of the terrain)
+		float m_FrequencyMountain = 0.003f; // Smaller = smoother, larger = more rugged
 
-		FastNoiseLite m_NoiseDetail;	 // Noise generator for terrain generation
-		float m_FrequencyDetail = 0.02f; // Frequency of the noise (controls "zoom" of the terrain)
+		FastNoiseLite m_NoiseDetail;
+		float m_FrequencyDetail = 0.02f; // Smaller = smoother, larger = more rugged
+
+		FastNoiseLite m_NoiseTemperature;
+		float m_FrequencyTemperature = 0.0006f; // Smaller = smoother, larger = more rugged
+
+		FastNoiseLite m_NoiseHumidity;
+		float m_FrequencyHumidity = 0.0006f; // Smaller = smoother, larger = more rugged
+
+		FastNoiseLite m_NoiseWarp;
+		float m_FrequencyWarp = 0.0008f; // Smaller = smoother, larger = more rugged
+
+		FastNoiseLite m_NoiseWarp2;
+		float m_FrequencyWarp2 = 0.0008f; // Smaller = smoother, larger = more rugged
 
 		float
 		GetFractalNoise(const FastNoiseLite& noise, float x, float z, int octaves, float lacunarity, float gain) const;

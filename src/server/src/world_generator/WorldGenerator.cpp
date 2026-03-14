@@ -5,8 +5,139 @@
 #include <shared/utils/Stopwatch.hpp>
 #include <shared/utils/Utils.hpp>
 
+constexpr int BIOME_CELL_SIZE = 1024; // blocks
+
+inline uint32_t Hash(int x, int z)
+{
+	uint32_t h = x * 374761393u + z * 668265263u;
+	h = (h ^ (h >> 13)) * 1274126177u;
+	return h ^ (h >> 16);
+}
+
+inline float HashFloat(uint32_t h)
+{
+	return (h & 0xFFFFFF) / float(0xFFFFFF);
+}
+
+glm::vec2 GetSeedPosition(int cellX, int cellZ)
+{
+	uint32_t h = Hash(cellX, cellZ);
+
+	float rx = HashFloat(h);
+	float rz = HashFloat(h * 48271u);
+
+	return {cellX * BIOME_CELL_SIZE + rx * BIOME_CELL_SIZE, cellZ * BIOME_CELL_SIZE + rz * BIOME_CELL_SIZE};
+}
+
 namespace onion::voxel
 {
+	Biome GetSeedBiome(int cellX, int cellZ)
+	{
+		uint32_t h = Hash(cellX, cellZ);
+
+		switch (h % 6)
+		{
+			case 0:
+				return Biome::Ocean;
+			case 1:
+				return Biome::Plains;
+			case 2:
+				return Biome::Forest;
+			case 3:
+				return Biome::Desert;
+			case 4:
+				return Biome::Mountain;
+			case 5:
+				return Biome::Snow;
+			default:
+				return Biome::Ocean;
+		}
+	}
+
+	static WorldGenerator::BiomeBlend GetBiomeBlend(float x, float z)
+	{
+		int cellX = static_cast<int>(std::floor(x / BIOME_CELL_SIZE));
+		int cellZ = static_cast<int>(std::floor(z / BIOME_CELL_SIZE));
+
+		WorldGenerator::BiomeSeed seeds[3] = {
+			{FLT_MAX, Biome::Plains}, {FLT_MAX, Biome::Plains}, {FLT_MAX, Biome::Plains}};
+
+		for (int dz = -1; dz <= 1; dz++)
+		{
+			for (int dx = -1; dx <= 1; dx++)
+			{
+				int cx = cellX + dx;
+				int cz = cellZ + dz;
+
+				glm::vec2 seed = GetSeedPosition(cx, cz);
+
+				float dxs = seed.x - x;
+				float dzs = seed.y - z;
+
+				float dist = sqrt(dxs * dxs + dzs * dzs);
+
+				Biome biome = GetSeedBiome(cx, cz);
+
+				if (dist < seeds[0].dist)
+				{
+					seeds[2] = seeds[1];
+					seeds[1] = seeds[0];
+					seeds[0] = {dist, biome};
+				}
+				else if (dist < seeds[1].dist)
+				{
+					seeds[2] = seeds[1];
+					seeds[1] = {dist, biome};
+				}
+				else if (dist < seeds[2].dist)
+				{
+					seeds[2] = {dist, biome};
+				}
+			}
+		}
+
+		float k = 0.02f;
+
+		float w0 = exp(-seeds[0].dist * k);
+		float w1 = exp(-seeds[1].dist * k);
+		float w2 = exp(-seeds[2].dist * k);
+
+		float sum = w0 + w1 + w2;
+
+		WorldGenerator::BiomeBlend result;
+
+		result.seeds[0] = seeds[0];
+		result.seeds[1] = seeds[1];
+		result.seeds[2] = seeds[2];
+
+		result.weights[0] = w0 / sum;
+		result.weights[1] = w1 / sum;
+		result.weights[2] = w2 / sum;
+
+		return result;
+	}
+
+	float GetBiomeHeight(Biome biome)
+	{
+		switch (biome)
+		{
+			case Biome::Ocean:
+				return 1.f;
+			case Biome::Plains:
+				return 20.f;
+			case Biome::Forest:
+				return 40.f;
+			case Biome::Desert:
+				return 30.f;
+			case Biome::Mountain:
+				return 60.f;
+			case Biome::Snow:
+				return 25.f;
+			default:
+				return 70.0f;
+		}
+	}
+
 	WorldGenerator::WorldGenerator(std::shared_ptr<WorldManager> worldManager) : m_WorldManager(worldManager)
 	{
 		SubscribeToWorldManagerEvents();
@@ -78,6 +209,9 @@ namespace onion::voxel
 				break;
 			case eWorldGenerationType::Classic:
 				genChunk = GenerateChunk_Classic(chunkPosition);
+				break;
+			case eWorldGenerationType::BiomeVisualizer:
+				genChunk = GenerateChunk_BiomeVisualizer(chunkPosition);
 				break;
 			default:
 				throw std::runtime_error("Invalid world generation type");
@@ -535,6 +669,65 @@ namespace onion::voxel
 		return genChunk;
 	}
 
+	WorldGenerator::GenChunk WorldGenerator::GenerateChunk_BiomeVisualizer(const glm::ivec2& chunkPosition)
+	{
+		GenChunk genChunk;
+		genChunk.chunk = std::make_shared<Chunk>(chunkPosition);
+		auto& chunk = genChunk.chunk;
+
+		WorldGenerator::BiomeBlend biomeBlend;
+		for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
+		{
+			for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
+			{
+				glm::ivec3 worldPos = {(chunkPosition.x * WorldConstants::CHUNK_SIZE) + x,
+									   0, // Y doesn't matter for biome visualization
+									   (chunkPosition.y * WorldConstants::CHUNK_SIZE) + z};
+				biomeBlend = GetBiome(worldPos);
+
+				BlockId blockId;
+				switch (biomeBlend.seeds[0].biome)
+				{
+					case Biome::Plains:
+						blockId = BlockId::Grass;
+						break;
+					case Biome::Desert:
+						blockId = BlockId::Sand;
+						break;
+					case Biome::Mountain:
+						blockId = BlockId::Stone;
+						break;
+					case Biome::Forest:
+						blockId = BlockId::OakLog;
+						break;
+					case Biome::Snow:
+						blockId = BlockId::SnowGrass;
+						break;
+					case Biome::Ocean:
+						blockId = BlockId::Water;
+						break;
+
+					default:
+						blockId = BlockId::Dirt;
+						break;
+				}
+
+				float h0 = GetBiomeHeight(biomeBlend.seeds[0].biome);
+				float h1 = GetBiomeHeight(biomeBlend.seeds[1].biome);
+				float h2 = GetBiomeHeight(biomeBlend.seeds[2].biome);
+
+				float height = biomeBlend.weights[0] * h0 + biomeBlend.weights[1] * h1 + biomeBlend.weights[2] * h2;
+
+				for (int y = 0; y < height; y++)
+				{
+					chunk->SetBlock(glm::ivec3(x, y, z), blockId);
+				}
+			}
+		}
+
+		return genChunk;
+	}
+
 	bool WorldGenerator::ShouldGenerateTree(const glm::ivec3& position) const
 	{
 
@@ -598,6 +791,17 @@ namespace onion::voxel
 		const double flowerVal = m_SeededRandom.GetValue(val);
 		const size_t index = static_cast<size_t>(flowerVal * BlockState::Flowers.size());
 		return BlockState::Flowers[index];
+	}
+
+	WorldGenerator::BiomeBlend WorldGenerator::GetBiome(const glm::ivec3& pos) const
+	{
+		float noiseX = GetFractalNoise(m_NoiseWarp, pos.x, pos.z, 4, 2.0f, 0.5f) * 200.f;
+		float noiseZ = GetFractalNoise(m_NoiseWarp2, pos.z, pos.x, 4, 2.0f, 0.5f) * 200.f;
+
+		float x = pos.x + noiseX;
+		float z = pos.z + noiseZ;
+
+		return GetBiomeBlend(x, z);
 	}
 
 	void WorldGenerator::MergeSchematicInChunk(const Schematic& schematic,
@@ -724,15 +928,31 @@ namespace onion::voxel
 		uint32_t seed = GetSeed();
 		m_NoiseContinent.SetSeed(seed);
 		m_NoiseContinent.SetNoiseType(m_NoiseType);
-		m_NoiseContinent.SetFrequency(m_FrequencyContinent); // Smaller = smoother, larger = more rugged
+		m_NoiseContinent.SetFrequency(m_FrequencyContinent);
 
 		m_NoiseMountain.SetSeed(seed + 1);
 		m_NoiseMountain.SetNoiseType(m_NoiseType);
-		m_NoiseMountain.SetFrequency(m_FrequencyMountain); // Smaller = smoother, larger = more rugged
+		m_NoiseMountain.SetFrequency(m_FrequencyMountain);
 
 		m_NoiseDetail.SetSeed(seed + 2);
 		m_NoiseDetail.SetNoiseType(m_NoiseType);
-		m_NoiseDetail.SetFrequency(m_FrequencyDetail); // Smaller = smoother, larger = more rugged
+		m_NoiseDetail.SetFrequency(m_FrequencyDetail);
+
+		m_NoiseTemperature.SetSeed(seed + 3);
+		m_NoiseTemperature.SetNoiseType(m_NoiseType);
+		m_NoiseTemperature.SetFrequency(m_FrequencyTemperature);
+
+		m_NoiseHumidity.SetSeed(seed + 4);
+		m_NoiseHumidity.SetNoiseType(m_NoiseType);
+		m_NoiseHumidity.SetFrequency(m_FrequencyHumidity);
+
+		m_NoiseWarp.SetSeed(seed + 5);
+		m_NoiseWarp.SetNoiseType(m_NoiseType);
+		m_NoiseWarp.SetFrequency(m_FrequencyWarp);
+
+		m_NoiseWarp2.SetSeed(seed + 6);
+		m_NoiseWarp2.SetNoiseType(m_NoiseType);
+		m_NoiseWarp2.SetFrequency(m_FrequencyWarp);
 	}
 
 	float WorldGenerator::GetFractalNoise(

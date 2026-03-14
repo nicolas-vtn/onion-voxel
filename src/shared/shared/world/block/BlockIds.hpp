@@ -35,11 +35,13 @@ namespace onion::voxel
 		OrangeTulip,
 		WhiteTulip,
 		PinkTulip,
+
+		Count,
 	};
 
 	inline int GetBlockIdCount()
 	{
-		return 30;
+		return static_cast<int>(BlockId::Count);
 	}
 
 } // namespace onion::voxel
