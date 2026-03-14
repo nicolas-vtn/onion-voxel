@@ -36,7 +36,7 @@ namespace onion::voxel
 		{
 			glBindVertexArray(VAO_Opaque);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Opaque);
-			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_IndicesOpaqueCount), GL_UNSIGNED_SHORT, 0);
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_IndicesOpaqueCount), GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
 		}
 	}
@@ -47,7 +47,7 @@ namespace onion::voxel
 		{
 			glBindVertexArray(VAO_Cutout);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Cutout);
-			glDrawElements(GL_TRIANGLES, (GLsizei) m_IndicesCutoutCount, GL_UNSIGNED_SHORT, 0);
+			glDrawElements(GL_TRIANGLES, (GLsizei) m_IndicesCutoutCount, GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
 		}
 	}
@@ -58,7 +58,7 @@ namespace onion::voxel
 		{
 			glBindVertexArray(VAO_Transparent);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Transparent);
-			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_IndicesTransparentCount), GL_UNSIGNED_SHORT, 0);
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_IndicesTransparentCount), GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
 		}
 	}
@@ -164,7 +164,7 @@ namespace onion::voxel
 			{
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Opaque);
 				glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-							 m_IndicesOpaque.size() * sizeof(uint16_t),
+							 m_IndicesOpaque.size() * sizeof(uint32_t),
 							 &m_IndicesOpaque[0],
 							 GL_STATIC_DRAW);
 			}
@@ -202,7 +202,7 @@ namespace onion::voxel
 			{
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Cutout);
 				glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-							 m_IndicesCutout.size() * sizeof(uint16_t),
+							 m_IndicesCutout.size() * sizeof(uint32_t),
 							 &m_IndicesCutout[0],
 							 GL_STATIC_DRAW);
 			}
@@ -242,7 +242,7 @@ namespace onion::voxel
 			{
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Transparent);
 				glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-							 m_IndicesTransparent.size() * sizeof(uint16_t),
+							 m_IndicesTransparent.size() * sizeof(uint32_t),
 							 &m_IndicesTransparent[0],
 							 GL_STATIC_DRAW);
 			}
@@ -277,13 +277,13 @@ namespace onion::voxel
 
 		// Clear the buffers after setting data to free memory
 		std::vector<Vertex>().swap(m_VerticesOpaque);
-		std::vector<uint16_t>().swap(m_IndicesOpaque);
+		std::vector<uint32_t>().swap(m_IndicesOpaque);
 
 		std::vector<Vertex>().swap(m_VerticesCutout);
-		std::vector<uint16_t>().swap(m_IndicesCutout);
+		std::vector<uint32_t>().swap(m_IndicesCutout);
 
 		std::vector<Vertex>().swap(m_VerticesTransparent);
-		std::vector<uint16_t>().swap(m_IndicesTransparent);
+		std::vector<uint32_t>().swap(m_IndicesTransparent);
 	}
 
 	void SubChunkMesh::CleanupOpenGlBuffers()

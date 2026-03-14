@@ -4,5 +4,9 @@
 
 namespace onion::voxel::WorldConstants
 {
-	constexpr uint8_t CHUNK_SIZE = 16; // The size of a chunk in blocks
-}
+#ifdef NDEBUG
+	constexpr uint8_t CHUNK_SIZE = 64;
+#else
+	constexpr uint8_t CHUNK_SIZE = 16;
+#endif
+} // namespace onion::voxel::WorldConstants

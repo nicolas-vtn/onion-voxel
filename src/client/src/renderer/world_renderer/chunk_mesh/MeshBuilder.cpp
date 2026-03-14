@@ -152,7 +152,7 @@ namespace onion::voxel
 
 	std::array<bool, 6> GetFaceVisibility(const BlockState& block, const std::array<BlockState, 6>& neighbors)
 	{
-		std::array<bool, 6> visibility{};
+		std::array<bool, 6> visibility{true};
 
 		for (int i = 0; i < 6; i++)
 		{
@@ -685,7 +685,7 @@ namespace onion::voxel
 							  BlockState::RotationType rotationType)
 	{
 		std::vector<SubChunkMesh::Vertex>* vertices = nullptr;
-		std::vector<uint16_t>* indices = nullptr;
+		std::vector<uint32_t>* indices = nullptr;
 
 		switch (faceTexture.textureType)
 		{
@@ -740,7 +740,7 @@ namespace onion::voxel
 		}
 
 		// ------ VERTEX CREATION ------
-		uint16_t startIndex = static_cast<uint16_t>(vertices->size());
+		uint32_t startIndex = static_cast<uint32_t>(vertices->size());
 
 		auto makeVertex = [&](const glm::ivec3& p, const glm::vec2& uv, uint8_t occlusion)
 		{
@@ -822,10 +822,11 @@ namespace onion::voxel
 		result.p110 = glm::vec3(lx + 1, wy + 1, lz);
 		result.p111 = glm::vec3(lx + 1, wy + 1, lz + 1);
 
-		const int ly = wy % WorldConstants::CHUNK_SIZE;
+		constexpr int SIZE = WorldConstants::CHUNK_SIZE;
+		const int ly = wy % SIZE;
 
-		const int NX = WorldConstants::CHUNK_SIZE + 1;
-		const int NY = WorldConstants::CHUNK_SIZE + 1;
+		const int NX = SIZE + 1;
+		const int NY = SIZE + 1;
 		auto AO = [&](int dx, int dy, int dz) -> uint8_t
 		{
 			int ax = lx + dx;

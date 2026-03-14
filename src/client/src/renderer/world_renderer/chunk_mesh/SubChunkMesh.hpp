@@ -67,15 +67,15 @@ namespace onion::voxel
 		mutable std::mutex m_Mutex;
 
 		std::vector<Vertex> m_VerticesOpaque;  // Vertex data for the mesh
-		std::vector<uint16_t> m_IndicesOpaque; // Indices for the Opaque mesh
+		std::vector<uint32_t> m_IndicesOpaque; // Indices for the Opaque mesh
 		unsigned int m_IndicesOpaqueCount = 0; // Count of indices for the classic mesh
 
 		std::vector<Vertex> m_VerticesCutout;  // Vertex data for the mesh
-		std::vector<uint16_t> m_IndicesCutout; // Indices for the mesh
+		std::vector<uint32_t> m_IndicesCutout; // Indices for the mesh
 		unsigned int m_IndicesCutoutCount = 0; // Count of indices for the classic mesh
 
 		std::vector<Vertex> m_VerticesTransparent;	// Vertex data for the mesh
-		std::vector<uint16_t> m_IndicesTransparent; // Indices for the mesh
+		std::vector<uint32_t> m_IndicesTransparent; // Indices for the mesh
 		unsigned int m_IndicesTransparentCount = 0; // Count of indices for the classic mesh
 
 		unsigned int VBO_Opaque = 0, VAO_Opaque = 0, EBO_Opaque = 0;
