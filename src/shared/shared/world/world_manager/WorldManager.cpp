@@ -361,6 +361,14 @@ namespace onion::voxel
 
 			for (auto& block : blocks)
 			{
+				BlockId currentBlockId = chunk->GetBlock(Utils::WorldToLocalPosition(block.Position)).ID;
+
+				// Don't place out-of-bounds block if there is already a non-air block at the position
+				if (currentBlockId != BlockId::Air)
+				{
+					continue;
+				}
+
 				glm::ivec3 localPos = Utils::WorldToLocalPosition(block.Position);
 				chunk->SetBlock(localPos, block.State);
 
@@ -465,9 +473,9 @@ namespace onion::voxel
 		{
 			glm::ivec2 playerChunkPos = Utils::WorldToChunkPosition(playerPos);
 
-			for (int x = -persistanceDistance; x <= persistanceDistance; ++x)
+			for (int x = -persistanceDistance; x <= persistanceDistance; x++)
 			{
-				for (int y = -persistanceDistance; y <= persistanceDistance; ++y)
+				for (int y = -persistanceDistance; y <= persistanceDistance; y++)
 				{
 					glm::ivec2 chunkPos = playerChunkPos + glm::ivec2(x, y);
 					chunksToKeep[chunkPos] = true; // Mark chunk as to be kept

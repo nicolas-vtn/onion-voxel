@@ -84,6 +84,26 @@ namespace onion::voxel
 		PreRegister(BlockId::PinkTulip, TextureInfo{"pink_tulip.png", Tint::None, Transparency::Cutout}, Model::Cross);
 		PreRegister(
 			BlockId::ShortGrass, TextureInfo{"short_grass.png", Tint::Foliage, Transparency::Cutout}, Model::Cross);
+
+		PreRegister(BlockId::SnowGrass,
+					{TextureInfo{"snow.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"dirt.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque}});
+
+		PreRegister(BlockId::SnowBlock, "snow.png");
+
+		PreRegister(BlockId::BirchLog,
+					{TextureInfo{"birch_log.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"birch_log.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"birch_log_top.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"birch_log_top.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"birch_log.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"birch_log.png", Tint::None, Transparency::Opaque}});
+
+		PreRegister(BlockId::BirchLeaves, TextureInfo{"birch_leaves.png", Tint::Foliage, Transparency::Cutout});
 	}
 
 	void BlockRegistry::PreRegister(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel)

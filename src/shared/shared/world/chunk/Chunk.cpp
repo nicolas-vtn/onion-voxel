@@ -96,7 +96,7 @@ namespace onion::voxel
 		subChunk.SetBlockIndexInPalette(localPositionInSubChunk, indexInPalette);
 	}
 
-	void voxel::Chunk::SetBlock_Unsafe(const uint8_t x, const uint8_t y, const uint8_t z, const BlockState& block)
+	void voxel::Chunk::SetBlock_Unsafe(const uint8_t x, const uint16_t y, const uint8_t z, const BlockState& block)
 	{
 		// Add the block to the palette and get the block data index
 		const uint8_t indexInPalette = AddBlockToPalette(block);

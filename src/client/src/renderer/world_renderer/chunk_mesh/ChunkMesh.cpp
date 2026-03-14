@@ -9,7 +9,7 @@ namespace onion::voxel
 		std::unique_lock lock(m_MutexSubChunkMeshes);
 		const int subChunkCount = chunk->GetSubChunkCount();
 		m_SubChunkMeshes.reserve(subChunkCount);
-		for (int i = 0; i < subChunkCount; ++i)
+		for (int i = 0; i < subChunkCount; i++)
 		{
 			m_SubChunkMeshes.emplace_back(std::make_shared<SubChunkMesh>());
 		}

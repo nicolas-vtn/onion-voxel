@@ -402,26 +402,26 @@ namespace onion::voxel
 				constexpr Row FULL_Z = Row((1ull << SZ) - 1ull);
 				constexpr Row FULL_Y = Row((1ull << SY) - 1ull);
 
-				for (int y = 0; y < SY; ++y)
+				for (int y = 0; y < SY; y++)
 				{
-					for (int z = 0; z < SZ; ++z)
+					for (int z = 0; z < SZ; z++)
 						solidX[y][z] = FULL_X;
-					for (int x = 0; x < SX; ++x)
+					for (int x = 0; x < SX; x++)
 						solidZ[y][x] = FULL_Z;
 				}
-				for (int z = 0; z < SZ; ++z)
-					for (int x = 0; x < SX; ++x)
+				for (int z = 0; z < SZ; z++)
+					for (int x = 0; x < SX; x++)
 						solidY[z][x] = FULL_Y;
 			}
 		}
 		else
 		{
-			for (int y = 0; y < SY; ++y)
+			for (int y = 0; y < SY; y++)
 			{
-				for (int z = 0; z < SZ; ++z)
+				for (int z = 0; z < SZ; z++)
 				{
 					Row rowX = 0;
-					for (int x = 0; x < SX; ++x)
+					for (int x = 0; x < SX; x++)
 					{
 						const BlockId id =
 							chunk->GetBlock({static_cast<int>(x), static_cast<int>(y) + yMini, static_cast<int>(z)}).ID;
@@ -525,11 +525,11 @@ namespace onion::voxel
 		const int NX = SX + 1, NY = SY + 1, NZ = SZ + 1;
 		std::vector<uint8_t> occMap(NX * NY * NZ, 0);
 
-		for (int z = 0; z < NZ; ++z)
+		for (int z = 0; z < NZ; z++)
 		{
-			for (int y = 0; y < NY; ++y)
+			for (int y = 0; y < NY; y++)
 			{
-				for (int x = 0; x < NX; ++x)
+				for (int x = 0; x < NX; x++)
 				{
 					const int cx0 = x - 1, cx1 = x;
 					const int cy0 = y - 1, cy1 = y;
@@ -568,7 +568,7 @@ namespace onion::voxel
 
 		static constexpr uint8_t AO_LUT[5] = {0, 64, 128, 192, 255};
 		std::vector<uint8_t> occlusionMap(occMap.size());
-		for (size_t i = 0; i < occMap.size(); ++i)
+		for (size_t i = 0; i < occMap.size(); i++)
 		{
 			occlusionMap[i] = AO_LUT[occMap[i]]; // 0, 64, 128, 192, 255
 		}
@@ -745,7 +745,7 @@ namespace onion::voxel
 			SubChunkMesh::Vertex vert;
 
 			vert.x = static_cast<uint8_t>(p.x);
-			vert.y = static_cast<uint8_t>(p.y);
+			vert.y = static_cast<uint16_t>(p.y);
 			vert.z = static_cast<uint8_t>(p.z);
 
 			vert.texX = uv.x;

@@ -33,7 +33,7 @@ namespace onion::voxel
 		BlockState GetBlock(const glm::ivec3& localPosition) const;
 		void SetBlock(const glm::ivec3& localPosition, const BlockState& block);
 
-		void SetBlock_Unsafe(const uint8_t x, const uint8_t y, const uint8_t z, const BlockState& block);
+		void SetBlock_Unsafe(const uint8_t x, const uint16_t y, const uint8_t z, const BlockState& block);
 
 		int GetSubChunkCount() const;
 

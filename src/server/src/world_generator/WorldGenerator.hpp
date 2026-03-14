@@ -5,6 +5,7 @@
 #include <memory>
 #include <random>
 #include <thread>
+#include <unordered_set>
 
 #include <onion/ThreadPool.hpp>
 
@@ -83,9 +84,11 @@ namespace onion::voxel
 		BlockId GetFlowerType(const glm::ivec3& position) const;
 
 		// ------------ STRUCTURES ------------
-		static void MergeSchematicInChunk(const Schematic& schematic, GenChunk& chunk);
+		static void MergeSchematicInChunk(const Schematic& schematic,
+										  GenChunk& chunk,
+										  const std::unordered_set<BlockId>& overwritables = {BlockId::Air});
 
-		Schematic GenerateTree(const glm::ivec3& position) const;
+		Schematic GenerateTree(const glm::ivec3& position, int height, BlockId logType, BlockId leavesType) const;
 
 		// ----- Classic Generation Parameters -----
 	  private:
@@ -93,14 +96,15 @@ namespace onion::voxel
 
 		FastNoiseLite m_FastNoiseLite; // Noise generator for terrain generation
 		FastNoiseLite::NoiseType m_NoiseType = FastNoiseLite::NoiseType_OpenSimplex2;
-		float m_Frequency = 0.01f; // Frequency of the noise (controls "zoom" of the terrain)
+		float m_Frequency = 0.002f; // Frequency of the noise (controls "zoom" of the terrain)
 		void ConfigureNoiseGenerator();
 
-		uint16_t m_WorldHeight = 500;  // Height of the world in blocks
-		float m_SmoothnessX = 0.5f;	   // Controls the "zoom" of the terrain in the X direction
-		float m_SmoothnessZ = 0.5f;	   // Controls the "zoom" of the terrain in the Z direction
-		float m_AverageHeight = 70.0f; // Average height of the terrain
-		float m_Amplitude = 35.0f;	   // Amplitude of the noise
+		uint16_t m_WorldHeight = 500; // Height of the world in blocks
+		float m_SmoothnessX = 0.5f;	  // Controls the "zoom" of the terrain in the X direction
+		float m_SmoothnessZ = 0.5f;	  // Controls the "zoom" of the terrain in the Z direction
+		int m_SeaLevel = 30;		  // Sea level of the terrain
+		int m_SnowLevel = 200;		  // Snow level of the terrain (blocks above this height will be covered in snow)
+		int m_MaxTerrainHeight = 300; // Maximum height of the terrain
 
 		constexpr float GetTerrainHeight(float noiseHeight) const;
 	};

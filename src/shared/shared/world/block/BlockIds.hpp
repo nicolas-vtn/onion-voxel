@@ -8,10 +8,14 @@ namespace onion::voxel
 		Air = 0,
 		Dirt,
 		Grass,
+		SnowGrass,
+		SnowBlock,
 		Stone,
 		Glass,
 		OakLog,
 		OakLeaves,
+		BirchLog,
+		BirchLeaves,
 		Furnace,
 		Bedrock,
 		Water,
@@ -35,7 +39,7 @@ namespace onion::voxel
 
 	inline int GetBlockIdCount()
 	{
-		return 26;
+		return 30;
 	}
 
 } // namespace onion::voxel

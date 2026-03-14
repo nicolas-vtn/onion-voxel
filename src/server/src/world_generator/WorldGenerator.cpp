@@ -208,7 +208,7 @@ namespace onion::voxel
 
 		// ---- Iterate all blocks ----
 		const int blockIdCount = GetBlockIdCount();
-		for (int blockId = 0; blockId < blockIdCount; ++blockId)
+		for (int blockId = 0; blockId < blockIdCount; blockId++)
 		{
 			BlockId id = static_cast<BlockId>(blockId);
 
@@ -323,8 +323,17 @@ namespace onion::voxel
 				bool shouldGenerateTree = ShouldGenerateTree(worldPos);
 				if (GENERATE_TREES && shouldGenerateTree)
 				{
+					double val = m_SeededRandom.GetValue(worldPos + glm::ivec3(25, 2584, 88));
+
+					BlockId logId = (val < 0.025) ? BlockId::BirchLog : BlockId::OakLog; // 2.5% chance for birch
+					BlockId leavesId = (logId == BlockId::BirchLog) ? BlockId::BirchLeaves : BlockId::OakLeaves;
+
+					// Tree height between 2 and 6
+					int treeHeight = 2 + (m_SeededRandom.GetValue(worldPos + glm::ivec3(88, 654, 2584)) * 4);
+
 					glm::ivec3 treeBlock = worldPos + glm::ivec3(0, 1, 0);
-					Schematic tree = GenerateTree(treeBlock); // Generate a tree at the top block position
+					Schematic tree = GenerateTree(
+						treeBlock, treeHeight, logId, leavesId); // Generate a tree at the top block position
 					MergeSchematicInChunk(tree, genChunk);
 				}
 			}
@@ -345,9 +354,9 @@ namespace onion::voxel
 
 		// Gets the height map
 		uint16_t heightMap[CHUNK_SIZE][CHUNK_SIZE] = {0};
-		for (uint8_t z = 0; z < CHUNK_SIZE; ++z)
+		for (uint8_t z = 0; z < CHUNK_SIZE; z++)
 		{
-			for (uint8_t x = 0; x < CHUNK_SIZE; ++x)
+			for (uint8_t x = 0; x < CHUNK_SIZE; x++)
 			{
 				int realWorldX = (chunkPosition.x * CHUNK_SIZE + x);
 				int realWorldZ = (chunkPosition.y * CHUNK_SIZE + z);
@@ -361,116 +370,83 @@ namespace onion::voxel
 		}
 
 		// Fills the chunks with blocks based on the height map
-		for (uint8_t z = 0; z < CHUNK_SIZE; ++z)
+		for (uint8_t z = 0; z < CHUNK_SIZE; z++)
 		{
-			for (uint8_t x = 0; x < CHUNK_SIZE; ++x)
+			for (uint8_t x = 0; x < CHUNK_SIZE; x++)
 			{
 				uint16_t height = heightMap[x][z];
 
 				// Higher than sea level
-				if (height >= m_AverageHeight)
+				if (height >= m_SeaLevel)
 				{
-					for (uint16_t y = 0; y < m_WorldHeight; ++y)
+					BlockId topBlockId = (height >= m_SnowLevel) ? BlockId::SnowGrass : BlockId::Grass;
+					for (uint16_t y = 0; y <= height + 1; y++)
 					{
-						//if (y == 0)
-						//{
-						//	chunk->SetBlock({x, y, z}, BlockId::Bedrock); // Set bedrock at the bottom
-						//}
-						//else if (y == height)
-						//{
-						//	chunk->SetBlock({x, y, z}, BlockId::Grass); // Set grass block at the top
-						//}
-						//else if (y == height - 1 || y == height - 2)
-						//{
-						//	chunk->SetBlock({x, y, z}, BlockId::Dirt); // Set dirt blocks below the grass
-						//}
-						//else if (y < height)
-						//{
-						//	chunk->SetBlock({x, y, z}, BlockId::Stone); // Set stone below the grass
-						//}
-
 						if (y == 0)
 						{
 							chunk->SetBlock_Unsafe(
-								(uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
+								(uint8_t) x, y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
 						}
 						else if (y == height)
 						{
 							chunk->SetBlock_Unsafe(
-								(uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::Grass); // Set grass block at the top
+								(uint8_t) x, y, (uint8_t) z, topBlockId); // Set the Top block (grass or snow grass)
 						}
-						else if (y == height + 1)
+						else if (y == height + 1 && y < m_SnowLevel)
 						{
 							glm::ivec3 currentWorldPos = {
 								chunkPosition.x * CHUNK_SIZE + x, y, chunkPosition.y * CHUNK_SIZE + z};
 							if (ShouldGenerateShortGrass(currentWorldPos))
 							{
-								chunk->SetBlock_Unsafe((uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::ShortGrass);
+								chunk->SetBlock_Unsafe((uint8_t) x, y, (uint8_t) z, BlockId::ShortGrass);
 							}
 							if (ShouldGenerateFlower(currentWorldPos))
 							{
 								BlockId flowerId = GetFlowerType(currentWorldPos);
-								chunk->SetBlock_Unsafe((uint8_t) x, (uint8_t) y, (uint8_t) z, flowerId);
+								chunk->SetBlock_Unsafe((uint8_t) x, y, (uint8_t) z, flowerId);
 							}
 						}
 						else if (y == height - 1 || y == height - 2)
 						{
 							chunk->SetBlock_Unsafe((uint8_t) x,
-												   (uint8_t) y,
+												   y,
 												   (uint8_t) z,
 												   BlockId::Dirt); // Set dirt blocks below the grass
 						}
 						else if (y < height)
 						{
 							chunk->SetBlock_Unsafe(
-								(uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::Stone); // Set stone below the grass
+								(uint8_t) x, y, (uint8_t) z, BlockId::Stone); // Set stone below the grass
 						}
 					}
 				}
 
 				// Lower than sea level
-				if (height < m_AverageHeight)
+				if (height < m_SeaLevel)
 				{
-					for (uint16_t y = 0; y < m_WorldHeight; ++y)
+					for (uint16_t y = 0; y < m_WorldHeight; y++)
 					{
-						//if (y == 0)
-						//{
-						//	chunk->SetBlock({x, y, z}, BlockId::Bedrock); // Set bedrock at the bottom
-						//}
-						//else if (y == height || y == height - 1)
-						//{
-						//	chunk->SetBlock({x, y, z}, BlockId::Gravel); // Set gravel blocks below the sea level
-						//}
-						//else if (y < height)
-						//{
-						//	chunk->SetBlock({x, y, z}, BlockId::Stone); // Set stone below the gravel
-						//}
-						//else if (y > height && y < m_AverageHeight)
-						//{
-						//	chunk->SetBlock({x, y, z}, BlockId::Water); // Set water above the gravel
-						//}
-
 						if (y == 0)
 						{
 							chunk->SetBlock_Unsafe(
-								(uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
+								(uint8_t) x, y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
 						}
 						else if (y == height || y == height - 1)
 						{
 							chunk->SetBlock_Unsafe((uint8_t) x,
-												   (uint8_t) y,
+												   y,
 												   (uint8_t) z,
 												   BlockId::Gravel); // Set gravel blocks below the sea level
 						}
 						else if (y < height)
 						{
 							chunk->SetBlock_Unsafe(
-								(uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::Stone); // Set stone below the gravel
+								(uint8_t) x, y, (uint8_t) z, BlockId::Stone); // Set stone below the gravel
 						}
-						else if (y > height && y < m_AverageHeight)
+						else if (y > height && y < m_SeaLevel)
 						{
 							chunk->SetBlock_Unsafe(
-								(uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::Water); // Set water above the gravel
+								(uint8_t) x, y, (uint8_t) z, BlockId::Water); // Set water above the gravel
 						}
 					}
 				}
@@ -478,9 +454,9 @@ namespace onion::voxel
 		}
 
 		// Adds trees
-		for (uint8_t x = 0; x < WorldConstants::CHUNK_SIZE; ++x)
+		for (uint8_t x = 0; x < WorldConstants::CHUNK_SIZE; x++)
 		{
-			for (uint8_t z = 0; z < WorldConstants::CHUNK_SIZE; ++z)
+			for (uint8_t z = 0; z < WorldConstants::CHUNK_SIZE; z++)
 			{
 				int realWorldX = (chunkPosition.x * WorldConstants::CHUNK_SIZE + x);
 				int realWorldZ = (chunkPosition.y * WorldConstants::CHUNK_SIZE + z);
@@ -488,8 +464,8 @@ namespace onion::voxel
 
 				glm::ivec3 worldPos = {realWorldX, height, realWorldZ};
 
-				if (height < m_AverageHeight)
-					continue; // Skip if the height is below average (no trees in water)
+				if (height < m_SeaLevel)
+					continue; // Skip if the height is below sea level (no trees in water)
 
 				bool shouldGenerateTree = ShouldGenerateTree(worldPos);
 				if (shouldGenerateTree)
@@ -503,8 +479,22 @@ namespace onion::voxel
 						chunk->SetBlock({x, height, z}, BlockId::Dirt);
 					}
 
-					Schematic tree = GenerateTree(treeBlock); // Generate a tree at the top block position
-					MergeSchematicInChunk(tree, genChunk);
+					double val = m_SeededRandom.GetValue(worldPos + glm::ivec3(25, 2584, 88));
+					BlockId logId = (val < 0.025) ? BlockId::BirchLog : BlockId::OakLog; // 2.5% chance for birch
+					BlockId leavesId = (logId == BlockId::BirchLog) ? BlockId::BirchLeaves : BlockId::OakLeaves;
+					// Tree height between 2 and 6
+					int treeHeight = 2 + (m_SeededRandom.GetValue(worldPos + glm::ivec3(88, 654, 2584)) * 4);
+
+					Schematic tree = GenerateTree(treeBlock, treeHeight, logId, leavesId);
+					std::unordered_set<BlockId> overwritables;
+					overwritables.insert(BlockId::Air);
+					overwritables.insert(BlockId::ShortGrass);
+					for (const auto& blockId : BlockState::Flowers)
+					{
+						overwritables.insert(blockId);
+					}
+
+					MergeSchematicInChunk(tree, genChunk, overwritables);
 				}
 			}
 		}
@@ -517,23 +507,59 @@ namespace onion::voxel
 
 	bool WorldGenerator::ShouldGenerateTree(const glm::ivec3& position) const
 	{
-		// 2% chance to generate a tree
+
+		if (position.y > m_SnowLevel)
+		{
+			return false; // Don't generate trees above the snow level
+		}
+
 		double randomVal = m_SeededRandom.GetValue(position);
-		return randomVal < 0.02;
+
+		// Less trees at higher altitudes
+		double altitudeFactor = static_cast<double>(position.y) / static_cast<double>(m_SnowLevel);
+
+		constexpr double BASE_TREE_CHANCE = 0.02; // Base 2% chance to generate a tree
+
+		randomVal += altitudeFactor * BASE_TREE_CHANCE; // Increase the random value slightly based on altitude
+
+		return randomVal < BASE_TREE_CHANCE;
 	}
 
 	bool WorldGenerator::ShouldGenerateShortGrass(const glm::ivec3& position) const
 	{
-		// 25% chance to generate short grass
+		if (position.y > m_SnowLevel)
+		{
+			return false; // Don't generate short grass above the snow level
+		}
+
 		double randomVal = m_SeededRandom.GetValue(position);
-		return randomVal < 0.25;
+
+		// Less short grass at higher altitudes
+		double altitudeFactor = static_cast<double>(position.y) / static_cast<double>(m_SnowLevel);
+
+		constexpr double BASE_SHORT_GRASS_CHANCE = 0.25; // Base 25% chance to generate short grass
+
+		randomVal += altitudeFactor * BASE_SHORT_GRASS_CHANCE; // Increase the random value slightly based on altitude
+
+		return randomVal < BASE_SHORT_GRASS_CHANCE;
 	}
 
 	bool WorldGenerator::ShouldGenerateFlower(const glm::ivec3& position) const
 	{
-		// 5% chance to generate a flower
+		if (position.y > m_SnowLevel)
+		{
+			return false; // Don't generate flowers above the snow level
+		}
+
 		double randomVal = m_SeededRandom.GetValue(position);
-		return randomVal < 0.05;
+
+		// Less flowers at higher altitudes
+		double altitudeFactor = static_cast<double>(position.y) / static_cast<double>(m_SnowLevel);
+
+		constexpr double BASE_FLOWER_CHANCE = 0.05; // Base 5% chance to generate flowers
+
+		randomVal += altitudeFactor * BASE_FLOWER_CHANCE; // Increase the random value slightly based on altitude
+		return randomVal < BASE_FLOWER_CHANCE;
 	}
 
 	BlockId WorldGenerator::GetFlowerType(const glm::ivec3& position) const
@@ -544,7 +570,9 @@ namespace onion::voxel
 		return BlockState::Flowers[index];
 	}
 
-	void WorldGenerator::MergeSchematicInChunk(const Schematic& schematic, GenChunk& genChunk)
+	void WorldGenerator::MergeSchematicInChunk(const Schematic& schematic,
+											   GenChunk& genChunk,
+											   const std::unordered_set<BlockId>& overwritables)
 	{
 		const auto& chunk = genChunk.chunk;
 		const auto chunkPosition = chunk->GetPosition();
@@ -572,11 +600,14 @@ namespace onion::voxel
 					const auto blockChunkPos = Utils::WorldToChunkPosition(blockWorldPos);
 					if (blockChunkPos == chunkPosition)
 					{
-						// Set the block in the chunk pile
-
 						// Get local coordinates in the chunk
 						const glm::ivec3 localPos = Utils::WorldToLocalPosition(blockWorldPos);
-						chunk->SetBlock(localPos, block);
+						BlockId existingBlockId = chunk->GetBlock(localPos).ID;
+						if (overwritables.contains(existingBlockId) || existingBlockId == BlockId::Air)
+						{
+							// The block can be overwritten, set it in the chunk
+							chunk->SetBlock(localPos, block);
+						}
 					}
 					else
 					{
@@ -588,7 +619,8 @@ namespace onion::voxel
 		}
 	}
 
-	Schematic WorldGenerator::GenerateTree(const glm::ivec3& position) const
+	Schematic
+	WorldGenerator::GenerateTree(const glm::ivec3& position, int height, BlockId logType, BlockId leavesType) const
 	{
 		glm::ivec3 treePosition{position.x, position.y, position.z};
 
@@ -596,44 +628,35 @@ namespace onion::voxel
 
 		Schematic treeSchematic({5, 10, 5}, SchematicOrigin);
 
-		int minTreeHeight = 2;
-		int maxTreeHeight = 5;
+		constexpr int MIN_TREE_HEIGHT = 2;
 
-		// Combine seed, x and z in a simple way
-		std::uint64_t combined = static_cast<std::uint64_t>(GetSeed()) ^
-			(static_cast<std::uint64_t>(position.x) << 16) ^ (static_cast<std::uint64_t>(position.z) << 32);
-
-		std::mt19937 generator(static_cast<std::mt19937::result_type>(combined));
-		std::uniform_int_distribution<int> heightDistribution(minTreeHeight, maxTreeHeight);
-
-		int treeHeight = heightDistribution(generator);
+		int treeHeight = std::max(height, MIN_TREE_HEIGHT);
 
 		static std::random_device rd;  // Non-deterministic (hardware RNG)
 		static std::mt19937 gen(rd()); // Only seeded once
 		static std::uniform_int_distribution<int> dist(1, 100);
 
 		// Creates the block palette for the tree
-		BlockState verticalOakLog =
-			BlockState(BlockId::OakLog, BlockState::Orientation::Up, BlockState::Orientation::North);
-		BlockState oakLeaves = BlockState(BlockId::OakLeaves);
+		BlockState verticalLog = BlockState(logType, BlockState::Orientation::Up, BlockState::Orientation::North);
+		BlockState leaves = BlockState(leavesType);
 
 		// Generate the Logs
-		for (int y = 0; y < treeHeight + 3; ++y)
+		for (int y = 0; y < treeHeight + 3; y++)
 		{
-			// Vertical oak log
-			treeSchematic.SetBlock({2, y, 2}, verticalOakLog); // Set the trunk block
+			// Vertical log
+			treeSchematic.SetBlock({2, y, 2}, verticalLog); // Set the trunk block
 		}
 
 		// Generate the Leaves
-		for (int x = 0; x < 5; ++x)
+		for (int x = 0; x < 5; x++)
 		{
-			for (int z = 0; z < 5; ++z)
+			for (int z = 0; z < 5; z++)
 			{
 				for (int y = treeHeight; y < treeHeight + 2; y++)
 				{
 					if (treeSchematic.GetBlockId({x, y, z}) == BlockId::Air)
 					{
-						treeSchematic.SetBlock({x, y, z}, oakLeaves); // Set the leaves block
+						treeSchematic.SetBlock({x, y, z}, leaves); // Set the leaves block
 					}
 
 					// 20% chance to NOT have leaves at the corners
@@ -649,15 +672,15 @@ namespace onion::voxel
 			}
 		}
 
-		for (int x = 1; x < 4; ++x)
+		for (int x = 1; x < 4; x++)
 		{
-			for (int z = 1; z < 4; ++z)
+			for (int z = 1; z < 4; z++)
 			{
 				for (int y = treeHeight + 2; y <= treeHeight + 3; y++)
 				{
 					if (treeSchematic.GetBlockId({x, y, z}) == BlockId::Air)
 					{
-						treeSchematic.SetBlock({x, y, z}, oakLeaves); // Set the leaves block
+						treeSchematic.SetBlock({x, y, z}, leaves); // Set the leaves block
 					}
 				}
 			}
@@ -675,7 +698,8 @@ namespace onion::voxel
 
 	constexpr float WorldGenerator::GetTerrainHeight(float noiseHeight) const
 	{
-		return (noiseHeight * m_Amplitude + m_AverageHeight);
+		// Scale and shift the noise value to get a height between 0 and m_MaxTerrainHeight
+		return (noiseHeight * (m_MaxTerrainHeight / 2)) + (m_MaxTerrainHeight / 2);
 	}
 
 } // namespace onion::voxel
