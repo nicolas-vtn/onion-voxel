@@ -60,5 +60,9 @@ namespace onion::voxel
 			s_TransparencyLookupTable; // A lookup table for block transparency, indexed by BlockId
 		static const std::vector<RotationType>
 			s_RotationTypeLookupTable; // A lookup table for block rotation types, indexed by BlockId
+
+		// ----- Lists of block IDs for different categories -----
+	  public:
+		static const std::vector<BlockId> Flowers;
 	};
 } // namespace onion::voxel

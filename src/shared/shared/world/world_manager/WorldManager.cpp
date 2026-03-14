@@ -47,7 +47,7 @@ namespace onion::voxel
 		}
 	}
 
-	std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, IVec2Hash> WorldManager::GetAllChunks() const
+	std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> WorldManager::GetAllChunks() const
 	{
 		std::shared_lock lock(m_MutexChunks);
 		return m_Chunks; // Return a copy of the chunks map
@@ -68,7 +68,7 @@ namespace onion::voxel
 	void WorldManager::AddChunk(const std::shared_ptr<Chunk> chunk, const std::vector<Block>& outOfBoundsBlocks)
 	{
 		// Converts world position to chunk position + local position.
-		std::unordered_map<glm::ivec2, std::vector<Block>, IVec2Hash> outOfBoundsBlocksByChunk;
+		std::unordered_map<glm::ivec2, std::vector<Block>> outOfBoundsBlocksByChunk;
 		for (const auto& block : outOfBoundsBlocks)
 		{
 			glm::ivec2 chunkPos = Utils::WorldToChunkPosition(block.Position);
@@ -276,7 +276,7 @@ namespace onion::voxel
 	size_t
 	WorldManager::SetBlocks(const std::vector<Block>& blocks, BlocksChangedEventArgs::eOrigin origin, bool notify)
 	{
-		std::unordered_map<glm::ivec2, std::vector<std::pair<glm::ivec3, Block>>, IVec2Hash> blocksByChunk;
+		std::unordered_map<glm::ivec2, std::vector<std::pair<glm::ivec3, Block>>> blocksByChunk;
 		std::vector<Block> blocksToNotify;
 
 		// Group blocks by chunk
@@ -406,7 +406,7 @@ namespace onion::voxel
 	{
 		std::vector<glm::ivec2> missingChunks;
 		auto playersPosition = GetPlayersPosition();
-		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, IVec2Hash> chunks = GetAllChunks();
+		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> chunks = GetAllChunks();
 
 		// For each player, check the chunks within the persistance distance and mark them as missing if they are not loaded
 		int persistanceDistance = std::min(GetChunkPersistanceDistance(), m_ServerSimulationDistance.load());
@@ -449,7 +449,7 @@ namespace onion::voxel
 		auto playersPosition = GetPlayersPosition();
 
 		// Initialize all chunks as not to be kept
-		std::unordered_map<glm::ivec2, bool, IVec2Hash> chunksToKeep;
+		std::unordered_map<glm::ivec2, bool> chunksToKeep;
 		{
 			std::shared_lock lock(m_MutexChunks);
 			for (const auto& [chunkPos, chunk] : m_Chunks)

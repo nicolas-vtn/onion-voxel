@@ -142,7 +142,7 @@ namespace onion::voxel
 
 		// Render chunks
 
-		std::unordered_map<glm::ivec2, std::shared_ptr<ChunkMesh>, IVec2Hash> chunkMeshesSnapshot;
+		std::unordered_map<glm::ivec2, std::shared_ptr<ChunkMesh>> chunkMeshesSnapshot;
 		{
 			std::shared_lock lock(m_MutexChunkMeshes);
 			chunkMeshesSnapshot = m_ChunkMeshes;
@@ -397,7 +397,7 @@ namespace onion::voxel
 	{
 		const glm::ivec2 chunkPos = Utils::WorldToChunkPosition(blockPosition);
 
-		std::unordered_map<glm::ivec2, std::vector<uint8_t>, IVec2Hash> subChunkIndicesToMarkDirty;
+		std::unordered_map<glm::ivec2, std::vector<uint8_t>> subChunkIndicesToMarkDirty;
 
 		// Mark the subchunk mesh of the chunk that contains the block dirty
 		int value = blockPosition.y / WorldConstants::CHUNK_SIZE;

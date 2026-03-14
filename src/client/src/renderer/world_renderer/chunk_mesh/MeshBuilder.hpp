@@ -71,6 +71,7 @@ namespace onion::voxel
 			const uint8_t* o[4];
 
 			bool reverseWinding = false; // vertices should be added in reverse order (for correct backface culling)
+			bool isCutout = false;		 // whether this face should be rendered in the cutout pass
 		};
 
 		struct PointsAndOcclusion

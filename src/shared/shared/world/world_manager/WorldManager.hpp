@@ -1,6 +1,8 @@
 #pragma once
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
 
 #include <filesystem>
 #include <memory>
@@ -14,14 +16,6 @@
 
 namespace onion::voxel
 {
-	struct IVec2Hash
-	{
-		size_t operator()(const glm::ivec2& v) const noexcept
-		{
-			return (static_cast<uint64_t>(v.x) << 32) ^ static_cast<uint32_t>(v.y);
-		}
-	};
-
 	class WorldManager
 	{
 		// ----- Structs -----
@@ -72,7 +66,7 @@ namespace onion::voxel
 
 		bool IsChunkLoaded(const glm::ivec2& chunkPosition) const;
 		std::shared_ptr<Chunk> GetChunk(const glm::ivec2& chunkPosition) const;
-		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, IVec2Hash> GetAllChunks() const;
+		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> GetAllChunks() const;
 
 		// ----- Getters / Setters -----
 	  public:
@@ -121,10 +115,10 @@ namespace onion::voxel
 
 		mutable std::shared_mutex m_MutexOutOfBoundsBlocks;
 		// Map of chunk position to list of out-of-bounds blocks that should be added to the chunk when it is added to the world
-		std::unordered_map<glm::ivec2, std::vector<Block>, IVec2Hash> m_OutOfBoundsBlocks;
+		std::unordered_map<glm::ivec2, std::vector<Block>> m_OutOfBoundsBlocks;
 
 		mutable std::shared_mutex m_MutexChunks;
-		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>, IVec2Hash> m_Chunks;
+		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> m_Chunks;
 
 		// ----- Periodic Tasks -----
 	  private:

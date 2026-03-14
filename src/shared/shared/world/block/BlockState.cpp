@@ -34,6 +34,15 @@ namespace onion::voxel
 		return table;
 	}();
 
+	const std::vector<BlockId> BlockState::Flowers = {BlockId::Poppy,
+													  BlockId::Dandelion,
+													  BlockId::RedTulip,
+													  BlockId::OrangeTulip,
+													  BlockId::WhiteTulip,
+													  BlockId::PinkTulip};
+
+	// ----- Constructor / Destructor -----
+
 	BlockState::BlockState(BlockId blockID, Orientation facing, Orientation top) : ID(blockID), Facing(facing), Top(top)
 	{
 	}

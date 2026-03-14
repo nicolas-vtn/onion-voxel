@@ -58,6 +58,7 @@ namespace onion::voxel
 	{
 		(void) newSeed; // Unused parameter
 		ConfigureNoiseGenerator();
+		m_SeededRandom.SetSeed(newSeed);
 	}
 
 	WorldGenerator::GenChunk WorldGenerator::GenerateChunk(const glm::ivec2& chunkPosition)
@@ -293,18 +294,18 @@ namespace onion::voxel
 			}
 		}
 
-		// Poppy layer
-		BlockState poppy{BlockId::Poppy};
-		for (y = 5; y <= 5; y++)
-		{
-			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
-			{
-				for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
-				{
-					chunk->SetBlock(glm::ivec3(x, y, z), poppy);
-				}
-			}
-		}
+		//// Poppy layer
+		//BlockState poppy{BlockId::Poppy};
+		//for (y = 5; y <= 5; y++)
+		//{
+		//	for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
+		//	{
+		//		for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
+		//		{
+		//			chunk->SetBlock(glm::ivec3(x, y, z), poppy);
+		//		}
+		//	}
+		//}
 
 		return genChunk;
 	}
@@ -374,6 +375,20 @@ namespace onion::voxel
 						{
 							chunk->SetBlock_Unsafe(
 								(uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::Grass); // Set grass block at the top
+						}
+						else if (y == height + 1)
+						{
+							glm::ivec3 currentWorldPos = {
+								chunkPosition.x * CHUNK_SIZE + x, y, chunkPosition.y * CHUNK_SIZE + z};
+							if (ShouldGenerateShortGrass(currentWorldPos))
+							{
+								chunk->SetBlock_Unsafe((uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::ShortGrass);
+							}
+							if (ShouldGenerateFlower(currentWorldPos))
+							{
+								BlockId flowerId = GetFlowerType(currentWorldPos);
+								chunk->SetBlock_Unsafe((uint8_t) x, (uint8_t) y, (uint8_t) z, flowerId);
+							}
 						}
 						else if (y == height - 1 || y == height - 2)
 						{
@@ -451,26 +466,8 @@ namespace onion::voxel
 				if (height < m_AverageHeight)
 					continue; // Skip if the height is below average (no trees in water)
 
-				int minRand = 0;
-				int maxRand = 1000000;
-
-				// Seed PRNG directly
-				std::uint64_t hash = 14695981039346656037ull; // FNV offset
-				hash ^= static_cast<std::uint64_t>(GetSeed());
-				hash *= 1099511628211ull;
-				hash ^= static_cast<std::uint64_t>(realWorldX);
-				hash *= 1099511628211ull;
-				hash ^= static_cast<std::uint64_t>(realWorldZ);
-				hash *= 1099511628211ull;
-
-				std::mt19937 generator(static_cast<std::mt19937::result_type>(hash));
-				std::uniform_int_distribution<int> heightDistribution(minRand, maxRand);
-
-				// Generate a float in [0,1)
-				float randomVal = static_cast<float>(heightDistribution(generator)) / (maxRand + 1);
-
-				// 5% chance to generate a tree
-				if (randomVal < 0.01f)
+				bool shouldGenerateTree = ShouldGenerateTree({realWorldX, height, realWorldZ});
+				if (shouldGenerateTree)
 				{
 					glm::ivec3 treeBlock{(chunkPosition.x * WorldConstants::CHUNK_SIZE) + x,
 										 height + 1,
@@ -534,6 +531,35 @@ namespace onion::voxel
 		genChunk.chunk = chunk;
 
 		return genChunk;
+	}
+
+	bool WorldGenerator::ShouldGenerateTree(const glm::ivec3& position) const
+	{
+		// 2% chance to generate a tree
+		double randomVal = m_SeededRandom.GetValue(position);
+		return randomVal < 0.02;
+	}
+
+	bool WorldGenerator::ShouldGenerateShortGrass(const glm::ivec3& position) const
+	{
+		// 25% chance to generate short grass
+		double randomVal = m_SeededRandom.GetValue(position);
+		return randomVal < 0.25;
+	}
+
+	bool WorldGenerator::ShouldGenerateFlower(const glm::ivec3& position) const
+	{
+		// 5% chance to generate a flower
+		double randomVal = m_SeededRandom.GetValue(position);
+		return randomVal < 0.05;
+	}
+
+	BlockId WorldGenerator::GetFlowerType(const glm::ivec3& position) const
+	{
+		const double val = m_SeededRandom.GetValue(position);
+		const double flowerVal = m_SeededRandom.GetValue(val);
+		const size_t index = static_cast<size_t>(flowerVal * BlockState::Flowers.size());
+		return BlockState::Flowers[index];
 	}
 
 	Schematic WorldGenerator::GenerateTree(const glm::ivec3& position) const

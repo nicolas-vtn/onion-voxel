@@ -88,7 +88,7 @@ namespace onion::voxel
 		// ----- Chunk Meshes -----
 	  private:
 		mutable std::shared_mutex m_MutexChunkMeshes;
-		std::unordered_map<glm::ivec2, std::shared_ptr<ChunkMesh>, IVec2Hash> m_ChunkMeshes;
+		std::unordered_map<glm::ivec2, std::shared_ptr<ChunkMesh>> m_ChunkMeshes;
 
 		// ----- Texture Atlas and Block Registry -----
 	  private:

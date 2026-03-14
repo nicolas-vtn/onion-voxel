@@ -11,22 +11,10 @@
 #include <shared/world/schematic/Schematic.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
-namespace std
-{
-	template <> struct hash<glm::ivec3>
-	{
-		size_t operator()(const glm::ivec3& v) const noexcept
-		{
-			size_t h = 0;
+#include "SeededRandom.hpp"
 
-			h ^= std::hash<int>()(v.x) + 0x9e3779b9 + (h << 6) + (h >> 2);
-			h ^= std::hash<int>()(v.y) + 0x9e3779b9 + (h << 6) + (h >> 2);
-			h ^= std::hash<int>()(v.z) + 0x9e3779b9 + (h << 6) + (h >> 2);
-
-			return h;
-		}
-	};
-} // namespace std
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 
 namespace onion::voxel
 {
@@ -75,7 +63,7 @@ namespace onion::voxel
 			Classic
 		};
 
-		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::Superflat;
+		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::Classic;
 
 		// ----- Chunk Generation Thread -----
 	  private:
@@ -89,11 +77,18 @@ namespace onion::voxel
 
 		// ----- Structures Generation -----
 	  private:
+		bool ShouldGenerateTree(const glm::ivec3& position) const;
+		bool ShouldGenerateShortGrass(const glm::ivec3& position) const;
+		bool ShouldGenerateFlower(const glm::ivec3& position) const;
+		BlockId GetFlowerType(const glm::ivec3& position) const;
+
 		// ------------ STRUCTURES ------------
 		Schematic GenerateTree(const glm::ivec3& position) const;
 
 		// ----- Classic Generation Parameters -----
 	  private:
+		SeededRandom m_SeededRandom;
+
 		FastNoiseLite m_FastNoiseLite; // Noise generator for terrain generation
 		FastNoiseLite::NoiseType m_NoiseType = FastNoiseLite::NoiseType_OpenSimplex2;
 		float m_Frequency = 0.01f; // Frequency of the noise (controls "zoom" of the terrain)

@@ -163,16 +163,16 @@ namespace onion::voxel
 				continue;
 			}
 
-			if (block.ID == BlockId::OakLeaves && neighbors[i].ID == BlockId::OakLeaves)
-			{
-				if (i == (int) Face::Top || i == (int) Face::Left || i == (int) Face::Back)
-				{
-					visibility[i] = true;
-					continue;
-				}
-				visibility[i] = false;
-				continue;
-			}
+			//if (block.ID == BlockId::OakLeaves && neighbors[i].ID == BlockId::OakLeaves)
+			//{
+			//	if (i == (int) Face::Top || i == (int) Face::Left || i == (int) Face::Back)
+			//	{
+			//		visibility[i] = true;
+			//		continue;
+			//	}
+			//	visibility[i] = false;
+			//	continue;
+			//}
 
 			// A face is visible if the neighboring block in that direction is transparent
 			visibility[i] = BlockState::IsTransparent(block.ID) || BlockState::IsTransparent(neighbors[i].ID);
@@ -822,12 +822,14 @@ namespace onion::voxel
 		result.p110 = glm::vec3(lx + 1, wy + 1, lz);
 		result.p111 = glm::vec3(lx + 1, wy + 1, lz + 1);
 
+		const int ly = wy % WorldConstants::CHUNK_SIZE;
+
 		const int NX = WorldConstants::CHUNK_SIZE + 1;
 		const int NY = WorldConstants::CHUNK_SIZE + 1;
 		auto AO = [&](int dx, int dy, int dz) -> uint8_t
 		{
 			int ax = lx + dx;
-			int ay = wy + dy;
+			int ay = ly + dy;
 			int az = lz + dz;
 			return mesh->m_OcclusionMap[ax + NX * (ay + NY * az)];
 		};
@@ -871,16 +873,22 @@ namespace onion::voxel
 	std::vector<MeshBuilder::FaceBuildDesc> MeshBuilder::GetFaceBuildDescs(const BlockTextures& blockTextures,
 																		   const PointsAndOcclusion& pao)
 	{
+		std::vector<MeshBuilder::FaceBuildDesc> desc;
+
 		switch (blockTextures.textureModel)
 		{
 			case Model::Block:
-				return GetBlockFaceBuildDescs(pao);
+				desc = GetBlockFaceBuildDescs(pao);
+				break;
 			case Model::Cross:
-				return GetCrossFaceBuildDescs(pao);
+				desc = GetCrossFaceBuildDescs(pao);
+				break;
 			default:
 				assert(false && "Unknown TextureModel");
-				return std::vector<FaceBuildDesc>();
+				break;
 		}
+
+		return desc;
 	}
 
 	std::vector<MeshBuilder::FaceBuildDesc> MeshBuilder::GetBlockFaceBuildDescs(const PointsAndOcclusion& pao)
