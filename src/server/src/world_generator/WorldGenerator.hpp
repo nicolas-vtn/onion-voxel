@@ -94,15 +94,18 @@ namespace onion::voxel
 	  private:
 		SeededRandom m_SeededRandom;
 
+		void ConfigureNoiseGenerators();
+
 		FastNoiseLite m_FastNoiseLite; // Noise generator for terrain generation
 		FastNoiseLite::NoiseType m_NoiseType = FastNoiseLite::NoiseType_OpenSimplex2;
 		float m_Frequency = 0.002f; // Frequency of the noise (controls "zoom" of the terrain)
-		void ConfigureNoiseGenerator();
+
+		float GetFractalNoise(float x, float z) const;
 
 		uint16_t m_WorldHeight = 500; // Height of the world in blocks
 		float m_SmoothnessX = 0.5f;	  // Controls the "zoom" of the terrain in the X direction
 		float m_SmoothnessZ = 0.5f;	  // Controls the "zoom" of the terrain in the Z direction
-		int m_SeaLevel = 30;		  // Sea level of the terrain
+		int m_SeaLevel = 64;		  // Sea level of the terrain
 		int m_SnowLevel = 200;		  // Snow level of the terrain (blocks above this height will be covered in snow)
 		int m_MaxTerrainHeight = 300; // Maximum height of the terrain
 

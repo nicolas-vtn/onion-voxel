@@ -57,7 +57,7 @@ namespace onion::voxel
 	void WorldGenerator::Handle_SeedChanged(const uint32_t& newSeed)
 	{
 		(void) newSeed; // Unused parameter
-		ConfigureNoiseGenerator();
+		ConfigureNoiseGenerators();
 		m_SeededRandom.SetSeed(newSeed);
 	}
 
@@ -364,8 +364,8 @@ namespace onion::voxel
 				float noisePositionX = static_cast<float>(realWorldX) * m_SmoothnessX;
 				float noisePositionZ = static_cast<float>(realWorldZ) * m_SmoothnessZ;
 
-				heightMap[x][z] =
-					static_cast<uint16_t>(GetTerrainHeight(m_FastNoiseLite.GetNoise(noisePositionX, noisePositionZ)));
+				float h = GetFractalNoise(noisePositionX, noisePositionZ);
+				heightMap[x][z] = GetTerrainHeight(h);
 			}
 		}
 
@@ -426,22 +426,24 @@ namespace onion::voxel
 				{
 					for (uint16_t y = 0; y < m_WorldHeight; y++)
 					{
+						// Bedrock
 						if (y == 0)
 						{
 							chunk->SetBlock_Unsafe(
 								(uint8_t) x, y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
 						}
-						else if (y == height || y == height - 1)
-						{
-							chunk->SetBlock_Unsafe((uint8_t) x,
-												   y,
-												   (uint8_t) z,
-												   BlockId::Gravel); // Set gravel blocks below the sea level
-						}
-						else if (y < height)
+						// Stone
+						else if (y < height - 3)
 						{
 							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockId::Stone); // Set stone below the gravel
+								(uint8_t) x, y, (uint8_t) z, BlockId::Stone); // Set stone at the bottom
+						}
+						// Gravel Or Sand
+						else if (y <= height)
+						{
+							// Deeper sea has gravel, shallower sea has sand
+							BlockId seaFloor = (height < m_SeaLevel - 5) ? BlockId::Gravel : BlockId::Sand;
+							chunk->SetBlock_Unsafe((uint8_t) x, y, (uint8_t) z, seaFloor);
 						}
 						else if (y > height && y < m_SeaLevel)
 						{
@@ -689,11 +691,32 @@ namespace onion::voxel
 		return treeSchematic;
 	}
 
-	void WorldGenerator::ConfigureNoiseGenerator()
+	void WorldGenerator::ConfigureNoiseGenerators()
 	{
 		m_FastNoiseLite.SetSeed(GetSeed());
 		m_FastNoiseLite.SetNoiseType(m_NoiseType);
 		m_FastNoiseLite.SetFrequency(m_Frequency); // Smaller = smoother, larger = more rugged
+	}
+
+	float WorldGenerator::GetFractalNoise(float x, float z) const
+	{
+		float amplitude = 1.0f;
+		float frequency = 1.0f;
+
+		float value = 0.0f;
+		float maxValue = 0.0f;
+
+		for (int i = 0; i < 4; i++)
+		{
+			value += m_FastNoiseLite.GetNoise(x * frequency, z * frequency) * amplitude;
+
+			maxValue += amplitude;
+
+			amplitude *= 0.5f;
+			frequency *= 2.0f;
+		}
+
+		return value / maxValue;
 	}
 
 	constexpr float WorldGenerator::GetTerrainHeight(float noiseHeight) const
