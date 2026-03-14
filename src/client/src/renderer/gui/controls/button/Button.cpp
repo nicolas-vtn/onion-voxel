@@ -178,6 +178,7 @@ namespace onion::voxel
 
 	void Button::HandleMouseDown(const NineSliceSprite& sprite)
 	{
+		(void) sprite; // Unused parameter
 		m_IsPressed = true;
 		glm::ivec2 updatedSize = glm::ivec2(glm::vec2(m_Size) * m_ScaleFactorOnClick);
 
@@ -191,6 +192,7 @@ namespace onion::voxel
 
 	void Button::HandleMouseUp(const NineSliceSprite& sprite)
 	{
+		(void) sprite; // Unused parameter
 		m_IsPressed = false;
 		m_NineSliceSprite_Basic.SetSize(m_Size);
 		m_NineSliceSprite_Disabled.SetSize(m_Size);
@@ -199,12 +201,14 @@ namespace onion::voxel
 
 	void Button::HandleSpriteClick(const NineSliceSprite& sprite)
 	{
+		(void) sprite; // Unused parameter
 		if (m_IsEnabled)
 			OnClick.Trigger(*this);
 	}
 
 	void Button::HandleSpriteHoverEnter(const NineSliceSprite& sprite)
 	{
+		(void) sprite; // Unused parameter
 		if (m_IsEnabled)
 		{
 			GuiElement::RequestCursorStyleChange.Trigger(CursorStyle::Hand);
@@ -214,6 +218,7 @@ namespace onion::voxel
 
 	void Button::HandleSpriteHoverLeave(const NineSliceSprite& sprite)
 	{
+		(void) sprite; // Unused parameter
 		if (m_IsEnabled)
 		{
 			GuiElement::RequestCursorStyleChange.Trigger(CursorStyle::Arrow);

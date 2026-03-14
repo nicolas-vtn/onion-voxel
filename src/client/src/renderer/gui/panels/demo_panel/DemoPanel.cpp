@@ -33,7 +33,6 @@ namespace onion::voxel
 		glm::vec2 buttonSize{buttonSizeRatio.x * s_ScreenWidth, buttonSizeRatio.y * s_ScreenHeight};
 
 		// ---- Render Button ----
-		float buttonScaleFactorY = 0.08f;
 		float buttonXPosRatio = 0.5f;
 		float buttonYPosRatio = 0.5f;
 
@@ -59,7 +58,6 @@ namespace onion::voxel
 		m_Sprite.Render();
 
 		// ---- Render Button 2 ----
-		float button2ScaleFactorY = 0.5f;
 		float button2XPosRatio = 0.5f;
 		float button2YPosRatio = 0.6f;
 
@@ -70,7 +68,6 @@ namespace onion::voxel
 		m_Button2.Render();
 
 		// ---- Render Main Menu Button ----
-		float buttonMainMenuScaleFactorY = 0.5f;
 		float buttonMainMenuXPosRatio = 0.5f;
 		float buttonMainMenuYPosRatio = 0.8f;
 

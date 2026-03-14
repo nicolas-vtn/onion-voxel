@@ -306,7 +306,7 @@ namespace onion::voxel
 			return;
 		}
 
-		const float maxY = cameraChunk->GetSubChunkCount() * WorldConstants::CHUNK_SIZE;
+		const float maxY = (float) cameraChunk->GetSubChunkCount() * WorldConstants::CHUNK_SIZE;
 		const auto [minCorner, maxCorner] = GetChunkCorners(cameraChunkPos, maxY);
 
 		// Render Borders for the chunk of the camera
@@ -386,7 +386,10 @@ namespace onion::voxel
 		std::unordered_map<glm::ivec2, std::vector<uint8_t>, IVec2Hash> subChunkIndicesToMarkDirty;
 
 		// Mark the subchunk mesh of the chunk that contains the block dirty
-		uint8_t subChunkIndex = blockPosition.y / WorldConstants::CHUNK_SIZE;
+		int value = blockPosition.y / WorldConstants::CHUNK_SIZE;
+		assert(value >= 0 && value <= UINT8_MAX);
+		uint8_t subChunkIndex = static_cast<uint8_t>(blockPosition.y / WorldConstants::CHUNK_SIZE);
+
 		subChunkIndicesToMarkDirty[chunkPos].push_back(subChunkIndex);
 
 		// Mark the neighboring subchunk mesh dirty if the block is on the edge of the chunk
@@ -420,14 +423,14 @@ namespace onion::voxel
 		}
 
 		std::shared_lock lock(m_MutexChunkMeshes);
-		for (const auto& [neighborChunkPos, neighborSubChunkIndex] : subChunkIndicesToMarkDirty)
+		for (const auto& [neighborChunkPos, neighborSubChunkIndexes] : subChunkIndicesToMarkDirty)
 		{
 			auto it = m_ChunkMeshes.find(neighborChunkPos);
 			if (it != m_ChunkMeshes.end())
 			{
-				for (uint8_t subChunkIndex : neighborSubChunkIndex)
+				for (uint8_t neighborSubChunkIndex : neighborSubChunkIndexes)
 				{
-					it->second->SetSubChunkMeshDirty(subChunkIndex, true);
+					it->second->SetSubChunkMeshDirty(neighborSubChunkIndex, true);
 				}
 			}
 		}
@@ -449,7 +452,7 @@ namespace onion::voxel
 	{
 		std::string s = std::to_string(value);
 
-		int insertPosition = s.length() - 3;
+		int insertPosition = static_cast<int>(s.length()) - 3;
 		while (insertPosition > 0)
 		{
 			s.insert(insertPosition, " ");

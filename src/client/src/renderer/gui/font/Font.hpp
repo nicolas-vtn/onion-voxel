@@ -1,16 +1,16 @@
 #pragma once
 
-#include <renderer/EngineContext.hpp>
-
-#include <renderer/shader/shader.hpp>
-#include <renderer/texture/texture.hpp>
-
-#include <glad/glad.h>
 #include <glm/glm.hpp>
 
 #include <filesystem>
 #include <string>
 #include <vector>
+
+#include <renderer/OpenGL.hpp>
+
+#include <renderer/EngineContext.hpp>
+#include <renderer/shader/shader.hpp>
+#include <renderer/texture/texture.hpp>
 
 namespace onion::voxel
 {

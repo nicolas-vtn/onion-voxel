@@ -7,7 +7,7 @@
 
 namespace onion::voxel
 {
-	NetworkServer::NetworkServer(int port) : m_Port(port)
+	NetworkServer::NetworkServer(uint16_t port) : m_Port(port)
 	{
 		InitEnetOnce::Init();
 
@@ -34,7 +34,7 @@ namespace onion::voxel
 
 		ENetAddress address;
 		address.host = ENET_HOST_ANY; // Bind to all interfaces
-		address.port = m_Port;
+		address.port = static_cast<enet_uint16>(m_Port);
 
 		m_EnetServer = enet_host_create(&address, // Address
 										32,		  // Max clients
@@ -50,8 +50,6 @@ namespace onion::voxel
 		}
 
 		std::cout << "Server started on port " << m_Port << "...\n";
-
-		ENetEvent event;
 
 		// Start the event listening thread
 		m_EventThread = std::jthread([this](std::stop_token stopToken) { ListenForEvents(stopToken); });
@@ -120,13 +118,13 @@ namespace onion::voxel
 		Send(clients, std::move(message), reliable);
 	}
 
-	int NetworkServer::GetServerPort() const
+	uint16_t NetworkServer::GetServerPort() const
 	{
 		std::lock_guard<std::mutex> lock(m_Mutex);
 		return m_Port;
 	}
 
-	void NetworkServer::SetServerPort(int port)
+	void NetworkServer::SetServerPort(uint16_t port)
 	{
 		std::lock_guard<std::mutex> lock(m_Mutex);
 		m_Port = port;
@@ -248,16 +246,16 @@ namespace onion::voxel
 
 						{
 							std::unique_lock<std::mutex> lock(m_ClientMutex);
-							ClientSession& session = m_PeerToSession[event.peer];
+							ClientSession& retrevedSession = m_PeerToSession[event.peer];
 
 							// Build event args before erasing session data
 							ClientDisconnectedEventArgs disconnectArgs;
-							disconnectArgs.Client = session.handle;
-							disconnectArgs.UUID = session.uuid;
-							disconnectArgs.IpAddress = session.ipAddress;
+							disconnectArgs.Client = retrevedSession.handle;
+							disconnectArgs.UUID = retrevedSession.uuid;
+							disconnectArgs.IpAddress = retrevedSession.ipAddress;
 
 							// Clean up session data
-							m_HandleToPeer.erase(session.handle);
+							m_HandleToPeer.erase(retrevedSession.handle);
 							m_PeerToSession.erase(event.peer);
 
 							lock.unlock();

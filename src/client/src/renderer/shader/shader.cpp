@@ -2,9 +2,10 @@
 
 #include <cassert>
 #include <fstream>
-#include <glad/glad.h>
 #include <iostream>
 #include <sstream>
+
+#include <renderer/OpenGL.hpp>
 
 using namespace onion::voxel;
 

@@ -54,8 +54,6 @@ namespace onion::voxel
 		// ---- Constants for Layout ----
 		glm::vec2 buttonSizeRatio{0.415f, 0.08f};
 		glm::vec2 buttonSize{buttonSizeRatio.x * s_ScreenWidth, buttonSizeRatio.y * s_ScreenHeight};
-		float buttonYSpacingRatio = 94.f / 1009.f;
-		float firstButtonYPosRatio = 486.f / 1009.f;
 		float middleX = s_ScreenWidth * 0.5f;
 
 		// ---- Render Menu Title ----
@@ -82,7 +80,7 @@ namespace onion::voxel
 		glm::ivec2 topLeftOfTable{s_ScreenWidth * 0.5 - (tableWidth / 2), s_ScreenHeight * tableButtonYPosRatio};
 
 		TableLayout tableLayout = LayoutHelper::CreateTableLayout(
-			5, 2, glm::ivec2(tableWidth, tableHeight), horizontalSpacing, verticalSpacing);
+			5, 2, glm::ivec2(tableWidth, tableHeight), (int) horizontalSpacing, (int) verticalSpacing);
 
 		const glm::ivec2 cellSize = tableLayout.GetCellSize();
 
@@ -192,16 +190,19 @@ namespace onion::voxel
 
 	void PausePanel::Handle_BackToGame_Click(const Button& sender)
 	{
+		(void) sender; // Unused Parameter
 		RequestBackToGame.Trigger(this);
 	}
 
 	void PausePanel::Handle_Options_Click(const Button& sender)
 	{
+		(void) sender; // Unused Parameter
 		RequestMenuNavigation.Trigger({this, eMenu::Options});
 	}
 
 	void PausePanel::Handle_MainMenu_Click(const Button& sender)
 	{
+		(void) sender; // Unused Parameter
 		RequestQuitToMainMenu.Trigger({this});
 	}
 

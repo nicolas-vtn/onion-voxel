@@ -9,8 +9,6 @@
 #include <renderer/Variables.hpp>
 #include <renderer/gui/LayoutHelper.hpp>
 
-#include <windows.h>
-
 namespace onion::voxel
 {
 	ResourcePacksPanel::ResourcePacksPanel(const std::string& name)
@@ -64,8 +62,6 @@ namespace onion::voxel
 		// ---- Constants for Layout ----
 		glm::vec2 buttonSizeRatio{0.415f, 0.08f};
 		glm::vec2 buttonSize{buttonSizeRatio.x * s_ScreenWidth, buttonSizeRatio.y * s_ScreenHeight};
-		float buttonYSpacingRatio = 94.f / 1009.f;
-		float firstButtonYPosRatio = 486.f / 1009.f;
 		float middleX = s_ScreenWidth * 0.5f;
 
 		// ---- Render Menu Title ----
@@ -126,7 +122,7 @@ namespace onion::voxel
 		glm::ivec2 topLeftOfTable1{s_ScreenWidth * 0.5 - (tablesWidth / 2), s_ScreenHeight * table1TopRatio};
 
 		TableLayout tableLayout1 = LayoutHelper::CreateTableLayout(
-			1, 2, glm::ivec2(tablesWidth, table1Height), horizontalSpacings, verticalSpacings);
+			1, 2, glm::ivec2(tablesWidth, table1Height), (int) horizontalSpacings, (int) verticalSpacings);
 
 		const glm::ivec2 cellSize1 = tableLayout1.GetCellSize();
 
@@ -334,6 +330,7 @@ namespace onion::voxel
 
 	void ResourcePacksPanel::Handle_OpenPackFolder_Click(const Button& sender)
 	{
+		(void) sender; // Unused parameter)
 		std::filesystem::path resourcePacksFolderPath = GetResourcePacksDirectory();
 		ShellExecuteA(
 			nullptr, "open", "explorer.exe", resourcePacksFolderPath.string().c_str(), nullptr, SW_SHOWNORMAL);
@@ -341,6 +338,7 @@ namespace onion::voxel
 
 	void ResourcePacksPanel::Handle_Done_Click(const Button& sender)
 	{
+		(void) sender; // Unused parameter)
 		m_TimerScanResourcePacksFolder.Stop();
 		RequestResourcePackChange.Trigger(GetCurrentlySelectedResourcePack());
 		RequestBackNavigation.Trigger(this);

@@ -15,7 +15,7 @@ namespace onion::voxel
 		std::string ServerName = "DefaultServer";
 		std::string UUID;
 		uint16_t Port = 7777;
-		uint16_t SimulationDistance = 8;
+		uint8_t SimulationDistance = 8;
 	};
 
 	struct ServerConfiguration

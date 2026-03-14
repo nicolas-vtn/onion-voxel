@@ -1,14 +1,15 @@
 #pragma once
 
-#include <renderer/gui/GuiElement.hpp>
-
-#include <onion/Event.hpp>
-
-#include <glad/glad.h>
 #include <glm/glm.hpp>
 
 #include <mutex>
 #include <string>
+
+#include <onion/Event.hpp>
+
+#include <renderer/OpenGL.hpp>
+
+#include <renderer/gui/GuiElement.hpp>
 
 namespace onion::voxel
 {

@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include <glad/glad.h>
+#include <renderer/OpenGL.hpp>
 
 namespace onion::voxel
 {

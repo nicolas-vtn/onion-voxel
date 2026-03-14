@@ -20,7 +20,7 @@ namespace onion::voxel
 
 		// ----- Constructor / Destructor -----
 	  public:
-		NetworkClient(const std::string& host = "127.0.0.1", int port = 7777);
+		NetworkClient(const std::string& host = "127.0.0.1", uint16_t port = 7777);
 		~NetworkClient();
 
 		// ----- Public API -----
@@ -36,8 +36,8 @@ namespace onion::voxel
 		std::string GetRemoteHost() const;
 		void SetRemoteHost(const std::string& host);
 
-		int GetRemotePort() const;
-		void SetRemotePort(int port);
+		uint16_t GetRemotePort() const;
+		void SetRemotePort(uint16_t port);
 
 		// ----- Events -----
 	  public:
@@ -68,7 +68,7 @@ namespace onion::voxel
 		ENetHost* m_Client{nullptr};
 		ENetPeer* m_Peer{nullptr};
 		std::string m_Host;
-		int m_Port{7777};
+		uint16_t m_Port{7777};
 
 		std::jthread m_EventThread;
 		void ListenForEvents(std::stop_token stopToken);

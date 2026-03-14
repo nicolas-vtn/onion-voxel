@@ -39,8 +39,9 @@ namespace onion::voxel
 			float columnWidth = m_TableSize.x / (float) Columns;
 			float rowHeight = m_TableSize.y / (float) Rows;
 
-			int topLeftX = isFirstColumn ? 0 : ((columnWidth * column) + (0.5f * m_HorizontalSpacing));
-			int topLeftY = isFirstRow ? 0 : ((rowHeight * row) + (0.5f * m_VerticalSpacing));
+			int topLeftX =
+				isFirstColumn ? 0 : (int) std::lround(((columnWidth * column) + (0.5f * m_HorizontalSpacing)));
+			int topLeftY = isFirstRow ? 0 : (int) std::lround(((rowHeight * row) + (0.5f * m_VerticalSpacing)));
 
 			const glm::ivec2 cellSize = GetCellSize();
 

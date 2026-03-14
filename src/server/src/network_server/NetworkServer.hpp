@@ -66,7 +66,7 @@ namespace onion::voxel
 
 		// ----- Constructor / Destructor -----
 	  public:
-		NetworkServer(int port = 7777);
+		NetworkServer(uint16_t port = 7777);
 		~NetworkServer();
 
 		// ----- Public API -----
@@ -81,8 +81,8 @@ namespace onion::voxel
 
 		// ----- Getters / Setters -----
 	  public:
-		int GetServerPort() const;
-		void SetServerPort(int port);
+		uint16_t GetServerPort() const;
+		void SetServerPort(uint16_t port);
 
 		// ----- Events -----
 	  public:
@@ -121,7 +121,7 @@ namespace onion::voxel
 		// ----- States -----
 	  private:
 		mutable std::mutex m_Mutex;
-		int m_Port{7777};
+		uint16_t m_Port{7777};
 		std::atomic_bool m_IsRunning{false};
 	};
 } // namespace onion::voxel

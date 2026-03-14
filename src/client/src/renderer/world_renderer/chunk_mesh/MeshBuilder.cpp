@@ -203,7 +203,7 @@ namespace onion::voxel
 		}
 
 		// Acquire the lock to set the rebuilding flag and create a new stop source for this rebuild
-		std::lock_guard lock(chunkMesh->m_MutexRebuilding);
+		std::lock_guard lockRebuild(chunkMesh->m_MutexRebuilding);
 		chunkMesh->StartRebuilding();
 		{
 			std::lock_guard stopSourceLock(chunkMesh->m_MutexStopSource);
@@ -214,7 +214,7 @@ namespace onion::voxel
 		// Create a new vector of SubChunkMeshes to build the new meshes into.
 		std::vector<std::shared_ptr<SubChunkMesh>> newSubChunkMeshes(subChunkCount);
 		{
-			std::shared_lock lock(chunkMesh->m_MutexSubChunkMeshes);
+			std::shared_lock lockSubChunkMeshes(chunkMesh->m_MutexSubChunkMeshes);
 			newSubChunkMeshes = chunkMesh->m_SubChunkMeshes;
 		}
 
@@ -264,9 +264,9 @@ namespace onion::voxel
 							continue;
 
 						// ------ Calculate World Position -----
-						float wx = chunkPos.x * SIZE + x;
-						float wy = SIZE * sub + y;
-						float wz = chunkPos.y * SIZE + z;
+						//int wx = chunkPos.x * SIZE + x;
+						int wy = SIZE * sub + y;
+						//int wz = chunkPos.y * SIZE + z;
 
 						// ------ Get Neighboring Blocks ------
 						std::array<BlockState, 6> neighbors;
@@ -595,8 +595,6 @@ namespace onion::voxel
 		uint8_t nbrYneg[SZ][SX] = {}, nbrYpos[SZ][SX] = {};
 
 		const glm::ivec2 chunkPos = chunk->GetPosition();
-		const int baseX = chunkPos.x * SX;
-		const int baseZ = chunkPos.y * SZ;
 
 		// X- (x = -1) and X+ (x = SX)
 		for (int ly = 0; ly < SY; ly++)

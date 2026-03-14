@@ -97,7 +97,7 @@ namespace onion::voxel
 		glm::ivec2 topLeftOfTable{s_ScreenWidth * 0.5 - (tableWidth / 2), s_ScreenHeight * tableButtonYPosRatio};
 
 		TableLayout tableLayout = LayoutHelper::CreateTableLayout(
-			1, 2, glm::ivec2(tableWidth, tableHeight), horizontalSpacing, verticalSpacing);
+			1, 2, glm::ivec2(tableWidth, tableHeight), (int) horizontalSpacing, (int) verticalSpacing);
 		const glm::ivec2 cellSize = tableLayout.GetCellSize();
 
 		// ---- Render Options Button ----
@@ -205,7 +205,7 @@ namespace onion::voxel
 		// Select a random splash text from the list
 		static std::random_device rd;  // Seed source
 		static std::mt19937 gen(rd()); // Mersenne Twister engine
-		std::uniform_int_distribution<int> dist(0, m_Splashes.size() - 1);
+		std::uniform_int_distribution<int> dist(0, static_cast<int>(m_Splashes.size()) - 1);
 
 		m_CurrentSplashIndex = dist(gen);
 	}
@@ -236,29 +236,49 @@ namespace onion::voxel
 
 	void MainMenuPanel::SubscribeToControlEvents()
 	{
-		m_EventHandles.push_back(m_Singleplayer_Button.OnClick.Subscribe(
-			[this](const Button& sender) { RequestMenuNavigation.Trigger({this, eMenu::Singleplayer}); }));
-
-		m_EventHandles.push_back(m_Multiplayer_Button.OnClick.Subscribe(
-			[this](const Button& sender) { RequestMenuNavigation.Trigger({this, eMenu::Multiplayer}); }));
-
-		m_EventHandles.push_back(m_DemoPanel_Button.OnClick.Subscribe(
-			[this](const Button& sender) { RequestMenuNavigation.Trigger({this, eMenu::DemoPanel}); }));
-
-		m_EventHandles.push_back(m_Options_Button.OnClick.Subscribe(
-			[this](const Button& sender) { RequestMenuNavigation.Trigger({this, eMenu::Options}); }));
+		m_EventHandles.push_back(m_Singleplayer_Button.OnClick.Subscribe([this](const Button& sender)
+																		 { Handle_Singleplayer_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_QuitGame_Button.OnClick.Subscribe([this](const Button& sender) { RequestQuitGame.Trigger(this); }));
+			m_Multiplayer_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Multiplayer_Click(sender); }));
+
+		m_EventHandles.push_back(
+			m_DemoPanel_Button.OnClick.Subscribe([this](const Button& sender) { Handle_DemoButton_Click(sender); }));
+
+		m_EventHandles.push_back(
+			m_Options_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Options_Click(sender); }));
+
+		m_EventHandles.push_back(
+			m_QuitGame_Button.OnClick.Subscribe([this](const Button& sender) { Handle_QuitGame_Click(sender); }));
 	}
 
-	void MainMenuPanel::Handle_Singleplayer_Click(const Button& sender) {}
+	void MainMenuPanel::Handle_Singleplayer_Click(const Button& sender)
+	{
+		(void) sender; // Unused Parameter
+		RequestMenuNavigation.Trigger({this, eMenu::Singleplayer});
+	}
 
-	void MainMenuPanel::Handle_Multiplayer_Click(const Button& sender) {}
+	void MainMenuPanel::Handle_Multiplayer_Click(const Button& sender)
+	{
+		(void) sender; // Unused Parameter
+		RequestMenuNavigation.Trigger({this, eMenu::Multiplayer});
+	}
 
-	void MainMenuPanel::Handle_DemoButton_Click(const Button& sender) {}
+	void MainMenuPanel::Handle_DemoButton_Click(const Button& sender)
+	{
+		(void) sender; // Unused Parameter
+		RequestMenuNavigation.Trigger({this, eMenu::DemoPanel});
+	}
 
-	void MainMenuPanel::Handle_Options_Click(const Button& sender) {}
+	void MainMenuPanel::Handle_Options_Click(const Button& sender)
+	{
+		(void) sender; // Unused Parameter
+		RequestMenuNavigation.Trigger({this, eMenu::Options});
+	}
 
-	void MainMenuPanel::Handle_QuitGame_Click(const Button& sender) {}
+	void MainMenuPanel::Handle_QuitGame_Click(const Button& sender)
+	{
+		(void) sender; // Unused Parameter
+		RequestQuitGame.Trigger(this);
+	}
 }; // namespace onion::voxel

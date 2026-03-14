@@ -29,5 +29,10 @@ target_include_directories(enet
         $<BUILD_INTERFACE:${enet_SOURCE_DIR}/include>
 )
 
+# Suppress warnings about deprecated functions and non-secure functions in ENet
+if (MSVC)
+    target_compile_options(enet PRIVATE /wd5287 /wd4996)
+endif()
+
 # Create namespace alias
 add_library(enet::enet ALIAS enet)

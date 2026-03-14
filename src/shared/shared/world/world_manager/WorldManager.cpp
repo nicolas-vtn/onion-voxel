@@ -269,7 +269,7 @@ namespace onion::voxel
 
 	bool WorldManager::SetBlock(const Block& block, BlocksChangedEventArgs::eOrigin origin, bool notify)
 	{
-		int blockPlaced = SetBlocks({block}, origin, notify);
+		size_t blockPlaced = SetBlocks({block}, origin, notify);
 		return blockPlaced > 0;
 	}
 
@@ -317,7 +317,7 @@ namespace onion::voxel
 			}
 		}
 
-		int numBlocksSet = blocksToNotify.size();
+		size_t numBlocksSet = blocksToNotify.size();
 		if (notify && numBlocksSet > 0)
 		{
 			BlocksChangedEventArgs args;
@@ -380,6 +380,7 @@ namespace onion::voxel
 
 	void WorldManager::Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk)
 	{
+		(void) chunk; // Unused parameter
 		PlaceOutOfBoundsBlocks();
 	}
 

@@ -157,8 +157,7 @@ namespace onion::voxel
 			changedBlocks.emplace_back(Serializer::DeserializeBlock(blockDTO));
 		}
 
-		size_t blocksSet = m_WorldManager->SetBlocks(
-			changedBlocks, WorldManager::BlocksChangedEventArgs::eOrigin::ClientRequest, true);
+		m_WorldManager->SetBlocks(changedBlocks, WorldManager::BlocksChangedEventArgs::eOrigin::ClientRequest, true);
 	}
 
 	void Server::Handle_ClientConnected(const NetworkServer::ClientConnectedEventArgs& args)
@@ -190,6 +189,7 @@ namespace onion::voxel
 	void Server::Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk)
 	{
 		// For now, the client has the resposiblity to remove it's chunks.
+		(void) chunk; // Unused parameter
 	}
 
 	void Server::Handle_BlocksChanged(const WorldManager::BlocksChangedEventArgs& args)

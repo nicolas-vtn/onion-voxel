@@ -82,8 +82,8 @@ namespace onion::voxel
 
 		for (size_t i = 0; i < count; i++)
 		{
-			int x = (i % grid);
-			int y = (i / grid);
+			int x = i % grid;
+			int y = static_cast<int>(i / grid);
 
 			int atlasX = x * m_TextureSize;
 			int atlasY = y * m_TextureSize;

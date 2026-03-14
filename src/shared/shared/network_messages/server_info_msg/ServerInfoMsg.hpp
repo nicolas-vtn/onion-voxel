@@ -17,7 +17,7 @@ namespace onion::voxel
 		uint32_t ClientHandle = 0;
 
 		std::string ServerName;
-		int SimulationDistance = 0;
+		uint8_t SimulationDistance = 0;
 
 		template <class Archive> void serialize(Archive& ar) { ar(ServerName, ClientHandle, SimulationDistance); }
 	};

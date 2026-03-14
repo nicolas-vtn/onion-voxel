@@ -72,8 +72,6 @@ namespace onion::voxel
 		// ---- Constants for Layout ----
 		constexpr glm::vec2 buttonSizeRatio{0.415f, 0.08f};
 		glm::vec2 buttonSize{buttonSizeRatio.x * s_ScreenWidth, buttonSizeRatio.y * s_ScreenHeight};
-		constexpr float buttonYSpacingRatio = 94.f / 1009.f;
-		constexpr float firstButtonYPosRatio = 486.f / 1009.f;
 
 		// ---- Menu Title ----
 		constexpr float menuYOffsetRatio = (85.f - 23.f) / 1009.f;
@@ -100,7 +98,7 @@ namespace onion::voxel
 		glm::ivec2 topLeftOfTable1{s_ScreenWidth * 0.5 - (tablesWidth / 2), s_ScreenHeight * table1TopRatio};
 
 		TableLayout tableLayout1 = LayoutHelper::CreateTableLayout(
-			1, 2, glm::ivec2(tablesWidth, table1Height), horizontalSpacings, verticalSpacings);
+			1, 2, glm::ivec2(tablesWidth, table1Height), (int) horizontalSpacings, (int) verticalSpacings);
 
 		const glm::ivec2 cellSize1 = tableLayout1.GetCellSize();
 
@@ -123,7 +121,7 @@ namespace onion::voxel
 
 		glm::ivec2 topLeftOfTable2{s_ScreenWidth * 0.5 - (tablesWidth / 2), s_ScreenHeight * table2TopRatio};
 		TableLayout tableLayout2 = LayoutHelper::CreateTableLayout(
-			5, 2, glm::ivec2(tablesWidth, table2Height), horizontalSpacings, verticalSpacings);
+			5, 2, glm::ivec2(tablesWidth, table2Height), (int) horizontalSpacings, (int) verticalSpacings);
 		glm::ivec2 cellSize2 = tableLayout2.GetCellSize();
 
 		// ---- Render Skin Customization Button ----
@@ -269,21 +267,25 @@ namespace onion::voxel
 
 	void OptionsPanel::Handle_MusicAndSounds_Click(const Button& sender)
 	{
+		(void) sender; // Unused
 		RequestMenuNavigation.Trigger({this, eMenu::MusicAndSounds});
 	}
 
 	void OptionsPanel::Handle_Controls_Click(const Button& sender)
 	{
+		(void) sender; // Unused
 		RequestMenuNavigation.Trigger({this, eMenu::Controls});
 	}
 
 	void OptionsPanel::Handle_ResourcePacks_Click(const Button& sender)
 	{
+		(void) sender; // Unused
 		RequestMenuNavigation.Trigger({this, eMenu::ResourcePacks});
 	}
 
 	void OptionsPanel::Handle_Done_Click(const Button& sender)
 	{
+		(void) sender; // Unused
 		RequestBackNavigation.Trigger(this);
 	}
 

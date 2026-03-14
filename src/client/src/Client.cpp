@@ -92,6 +92,7 @@ namespace onion::voxel
 
 	void Client::Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath)
 	{
+		(void) worldPath; // Currently unused
 		// Starts a Server on Localhost
 		if (m_LocalhostServer == nullptr)
 		{
@@ -129,6 +130,7 @@ namespace onion::voxel
 
 	void Client::Handle_StopSingleplayerGameRequest(const std::filesystem::path& worldPath)
 	{
+		(void) worldPath; // Currently unused
 		if (m_NetworkClient.IsRunning())
 		{
 			m_NetworkClient.Stop();
@@ -188,8 +190,12 @@ namespace onion::voxel
 		m_RendererEventHandles.push_back(m_Renderer.RequestStartSingleplayerGame.Subscribe(
 			[this](const std::filesystem::path& worldPath) { Handle_StartSingleplayerGameRequest(worldPath); }));
 
-		m_RendererEventHandles.push_back(
-			m_Renderer.RequestQuitToMainMenu.Subscribe([this](bool quit) { Handle_StopSingleplayerGameRequest(""); }));
+		m_RendererEventHandles.push_back(m_Renderer.RequestQuitToMainMenu.Subscribe(
+			[this](bool quit)
+			{
+				(void) quit;
+				Handle_StopSingleplayerGameRequest("");
+			}));
 	}
 
 	void Client::SubscribeToNetworkClientEvents()
@@ -211,6 +217,7 @@ namespace onion::voxel
 
 	void Client::Handle_ClientDisconnected(bool disconnectedByServer)
 	{
+		(void) disconnectedByServer; // Currently unused
 		m_Renderer.SetServerInfo(nullptr);
 	}
 
@@ -283,8 +290,7 @@ namespace onion::voxel
 
 		//std::cout << "Received BlocksChangedMsg: " << changedBlocks.size() << " changed blocks\n";
 
-		size_t blocksSet = m_WorldManager->SetBlocks(
-			changedBlocks, WorldManager::BlocksChangedEventArgs::eOrigin::ServerRequest, false);
+		m_WorldManager->SetBlocks(changedBlocks, WorldManager::BlocksChangedEventArgs::eOrigin::ServerRequest, false);
 	}
 
 	void Client::SendPlayerInfosToServer()

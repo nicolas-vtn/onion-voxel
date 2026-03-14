@@ -8,11 +8,13 @@ add_library(onion_voxel_shared
  "shared/world/chunk/Chunk.cpp"
  "shared/world/chunk/SubChunk.cpp"
  "shared/world/block/Block.cpp"
+ "shared/world/block/BlockState.cpp"
  "shared/world/world_manager/WorldManager.cpp"
 
  "shared/network_messages/Serializer.cpp"
+
  "shared/zip_archive/ZipArchive.cpp"
- "shared/world/block/BlockState.cpp")
+)
 
 target_link_libraries(onion_voxel_shared
 	PUBLIC
@@ -31,6 +33,12 @@ target_include_directories(onion_voxel_shared
 )
 
 target_compile_features(onion_voxel_shared PUBLIC cxx_std_20)
+
+target_compile_options(onion_voxel_shared
+    PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W4>
+        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wpedantic>
+)
 
 set_target_properties(onion_voxel_shared PROPERTIES
     CXX_STANDARD 20

@@ -56,6 +56,7 @@ namespace onion::voxel
 
 	void WorldGenerator::Handle_SeedChanged(const uint32_t& newSeed)
 	{
+		(void) newSeed; // Unused parameter
 		ConfigureNoiseGenerator();
 	}
 
@@ -82,6 +83,7 @@ namespace onion::voxel
 		}
 
 		double elapsedMs = stopwatch.ElapsedMs();
+		(void) elapsedMs; // Currently unused
 		//std::cout << elapsedMs << " ms" << std::endl;
 
 		return genChunk;
@@ -326,8 +328,6 @@ namespace onion::voxel
 		{
 			for (uint8_t x = 0; x < CHUNK_SIZE; ++x)
 			{
-				int realWorldX = (chunkPosition.x * CHUNK_SIZE + x);
-				int realWorldZ = (chunkPosition.y * CHUNK_SIZE + z);
 				uint16_t height = heightMap[x][z];
 
 				// Higher than sea level
@@ -354,19 +354,25 @@ namespace onion::voxel
 
 						if (y == 0)
 						{
-							chunk->SetBlock_Unsafe(x, y, z, BlockId::Bedrock); // Set bedrock at the bottom
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
 						}
 						else if (y == height)
 						{
-							chunk->SetBlock_Unsafe(x, y, z, BlockId::Grass); // Set grass block at the top
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::Grass); // Set grass block at the top
 						}
 						else if (y == height - 1 || y == height - 2)
 						{
-							chunk->SetBlock_Unsafe(x, y, z, BlockId::Dirt); // Set dirt blocks below the grass
+							chunk->SetBlock_Unsafe((uint8_t) x,
+												   (uint8_t) y,
+												   (uint8_t) z,
+												   BlockId::Dirt); // Set dirt blocks below the grass
 						}
 						else if (y < height)
 						{
-							chunk->SetBlock_Unsafe(x, y, z, BlockId::Stone); // Set stone below the grass
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::Stone); // Set stone below the grass
 						}
 					}
 				}
@@ -395,19 +401,25 @@ namespace onion::voxel
 
 						if (y == 0)
 						{
-							chunk->SetBlock_Unsafe(x, y, z, BlockId::Bedrock); // Set bedrock at the bottom
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
 						}
 						else if (y == height || y == height - 1)
 						{
-							chunk->SetBlock_Unsafe(x, y, z, BlockId::Gravel); // Set gravel blocks below the sea level
+							chunk->SetBlock_Unsafe((uint8_t) x,
+												   (uint8_t) y,
+												   (uint8_t) z,
+												   BlockId::Gravel); // Set gravel blocks below the sea level
 						}
 						else if (y < height)
 						{
-							chunk->SetBlock_Unsafe(x, y, z, BlockId::Stone); // Set stone below the gravel
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::Stone); // Set stone below the gravel
 						}
 						else if (y > height && y < m_AverageHeight)
 						{
-							chunk->SetBlock_Unsafe(x, y, z, BlockId::Water); // Set water above the gravel
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, (uint8_t) y, (uint8_t) z, BlockId::Water); // Set water above the gravel
 						}
 					}
 				}
@@ -452,8 +464,8 @@ namespace onion::voxel
 										 (chunkPosition.y * WorldConstants::CHUNK_SIZE) + z};
 
 					// Sets a dirtblock under the tree if the top block is grass
-					BlockState block = chunk->GetBlock({x, height, z});
-					if (block.ID == BlockId::Grass)
+					BlockState bottomBlock = chunk->GetBlock({x, height, z});
+					if (bottomBlock.ID == BlockId::Grass)
 					{
 						chunk->SetBlock({x, height, z}, BlockId::Dirt);
 					}

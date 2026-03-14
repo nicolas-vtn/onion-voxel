@@ -1,6 +1,6 @@
 #include "AssetsManager.hpp"
 
-#include <windows.h>
+#include <Windows.h>
 
 #include <fstream>
 #include <iostream>

@@ -135,12 +135,16 @@ namespace onion::voxel
 
 		if (it != m_BlocksPalette.end())
 		{
-			indexInPalette = std::distance(m_BlocksPalette.begin(), it);
+			size_t index = std::distance(m_BlocksPalette.begin(), it);
+			assert(std::distance(m_BlocksPalette.begin(), it) <= UINT8_MAX); // Ensure the index can fit in a uint8_t
+			indexInPalette = static_cast<uint8_t>(index);
 		}
 		else
 		{
 			m_BlocksPalette.push_back(block);
-			indexInPalette = m_BlocksPalette.size() - 1;
+			size_t index = m_BlocksPalette.size() - 1;
+			assert(index <= UINT8_MAX); // Ensure the index can fit in a uint8_t
+			indexInPalette = static_cast<uint8_t>(index);
 		}
 
 		return indexInPalette;

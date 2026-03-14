@@ -177,8 +177,8 @@ namespace onion::voxel
 			return false;
 		}
 
-		int mouseX = s_InputsSnapshot->Mouse.Xpos;
-		int mouseY = s_InputsSnapshot->Mouse.Ypos;
+		int mouseX = (int) std::lround(s_InputsSnapshot->Mouse.Xpos);
+		int mouseY = (int) std::lround(s_InputsSnapshot->Mouse.Ypos);
 
 		glm::vec2 topLeft = glm::vec2(m_Position) - glm::vec2(m_Size) * 0.5f;
 

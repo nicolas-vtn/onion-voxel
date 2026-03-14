@@ -1,11 +1,9 @@
 #pragma once
 
-#include <glad/glad.h>
-
-#include <GLFW/glfw3.h>
-
 #include <shared_mutex>
 #include <unordered_map>
+
+#include <renderer/OpenGL.hpp>
 
 #include "inputs.hpp"
 

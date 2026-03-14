@@ -417,8 +417,8 @@ namespace onion::voxel
 			const double xoffset = inputs->Mouse.Xoffset * sensitivity;
 			const double yoffset = inputs->Mouse.Yoffset * sensitivity;
 
-			m_Camera->SetYaw(m_Camera->GetYaw() + xoffset);
-			m_Camera->SetPitch(m_Camera->GetPitch() + yoffset);
+			m_Camera->SetYaw(m_Camera->GetYaw() + (float) xoffset);
+			m_Camera->SetPitch(m_Camera->GetPitch() + (float) yoffset);
 
 			if (m_Camera->GetPitch() > 89.0f)
 				m_Camera->SetPitch(89.0f);
@@ -429,7 +429,6 @@ namespace onion::voxel
 		// Adjust camera Speed
 		if (inputs->Mouse.ScrollOffsetChanged)
 		{
-			const double xoffset = inputs->Mouse.ScrollXoffset;
 			const double yoffset = inputs->Mouse.ScrollYoffset;
 			if (yoffset != 0.f)
 			{
@@ -447,7 +446,7 @@ namespace onion::voxel
 		}
 
 		// Camera's Position
-		float velocity = m_CameraSpeed * m_DeltaTime;
+		float velocity = m_CameraSpeed * (float) m_DeltaTime;
 
 		if (inputs->GetKeyState(m_InputIdSpeedUp).IsPressed)
 		{

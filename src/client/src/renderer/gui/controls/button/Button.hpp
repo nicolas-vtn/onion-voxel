@@ -1,17 +1,18 @@
 #pragma once
 
-#include <renderer/gui/GuiElement.hpp>
-#include <renderer/gui/controls/label/Label.hpp>
-#include <renderer/gui/nine_slice_sprite/NineSliceSprite.hpp>
+#include <glm/glm.hpp>
 
-#include <renderer/texture/texture.hpp>
+#include <string>
+#include <vector>
 
 #include <onion/Event.hpp>
 
-#include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <string>
-#include <vector>
+#include <renderer/OpenGL.hpp>
+
+#include <renderer/gui/GuiElement.hpp>
+#include <renderer/gui/controls/label/Label.hpp>
+#include <renderer/gui/nine_slice_sprite/NineSliceSprite.hpp>
+#include <renderer/texture/texture.hpp>
 
 namespace onion::voxel
 {

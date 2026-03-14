@@ -31,6 +31,12 @@ target_include_directories(onion_voxel_server
 
 target_compile_features(onion_voxel_server PUBLIC cxx_std_20)
 
+target_compile_options(onion_voxel_server
+    PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W4>
+        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wpedantic>
+)
+
 set_target_properties(onion_voxel_server PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON

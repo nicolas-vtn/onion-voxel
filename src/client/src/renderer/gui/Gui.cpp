@@ -79,6 +79,7 @@ namespace onion::voxel
 
 	void Gui::Handle_QuitGameRequest(const GuiElement* sender)
 	{
+		(void) sender; // Unused parameter
 		// Sends a SIGINT Signal to the Application.
 		raise(SIGINT);
 	}
@@ -100,6 +101,7 @@ namespace onion::voxel
 
 	void Gui::Handle_BackRequest(const GuiElement* sender)
 	{
+		(void) sender; // Unused parameter
 		GoBackToPreviousMenu();
 	}
 

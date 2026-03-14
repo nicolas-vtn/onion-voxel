@@ -95,6 +95,12 @@ target_link_libraries(OnionVoxel
 
 target_compile_features(OnionVoxel PRIVATE cxx_std_20)
 
+target_compile_options(OnionVoxel
+    PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W4>
+        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wpedantic>
+)
+
 target_include_directories(OnionVoxel
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src

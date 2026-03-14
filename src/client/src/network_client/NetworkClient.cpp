@@ -7,7 +7,7 @@
 
 namespace onion::voxel
 {
-	NetworkClient::NetworkClient(const std::string& host, int port) : m_Host(host), m_Port(port)
+	NetworkClient::NetworkClient(const std::string& host, uint16_t port) : m_Host(host), m_Port(port)
 	{
 		InitEnetOnce::Init();
 
@@ -116,12 +116,12 @@ namespace onion::voxel
 		}
 	}
 
-	int NetworkClient::GetRemotePort() const
+	uint16_t NetworkClient::GetRemotePort() const
 	{
 		return m_Port;
 	}
 
-	void NetworkClient::SetRemotePort(int port)
+	void NetworkClient::SetRemotePort(uint16_t port)
 	{
 		m_Port = port;
 
