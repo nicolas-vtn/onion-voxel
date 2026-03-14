@@ -96,11 +96,19 @@ namespace onion::voxel
 
 		void ConfigureNoiseGenerators();
 
-		FastNoiseLite m_FastNoiseLite; // Noise generator for terrain generation
 		FastNoiseLite::NoiseType m_NoiseType = FastNoiseLite::NoiseType_OpenSimplex2;
-		float m_Frequency = 0.002f; // Frequency of the noise (controls "zoom" of the terrain)
 
-		float GetFractalNoise(float x, float z) const;
+		FastNoiseLite m_NoiseContinent;
+		float m_FrequencyContinent = 0.0006f; // Frequency of the noise (controls "zoom" of the terrain)
+
+		FastNoiseLite m_NoiseMountain;
+		float m_FrequencyMountain = 0.003f; // Frequency of the noise (controls "zoom" of the terrain)
+
+		FastNoiseLite m_NoiseDetail;	 // Noise generator for terrain generation
+		float m_FrequencyDetail = 0.02f; // Frequency of the noise (controls "zoom" of the terrain)
+
+		float
+		GetFractalNoise(const FastNoiseLite& noise, float x, float z, int octaves, float lacunarity, float gain) const;
 
 		uint16_t m_WorldHeight = 500; // Height of the world in blocks
 		float m_SmoothnessX = 0.5f;	  // Controls the "zoom" of the terrain in the X direction

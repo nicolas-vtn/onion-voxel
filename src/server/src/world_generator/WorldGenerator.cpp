@@ -364,8 +364,23 @@ namespace onion::voxel
 				float noisePositionX = static_cast<float>(realWorldX) * m_SmoothnessX;
 				float noisePositionZ = static_cast<float>(realWorldZ) * m_SmoothnessZ;
 
-				float h = GetFractalNoise(noisePositionX, noisePositionZ);
-				heightMap[x][z] = GetTerrainHeight(h);
+				float continents = GetFractalNoise(m_NoiseContinent, realWorldX, realWorldZ, 3, 2.0f, 0.5f);
+
+				float mountains =
+					std::max(0.0f, GetFractalNoise(m_NoiseMountain, realWorldX, realWorldZ, 4, 2.0f, 0.5f));
+
+				float detail = GetFractalNoise(m_NoiseDetail, realWorldX, realWorldZ, 3, 2.0f, 0.5f);
+
+				float continentMask = (continents + 1.0f) * 0.5f; // [-1,1] -> [0,1]
+				continentMask = std::pow(continentMask, 1.5f);
+
+				float height = m_SeaLevel + continents * 100.0f + (mountains * continentMask) * 180.0f + detail * 5.0f;
+
+				heightMap[x][z] =
+					static_cast<uint16_t>(std::clamp(height, 1.0f, static_cast<float>(m_WorldHeight - 1)));
+
+				//float h = GetFractalNoise(noisePositionX, noisePositionZ);
+				//heightMap[x][z] = GetTerrainHeight(height);
 			}
 		}
 
@@ -382,17 +397,42 @@ namespace onion::voxel
 					BlockId topBlockId = (height >= m_SnowLevel) ? BlockId::SnowGrass : BlockId::Grass;
 					for (uint16_t y = 0; y <= height + 1; y++)
 					{
+						// Bedrock
 						if (y == 0)
 						{
 							chunk->SetBlock_Unsafe(
 								(uint8_t) x, y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
+							continue;
 						}
-						else if (y == height)
+
+						float altitudeFactor =
+							std::clamp((float) (height - m_SeaLevel) / (float) (m_SnowLevel - m_SeaLevel), 0.0f, 1.0f);
+						int numDirtLayers = (int) std::round((1.0f - altitudeFactor) * 3.0f);
+
+						// Stone layers
+						if (y < height - numDirtLayers)
+						{
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, y, (uint8_t) z, BlockId::Stone); // Set stone below the dirt
+							continue;
+						}
+
+						// Dirt layers
+						if (y < height)
+						{
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, y, (uint8_t) z, BlockId::Dirt); // Set dirt below the top block
+							continue;
+						}
+
+						if (y == height)
 						{
 							chunk->SetBlock_Unsafe(
 								(uint8_t) x, y, (uint8_t) z, topBlockId); // Set the Top block (grass or snow grass)
+							continue;
 						}
-						else if (y == height + 1 && y < m_SnowLevel)
+
+						if (y == height + 1 && y < m_SnowLevel)
 						{
 							glm::ivec3 currentWorldPos = {
 								chunkPosition.x * CHUNK_SIZE + x, y, chunkPosition.y * CHUNK_SIZE + z};
@@ -405,18 +445,6 @@ namespace onion::voxel
 								BlockId flowerId = GetFlowerType(currentWorldPos);
 								chunk->SetBlock_Unsafe((uint8_t) x, y, (uint8_t) z, flowerId);
 							}
-						}
-						else if (y == height - 1 || y == height - 2)
-						{
-							chunk->SetBlock_Unsafe((uint8_t) x,
-												   y,
-												   (uint8_t) z,
-												   BlockId::Dirt); // Set dirt blocks below the grass
-						}
-						else if (y < height)
-						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockId::Stone); // Set stone below the grass
 						}
 					}
 				}
@@ -693,12 +721,22 @@ namespace onion::voxel
 
 	void WorldGenerator::ConfigureNoiseGenerators()
 	{
-		m_FastNoiseLite.SetSeed(GetSeed());
-		m_FastNoiseLite.SetNoiseType(m_NoiseType);
-		m_FastNoiseLite.SetFrequency(m_Frequency); // Smaller = smoother, larger = more rugged
+		uint32_t seed = GetSeed();
+		m_NoiseContinent.SetSeed(seed);
+		m_NoiseContinent.SetNoiseType(m_NoiseType);
+		m_NoiseContinent.SetFrequency(m_FrequencyContinent); // Smaller = smoother, larger = more rugged
+
+		m_NoiseMountain.SetSeed(seed + 1);
+		m_NoiseMountain.SetNoiseType(m_NoiseType);
+		m_NoiseMountain.SetFrequency(m_FrequencyMountain); // Smaller = smoother, larger = more rugged
+
+		m_NoiseDetail.SetSeed(seed + 2);
+		m_NoiseDetail.SetNoiseType(m_NoiseType);
+		m_NoiseDetail.SetFrequency(m_FrequencyDetail); // Smaller = smoother, larger = more rugged
 	}
 
-	float WorldGenerator::GetFractalNoise(float x, float z) const
+	float WorldGenerator::GetFractalNoise(
+		const FastNoiseLite& noise, float x, float z, int octaves, float lacunarity, float gain) const
 	{
 		float amplitude = 1.0f;
 		float frequency = 1.0f;
@@ -706,17 +744,16 @@ namespace onion::voxel
 		float value = 0.0f;
 		float maxValue = 0.0f;
 
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < octaves; i++)
 		{
-			value += m_FastNoiseLite.GetNoise(x * frequency, z * frequency) * amplitude;
-
+			value += noise.GetNoise(x * frequency, z * frequency) * amplitude;
 			maxValue += amplitude;
 
-			amplitude *= 0.5f;
-			frequency *= 2.0f;
+			frequency *= lacunarity;
+			amplitude *= gain;
 		}
 
-		return value / maxValue;
+		return (maxValue > 0.0f) ? (value / maxValue) : 0.0f;
 	}
 
 	constexpr float WorldGenerator::GetTerrainHeight(float noiseHeight) const
