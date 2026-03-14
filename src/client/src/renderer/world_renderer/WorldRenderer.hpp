@@ -106,5 +106,6 @@ namespace onion::voxel
 		// ----- ImGui menu -----
 	  private:
 		void RenderDebugPanel();
+		bool m_UseFaceCulling{true};
 	};
 } // namespace onion::voxel

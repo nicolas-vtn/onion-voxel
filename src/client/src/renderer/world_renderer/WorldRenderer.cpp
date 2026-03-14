@@ -57,6 +57,13 @@ namespace onion::voxel
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
 		glDisable(GL_POLYGON_OFFSET_FILL);
+
+		//Enable backface culling for opaque rendering
+		if (m_UseFaceCulling)
+		{
+			glEnable(GL_CULL_FACE);
+			glCullFace(GL_BACK);
+		}
 	}
 
 	void WorldRenderer::PrepareForRenderingCutout()
@@ -95,6 +102,13 @@ namespace onion::voxel
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
 		glDisable(GL_POLYGON_OFFSET_FILL);
+
+		//Disable backface culling
+		if (m_UseFaceCulling)
+		{
+			glDisable(GL_CULL_FACE);
+			glCullFace(GL_BACK);
+		}
 	}
 
 	void WorldRenderer::Render()
@@ -497,6 +511,7 @@ namespace onion::voxel
 		// ----- Render Options -----
 		ImGui::Separator();
 		ImGui::Checkbox("Render Chunk Borders", &m_RenderChunkBorders);
+		ImGui::Checkbox("Use Face Culling", &m_UseFaceCulling);
 
 		// ----- Performance Options -----
 		ImGui::Separator();
