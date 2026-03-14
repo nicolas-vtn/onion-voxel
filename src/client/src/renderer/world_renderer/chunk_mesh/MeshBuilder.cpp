@@ -334,7 +334,7 @@ namespace onion::voxel
 						// ------ Get Block Textures ------
 						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.ID);
 
-						// ------ Build Mesh ------
+						// ------ Prepare Poins / OA ------
 						glm::ivec3 p000(x, wy, z);
 						glm::ivec3 p001(x, wy, z + 1);
 						glm::ivec3 p010(x, wy + 1, z);
@@ -365,142 +365,45 @@ namespace onion::voxel
 						uint8_t o110 = AO(1, 1, 0);
 						uint8_t o111 = AO(1, 1, 1);
 
-						auto buildFace = [&](BlockFace worldFace,
-											 BlockFace textureFace,
-											 const glm::ivec3& v0,
-											 const glm::ivec3& v1,
-											 const glm::ivec3& v2,
-											 const glm::ivec3& v3,
-											 const uint8_t o0,
-											 const uint8_t o1,
-											 const uint8_t o2,
-											 const uint8_t o3)
+						// ------ Build Mesh ------
+						struct FaceBuildDesc
 						{
-							const FaceTexture& faceTex = blockTextures.faces[(size_t) textureFace];
+							BlockFace face;
 
-							auto uv = m_TextureAtlas->GetAtlasEntry(faceTex.texture);
-
-							AddFace(*mesh,
-									v0,
-									v1,
-									v2,
-									v3,
-									o0,
-									o1,
-									o2,
-									o3,
-									worldFace,
-									block,
-									faceTex,
-									uv,
-									blockTextures.rotationType);
-
-							// Overlay pass
-							const FaceTexture& overlay = blockTextures.overlay[(size_t) textureFace];
-
-							if (overlay.texture != 0)
-							{
-								auto uvOverlay = m_TextureAtlas->GetAtlasEntry(overlay.texture);
-
-								AddFace(*mesh,
-										v0,
-										v1,
-										v2,
-										v3,
-										o0,
-										o1,
-										o2,
-										o3,
-										worldFace,
-										block,
-										overlay,
-										uvOverlay,
-										blockTextures.rotationType);
-							}
+							const glm::ivec3* v[4];
+							const uint8_t* o[4];
 						};
 
-						if (faceVisible[(int) BlockFace::Top])
-						{
-							buildFace(BlockFace::Top,
-									  GetTextureFaceForWorldFace(BlockFace::Top, block),
-									  p011,
-									  p111,
-									  p110,
-									  p010,
-									  o011,
-									  o111,
-									  o110,
-									  o010);
-						}
+						FaceBuildDesc faces[] = {
+							{BlockFace::Top, {&p011, &p111, &p110, &p010}, {&o011, &o111, &o110, &o010}},
+							{BlockFace::Bottom, {&p000, &p100, &p101, &p001}, {&o000, &o100, &o101, &o001}},
+							{BlockFace::Front, {&p001, &p101, &p111, &p011}, {&o001, &o101, &o111, &o011}},
+							{BlockFace::Back, {&p100, &p000, &p010, &p110}, {&o100, &o000, &o010, &o110}},
+							{BlockFace::Right, {&p101, &p100, &p110, &p111}, {&o101, &o100, &o110, &o111}},
+							{BlockFace::Left, {&p000, &p001, &p011, &p010}, {&o000, &o001, &o011, &o010}},
+						};
 
-						if (faceVisible[(int) BlockFace::Bottom])
+						for (const auto& f : faces)
 						{
-							buildFace(BlockFace::Bottom,
-									  GetTextureFaceForWorldFace(BlockFace::Bottom, block),
-									  p000,
-									  p100,
-									  p101,
-									  p001,
-									  o000,
-									  o100,
-									  o101,
-									  o001);
-						}
+							int idx = (int) f.face;
 
-						if (faceVisible[(int) BlockFace::Front])
-						{
-							buildFace(BlockFace::Front,
-									  GetTextureFaceForWorldFace(BlockFace::Front, block),
-									  p001,
-									  p101,
-									  p111,
-									  p011,
-									  o001,
-									  o101,
-									  o111,
-									  o011);
-						}
+							if (!faceVisible[idx])
+								continue;
 
-						if (faceVisible[(int) BlockFace::Back])
-						{
-							buildFace(BlockFace::Back,
-									  GetTextureFaceForWorldFace(BlockFace::Back, block),
-									  p100,
-									  p000,
-									  p010,
-									  p110,
-									  o100,
-									  o000,
-									  o010,
-									  o110);
-						}
-
-						if (faceVisible[(int) BlockFace::Right])
-						{
-							buildFace(BlockFace::Right,
-									  GetTextureFaceForWorldFace(BlockFace::Right, block),
-									  p101,
-									  p100,
-									  p110,
-									  p111,
-									  o101,
-									  o100,
-									  o110,
-									  o111);
-						}
-
-						if (faceVisible[(int) BlockFace::Left])
-						{
-							buildFace(BlockFace::Left,
-									  GetTextureFaceForWorldFace(BlockFace::Left, block),
-									  p000,
-									  p001,
-									  p011,
-									  p010,
-									  o000,
-									  o001,
-									  o011,
-									  o010);
+							BuildFace(*m_TextureAtlas,
+									  *mesh,
+									  block,
+									  blockTextures,
+									  f.face,
+									  GetTextureFaceForWorldFace(f.face, block),
+									  *f.v[0],
+									  *f.v[1],
+									  *f.v[2],
+									  *f.v[3],
+									  *f.o[0],
+									  *f.o[1],
+									  *f.o[2],
+									  *f.o[3]);
 						}
 					}
 
@@ -730,6 +633,39 @@ namespace onion::voxel
 		}
 
 		subMesh->m_OcclusionMap = std::move(occlusionMap);
+	}
+
+	void MeshBuilder::BuildFace(TextureAtlas& textureAtlas,
+								SubChunkMesh& mesh,
+								const BlockState& block,
+								const BlockTextures& blockTextures,
+								BlockFace worldFace,
+								BlockFace textureFace,
+								const glm::ivec3& v0,
+								const glm::ivec3& v1,
+								const glm::ivec3& v2,
+								const glm::ivec3& v3,
+								uint8_t o0,
+								uint8_t o1,
+								uint8_t o2,
+								uint8_t o3)
+	{
+		const FaceTexture& faceTex = blockTextures.faces[(size_t) textureFace];
+
+		auto uv = textureAtlas.GetAtlasEntry(faceTex.texture);
+
+		AddFace(mesh, v0, v1, v2, v3, o0, o1, o2, o3, worldFace, block, faceTex, uv, blockTextures.rotationType);
+
+		// Overlay pass
+		const FaceTexture& overlay = blockTextures.overlay[(size_t) textureFace];
+
+		if (overlay.texture != 0)
+		{
+			auto uvOverlay = textureAtlas.GetAtlasEntry(overlay.texture);
+
+			AddFace(
+				mesh, v0, v1, v2, v3, o0, o1, o2, o3, worldFace, block, overlay, uvOverlay, blockTextures.rotationType);
+		}
 	}
 
 	void MeshBuilder::AddChunkMeshUpdateTime(double timeMs)

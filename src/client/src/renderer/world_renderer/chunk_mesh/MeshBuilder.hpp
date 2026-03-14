@@ -73,6 +73,21 @@ namespace onion::voxel
 							   const std::shared_ptr<Chunk>& adjacentPosZ,
 							   const std::shared_ptr<Chunk>& adjacentNegZ);
 
+		static void BuildFace(TextureAtlas& textureAtlas,
+							  SubChunkMesh& mesh,
+							  const BlockState& block,
+							  const BlockTextures& blockTextures,
+							  BlockFace worldFace,
+							  BlockFace textureFace,
+							  const glm::ivec3& v0,
+							  const glm::ivec3& v1,
+							  const glm::ivec3& v2,
+							  const glm::ivec3& v3,
+							  uint8_t o0,
+							  uint8_t o1,
+							  uint8_t o2,
+							  uint8_t o3);
+
 		static void AddFace(SubChunkMesh& mesh,
 							const glm::ivec3& v0,
 							const glm::ivec3& v1,
