@@ -450,13 +450,12 @@ namespace onion::voxel
 
 				// X-
 				{
-					BlockId blockId =
-						adjacentNegX ? adjacentNegX->GetBlock({SX - 1, ly + yMini, lz}).ID : BlockId::Stone;
+					BlockId blockId = adjacentNegX ? adjacentNegX->GetBlock({SX - 1, ly + yMini, lz}).ID : BlockId::Air;
 					nbrXneg[ly][lz] = BlockState::IsOpaque(blockId) ? 1 : 0;
 				}
 				// X+
 				{
-					BlockId blockId = adjacentPosX ? adjacentPosX->GetBlock({0, ly + yMini, lz}).ID : BlockId::Stone;
+					BlockId blockId = adjacentPosX ? adjacentPosX->GetBlock({0, ly + yMini, lz}).ID : BlockId::Air;
 					nbrXpos[ly][lz] = BlockState::IsOpaque(blockId) ? 1 : 0;
 				}
 			}
@@ -470,13 +469,12 @@ namespace onion::voxel
 
 				// Z-
 				{
-					BlockId blockId =
-						adjacentNegZ ? adjacentNegZ->GetBlock({lx, ly + yMini, SZ - 1}).ID : BlockId::Stone;
+					BlockId blockId = adjacentNegZ ? adjacentNegZ->GetBlock({lx, ly + yMini, SZ - 1}).ID : BlockId::Air;
 					nbrZneg[ly][lx] = BlockState::IsOpaque(blockId) ? 1 : 0;
 				}
 				// Z+
 				{
-					BlockId blockId = adjacentPosZ ? adjacentPosZ->GetBlock({lx, ly + yMini, 0}).ID : BlockId::Stone;
+					BlockId blockId = adjacentPosZ ? adjacentPosZ->GetBlock({lx, ly + yMini, 0}).ID : BlockId::Air;
 					nbrZpos[ly][lx] = BlockState::IsOpaque(blockId) ? 1 : 0;
 				}
 			}

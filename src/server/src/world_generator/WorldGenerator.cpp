@@ -252,6 +252,10 @@ namespace onion::voxel
 		genChunk.chunk = std::make_shared<Chunk>(chunkPosition);
 		auto& chunk = genChunk.chunk;
 
+		constexpr bool GENERATE_GRASS = true;
+		constexpr bool GENERATE_FLOWERS = true;
+		constexpr bool GENERATE_TREES = false;
+
 		int y = 0;
 
 		// Bedrock layer
@@ -294,29 +298,48 @@ namespace onion::voxel
 			}
 		}
 
-		//// Poppy layer
-		//BlockState poppy{BlockId::Poppy};
-		//for (y = 5; y <= 5; y++)
-		//{
-		//	for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
-		//	{
-		//		for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
-		//		{
-		//			chunk->SetBlock(glm::ivec3(x, y, z), poppy);
-		//		}
-		//	}
-		//}
+		int height = 4; // Grass layer height
+		for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
+		{
+			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
+			{
+				glm::ivec3 worldPos = {(chunkPosition.x * WorldConstants::CHUNK_SIZE) + x,
+									   height, // Grass layer height
+									   (chunkPosition.y * WorldConstants::CHUNK_SIZE) + z};
+
+				bool shouldGenerateShortGrass = ShouldGenerateShortGrass(worldPos);
+				if (GENERATE_GRASS && shouldGenerateShortGrass)
+				{
+					chunk->SetBlock(glm::ivec3(x, height + 1, z), BlockState(BlockId::ShortGrass));
+				}
+
+				bool shouldGenerateFlower = ShouldGenerateFlower(worldPos);
+				if (GENERATE_FLOWERS && shouldGenerateFlower)
+				{
+					BlockId flowerId = GetFlowerType(worldPos);
+					chunk->SetBlock(glm::ivec3(x, height + 1, z), BlockState(flowerId));
+				}
+
+				bool shouldGenerateTree = ShouldGenerateTree(worldPos);
+				if (GENERATE_TREES && shouldGenerateTree)
+				{
+					glm::ivec3 treeBlock = worldPos + glm::ivec3(0, 1, 0);
+					Schematic tree = GenerateTree(treeBlock); // Generate a tree at the top block position
+					MergeSchematicInChunk(tree, genChunk);
+				}
+			}
+		}
 
 		return genChunk;
 	}
 
 	WorldGenerator::GenChunk WorldGenerator::GenerateChunk_Classic(const glm::ivec2& chunkPosition)
 	{
-
 		GenChunk genChunk;
 
 		// Creates the Chunk
-		auto chunk = std::make_shared<Chunk>(chunkPosition, 100);
+		genChunk.chunk = std::make_shared<Chunk>(chunkPosition, 100);
+		auto& chunk = genChunk.chunk;
 
 		constexpr int CHUNK_SIZE = WorldConstants::CHUNK_SIZE;
 
@@ -463,15 +486,15 @@ namespace onion::voxel
 				int realWorldZ = (chunkPosition.y * WorldConstants::CHUNK_SIZE + z);
 				int height = heightMap[x][z];
 
+				glm::ivec3 worldPos = {realWorldX, height, realWorldZ};
+
 				if (height < m_AverageHeight)
 					continue; // Skip if the height is below average (no trees in water)
 
-				bool shouldGenerateTree = ShouldGenerateTree({realWorldX, height, realWorldZ});
+				bool shouldGenerateTree = ShouldGenerateTree(worldPos);
 				if (shouldGenerateTree)
 				{
-					glm::ivec3 treeBlock{(chunkPosition.x * WorldConstants::CHUNK_SIZE) + x,
-										 height + 1,
-										 (chunkPosition.y * WorldConstants::CHUNK_SIZE) + z};
+					glm::ivec3 treeBlock = worldPos + glm::ivec3(0, 1, 0);
 
 					// Sets a dirtblock under the tree if the top block is grass
 					BlockState bottomBlock = chunk->GetBlock({x, height, z});
@@ -481,54 +504,13 @@ namespace onion::voxel
 					}
 
 					Schematic tree = GenerateTree(treeBlock); // Generate a tree at the top block position
-
-					// Fuse the tree schematic into the chunk pile
-					const auto treeOrigin = tree.GetOrigin();
-					const auto treeSize = tree.GetSize();
-					for (int treeX = 0; treeX < treeSize.x; treeX++)
-					{
-						for (int treeY = 0; treeY < treeSize.y; treeY++)
-						{
-							for (int treeZ = 0; treeZ < treeSize.z; treeZ++)
-							{
-
-								BlockState block = tree.GetBlock({treeX, treeY, treeZ});
-								const glm::ivec3 blockWorldPos = {
-									treeOrigin.x + treeX, treeOrigin.y + treeY, treeOrigin.z + treeZ};
-
-								if (block.ID == BlockId::Air)
-								{
-									continue; // Skip air blocks
-								}
-
-								// Check if the block is in the chunkpile bounds
-								const auto blockChunkPos = Utils::WorldToChunkPosition(blockWorldPos);
-								if (blockChunkPos == chunkPosition)
-								{
-									// Set the block in the chunk pile
-
-									// Get local coordinates in the chunk
-									const glm::ivec3 localPos = Utils::WorldToLocalPosition(blockWorldPos);
-									chunk->SetBlock(localPos, block);
-								}
-								else
-								{
-									// Tree block is outside the chunk pile bounds ...
-
-									// Add the block to the out-of-bounds blocks
-									genChunk.outOfBoundsBlocks.emplace_back(blockWorldPos, block);
-								}
-							}
-						}
-					}
+					MergeSchematicInChunk(tree, genChunk);
 				}
 			}
 		}
 
 		// Optimize the chunk (less memory, faster to send to clients)
 		chunk->Optimize();
-
-		genChunk.chunk = chunk;
 
 		return genChunk;
 	}
@@ -560,6 +542,50 @@ namespace onion::voxel
 		const double flowerVal = m_SeededRandom.GetValue(val);
 		const size_t index = static_cast<size_t>(flowerVal * BlockState::Flowers.size());
 		return BlockState::Flowers[index];
+	}
+
+	void WorldGenerator::MergeSchematicInChunk(const Schematic& schematic, GenChunk& genChunk)
+	{
+		const auto& chunk = genChunk.chunk;
+		const auto chunkPosition = chunk->GetPosition();
+
+		const auto schematicOrigin = schematic.GetOrigin();
+		const auto schematicSize = schematic.GetSize();
+
+		for (int x = 0; x < schematicSize.x; x++)
+		{
+			for (int y = 0; y < schematicSize.y; y++)
+			{
+				for (int z = 0; z < schematicSize.z; z++)
+				{
+
+					BlockState block = schematic.GetBlock({x, y, z});
+					const glm::ivec3 blockWorldPos{schematicOrigin.x + x, schematicOrigin.y + y, schematicOrigin.z + z};
+
+					// Skip air blocks
+					if (block.ID == BlockId::Air)
+					{
+						continue;
+					}
+
+					// Check if the block is in the chunk
+					const auto blockChunkPos = Utils::WorldToChunkPosition(blockWorldPos);
+					if (blockChunkPos == chunkPosition)
+					{
+						// Set the block in the chunk pile
+
+						// Get local coordinates in the chunk
+						const glm::ivec3 localPos = Utils::WorldToLocalPosition(blockWorldPos);
+						chunk->SetBlock(localPos, block);
+					}
+					else
+					{
+						// Add the block to the out-of-bounds blocks
+						genChunk.outOfBoundsBlocks.emplace_back(blockWorldPos, block);
+					}
+				}
+			}
+		}
 	}
 
 	Schematic WorldGenerator::GenerateTree(const glm::ivec3& position) const

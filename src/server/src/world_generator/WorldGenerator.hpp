@@ -83,6 +83,8 @@ namespace onion::voxel
 		BlockId GetFlowerType(const glm::ivec3& position) const;
 
 		// ------------ STRUCTURES ------------
+		static void MergeSchematicInChunk(const Schematic& schematic, GenChunk& chunk);
+
 		Schematic GenerateTree(const glm::ivec3& position) const;
 
 		// ----- Classic Generation Parameters -----
