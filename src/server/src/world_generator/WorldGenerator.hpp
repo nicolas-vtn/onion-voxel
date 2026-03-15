@@ -22,7 +22,15 @@ namespace onion::voxel
 {
 	class WorldGenerator
 	{
+		// ----- Structs -----
 	  public:
+		struct GenChunk
+		{
+			std::shared_ptr<Chunk> chunk;
+			std::vector<Block> outOfBoundsBlocks;
+		};
+
+	  private:
 		struct BiomeSeed
 		{
 			float dist;
@@ -31,16 +39,8 @@ namespace onion::voxel
 
 		struct BiomeBlend
 		{
-			BiomeSeed seeds[3];
-			float weights[3];
-		};
-
-		// ----- Structs -----
-	  public:
-		struct GenChunk
-		{
-			std::shared_ptr<Chunk> chunk;
-			std::vector<Block> outOfBoundsBlocks;
+			BiomeSeed seeds[9];
+			float weights[9];
 		};
 
 		// ----- Constructor / Destructor -----
@@ -78,7 +78,7 @@ namespace onion::voxel
 			BiomeVisualizer,
 		};
 
-		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::BiomeVisualizer;
+		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::Classic;
 
 		// ----- Chunk Generation Thread -----
 	  private:
@@ -97,7 +97,14 @@ namespace onion::voxel
 		bool ShouldGenerateShortGrass(const glm::ivec3& position) const;
 		bool ShouldGenerateFlower(const glm::ivec3& position) const;
 		BlockId GetFlowerType(const glm::ivec3& position) const;
+
 		BiomeBlend GetBiome(const glm::ivec3& pos) const;
+
+		static Biome GetSeedBiome(int cellX, int cellZ);
+		static BiomeBlend GetBiomeBlend(float x, float z);
+		static float GetBiomeHeight(Biome biome);
+
+		static std::vector<float> s_BiomeHeightsLookup;
 
 		// ------------ STRUCTURES ------------
 		static void MergeSchematicInChunk(const Schematic& schematic,

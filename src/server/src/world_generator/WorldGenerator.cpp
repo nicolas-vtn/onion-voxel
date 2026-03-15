@@ -5,138 +5,51 @@
 #include <shared/utils/Stopwatch.hpp>
 #include <shared/utils/Utils.hpp>
 
-constexpr int BIOME_CELL_SIZE = 1024; // blocks
-
-inline uint32_t Hash(int x, int z)
+namespace
 {
-	uint32_t h = x * 374761393u + z * 668265263u;
-	h = (h ^ (h >> 13)) * 1274126177u;
-	return h ^ (h >> 16);
-}
+	constexpr int BIOME_CELL_SIZE = 1024; // blocks
 
-inline float HashFloat(uint32_t h)
-{
-	return (h & 0xFFFFFF) / float(0xFFFFFF);
-}
+	static inline uint32_t Hash(int x, int z)
+	{
+		uint32_t h = x * 374761393u + z * 668265263u;
+		h = (h ^ (h >> 13)) * 1274126177u;
+		return h ^ (h >> 16);
+	}
 
-glm::vec2 GetSeedPosition(int cellX, int cellZ)
-{
-	uint32_t h = Hash(cellX, cellZ);
+	static inline float HashFloat(uint32_t h)
+	{
+		return (h & 0xFFFFFF) / float(0xFFFFFF);
+	}
 
-	float rx = HashFloat(h);
-	float rz = HashFloat(h * 48271u);
-
-	return {cellX * BIOME_CELL_SIZE + rx * BIOME_CELL_SIZE, cellZ * BIOME_CELL_SIZE + rz * BIOME_CELL_SIZE};
-}
-
-namespace onion::voxel
-{
-	Biome GetSeedBiome(int cellX, int cellZ)
+	static inline glm::vec2 GetSeedPosition(int cellX, int cellZ)
 	{
 		uint32_t h = Hash(cellX, cellZ);
 
-		switch (h % 6)
-		{
-			case 0:
-				return Biome::Ocean;
-			case 1:
-				return Biome::Plains;
-			case 2:
-				return Biome::Forest;
-			case 3:
-				return Biome::Desert;
-			case 4:
-				return Biome::Mountain;
-			case 5:
-				return Biome::Snow;
-			default:
-				return Biome::Ocean;
-		}
+		float rx = HashFloat(h);
+		float rz = HashFloat(h * 48271u);
+
+		return {cellX * BIOME_CELL_SIZE + rx * BIOME_CELL_SIZE, cellZ * BIOME_CELL_SIZE + rz * BIOME_CELL_SIZE};
 	}
 
-	static WorldGenerator::BiomeBlend GetBiomeBlend(float x, float z)
+} // namespace
+
+namespace onion::voxel
+{
+	// ----- Static Members Initialization -----
+
+	std::vector<float> WorldGenerator::s_BiomeHeightsLookup = []()
 	{
-		int cellX = static_cast<int>(std::floor(x / BIOME_CELL_SIZE));
-		int cellZ = static_cast<int>(std::floor(z / BIOME_CELL_SIZE));
+		std::vector<float> lookup(static_cast<size_t>(Biome::Count));
+		lookup[static_cast<size_t>(Biome::Ocean)] = 1.f;
+		lookup[static_cast<size_t>(Biome::Plains)] = 20.f;
+		lookup[static_cast<size_t>(Biome::Forest)] = 40.f;
+		lookup[static_cast<size_t>(Biome::Desert)] = 30.f;
+		lookup[static_cast<size_t>(Biome::Mountain)] = 80.f;
+		lookup[static_cast<size_t>(Biome::Snow)] = 25.f;
+		return lookup;
+	}();
 
-		WorldGenerator::BiomeSeed seeds[3] = {
-			{FLT_MAX, Biome::Plains}, {FLT_MAX, Biome::Plains}, {FLT_MAX, Biome::Plains}};
-
-		for (int dz = -1; dz <= 1; dz++)
-		{
-			for (int dx = -1; dx <= 1; dx++)
-			{
-				int cx = cellX + dx;
-				int cz = cellZ + dz;
-
-				glm::vec2 seed = GetSeedPosition(cx, cz);
-
-				float dxs = seed.x - x;
-				float dzs = seed.y - z;
-
-				float dist = sqrt(dxs * dxs + dzs * dzs);
-
-				Biome biome = GetSeedBiome(cx, cz);
-
-				if (dist < seeds[0].dist)
-				{
-					seeds[2] = seeds[1];
-					seeds[1] = seeds[0];
-					seeds[0] = {dist, biome};
-				}
-				else if (dist < seeds[1].dist)
-				{
-					seeds[2] = seeds[1];
-					seeds[1] = {dist, biome};
-				}
-				else if (dist < seeds[2].dist)
-				{
-					seeds[2] = {dist, biome};
-				}
-			}
-		}
-
-		float k = 0.02f;
-
-		float w0 = exp(-seeds[0].dist * k);
-		float w1 = exp(-seeds[1].dist * k);
-		float w2 = exp(-seeds[2].dist * k);
-
-		float sum = w0 + w1 + w2;
-
-		WorldGenerator::BiomeBlend result;
-
-		result.seeds[0] = seeds[0];
-		result.seeds[1] = seeds[1];
-		result.seeds[2] = seeds[2];
-
-		result.weights[0] = w0 / sum;
-		result.weights[1] = w1 / sum;
-		result.weights[2] = w2 / sum;
-
-		return result;
-	}
-
-	float GetBiomeHeight(Biome biome)
-	{
-		switch (biome)
-		{
-			case Biome::Ocean:
-				return 1.f;
-			case Biome::Plains:
-				return 20.f;
-			case Biome::Forest:
-				return 40.f;
-			case Biome::Desert:
-				return 30.f;
-			case Biome::Mountain:
-				return 60.f;
-			case Biome::Snow:
-				return 25.f;
-			default:
-				return 70.0f;
-		}
-	}
+	// ----- Constructor / Destructor -----
 
 	WorldGenerator::WorldGenerator(std::shared_ptr<WorldManager> worldManager) : m_WorldManager(worldManager)
 	{
@@ -463,7 +376,7 @@ namespace onion::voxel
 					BlockId leavesId = (logId == BlockId::BirchLog) ? BlockId::BirchLeaves : BlockId::OakLeaves;
 
 					// Tree height between 2 and 6
-					int treeHeight = 2 + (m_SeededRandom.GetValue(worldPos + glm::ivec3(88, 654, 2584)) * 4);
+					int treeHeight = 2 + (int) (m_SeededRandom.GetValue(worldPos + glm::ivec3(88, 654, 2584)) * 4);
 
 					glm::ivec3 treeBlock = worldPos + glm::ivec3(0, 1, 0);
 					Schematic tree = GenerateTree(
@@ -495,15 +408,13 @@ namespace onion::voxel
 				int realWorldX = (chunkPosition.x * CHUNK_SIZE + x);
 				int realWorldZ = (chunkPosition.y * CHUNK_SIZE + z);
 
-				float noisePositionX = static_cast<float>(realWorldX) * m_SmoothnessX;
-				float noisePositionZ = static_cast<float>(realWorldZ) * m_SmoothnessZ;
+				float continents =
+					GetFractalNoise(m_NoiseContinent, (float) realWorldX, (float) realWorldZ, 3, 2.0f, 0.5f);
 
-				float continents = GetFractalNoise(m_NoiseContinent, realWorldX, realWorldZ, 3, 2.0f, 0.5f);
+				float mountains = std::max(
+					0.0f, GetFractalNoise(m_NoiseMountain, (float) realWorldX, (float) realWorldZ, 4, 2.0f, 0.5f));
 
-				float mountains =
-					std::max(0.0f, GetFractalNoise(m_NoiseMountain, realWorldX, realWorldZ, 4, 2.0f, 0.5f));
-
-				float detail = GetFractalNoise(m_NoiseDetail, realWorldX, realWorldZ, 3, 2.0f, 0.5f);
+				float detail = GetFractalNoise(m_NoiseDetail, (float) realWorldX, (float) realWorldZ, 3, 2.0f, 0.5f);
 
 				float continentMask = (continents + 1.0f) * 0.5f; // [-1,1] -> [0,1]
 				continentMask = std::pow(continentMask, 1.5f);
@@ -604,7 +515,7 @@ namespace onion::voxel
 						else if (y <= height)
 						{
 							// Deeper sea has gravel, shallower sea has sand
-							BlockId seaFloor = (height < m_SeaLevel - 5) ? BlockId::Gravel : BlockId::Sand;
+							BlockId seaFloor = (height < m_SeaLevel - 8) ? BlockId::Gravel : BlockId::Sand;
 							chunk->SetBlock_Unsafe((uint8_t) x, y, (uint8_t) z, seaFloor);
 						}
 						else if (y > height && y < m_SeaLevel)
@@ -647,7 +558,7 @@ namespace onion::voxel
 					BlockId logId = (val < 0.025) ? BlockId::BirchLog : BlockId::OakLog; // 2.5% chance for birch
 					BlockId leavesId = (logId == BlockId::BirchLog) ? BlockId::BirchLeaves : BlockId::OakLeaves;
 					// Tree height between 2 and 6
-					int treeHeight = 2 + (m_SeededRandom.GetValue(worldPos + glm::ivec3(88, 654, 2584)) * 4);
+					int treeHeight = 2 + (int) (m_SeededRandom.GetValue(worldPos + glm::ivec3(88, 654, 2584)) * 4);
 
 					Schematic tree = GenerateTree(treeBlock, treeHeight, logId, leavesId);
 					std::unordered_set<BlockId> overwritables;
@@ -712,11 +623,12 @@ namespace onion::voxel
 						break;
 				}
 
-				float h0 = GetBiomeHeight(biomeBlend.seeds[0].biome);
-				float h1 = GetBiomeHeight(biomeBlend.seeds[1].biome);
-				float h2 = GetBiomeHeight(biomeBlend.seeds[2].biome);
-
-				float height = biomeBlend.weights[0] * h0 + biomeBlend.weights[1] * h1 + biomeBlend.weights[2] * h2;
+				float height = 0;
+				for (int i = 0; i < 9; i++)
+				{
+					const float h = GetBiomeHeight(biomeBlend.seeds[i].biome);
+					height += biomeBlend.weights[i] * h;
+				}
 
 				for (int y = 0; y < height; y++)
 				{
@@ -795,13 +707,83 @@ namespace onion::voxel
 
 	WorldGenerator::BiomeBlend WorldGenerator::GetBiome(const glm::ivec3& pos) const
 	{
-		float noiseX = GetFractalNoise(m_NoiseWarp, pos.x, pos.z, 4, 2.0f, 0.5f) * 200.f;
-		float noiseZ = GetFractalNoise(m_NoiseWarp2, pos.z, pos.x, 4, 2.0f, 0.5f) * 200.f;
+		const float noiseX = GetFractalNoise(m_NoiseWarp, (float) pos.x, (float) pos.z, 4, 2.0f, 0.5f) * 200.f;
+		const float noiseZ = GetFractalNoise(m_NoiseWarp2, (float) pos.z, (float) pos.x, 4, 2.0f, 0.5f) * 200.f;
 
-		float x = pos.x + noiseX;
-		float z = pos.z + noiseZ;
+		const float x = pos.x + noiseX;
+		const float z = pos.z + noiseZ;
 
 		return GetBiomeBlend(x, z);
+	}
+
+	Biome WorldGenerator::GetSeedBiome(int cellX, int cellZ)
+	{
+		uint32_t h = Hash(cellX, cellZ);
+		auto index = h % static_cast<uint32_t>(Biome::Count);
+		return static_cast<Biome>(index);
+	}
+
+	WorldGenerator::BiomeBlend WorldGenerator::GetBiomeBlend(float x, float z)
+	{
+		const int cellX = static_cast<int>(std::floor(x / BIOME_CELL_SIZE));
+		const int cellZ = static_cast<int>(std::floor(z / BIOME_CELL_SIZE));
+
+		WorldGenerator::BiomeBlend blend;
+		for (int i = 0; i < 9; i++)
+		{
+			blend.seeds[i] = {FLT_MAX, Biome::Plains};
+			blend.weights[i] = 0.0f;
+		}
+
+		int index = 0;
+		for (int dz = -1; dz <= 1; dz++)
+		{
+			for (int dx = -1; dx <= 1; dx++)
+			{
+				const int cx = cellX + dx;
+				const int cz = cellZ + dz;
+
+				const glm::vec2 seed = GetSeedPosition(cx, cz);
+
+				const float dxs = seed.x - x;
+				const float dzs = seed.y - z;
+
+				const float dist = sqrt(dxs * dxs + dzs * dzs);
+
+				const Biome biome = GetSeedBiome(cx, cz);
+
+				blend.seeds[index] = {dist, biome};
+				index++;
+			}
+		}
+
+		// Sort by distance (closest first)
+		std::sort(std::begin(blend.seeds),
+				  std::end(blend.seeds),
+				  [](const WorldGenerator::BiomeSeed& a, const WorldGenerator::BiomeSeed& b)
+				  { return a.dist < b.dist; });
+
+		// Lower k = smoother biome transitions, higher k = sharper biome transitions
+		constexpr float K = 90.0f / BIOME_CELL_SIZE;
+
+		float sum = 0;
+		for (int i = 0; i < 9; i++)
+		{
+			blend.weights[i] = exp(-blend.seeds[i].dist * K);
+			sum += blend.weights[i];
+		}
+
+		for (int i = 0; i < 9; i++)
+		{
+			blend.weights[i] /= sum;
+		}
+
+		return blend;
+	}
+
+	float WorldGenerator::GetBiomeHeight(Biome biome)
+	{
+		return s_BiomeHeightsLookup[static_cast<size_t>(biome)];
 	}
 
 	void WorldGenerator::MergeSchematicInChunk(const Schematic& schematic,
