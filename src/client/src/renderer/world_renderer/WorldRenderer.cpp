@@ -133,6 +133,11 @@ namespace onion::voxel
 			RenderChunkBorders();
 		}
 
+		if (m_RenderPlayerBoundingBoxes)
+		{
+			RenderPlayersBoundingBoxes();
+		}
+
 		RebuildDirtyChunkMeshesAsync();
 		DeleteChunkMeshes();
 
@@ -450,6 +455,18 @@ namespace onion::voxel
 		}
 	}
 
+	void WorldRenderer::RenderPlayersBoundingBoxes()
+	{
+		const auto& players = m_WorldManager->Entities->GetAllPlayers();
+		for (const auto& [uuid, player] : players)
+		{
+			const glm::vec3 playerPos = player->GetPosition();
+			constexpr glm::vec3 boxSize = glm::vec3(0.6f, 1.8f, 0.6f);
+
+			DebugDraws::DrawWorldBoxCenterSize(playerPos, boxSize, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 2, false);
+		}
+	}
+
 	void WorldRenderer::RebuildDirtyChunkMeshesAsync()
 	{
 		std::shared_lock lock(m_MutexChunkMeshes);
@@ -512,6 +529,7 @@ namespace onion::voxel
 		ImGui::Separator();
 		ImGui::Checkbox("Render Chunk Borders", &m_RenderChunkBorders);
 		ImGui::Checkbox("Use Face Culling", &m_UseFaceCulling);
+		ImGui::Checkbox("Render Player Bounding Boxes", &m_RenderPlayerBoundingBoxes);
 
 		// ----- Performance Options -----
 		ImGui::Separator();

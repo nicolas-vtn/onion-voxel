@@ -19,7 +19,6 @@ namespace onion::voxel
 		m_Singleplayer_Button.SetText("Singleplayer");
 
 		m_Multiplayer_Button.SetText("Multiplayer");
-		m_Multiplayer_Button.SetEnabled(false);
 
 		m_DemoPanel_Button.SetText("Demo Panel");
 

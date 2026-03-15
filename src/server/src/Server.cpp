@@ -13,6 +13,11 @@ namespace onion::voxel
 
 		SubscribeToNetworkServerEvents();
 		SubscribeToWorldManagerEvents();
+
+		// Setup Timer
+		m_TimerSendEvents.setTimeoutFunction([this]() { Handle_TimerSendEvents(); });
+		std::chrono::milliseconds defaultElapsedPeriod(100);
+		m_TimerSendEvents.setElapsedPeriod(defaultElapsedPeriod);
 	}
 
 	Server::~Server()
@@ -27,12 +32,14 @@ namespace onion::voxel
 
 	void Server::Start()
 	{
+		m_TimerSendEvents.Start();
 		m_NetworkServer.Start();
 		m_IsRunning.store(true);
 	}
 
 	void Server::Stop()
 	{
+		m_TimerSendEvents.Stop();
 		m_NetworkServer.Stop();
 		m_IsRunning.store(false);
 	}
@@ -111,7 +118,7 @@ namespace onion::voxel
 		playerInfo.Username = msg.Username;
 		playerInfo.UUID = msg.UUID;
 
-		AddOrUpdatePlayer(playerInfo);
+		//AddOrUpdatePlayer(playerInfo);
 	}
 
 	void Server::Handle_PlayerInfoMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
@@ -122,7 +129,34 @@ namespace onion::voxel
 		//		  << msg.Position.z << "\n";
 
 		// Update player position
-		UpdatePlayerPosition(args.Sender, msg.Position);
+		UpdatePlayerPosition(msg.UUID, msg.Position);
+	}
+
+	void Server::Handle_TimerSendEvents()
+	{
+		// Sends Entity Snapshot to all clients
+		std::unordered_map<std::string, std::shared_ptr<Player>> players = m_WorldManager->Entities->GetAllPlayers();
+
+		if (players.empty())
+		{
+			return; // No players connected, skip sending snapshot
+		}
+
+		EntitySnapshotMsg entitySnapshotMsg;
+		for (const auto& [clientHandle, player] : players)
+		{
+			EntityDTO playerDTO = Serializer::SerializeEntity(*player);
+			entitySnapshotMsg.Entities.push_back(playerDTO);
+		}
+
+		auto entities = m_WorldManager->Entities->GetAllEntities();
+		for (const auto& entity : entities)
+		{
+			EntityDTO entityDTO = Serializer::SerializeEntity(*entity);
+			entitySnapshotMsg.Entities.push_back(entityDTO);
+		}
+
+		m_NetworkServer.Broadcast(entitySnapshotMsg);
 	}
 
 	void Server::Handle_PlayerRequestChunksMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
@@ -165,18 +199,34 @@ namespace onion::voxel
 		std::cout << "New client connected: " << args.Client << " (" << args.Username << ", " << args.UUID << ", "
 				  << args.IpAddress << ")\n";
 
-		// Send a welcome message to the newly connected client
+		PlayerInfo playerInfo;
+		playerInfo.ClientHandle = args.Client;
+		playerInfo.Username = args.Username;
+		playerInfo.UUID = args.UUID;
+
+		// Add the new Player
+		AddPlayer(playerInfo);
+
+		// Arbitrary Set player position to 8 , 100, 8
+		m_WorldManager->Entities->SetPlayerPosition(args.UUID, glm::vec3(8.0f, 100.0f, 8.0f));
+
 		ServerInfoMsg srvInfoMsg;
 		srvInfoMsg.ServerName = m_Config.serverData.ServerName;
 		srvInfoMsg.ClientHandle = args.Client;
 		srvInfoMsg.SimulationDistance = m_Config.serverData.SimulationDistance;
 
+		// Sends the ServerInfoMsg to the newly connected client
 		m_NetworkServer.Send(args.Client, srvInfoMsg);
+
+		// Sends the Entity snapshot to all clients
+		Handle_TimerSendEvents();
 	}
 
 	void Server::Handle_ClientDisconnected(const NetworkServer::ClientDisconnectedEventArgs& args)
 	{
 		std::cout << "Client disconnected: " << args.Client << " ( " << args.UUID << ", " << args.IpAddress << ")\n";
+
+		RemovePlayer(args.UUID);
 	}
 
 	void Server::Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk)
@@ -211,55 +261,34 @@ namespace onion::voxel
 		}
 	}
 
-	void Server::AddOrUpdatePlayer(const PlayerInfo& playerInfo)
+	void Server::AddPlayer(const PlayerInfo& playerInfo)
 	{
-		std::lock_guard lock(m_MutexPlayers);
-		m_Players[playerInfo.ClientHandle] = playerInfo;
-		m_PlayerChunkPositions[playerInfo.ClientHandle] = Utils::WorldToChunkPosition(playerInfo.Position);
-	}
-
-	void Server::UpdatePlayerPosition(uint32_t clientHandle, const glm::vec3& newPosition)
-	{
-		glm::ivec2 playerChunkPos;
-		glm::ivec2 oldChunkPos;
-
+		m_WorldManager->Entities->AddPlayer(playerInfo.UUID, playerInfo.Username);
 		{
 			std::lock_guard lock(m_MutexPlayers);
+			m_ClientHandleToPlayerInfo[playerInfo.ClientHandle] = playerInfo;
+			m_UUIDToPlayerInfo[playerInfo.UUID] = playerInfo;
+		}
+	}
 
-			auto it = m_Players.find(clientHandle);
-			if (it == m_Players.end())
+	void Server::RemovePlayer(const std::string& uuid)
+	{
+		m_WorldManager->Entities->RemovePlayer(uuid);
+		{
+			std::lock_guard lock(m_MutexPlayers);
+			auto it = m_UUIDToPlayerInfo.find(uuid);
+			if (it != m_UUIDToPlayerInfo.end())
 			{
-				throw std::runtime_error("Player with client handle " + std::to_string(clientHandle) + " not found.");
+				uint32_t clientHandle = it->second.ClientHandle;
+				m_ClientHandleToPlayerInfo.erase(clientHandle);
+				m_UUIDToPlayerInfo.erase(it);
 			}
-
-			oldChunkPos = m_PlayerChunkPositions[clientHandle];
-			playerChunkPos = Utils::WorldToChunkPosition(newPosition);
-
-			it->second.Position = newPosition;
-			m_PlayerChunkPositions[clientHandle] = playerChunkPos;
-
-			m_WorldManager->SetPlayerPosition(clientHandle, newPosition);
 		}
 	}
 
-	void Server::RemovePlayer(uint32_t clientHandle)
+	void Server::UpdatePlayerPosition(const std::string& uuid, const glm::vec3& newPosition)
 	{
-		std::lock_guard lock(m_MutexPlayers);
-		m_Players.erase(clientHandle);
-	}
-
-	Server::PlayerInfo Server::GetPlayerInfo(uint32_t clientHandle) const
-	{
-		std::shared_lock lock(m_MutexPlayers);
-		auto it = m_Players.find(clientHandle);
-		if (it != m_Players.end())
-		{
-			return it->second;
-		}
-		else
-		{
-			throw std::runtime_error("Player with client handle " + std::to_string(clientHandle) + " not found.");
-		}
+		m_WorldManager->Entities->SetPlayerPosition(uuid, newPosition);
 	}
 
 	void Server::SubscribeToWorldManagerEvents()

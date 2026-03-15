@@ -14,6 +14,10 @@ add_library(onion_voxel_shared
  "shared/network_messages/Serializer.cpp"
 
  "shared/zip_archive/ZipArchive.cpp"
+
+ "shared/entities/entity_manager/EntityManager.cpp"
+ "shared/entities/entity/Entity.cpp"
+
 )
 
 target_link_libraries(onion_voxel_shared

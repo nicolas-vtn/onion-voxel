@@ -92,6 +92,11 @@ namespace onion::voxel
 		return m_ServerInfo;
 	}
 
+	void Renderer::SetPlayerUUID(const std::string& uuid)
+	{
+		m_PlayerUUID = uuid;
+	}
+
 	void Renderer::InitWindow()
 	{
 		glfwSetErrorCallback(error_callback);
@@ -196,12 +201,15 @@ namespace onion::voxel
 			// DEBUG : Sets DebugDraws ViewProj Matrix
 			DebugDraws::SetViewProjMatrix(viewProjectionMatrix);
 
-			m_WorldManager->SetPlayerPosition(0, m_Camera->GetPosition());
-
 			// Render World
 			if (GetRenderState() == eRenderState::InGame)
 			{
 				m_WorldRenderer.Render();
+				const auto& entityMana = m_WorldManager->Entities;
+				if (entityMana->IsPlayerExists(m_PlayerUUID))
+				{
+					m_WorldManager->SetPlayerPosition(m_PlayerUUID, m_Camera->GetPosition());
+				}
 			}
 
 			// Render GUI
@@ -480,6 +488,9 @@ namespace onion::voxel
 		m_EventHandles.push_back(m_Gui.RequestStartSingleplayerGame.Subscribe(
 			[this](const std::filesystem::path& worldPath) { Handle_StartSingleplayerGameRequest(worldPath); }));
 
+		m_EventHandles.push_back(m_Gui.RequestStartMultiplayerGame.Subscribe(
+			[this](const Gui::MultiplayerGameStartInfo& startInfo) { Handle_StartMultiplayerGameRequest(startInfo); }));
+
 		m_EventHandles.push_back(m_Gui.RequestBackToGame.Subscribe([this](bool) { Handle_BackToGameRequest(); }));
 
 		m_EventHandles.push_back(
@@ -497,6 +508,16 @@ namespace onion::voxel
 	void Renderer::Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath)
 	{
 		RequestStartSingleplayerGame.Trigger(worldPath);
+
+		// Enable mouse capture for gameplay
+		m_InputsManager.SetMouseCaptureEnabled(true);
+
+		m_IsPaused = false;
+	}
+
+	void Renderer::Handle_StartMultiplayerGameRequest(const Gui::MultiplayerGameStartInfo& startInfo)
+	{
+		RequestStartMultiplayerGame.Trigger(startInfo);
 
 		// Enable mouse capture for gameplay
 		m_InputsManager.SetMouseCaptureEnabled(true);

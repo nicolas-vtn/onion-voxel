@@ -86,7 +86,7 @@ namespace onion::voxel
 			BiomeVisualizer,
 		};
 
-		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::ClassicNoBiomes;
+		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::Superflat;
 
 		// ----- Chunk Generation Thread -----
 	  private:

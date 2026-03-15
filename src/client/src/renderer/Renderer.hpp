@@ -61,9 +61,12 @@ namespace onion::voxel
 		void SetServerInfo(std::shared_ptr<ServerInfo> serverInfo);
 		std::shared_ptr<ServerInfo> GetServerInfo() const;
 
+		void SetPlayerUUID(const std::string& uuid);
+
 		// ----- Events -----
 	  public:
 		Event<const std::filesystem::path&> RequestStartSingleplayerGame;
+		Event<const Gui::MultiplayerGameStartInfo&> RequestStartMultiplayerGame;
 		Event<bool> RequestQuitToMainMenu;
 
 		// ----- Internal Methods -----
@@ -83,6 +86,7 @@ namespace onion::voxel
 		mutable std::mutex m_MutexRenderState;
 		eRenderState m_RenderState = eRenderState::Menu;
 		bool m_IsPaused = false;
+		std::string m_PlayerUUID;
 
 		// ----- GLFW -----
 	  private:
@@ -155,6 +159,7 @@ namespace onion::voxel
 
 		void Handle_CursorStyleChangeRequest(const CursorStyle& style);
 		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
+		void Handle_StartMultiplayerGameRequest(const Gui::MultiplayerGameStartInfo& startInfo);
 		void Handle_BackToGameRequest();
 		void Handle_QuitToMainMenuRequest(bool quit);
 		void Handle_ResourcePackChangeRequest(const std::string& resourcePackName);

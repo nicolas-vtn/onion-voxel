@@ -2,6 +2,7 @@
 
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/string.hpp>
+#include <cereal/types/vector.hpp>
 
 #include <cstdint>
 #include <string>
@@ -19,6 +20,7 @@ namespace onion::voxel
 			PlayerInfos,
 			BlocksChanged,
 			RequestChunks,
+			EntitySnapshot,
 		};
 
 		eType Type = eType::None;

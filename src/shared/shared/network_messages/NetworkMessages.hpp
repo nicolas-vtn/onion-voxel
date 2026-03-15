@@ -5,6 +5,7 @@
 #include "blocks_changed_msg/BlocksChangedMsg.hpp"
 #include "chunk_data_msg/ChunkDataMsg.hpp"
 #include "client_info_msg/ClientInfoMsg.hpp"
+#include "entity_snapshot_msg/EntitySnapshotMsg.hpp"
 #include "player_infos_msg/PlayerInfosMsg.hpp"
 #include "request_chunks_msg/RequestChunksMsg.hpp"
 #include "server_info_msg/ServerInfoMsg.hpp"
@@ -17,8 +18,13 @@
 
 namespace onion::voxel
 {
-	using NetworkMessage =
-		std::variant<ClientInfoMsg, ServerInfoMsg, ChunkDataMsg, PlayerInfoMsg, BlocksChangedMsg, RequestChunksMsg>;
+	using NetworkMessage = std::variant<ClientInfoMsg,
+										ServerInfoMsg,
+										ChunkDataMsg,
+										PlayerInfoMsg,
+										BlocksChangedMsg,
+										RequestChunksMsg,
+										EntitySnapshotMsg>;
 
 	inline NetworkMessage DeserializeMessage(cereal::BinaryInputArchive& archive, MessageHeader::eType type)
 	{
@@ -62,6 +68,13 @@ namespace onion::voxel
 			case MessageHeader::eType::RequestChunks:
 				{
 					RequestChunksMsg msg;
+					archive(msg);
+					return msg;
+				}
+
+			case MessageHeader::eType::EntitySnapshot:
+				{
+					EntitySnapshotMsg msg;
 					archive(msg);
 					return msg;
 				}

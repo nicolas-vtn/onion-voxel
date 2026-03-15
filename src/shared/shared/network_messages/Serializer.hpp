@@ -4,6 +4,8 @@
 
 #include "NetworkMessages.hpp"
 
+#include <shared/entities/entity/Entity.hpp>
+#include <shared/entities/entity/player/Player.hpp>
 #include <shared/world/chunk/Chunk.hpp>
 
 namespace onion::voxel
@@ -29,5 +31,10 @@ namespace onion::voxel
 	  public:
 		static BlockDTO SerializeBlock(const Block& block);
 		static Block DeserializeBlock(const BlockDTO& dto);
+
+		// ----- Entity -----
+	  public:
+		static EntityDTO SerializeEntity(const Entity& entity);
+		static Entity DeserializeEntity(const EntityDTO& dto);
 	};
 } // namespace onion::voxel

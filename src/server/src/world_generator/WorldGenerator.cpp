@@ -578,13 +578,16 @@ namespace onion::voxel
 				int realWorldX = (chunkPosition.x * CHUNK_SIZE + x);
 				int realWorldZ = (chunkPosition.y * CHUNK_SIZE + z);
 
-				float warpX = GetFractalNoise(m_NoiseWarp, realWorldX, realWorldZ, 2, 2.0f, 0.5f) * 200.0f;
-				float warpZ = GetFractalNoise(m_NoiseWarp2, realWorldX, realWorldZ, 2, 2.0f, 0.5f) * 200.0f;
+				float warpX =
+					GetFractalNoise(m_NoiseWarp, (float) realWorldX, (float) realWorldZ, 2, 2.0f, 0.5f) * 200.0f;
+				float warpZ =
+					GetFractalNoise(m_NoiseWarp2, (float) realWorldX, (float) realWorldZ, 2, 2.0f, 0.5f) * 200.0f;
 
-				float continents =
-					GetFractalNoise(m_NoiseContinent, realWorldX + warpX, realWorldZ + warpZ, 3, 2.0f, 0.5f);
+				float continents = GetFractalNoise(
+					m_NoiseContinent, (float) realWorldX + warpX, (float) realWorldZ + warpZ, 3, 2.0f, 0.5f);
 
-				float mountains = GetFractalNoise(m_NoiseMountain, realWorldX, realWorldZ, 4, 2.0f, 0.5f);
+				float mountains =
+					GetFractalNoise(m_NoiseMountain, (float) realWorldX, (float) realWorldZ, 4, 2.0f, 0.5f);
 				float detail = GetFractalNoise(m_NoiseDetail, (float) realWorldX, (float) realWorldZ, 3, 2.0f, 0.5f);
 
 				// Map continent noise to [0,1]

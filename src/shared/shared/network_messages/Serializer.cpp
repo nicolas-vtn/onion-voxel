@@ -186,4 +186,23 @@ namespace onion::voxel
 		return block;
 	}
 
+	EntityDTO Serializer::SerializeEntity(const Entity& entity)
+	{
+		EntityDTO dto;
+		dto.Type = static_cast<int>(entity.GetType());
+		dto.Position = entity.GetPosition();
+		dto.Facing = entity.GetFacing();
+		dto.Name = entity.GetName();
+		dto.UUID = entity.GetUUID();
+		return dto;
+	}
+
+	Entity Serializer::DeserializeEntity(const EntityDTO& dto)
+	{
+		Entity entity(static_cast<EntityType>(dto.Type), dto.UUID, dto.Name);
+		entity.SetPosition(dto.Position);
+		entity.SetFacing(dto.Facing);
+		return entity;
+	}
+
 } // namespace onion::voxel

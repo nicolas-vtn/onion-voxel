@@ -64,6 +64,7 @@ namespace onion::voxel
 		void Handle_ServerInfoMessageReceived(const ServerInfoMsg& msg);
 		void Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg);
 		void Handle_BlocksChangedMessageReceived(const BlocksChangedMsg& msg);
+		void Handle_EntitySnapshotMessageReceived(const EntitySnapshotMsg& msg);
 
 		Timer m_TimerSendPlayerInfos;
 		void SendPlayerInfosToServer();
@@ -75,6 +76,7 @@ namespace onion::voxel
 		// ----- Event Handling -----
 	  private:
 		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
+		void Handle_RequestStartMultiplayerGame(const Gui::MultiplayerGameStartInfo& multiplayerGameStartInfo);
 		void Handle_StopSingleplayerGameRequest(const std::filesystem::path& worldPath);
 
 		// ----- World Manager -----

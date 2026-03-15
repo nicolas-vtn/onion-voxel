@@ -72,6 +72,25 @@ namespace onion::voxel
 		if (m_Peer)
 		{
 			enet_peer_disconnect(m_Peer, 0);
+
+			ENetEvent event;
+			bool disconnected = false;
+
+			while (enet_host_service(m_Client, &event, 100) > 0)
+			{
+				if (event.type == ENET_EVENT_TYPE_DISCONNECT)
+				{
+					disconnected = true;
+					break;
+				}
+			}
+
+			if (!disconnected)
+			{
+				// Force disconnect if server didn't respond
+				enet_peer_reset(m_Peer);
+			}
+
 			m_Peer = nullptr;
 		}
 

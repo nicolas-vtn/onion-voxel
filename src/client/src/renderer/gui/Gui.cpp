@@ -75,6 +75,13 @@ namespace onion::voxel
 		{
 			RequestStartSingleplayerGame.Trigger(GetAssetsPath() / "worlds" / "demo_map");
 		}
+		else if (menu == eMenu::Multiplayer)
+		{
+			std::string serverAddress = "127.0.0.1";
+			uint16_t serverPort = 25565;
+			MultiplayerGameStartInfo info{serverAddress, serverPort};
+			RequestStartMultiplayerGame.Trigger(info);
+		}
 	}
 
 	void Gui::Handle_QuitGameRequest(const GuiElement* sender)

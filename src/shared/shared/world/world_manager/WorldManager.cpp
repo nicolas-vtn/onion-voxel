@@ -133,10 +133,7 @@ namespace onion::voxel
 	{
 		RemoveAllChunks();
 
-		{
-			std::unique_lock lock(m_MutexPlayersPosition);
-			m_PlayersPosition.clear();
-		}
+		Entities->ClearAllEntities();
 
 		{
 			std::unique_lock lock(m_MutexOutOfBoundsBlocks);
@@ -166,35 +163,29 @@ namespace onion::voxel
 		SeedChanged.Trigger(seed);
 	}
 
-	std::unordered_map<uint32_t, glm::vec3> WorldManager::GetPlayersPosition() const
+	std::unordered_map<std::string, glm::vec3> WorldManager::GetPlayersPosition() const
 	{
-		std::shared_lock lock(m_MutexPlayersPosition);
-		return m_PlayersPosition; // Return a copy of the players position map
+		return Entities->GetAllPlayersPosition();
 	}
 
-	void WorldManager::SetPlayerPosition(uint32_t ClientHandle, const glm::vec3& position)
+	void WorldManager::SetPlayerPosition(const std::string& uuid, const glm::vec3& position)
 	{
-		glm::vec3 previousPosition;
+		glm::vec3 previousPosition = Entities->GetPlayerPosition(uuid);
 
+		// Early out if the player didn't move.
+		if (previousPosition == position)
 		{
-			std::lock_guard lock(m_MutexPlayersPosition);
-
-			previousPosition = m_PlayersPosition[ClientHandle];
-
-			if (position == previousPosition)
-			{
-				return; // Player hasn't moved.
-			}
-
-			m_PlayersPosition[ClientHandle] = position;
+			return;
 		}
+
+		Entities->SetPlayerPosition(uuid, position);
 
 		glm::ivec2 previousChunkPosition = Utils::WorldToChunkPosition(previousPosition);
 		glm::ivec2 newChunkPosition = Utils::WorldToChunkPosition(position);
 
 		if (previousChunkPosition != newChunkPosition)
 		{
-			PlayerChangedChunk.Trigger({ClientHandle, previousChunkPosition, newChunkPosition});
+			PlayerChangedChunk.Trigger({uuid, previousChunkPosition, newChunkPosition});
 		}
 	}
 
@@ -242,7 +233,7 @@ namespace onion::voxel
 
 	void WorldManager::Handle_PlayerChangedChunk(const PlayerChangedChunkEventArgs& args)
 	{
-		std::cout << "Player " << args.ClientHandle << " changed chunk from " << args.OldChunkPosition.x << ", "
+		std::cout << "Player " << args.PlayerUUID << " changed chunk from " << args.OldChunkPosition.x << ", "
 				  << args.OldChunkPosition.y << " to " << args.NewChunkPosition.x << ", " << args.NewChunkPosition.y
 				  << std::endl;
 
@@ -395,18 +386,18 @@ namespace onion::voxel
 	void WorldManager::RequestAllMissingChunks() const
 	{
 		// Request missing chunks around each player
-		std::vector<glm::ivec2> missingChunks;
+		std::vector<glm::ivec2> missingChunksCenters;
+
+		auto playersPosition = GetPlayersPosition();
+		for (const auto& [clientHandle, playerPos] : playersPosition)
 		{
-			std::shared_lock lock(m_MutexPlayersPosition);
-			for (const auto& [clientHandle, position] : m_PlayersPosition)
-			{
-				missingChunks.emplace_back(Utils::WorldToChunkPosition(position));
-			}
+			glm::ivec2 playerChunkPos = Utils::WorldToChunkPosition(playerPos);
+			missingChunksCenters.push_back(playerChunkPos);
 		}
 
-		for (const auto& chunkPos : missingChunks)
+		for (const auto& center : missingChunksCenters)
 		{
-			RequestMissingChunksAround(chunkPos);
+			RequestMissingChunksAround(center);
 		}
 	}
 

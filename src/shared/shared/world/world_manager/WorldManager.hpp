@@ -12,6 +12,7 @@
 #include <onion/Event.hpp>
 #include <onion/Timer.hpp>
 
+#include <shared/entities/entity_manager/EntityManager.hpp>
 #include <shared/world/chunk/Chunk.hpp>
 
 namespace onion::voxel
@@ -22,7 +23,7 @@ namespace onion::voxel
 	  public:
 		struct PlayerChangedChunkEventArgs
 		{
-			uint32_t ClientHandle{0};
+			std::string PlayerUUID;
 			glm::ivec2 OldChunkPosition;
 			glm::ivec2 NewChunkPosition;
 		};
@@ -68,6 +69,10 @@ namespace onion::voxel
 		std::shared_ptr<Chunk> GetChunk(const glm::ivec2& chunkPosition) const;
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> GetAllChunks() const;
 
+		// ----- Public Members -----
+	  public:
+		std::shared_ptr<EntityManager> Entities = std::make_shared<EntityManager>();
+
 		// ----- Getters / Setters -----
 	  public:
 		std::filesystem::path GetCurrentWorldPath() const;
@@ -75,8 +80,8 @@ namespace onion::voxel
 		uint32_t GetSeed() const;
 		void SetSeed(uint32_t seed);
 
-		std::unordered_map<uint32_t, glm::vec3> GetPlayersPosition() const;
-		void SetPlayerPosition(uint32_t ClientHandle, const glm::vec3& position);
+		std::unordered_map<std::string, glm::vec3> GetPlayersPosition() const;
+		void SetPlayerPosition(const std::string& uuid, const glm::vec3& position);
 
 		uint8_t GetChunkPersistanceDistance() const;
 		void SetChunkPersistanceDistance(uint8_t distance);
@@ -109,9 +114,6 @@ namespace onion::voxel
 		std::atomic_uint32_t m_Seed{1};
 		std::atomic_uint8_t m_ChunkPersistanceDistance{5};
 		std::atomic_uint8_t m_ServerSimulationDistance{5};
-
-		mutable std::shared_mutex m_MutexPlayersPosition;
-		std::unordered_map<uint32_t, glm::vec3> m_PlayersPosition;
 
 		mutable std::shared_mutex m_MutexOutOfBoundsBlocks;
 		// Map of chunk position to list of out-of-bounds blocks that should be added to the chunk when it is added to the world

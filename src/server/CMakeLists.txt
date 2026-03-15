@@ -8,6 +8,7 @@ add_library(onion_voxel_server
 
 	"src/network_server/NetworkServer.cpp"
 	"src/world_generator/WorldGenerator.cpp"
+
 )
 
 target_link_libraries(onion_voxel_server
@@ -21,7 +22,8 @@ target_link_libraries(onion_voxel_server
 		onion::event
 		onion::threadsafequeue
 		onion::threadpool
-		onion_voxel_shared		
+		onion::logger
+		onion_voxel_shared
 )
 
 target_include_directories(onion_voxel_server
@@ -41,4 +43,13 @@ set_target_properties(onion_voxel_server PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
+)
+
+add_executable(OnionVoxelServer
+	"src/main.cpp"
+)
+
+target_link_libraries(OnionVoxelServer
+    PRIVATE
+        onion_voxel_server
 )

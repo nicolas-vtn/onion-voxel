@@ -6,6 +6,8 @@
 #include <thread>
 #include <unordered_map>
 
+#include <onion/Timer.hpp>
+
 #include "ServerConfiguration.hpp"
 #include "network_server/NetworkServer.hpp"
 
@@ -72,6 +74,12 @@ namespace onion::voxel
 
 		WorldGenerator m_WorldGenerator;
 
+		// ----- Timer Send Events -----
+	  private:
+		Timer m_TimerSendEvents;
+
+		void Handle_TimerSendEvents();
+
 		// ----- Players -----
 	  private:
 		struct PlayerInfo
@@ -79,17 +87,14 @@ namespace onion::voxel
 			std::string Username;
 			std::string UUID;
 			uint32_t ClientHandle = 0;
-			glm::vec3 Position{99999.0f, 99999.0f, 99999.0f};
 		};
 
 		mutable std::shared_mutex m_MutexPlayers;
-		std::unordered_map<uint32_t, PlayerInfo> m_Players;
-		std::unordered_map<uint32_t, glm::ivec2>
-			m_PlayerChunkPositions; // The chunk positions of the chunks that each player is currently in
+		std::unordered_map<uint32_t, PlayerInfo> m_ClientHandleToPlayerInfo;
+		std::unordered_map<std::string, PlayerInfo> m_UUIDToPlayerInfo;
 
-		void AddOrUpdatePlayer(const PlayerInfo& playerInfo);
-		void UpdatePlayerPosition(uint32_t clientHandle, const glm::vec3& newPosition);
-		void RemovePlayer(uint32_t clientHandle);
-		PlayerInfo GetPlayerInfo(uint32_t clientHandle) const;
+		void AddPlayer(const PlayerInfo& playerInfo);
+		void RemovePlayer(const std::string& uuid);
+		void UpdatePlayerPosition(const std::string& uuid, const glm::vec3& newPosition);
 	};
 } // namespace onion::voxel

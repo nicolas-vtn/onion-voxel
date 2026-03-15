@@ -83,6 +83,7 @@ namespace onion::voxel
 
 		// Apply configuration to the client
 		m_WorldManager->SetChunkPersistanceDistance(m_Config.clientData.RenderDistance);
+		m_Renderer.SetPlayerUUID(m_Config.clientData.UUID);
 	}
 
 	void Client::SaveConfiguration()
@@ -128,13 +129,41 @@ namespace onion::voxel
 		m_NetworkClient.Send(std::move(clientInfoMsg), true);
 	}
 
+	void Client::Handle_RequestStartMultiplayerGame(const Gui::MultiplayerGameStartInfo& multiplayerGameStartInfo)
+	{
+		m_NetworkClient.SetRemoteHost(multiplayerGameStartInfo.ServerAddress);
+		m_NetworkClient.SetRemotePort(multiplayerGameStartInfo.ServerPort);
+
+		if (!m_NetworkClient.IsRunning())
+		{
+			m_NetworkClient.Start();
+			m_TimerSendPlayerInfos.Start();
+		}
+		else
+		{
+			throw std::runtime_error("Network Client is already running");
+		}
+
+		// Sets Renderer UI to InGame UI.
+		m_Renderer.SetRenderState(Renderer::eRenderState::InGame);
+
+		// Sends a message to Server
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+		ClientInfoMsg clientInfoMsg;
+		clientInfoMsg.Username = m_Config.clientData.Username;
+		clientInfoMsg.UUID = m_Config.clientData.UUID;
+
+		m_NetworkClient.Send(std::move(clientInfoMsg), true);
+	}
+
 	void Client::Handle_StopSingleplayerGameRequest(const std::filesystem::path& worldPath)
 	{
 		(void) worldPath; // Currently unused
 		if (m_NetworkClient.IsRunning())
 		{
-			m_NetworkClient.Stop();
 			m_TimerSendPlayerInfos.Stop();
+			m_NetworkClient.Stop();
 		}
 
 		if (m_LocalhostServer != nullptr)
@@ -168,7 +197,9 @@ namespace onion::voxel
 	void Client::Handle_BlocksChanged(const WorldManager::BlocksChangedEventArgs& args)
 	{
 		// Do not send back to server ()
-		if (args.Origin == WorldManager::BlocksChangedEventArgs::eOrigin::OutOfBoundsPlaced)
+		bool isOutOfBoundsPlaced = (args.Origin == WorldManager::BlocksChangedEventArgs::eOrigin::OutOfBoundsPlaced);
+		bool isServerRequest = (args.Origin == WorldManager::BlocksChangedEventArgs::eOrigin::ServerRequest);
+		if (isOutOfBoundsPlaced || isServerRequest)
 		{
 			return;
 		}
@@ -196,6 +227,10 @@ namespace onion::voxel
 				(void) quit;
 				Handle_StopSingleplayerGameRequest("");
 			}));
+
+		m_RendererEventHandles.push_back(m_Renderer.RequestStartMultiplayerGame.Subscribe(
+			[this](const Gui::MultiplayerGameStartInfo& multiplayerGameStartInfo)
+			{ Handle_RequestStartMultiplayerGame(multiplayerGameStartInfo); }));
 	}
 
 	void Client::SubscribeToNetworkClientEvents()
@@ -238,6 +273,14 @@ namespace onion::voxel
 				else if constexpr (std::is_same_v<T, BlocksChangedMsg>)
 				{
 					Handle_BlocksChangedMessageReceived(msg);
+				}
+				else if constexpr (std::is_same_v<T, EntitySnapshotMsg>)
+				{
+					Handle_EntitySnapshotMessageReceived(msg);
+				}
+				else
+				{
+					std::cout << "Received unhandled message type from server\n";
 				}
 			},
 			message);
@@ -290,7 +333,37 @@ namespace onion::voxel
 
 		//std::cout << "Received BlocksChangedMsg: " << changedBlocks.size() << " changed blocks\n";
 
-		m_WorldManager->SetBlocks(changedBlocks, WorldManager::BlocksChangedEventArgs::eOrigin::ServerRequest, false);
+		m_WorldManager->SetBlocks(changedBlocks, WorldManager::BlocksChangedEventArgs::eOrigin::ServerRequest, true);
+	}
+
+	void Client::Handle_EntitySnapshotMessageReceived(const EntitySnapshotMsg& msg)
+	{
+		std::cout << "Received EntitySnapshotMsg: " << msg.Entities.size() << " entities\n";
+
+		std::vector<std::shared_ptr<Entity>> entities;
+		for (const auto& entityDTO : msg.Entities)
+		{
+			// Deserialize the entity and add it to the list of entities to update in the EntityManager
+			std::shared_ptr<Entity> entity = std::make_shared<Entity>(Serializer::DeserializeEntity(entityDTO));
+
+			if (entity->GetType() == EntityType::Player)
+			{
+				//std::cout << "Received player entity: " << entity->GetName() << " (UUID: " << entity->GetUUID()
+				//		  << ")\n";
+
+				std::shared_ptr<Player> playerEntity = std::make_shared<Player>(entity->GetUUID(), entity->GetName());
+				playerEntity->SetPosition(entity->GetPosition());
+				playerEntity->SetFacing(entity->GetFacing());
+
+				entities.push_back(playerEntity);
+			}
+			else
+			{
+				entities.push_back(entity);
+			}
+		}
+
+		m_WorldManager->Entities->UpdateEntities(entities);
 	}
 
 	void Client::SendPlayerInfosToServer()
