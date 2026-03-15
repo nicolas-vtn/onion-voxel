@@ -5,8 +5,81 @@
 #include <shared/utils/Stopwatch.hpp>
 #include <shared/utils/Utils.hpp>
 
+namespace
+{
+	constexpr int BIOME_CELL_SIZE = 1024; // blocks
+
+	static inline uint32_t Hash(int x, int z)
+	{
+		uint32_t h = x * 374761393u + z * 668265263u;
+		h = (h ^ (h >> 13)) * 1274126177u;
+		return h ^ (h >> 16);
+	}
+
+	static inline float HashFloat(uint32_t h)
+	{
+		return (h & 0xFFFFFF) / float(0xFFFFFF);
+	}
+
+	static inline glm::vec2 GetSeedPosition(int cellX, int cellZ)
+	{
+		uint32_t h = Hash(cellX, cellZ);
+
+		float rx = HashFloat(h);
+		float rz = HashFloat(h * 48271u);
+
+		return {cellX * BIOME_CELL_SIZE + rx * BIOME_CELL_SIZE, cellZ * BIOME_CELL_SIZE + rz * BIOME_CELL_SIZE};
+	}
+
+} // namespace
+
 namespace onion::voxel
 {
+	// ----- Static Members Initialization -----
+
+	std::vector<float> WorldGenerator::s_BiomeHeightsLookup = []()
+	{
+		std::vector<float> lookup(static_cast<size_t>(Biome::Count));
+		lookup[static_cast<size_t>(Biome::Ocean)] = 10.f;
+		lookup[static_cast<size_t>(Biome::Plains)] = 75.f;
+		lookup[static_cast<size_t>(Biome::Forest)] = 80.f;
+		lookup[static_cast<size_t>(Biome::Desert)] = 70.f;
+		lookup[static_cast<size_t>(Biome::Mountain)] = 150.f;
+		lookup[static_cast<size_t>(Biome::Snow)] = 90.f;
+		return lookup;
+	}();
+
+	std::vector<WorldGenerator::ColumnBlocks> WorldGenerator::s_BiomeColumnBlocksLookup = []()
+	{
+		std::vector<ColumnBlocks> lookup(static_cast<size_t>(Biome::Count));
+		// Ocean
+		lookup[static_cast<size_t>(Biome::Ocean)].layers = {{10, BlockId::Water}, {1, BlockId::Sand}};
+		lookup[static_cast<size_t>(Biome::Ocean)].fillBlock = BlockId::Stone;
+
+		// Plains
+		lookup[static_cast<size_t>(Biome::Plains)].layers = {{1, BlockId::Grass}, {2, BlockId::Dirt}};
+		lookup[static_cast<size_t>(Biome::Plains)].fillBlock = BlockId::Stone;
+
+		// Forest
+		lookup[static_cast<size_t>(Biome::Forest)].layers = {{1, BlockId::Grass}, {2, BlockId::Dirt}};
+		lookup[static_cast<size_t>(Biome::Forest)].fillBlock = BlockId::Stone;
+
+		// Desert
+		lookup[static_cast<size_t>(Biome::Desert)].layers = {{3, BlockId::Sand}, {3, BlockId::Sandstone}};
+		lookup[static_cast<size_t>(Biome::Desert)].fillBlock = BlockId::Stone;
+
+		// Mountain
+		lookup[static_cast<size_t>(Biome::Mountain)].layers = {{1, BlockId::Grass}};
+		lookup[static_cast<size_t>(Biome::Mountain)].fillBlock = BlockId::Stone;
+
+		// Snow
+		lookup[static_cast<size_t>(Biome::Snow)].layers = {{1, BlockId::SnowGrass}, {2, BlockId::Dirt}};
+		lookup[static_cast<size_t>(Biome::Snow)].fillBlock = BlockId::Stone;
+		return lookup;
+	}();
+
+	// ----- Constructor / Destructor -----
+
 	WorldGenerator::WorldGenerator(std::shared_ptr<WorldManager> worldManager) : m_WorldManager(worldManager)
 	{
 		SubscribeToWorldManagerEvents();
@@ -57,7 +130,7 @@ namespace onion::voxel
 	void WorldGenerator::Handle_SeedChanged(const uint32_t& newSeed)
 	{
 		(void) newSeed; // Unused parameter
-		ConfigureNoiseGenerator();
+		ConfigureNoiseGenerators();
 		m_SeededRandom.SetSeed(newSeed);
 	}
 
@@ -78,6 +151,12 @@ namespace onion::voxel
 				break;
 			case eWorldGenerationType::Classic:
 				genChunk = GenerateChunk_Classic(chunkPosition);
+				break;
+			case eWorldGenerationType::BiomeVisualizer:
+				genChunk = GenerateChunk_BiomeVisualizer(chunkPosition);
+				break;
+			case eWorldGenerationType::ClassicNoBiomes:
+				genChunk = GenerateChunk_ClassicNoBiomes(chunkPosition);
 				break;
 			default:
 				throw std::runtime_error("Invalid world generation type");
@@ -329,7 +408,7 @@ namespace onion::voxel
 					BlockId leavesId = (logId == BlockId::BirchLog) ? BlockId::BirchLeaves : BlockId::OakLeaves;
 
 					// Tree height between 2 and 6
-					int treeHeight = 2 + (m_SeededRandom.GetValue(worldPos + glm::ivec3(88, 654, 2584)) * 4);
+					int treeHeight = 2 + (int) (m_SeededRandom.GetValue(worldPos + glm::ivec3(88, 654, 2584)) * 4);
 
 					glm::ivec3 treeBlock = worldPos + glm::ivec3(0, 1, 0);
 					Schematic tree = GenerateTree(
@@ -358,14 +437,37 @@ namespace onion::voxel
 		{
 			for (uint8_t x = 0; x < CHUNK_SIZE; x++)
 			{
+				// ------ GENERATE HEIGHT MAP ------
+
 				int realWorldX = (chunkPosition.x * CHUNK_SIZE + x);
 				int realWorldZ = (chunkPosition.y * CHUNK_SIZE + z);
 
-				float noisePositionX = static_cast<float>(realWorldX) * m_SmoothnessX;
-				float noisePositionZ = static_cast<float>(realWorldZ) * m_SmoothnessZ;
+				float continents =
+					GetFractalNoise(m_NoiseContinent, (float) realWorldX, (float) realWorldZ, 3, 2.0f, 0.5f);
+
+				float mountains = std::max(
+					0.0f, GetFractalNoise(m_NoiseMountain, (float) realWorldX, (float) realWorldZ, 4, 2.0f, 0.5f));
+
+				float detail = GetFractalNoise(m_NoiseDetail, (float) realWorldX, (float) realWorldZ, 3, 2.0f, 0.5f);
+
+				float continentMask = (continents + 1.0f) * 0.5f; // [-1,1] -> [0,1]
+				continentMask = std::pow(continentMask, 1.5f);
+
+				float noiseHeight = continents * 50.f + (mountains * continentMask) * 75.0f + detail * 1.0f;
+
+				BiomeBlend biomeBlend = GetBiome(glm::ivec3(realWorldX, 0, realWorldZ));
+
+				float height = 0;
+				for (int i = 0; i < 9; i++)
+				{
+					const float h = GetBiomeHeight(biomeBlend.seeds[i].biome);
+					height += biomeBlend.weights[i] * h;
+				}
+
+				height += noiseHeight;
 
 				heightMap[x][z] =
-					static_cast<uint16_t>(GetTerrainHeight(m_FastNoiseLite.GetNoise(noisePositionX, noisePositionZ)));
+					static_cast<uint16_t>(std::clamp(height, 1.0f, static_cast<float>(m_WorldHeight - 1)));
 			}
 		}
 
@@ -376,125 +478,75 @@ namespace onion::voxel
 			{
 				uint16_t height = heightMap[x][z];
 
-				// Higher than sea level
-				if (height >= m_SeaLevel)
+				const glm::ivec3 worldPos = {
+					chunkPosition.x * CHUNK_SIZE + x, height, chunkPosition.y * CHUNK_SIZE + z};
+				const auto biomeBlend = GetBiome(worldPos);
+
+				const auto& biome = biomeBlend.seeds[0].biome; // Get the dominant biome
+				const ColumnBlocks& columnBlocks = GetColumnBlocksForBiome(biome);
+
+				if (biome == Biome::Ocean)
 				{
-					BlockId topBlockId = (height >= m_SnowLevel) ? BlockId::SnowGrass : BlockId::Grass;
-					for (uint16_t y = 0; y <= height + 1; y++)
+					ColumnBlocks oceanColumn;
+					int waterDepth = m_SeaLevel - height;
+					oceanColumn.layers.push_back({waterDepth, BlockId::Water});
+					int gravelDepth = 5;
+					oceanColumn.layers.push_back({gravelDepth, BlockId::Gravel});
+					oceanColumn.fillBlock = BlockId::Stone;
+
+					SetBlocksColumn(genChunk, glm::ivec2(x, z), m_SeaLevel, oceanColumn);
+
+					// Fills from the height to sea level with gravel
+					if (height > m_SeaLevel)
 					{
-						if (y == 0)
+						for (int y = m_SeaLevel; y <= height; y++)
 						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
+							chunk->SetBlock(glm::ivec3(x, y, z), BlockState(BlockId::Gravel));
 						}
-						else if (y == height)
+					}
+
+					continue;
+				}
+
+				SetBlocksColumn(genChunk, glm::ivec2(x, z), height, columnBlocks);
+
+				// Replace air blocks below sea level with water, and replace grass with dirt if underwater
+				if (height <= m_SeaLevel)
+				{
+					for (uint16_t y = 0; y <= m_SeaLevel; y++)
+					{
+						BlockState block = chunk->GetBlock(glm::ivec3(x, y, z));
+						if (block.ID == BlockId::Air)
 						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, topBlockId); // Set the Top block (grass or snow grass)
+							chunk->SetBlock(glm::ivec3(x, y, z), BlockState(BlockId::Water));
+							block.ID = BlockId::Water; // Update block variable for the next condition
 						}
-						else if (y == height + 1 && y < m_SnowLevel)
+						else if ((block.ID == BlockId::Grass || block.ID == BlockId::SnowGrass) && y < m_SeaLevel)
 						{
-							glm::ivec3 currentWorldPos = {
-								chunkPosition.x * CHUNK_SIZE + x, y, chunkPosition.y * CHUNK_SIZE + z};
-							if (ShouldGenerateShortGrass(currentWorldPos))
+							chunk->SetBlock(glm::ivec3(x, y, z), BlockState(BlockId::Dirt));
+							block.ID = BlockId::Dirt; // Update block variable for the next condition
+						}
+
+						// Top Layer Replacement
+						if (y == m_SeaLevel)
+						{
+							// Replace top water by ice in snowy biomes
+							if (biome == Biome::Snow && block.ID == BlockId::Water)
 							{
-								chunk->SetBlock_Unsafe((uint8_t) x, y, (uint8_t) z, BlockId::ShortGrass);
+								chunk->SetBlock(glm::ivec3(x, y, z), BlockState(BlockId::Ice));
+								block.ID = BlockId::Ice; // Update block variable for the next condition
 							}
-							if (ShouldGenerateFlower(currentWorldPos))
-							{
-								BlockId flowerId = GetFlowerType(currentWorldPos);
-								chunk->SetBlock_Unsafe((uint8_t) x, y, (uint8_t) z, flowerId);
-							}
-						}
-						else if (y == height - 1 || y == height - 2)
-						{
-							chunk->SetBlock_Unsafe((uint8_t) x,
-												   y,
-												   (uint8_t) z,
-												   BlockId::Dirt); // Set dirt blocks below the grass
-						}
-						else if (y < height)
-						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockId::Stone); // Set stone below the grass
 						}
 					}
 				}
 
-				// Lower than sea level
-				if (height < m_SeaLevel)
+				// If top block is not transparent, try to generate foliage on top of it
+				bool isAboveSeaLevel = height > m_SeaLevel;
+				bool isBlockTransparent = BlockState::IsTransparent(chunk->GetBlock(glm::ivec3(x, height, z)).ID);
+				if (isAboveSeaLevel && !isBlockTransparent)
 				{
-					for (uint16_t y = 0; y < m_WorldHeight; y++)
-					{
-						if (y == 0)
-						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
-						}
-						else if (y == height || y == height - 1)
-						{
-							chunk->SetBlock_Unsafe((uint8_t) x,
-												   y,
-												   (uint8_t) z,
-												   BlockId::Gravel); // Set gravel blocks below the sea level
-						}
-						else if (y < height)
-						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockId::Stone); // Set stone below the gravel
-						}
-						else if (y > height && y < m_SeaLevel)
-						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockId::Water); // Set water above the gravel
-						}
-					}
-				}
-			}
-		}
-
-		// Adds trees
-		for (uint8_t x = 0; x < WorldConstants::CHUNK_SIZE; x++)
-		{
-			for (uint8_t z = 0; z < WorldConstants::CHUNK_SIZE; z++)
-			{
-				int realWorldX = (chunkPosition.x * WorldConstants::CHUNK_SIZE + x);
-				int realWorldZ = (chunkPosition.y * WorldConstants::CHUNK_SIZE + z);
-				int height = heightMap[x][z];
-
-				glm::ivec3 worldPos = {realWorldX, height, realWorldZ};
-
-				if (height < m_SeaLevel)
-					continue; // Skip if the height is below sea level (no trees in water)
-
-				bool shouldGenerateTree = ShouldGenerateTree(worldPos);
-				if (shouldGenerateTree)
-				{
-					glm::ivec3 treeBlock = worldPos + glm::ivec3(0, 1, 0);
-
-					// Sets a dirtblock under the tree if the top block is grass
-					BlockState bottomBlock = chunk->GetBlock({x, height, z});
-					if (bottomBlock.ID == BlockId::Grass)
-					{
-						chunk->SetBlock({x, height, z}, BlockId::Dirt);
-					}
-
-					double val = m_SeededRandom.GetValue(worldPos + glm::ivec3(25, 2584, 88));
-					BlockId logId = (val < 0.025) ? BlockId::BirchLog : BlockId::OakLog; // 2.5% chance for birch
-					BlockId leavesId = (logId == BlockId::BirchLog) ? BlockId::BirchLeaves : BlockId::OakLeaves;
-					// Tree height between 2 and 6
-					int treeHeight = 2 + (m_SeededRandom.GetValue(worldPos + glm::ivec3(88, 654, 2584)) * 4);
-
-					Schematic tree = GenerateTree(treeBlock, treeHeight, logId, leavesId);
-					std::unordered_set<BlockId> overwritables;
-					overwritables.insert(BlockId::Air);
-					overwritables.insert(BlockId::ShortGrass);
-					for (const auto& blockId : BlockState::Flowers)
-					{
-						overwritables.insert(blockId);
-					}
-
-					MergeSchematicInChunk(tree, genChunk, overwritables);
+					glm::ivec3 localPosAbove = {x, height + 1, z};
+					AddFoliage(genChunk, worldPos + glm::ivec3(0, 1, 0), localPosAbove, biome);
 				}
 			}
 		}
@@ -505,61 +557,345 @@ namespace onion::voxel
 		return genChunk;
 	}
 
-	bool WorldGenerator::ShouldGenerateTree(const glm::ivec3& position) const
+	WorldGenerator::GenChunk WorldGenerator::GenerateChunk_ClassicNoBiomes(const glm::ivec2& chunkPosition)
 	{
+		GenChunk genChunk;
 
-		if (position.y > m_SnowLevel)
+		// Creates the Chunk
+		genChunk.chunk = std::make_shared<Chunk>(chunkPosition, 100);
+		auto& chunk = genChunk.chunk;
+
+		constexpr int CHUNK_SIZE = WorldConstants::CHUNK_SIZE;
+
+		// Gets the height map
+		uint16_t heightMap[CHUNK_SIZE][CHUNK_SIZE] = {0};
+		for (uint8_t z = 0; z < CHUNK_SIZE; z++)
 		{
-			return false; // Don't generate trees above the snow level
+			for (uint8_t x = 0; x < CHUNK_SIZE; x++)
+			{
+				// ------- GENERATE HEIGHT MAP WITHOUT BIOMES -------
+
+				int realWorldX = (chunkPosition.x * CHUNK_SIZE + x);
+				int realWorldZ = (chunkPosition.y * CHUNK_SIZE + z);
+
+				float warpX = GetFractalNoise(m_NoiseWarp, realWorldX, realWorldZ, 2, 2.0f, 0.5f) * 200.0f;
+				float warpZ = GetFractalNoise(m_NoiseWarp2, realWorldX, realWorldZ, 2, 2.0f, 0.5f) * 200.0f;
+
+				float continents =
+					GetFractalNoise(m_NoiseContinent, realWorldX + warpX, realWorldZ + warpZ, 3, 2.0f, 0.5f);
+
+				float mountains = GetFractalNoise(m_NoiseMountain, realWorldX, realWorldZ, 4, 2.0f, 0.5f);
+				float detail = GetFractalNoise(m_NoiseDetail, (float) realWorldX, (float) realWorldZ, 3, 2.0f, 0.5f);
+
+				// Map continent noise to [0,1]
+				float continentMask = (continents + 1.0f) * 0.5f;
+
+				float mountainStart = 0.35f;
+				float mountainEnd = 0.85f;
+
+				// Create a mask for mountains so that they only appear in the higher parts of the continents
+				continentMask = std::clamp((continentMask - mountainStart) / (mountainEnd - mountainStart), 0.0f, 1.0f);
+				continentMask = continentMask * continentMask * (3.0f - 2.0f * continentMask);
+
+				// Map mountains noise to [0,1], and apply a curve to have more flat areas and less extreme mountains
+				mountains = (mountains + 1.0f) * 0.5f;
+				mountains = mountains * mountains;
+
+				// Apply the continent mask to the mountains so that they only appear on continents
+				mountains *= continentMask;
+
+				float height = m_SeaLevel + continents * 50.0f + mountains * 300.0f + detail * 5.0f;
+
+				heightMap[z][x] =
+					static_cast<uint16_t>(std::clamp(height, 1.0f, static_cast<float>(m_WorldHeight - 1)));
+			}
 		}
 
-		double randomVal = m_SeededRandom.GetValue(position);
+		// Fills the chunks with blocks based on the height map
+		for (uint8_t z = 0; z < CHUNK_SIZE; z++)
+		{
+			for (uint8_t x = 0; x < CHUNK_SIZE; x++)
+			{
+				uint16_t height = heightMap[z][x];
 
-		// Less trees at higher altitudes
-		double altitudeFactor = static_cast<double>(position.y) / static_cast<double>(m_SnowLevel);
+				const glm::ivec3 worldPos = {
+					chunkPosition.x * CHUNK_SIZE + x, height, chunkPosition.y * CHUNK_SIZE + z};
 
-		constexpr double BASE_TREE_CHANCE = 0.02; // Base 2% chance to generate a tree
+				int adjustedSnowLevel = m_SnowLevel;
+				double val = m_SeededRandom.GetValue(worldPos);
+				constexpr int snowLevelVariation = 10;
 
-		randomVal += altitudeFactor * BASE_TREE_CHANCE; // Increase the random value slightly based on altitude
+				// From range [0,1] to range [-snowLevelVariation, snowLevelVariation]
+				int snowLevelOffset = static_cast<int>((val * 2.0 - 1.0) * snowLevelVariation);
+				adjustedSnowLevel += snowLevelOffset;
 
-		return randomVal < BASE_TREE_CHANCE;
+				// Higher than sea level
+				if (height >= m_SeaLevel)
+				{
+					BlockId topBlockId = (height >= adjustedSnowLevel) ? BlockId::SnowGrass : BlockId::Grass;
+					for (uint16_t y = 0; y <= height + 1; y++)
+					{
+						// Bedrock
+						if (y == 0)
+						{
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
+							continue;
+						}
+
+						float altitudeFactor = std::clamp(
+							(float) (height - m_SeaLevel) / (float) (adjustedSnowLevel - m_SeaLevel), 0.0f, 1.0f);
+						int numDirtLayers = (int) std::round((1.0f - altitudeFactor) * 3.0f);
+
+						// Stone layers
+						if (y < height - numDirtLayers)
+						{
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, y, (uint8_t) z, BlockId::Stone); // Set stone below the dirt
+							continue;
+						}
+
+						// Dirt layers
+						if (y < height)
+						{
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, y, (uint8_t) z, BlockId::Dirt); // Set dirt below the top block
+							continue;
+						}
+
+						if (y == height)
+						{
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, y, (uint8_t) z, topBlockId); // Set the Top block (grass or snow grass)
+							continue;
+						}
+					}
+				}
+				else
+				{
+					for (uint16_t y = 0; y < m_WorldHeight; y++)
+					{
+						// Bedrock
+						if (y == 0)
+						{
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
+						}
+						// Stone
+						else if (y < height - 3)
+						{
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, y, (uint8_t) z, BlockId::Stone); // Set stone at the bottom
+						}
+						// Gravel Or Sand
+						else if (y <= height)
+						{
+							// Deeper sea has gravel, shallower sea has sand
+							BlockId seaFloor = (height < m_SeaLevel - 8) ? BlockId::Gravel : BlockId::Sand;
+							chunk->SetBlock_Unsafe((uint8_t) x, y, (uint8_t) z, seaFloor);
+						}
+						else if (y > height && y < m_SeaLevel)
+						{
+							chunk->SetBlock_Unsafe(
+								(uint8_t) x, y, (uint8_t) z, BlockId::Water); // Set water above the gravel
+						}
+					}
+				}
+
+				// If top block is not transparent, try to generate foliage on top of it
+				bool isAboveSeaLevel = height > m_SeaLevel;
+				bool isBlockTransparent = BlockState::IsTransparent(chunk->GetBlock(glm::ivec3(x, height, z)).ID);
+				if (isAboveSeaLevel && !isBlockTransparent)
+				{
+					glm::ivec3 localPosAbove = {x, height + 1, z};
+					AddFoliage(genChunk, worldPos + glm::ivec3(0, 1, 0), localPosAbove, Biome::Forest);
+				}
+			}
+		}
+
+		// Optimize the chunk (less memory, faster to send to clients)
+		chunk->Optimize();
+
+		return genChunk;
 	}
 
-	bool WorldGenerator::ShouldGenerateShortGrass(const glm::ivec3& position) const
+	WorldGenerator::GenChunk WorldGenerator::GenerateChunk_BiomeVisualizer(const glm::ivec2& chunkPosition)
 	{
-		if (position.y > m_SnowLevel)
+		GenChunk genChunk;
+		genChunk.chunk = std::make_shared<Chunk>(chunkPosition);
+		auto& chunk = genChunk.chunk;
+
+		WorldGenerator::BiomeBlend biomeBlend;
+		for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
 		{
-			return false; // Don't generate short grass above the snow level
+			for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
+			{
+				glm::ivec3 worldPos = {(chunkPosition.x * WorldConstants::CHUNK_SIZE) + x,
+									   0, // Y doesn't matter for biome visualization
+									   (chunkPosition.y * WorldConstants::CHUNK_SIZE) + z};
+				biomeBlend = GetBiome(worldPos);
+
+				BlockId blockId;
+				switch (biomeBlend.seeds[0].biome)
+				{
+					case Biome::Plains:
+						blockId = BlockId::Grass;
+						break;
+					case Biome::Desert:
+						blockId = BlockId::Sand;
+						break;
+					case Biome::Mountain:
+						blockId = BlockId::Stone;
+						break;
+					case Biome::Forest:
+						blockId = BlockId::OakLog;
+						break;
+					case Biome::Snow:
+						blockId = BlockId::SnowGrass;
+						break;
+					case Biome::Ocean:
+						blockId = BlockId::Water;
+						break;
+
+					default:
+						blockId = BlockId::Dirt;
+						break;
+				}
+
+				float height = 0;
+				for (int i = 0; i < 9; i++)
+				{
+					const float h = GetBiomeHeight(biomeBlend.seeds[i].biome);
+					height += biomeBlend.weights[i] * h;
+				}
+
+				for (int y = 0; y < height; y++)
+				{
+					chunk->SetBlock(glm::ivec3(x, y, z), blockId);
+				}
+			}
 		}
 
-		double randomVal = m_SeededRandom.GetValue(position);
+		return genChunk;
+	}
+
+	bool WorldGenerator::ShouldGenerateTree(const glm::ivec3& position, Biome biome) const
+	{
+		double randomVal = m_SeededRandom.GetValue(position + glm::ivec3(25, 2584, 88));
+
+		// Less trees at higher altitudes
+		const double altitudeFactor = static_cast<double>(position.y) / static_cast<double>(m_SnowLevel);
+
+		//constexpr double BASE_TREE_CHANCE = 0.02; // Base 2% chance to generate a tree
+
+		// Base Tree chance depends on the biome
+		double baseTreeChance = 0.0;
+		switch (biome)
+		{
+			case Biome::Plains:
+				baseTreeChance = 0.003;
+				break;
+			case Biome::Forest:
+				baseTreeChance = 0.02;
+				break;
+			case Biome::Desert:
+				baseTreeChance = 0.0005;
+				break;
+			case Biome::Mountain:
+				baseTreeChance = 0.003;
+				break;
+			case Biome::Snow:
+				baseTreeChance = 0.003;
+				break;
+			default:
+				break;
+		}
+
+		randomVal += altitudeFactor * baseTreeChance; // Increase the random value slightly based on altitude
+
+		return randomVal < baseTreeChance;
+	}
+
+	bool WorldGenerator::ShouldGenerateShortGrass(const glm::ivec3& position, Biome biome) const
+	{
+		double randomVal = m_SeededRandom.GetValue(position + glm::ivec3(745, 324, 199));
 
 		// Less short grass at higher altitudes
 		double altitudeFactor = static_cast<double>(position.y) / static_cast<double>(m_SnowLevel);
 
-		constexpr double BASE_SHORT_GRASS_CHANCE = 0.25; // Base 25% chance to generate short grass
+		//constexpr double BASE_SHORT_GRASS_CHANCE = 0.25; // Base 25% chance to generate short grass
 
-		randomVal += altitudeFactor * BASE_SHORT_GRASS_CHANCE; // Increase the random value slightly based on altitude
-
-		return randomVal < BASE_SHORT_GRASS_CHANCE;
-	}
-
-	bool WorldGenerator::ShouldGenerateFlower(const glm::ivec3& position) const
-	{
-		if (position.y > m_SnowLevel)
+		// Get base chance depending on the biome
+		double baseChance = 0.0;
+		switch (biome)
 		{
-			return false; // Don't generate flowers above the snow level
+			case Biome::Plains:
+				baseChance = 0.25;
+				break;
+			case Biome::Forest:
+				baseChance = 0.05;
+				break;
+			case Biome::Desert:
+				baseChance = 0.01;
+				break;
+			case Biome::Mountain:
+				baseChance = 0.1;
+				break;
+			case Biome::Snow:
+				baseChance = 0.05;
+				break;
+			default:
+				break;
 		}
 
-		double randomVal = m_SeededRandom.GetValue(position);
+		if (m_WorldGenerationType == eWorldGenerationType::ClassicNoBiomes)
+		{
+			baseChance = 0.25; // In ClassicNoBiomes, use the plains chance for short grass
+		}
+
+		randomVal += altitudeFactor * baseChance; // Increase the random value slightly based on altitude
+
+		return randomVal < baseChance;
+	}
+
+	bool WorldGenerator::ShouldGenerateFlower(const glm::ivec3& position, Biome biome) const
+	{
+		double randomVal = m_SeededRandom.GetValue(position + glm::ivec3(1, 46, 789));
 
 		// Less flowers at higher altitudes
 		double altitudeFactor = static_cast<double>(position.y) / static_cast<double>(m_SnowLevel);
 
-		constexpr double BASE_FLOWER_CHANCE = 0.05; // Base 5% chance to generate flowers
+		//constexpr double BASE_FLOWER_CHANCE = 0.05; // Base 5% chance to generate flowers
 
-		randomVal += altitudeFactor * BASE_FLOWER_CHANCE; // Increase the random value slightly based on altitude
-		return randomVal < BASE_FLOWER_CHANCE;
+		double baseFlowerChance = 0.0;
+		switch (biome)
+		{
+			case Biome::Plains:
+				baseFlowerChance = 0.05;
+				break;
+			case Biome::Forest:
+				baseFlowerChance = 0.02;
+				break;
+			case Biome::Desert:
+				baseFlowerChance = 0.001;
+				break;
+			case Biome::Mountain:
+				baseFlowerChance = 0.01;
+				break;
+			case Biome::Snow:
+				baseFlowerChance = 0.01;
+				break;
+			default:
+				break;
+		}
+
+		if (m_WorldGenerationType == eWorldGenerationType::ClassicNoBiomes)
+		{
+			baseFlowerChance = 0.05; // In ClassicNoBiomes, use the plains chance for flowers
+		}
+
+		randomVal += altitudeFactor * baseFlowerChance; // Increase the random value slightly based on altitude
+		return randomVal < baseFlowerChance;
 	}
 
 	BlockId WorldGenerator::GetFlowerType(const glm::ivec3& position) const
@@ -568,6 +904,122 @@ namespace onion::voxel
 		const double flowerVal = m_SeededRandom.GetValue(val);
 		const size_t index = static_cast<size_t>(flowerVal * BlockState::Flowers.size());
 		return BlockState::Flowers[index];
+	}
+
+	void WorldGenerator::SetBlocksColumn(GenChunk& genChunk,
+										 const glm::ivec2& localPos,
+										 int height,
+										 const ColumnBlocks& columnBlocks)
+	{
+		const auto& chunk = genChunk.chunk;
+		const auto& layers = columnBlocks.layers;
+
+		int y = height;
+
+		for (auto& [layerHeight, blockId] : layers)
+		{
+			for (int i = 0; i < layerHeight && y > 0; i++)
+			{
+				chunk->SetBlock(glm::ivec3(localPos.x, y, localPos.y), BlockState(blockId));
+				y--;
+			}
+		}
+
+		// Fill remaining height with the last block type
+		while (y > 0)
+		{
+			chunk->SetBlock(glm::ivec3(localPos.x, y, localPos.y), BlockState(columnBlocks.fillBlock));
+			y--;
+		}
+
+		// Ensure bedrock at the bottom
+		chunk->SetBlock(glm::ivec3(localPos.x, 0, localPos.y), BlockState(BlockId::Bedrock));
+	}
+
+	const WorldGenerator::ColumnBlocks& WorldGenerator::GetColumnBlocksForBiome(Biome biome) const
+	{
+		return s_BiomeColumnBlocksLookup[static_cast<size_t>(biome)];
+	}
+
+	WorldGenerator::BiomeBlend WorldGenerator::GetBiome(const glm::ivec3& pos) const
+	{
+		const float noiseX = GetFractalNoise(m_NoiseWarp, (float) pos.x, (float) pos.z, 4, 2.0f, 0.5f) * 200.f;
+		const float noiseZ = GetFractalNoise(m_NoiseWarp2, (float) pos.z, (float) pos.x, 4, 2.0f, 0.5f) * 200.f;
+
+		const float x = pos.x + noiseX;
+		const float z = pos.z + noiseZ;
+
+		return GetBiomeBlend(x, z);
+	}
+
+	Biome WorldGenerator::GetSeedBiome(int cellX, int cellZ)
+	{
+		uint32_t h = Hash(cellX, cellZ);
+		auto index = h % static_cast<uint32_t>(Biome::Count);
+		return static_cast<Biome>(index);
+	}
+
+	WorldGenerator::BiomeBlend WorldGenerator::GetBiomeBlend(float x, float z)
+	{
+		const int cellX = static_cast<int>(std::floor(x / BIOME_CELL_SIZE));
+		const int cellZ = static_cast<int>(std::floor(z / BIOME_CELL_SIZE));
+
+		WorldGenerator::BiomeBlend blend;
+		for (int i = 0; i < 9; i++)
+		{
+			blend.seeds[i] = {FLT_MAX, Biome::Plains};
+			blend.weights[i] = 0.0f;
+		}
+
+		int index = 0;
+		for (int dz = -1; dz <= 1; dz++)
+		{
+			for (int dx = -1; dx <= 1; dx++)
+			{
+				const int cx = cellX + dx;
+				const int cz = cellZ + dz;
+
+				const glm::vec2 seed = GetSeedPosition(cx, cz);
+
+				const float dxs = seed.x - x;
+				const float dzs = seed.y - z;
+
+				const float dist = sqrt(dxs * dxs + dzs * dzs);
+
+				const Biome biome = GetSeedBiome(cx, cz);
+
+				blend.seeds[index] = {dist, biome};
+				index++;
+			}
+		}
+
+		// Sort by distance (closest first)
+		std::sort(std::begin(blend.seeds),
+				  std::end(blend.seeds),
+				  [](const WorldGenerator::BiomeSeed& a, const WorldGenerator::BiomeSeed& b)
+				  { return a.dist < b.dist; });
+
+		// Lower k = smoother biome transitions, higher k = sharper biome transitions
+		constexpr float K = 30.0f / BIOME_CELL_SIZE;
+
+		float sum = 0;
+		for (int i = 0; i < 9; i++)
+		{
+			blend.weights[i] = exp(-blend.seeds[i].dist * K);
+			sum += blend.weights[i];
+		}
+
+		for (int i = 0; i < 9; i++)
+		{
+			blend.weights[i] /= sum;
+		}
+
+		return blend;
+	}
+
+	float WorldGenerator::GetBiomeHeight(Biome biome)
+	{
+		return s_BiomeHeightsLookup[static_cast<size_t>(biome)];
 	}
 
 	void WorldGenerator::MergeSchematicInChunk(const Schematic& schematic,
@@ -619,14 +1071,13 @@ namespace onion::voxel
 		}
 	}
 
-	Schematic
-	WorldGenerator::GenerateTree(const glm::ivec3& position, int height, BlockId logType, BlockId leavesType) const
+	Schematic WorldGenerator::GenerateTree(const glm::ivec3& position, int height, BlockId logType, BlockId leavesType)
 	{
 		glm::ivec3 treePosition{position.x, position.y, position.z};
 
 		glm::ivec3 SchematicOrigin{treePosition.x - 2, treePosition.y, treePosition.z - 2};
 
-		Schematic treeSchematic({5, 10, 5}, SchematicOrigin);
+		Schematic treeSchematic({5, 20, 5}, SchematicOrigin);
 
 		constexpr int MIN_TREE_HEIGHT = 2;
 
@@ -689,11 +1140,138 @@ namespace onion::voxel
 		return treeSchematic;
 	}
 
-	void WorldGenerator::ConfigureNoiseGenerator()
+	Schematic WorldGenerator::GenerateCactus(const glm::ivec3& position, int height)
 	{
-		m_FastNoiseLite.SetSeed(GetSeed());
-		m_FastNoiseLite.SetNoiseType(m_NoiseType);
-		m_FastNoiseLite.SetFrequency(m_Frequency); // Smaller = smoother, larger = more rugged
+		glm::ivec3 cactusPosition{position.x, position.y, position.z};
+		glm::ivec3 SchematicOrigin{cactusPosition.x, cactusPosition.y, cactusPosition.z};
+		Schematic cactusSchematic({1, 20, 1}, SchematicOrigin);
+		constexpr int MIN_CACTUS_HEIGHT = 2;
+		int cactusHeight = std::max(height, MIN_CACTUS_HEIGHT);
+
+		BlockState cactusBlock = BlockState(BlockId::Cactus);
+		for (int y = 0; y < cactusHeight; y++)
+		{
+			cactusSchematic.SetBlock({0, y, 0}, cactusBlock); // Set the cactus block
+		}
+
+		// Flower on top of the cactus
+		cactusSchematic.SetBlock({0, cactusHeight, 0}, BlockState(BlockId::CactusFlower));
+		return cactusSchematic;
+	}
+
+	void WorldGenerator::AddFoliage(GenChunk& genChunk, const glm::ivec3& worldPos, glm::ivec3& localPos, Biome biome)
+	{
+		bool shouldGenerateTree = ShouldGenerateTree(worldPos, biome);
+
+		if (shouldGenerateTree)
+		{
+			BlockId logId = BlockId::OakLog;
+			BlockId leavesId = BlockId::OakLeaves;
+			int minTreeHeight = 2;
+
+			switch (biome)
+			{
+				case Biome::Snow:
+					logId = BlockId::SpruceLog;
+					leavesId = BlockId::SpruceLeaves;
+					minTreeHeight = 6;
+					break;
+				case Biome::Plains:
+					logId = BlockId::BirchLog;
+					leavesId = BlockId::BirchLeaves;
+					minTreeHeight = 4;
+					break;
+				default:
+					break;
+			}
+
+			// Tree height between minTreeHeight and minTreeHeight + 4
+			int treeHeight =
+				minTreeHeight + static_cast<int>(m_SeededRandom.GetValue(worldPos + glm::ivec3(41, 588, 77)) * 4);
+
+			Schematic tree(glm::ivec3(0));
+			if (biome == Biome::Desert)
+			{
+				tree = GenerateCactus(worldPos, treeHeight);
+			}
+			else
+			{
+				tree = GenerateTree(worldPos, treeHeight, logId, leavesId);
+			}
+
+			std::unordered_set<BlockId> overwritables;
+			overwritables.insert(BlockId::Air);
+			overwritables.insert(BlockId::OakLeaves);
+			overwritables.insert(BlockId::SpruceLeaves);
+			overwritables.insert(BlockId::BirchLeaves);
+			MergeSchematicInChunk(tree, genChunk, overwritables);
+
+			// Set dirt block under the tree
+			glm::ivec3 belowTree = localPos + glm::ivec3(0, -1, 0);
+			genChunk.chunk->SetBlock(belowTree, BlockState(BlockId::Dirt));
+		}
+
+		// If top block is available
+		if (genChunk.chunk->GetBlock(localPos).ID == BlockId::Air)
+		{
+			if (ShouldGenerateShortGrass(worldPos, biome))
+			{
+				BlockId grassId = (biome == Biome::Desert) ? BlockId::DeadBush : BlockId::ShortGrass;
+				genChunk.chunk->SetBlock(localPos, BlockState(grassId));
+			}
+			else if (ShouldGenerateFlower(worldPos, biome))
+			{
+				BlockId flowerId = GetFlowerType(worldPos + glm::ivec3(4520, 4541, 970));
+				genChunk.chunk->SetBlock(localPos, BlockState(flowerId));
+			}
+		}
+
+		// Chose block palette based on biome
+	}
+
+	void WorldGenerator::ConfigureNoiseGenerators()
+	{
+		uint32_t seed = GetSeed();
+		m_NoiseContinent.SetSeed(seed);
+		m_NoiseContinent.SetNoiseType(m_NoiseType);
+		m_NoiseContinent.SetFrequency(m_FrequencyContinent);
+
+		m_NoiseMountain.SetSeed(seed + 1);
+		m_NoiseMountain.SetNoiseType(m_NoiseType);
+		m_NoiseMountain.SetFrequency(m_FrequencyMountain);
+
+		m_NoiseDetail.SetSeed(seed + 2);
+		m_NoiseDetail.SetNoiseType(m_NoiseType);
+		m_NoiseDetail.SetFrequency(m_FrequencyDetail);
+
+		m_NoiseWarp.SetSeed(seed + 5);
+		m_NoiseWarp.SetNoiseType(m_NoiseType);
+		m_NoiseWarp.SetFrequency(m_FrequencyWarp);
+
+		m_NoiseWarp2.SetSeed(seed + 6);
+		m_NoiseWarp2.SetNoiseType(m_NoiseType);
+		m_NoiseWarp2.SetFrequency(m_FrequencyWarp);
+	}
+
+	float WorldGenerator::GetFractalNoise(
+		const FastNoiseLite& noise, float x, float z, int octaves, float lacunarity, float gain) const
+	{
+		float amplitude = 1.0f;
+		float frequency = 1.0f;
+
+		float value = 0.0f;
+		float maxValue = 0.0f;
+
+		for (int i = 0; i < octaves; i++)
+		{
+			value += noise.GetNoise(x * frequency, z * frequency) * amplitude;
+			maxValue += amplitude;
+
+			frequency *= lacunarity;
+			amplitude *= gain;
+		}
+
+		return (maxValue > 0.0f) ? (value / maxValue) : 0.0f;
 	}
 
 	constexpr float WorldGenerator::GetTerrainHeight(float noiseHeight) const

@@ -16,10 +16,14 @@ namespace onion::voxel
 		OakLeaves,
 		BirchLog,
 		BirchLeaves,
+		SpruceLog,
+		SpruceLeaves,
 		Furnace,
 		Bedrock,
 		Water,
+		Ice,
 		Sand,
+		Sandstone,
 		Gravel,
 		Cobblestone,
 		Poppy,
@@ -35,11 +39,15 @@ namespace onion::voxel
 		OrangeTulip,
 		WhiteTulip,
 		PinkTulip,
+		Cactus,
+		CactusFlower,
+
+		Count,
 	};
 
 	inline int GetBlockIdCount()
 	{
-		return 30;
+		return static_cast<int>(BlockId::Count);
 	}
 
 } // namespace onion::voxel

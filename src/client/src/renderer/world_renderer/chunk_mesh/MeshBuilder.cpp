@@ -162,6 +162,11 @@ namespace onion::voxel
 				visibility[i] = false;
 				continue;
 			}
+			else if (block.ID == BlockId::Ice && neighbors[i].ID != BlockId::Air && neighbors[i].ID != BlockId::Water)
+			{
+				visibility[i] = false;
+				continue;
+			}
 
 			//if (block.ID == BlockId::OakLeaves && neighbors[i].ID == BlockId::OakLeaves)
 			//{
