@@ -10,6 +10,7 @@ namespace onion::voxel
 		table[static_cast<size_t>(BlockId::Glass)] = true;
 		table[static_cast<size_t>(BlockId::OakLeaves)] = true;
 		table[static_cast<size_t>(BlockId::BirchLeaves)] = true;
+		table[static_cast<size_t>(BlockId::SpruceLeaves)] = true;
 		table[static_cast<size_t>(BlockId::Water)] = true;
 		table[static_cast<size_t>(BlockId::Poppy)] = true;
 		table[static_cast<size_t>(BlockId::Dandelion)] = true;
@@ -24,6 +25,8 @@ namespace onion::voxel
 		table[static_cast<size_t>(BlockId::OrangeTulip)] = true;
 		table[static_cast<size_t>(BlockId::WhiteTulip)] = true;
 		table[static_cast<size_t>(BlockId::PinkTulip)] = true;
+		table[static_cast<size_t>(BlockId::Ice)] = true;
+		table[static_cast<size_t>(BlockId::CactusFlower)] = true;
 		return table;
 	}();
 
@@ -32,6 +35,8 @@ namespace onion::voxel
 		std::vector<RotationType> table(static_cast<size_t>(GetBlockIdCount()), RotationType::None);
 		table[static_cast<size_t>(BlockId::Furnace)] = RotationType::Horizontal;
 		table[static_cast<size_t>(BlockId::OakLog)] = RotationType::Pillar;
+		table[static_cast<size_t>(BlockId::BirchLog)] = RotationType::Pillar;
+		table[static_cast<size_t>(BlockId::Sandstone)] = RotationType::Horizontal;
 		return table;
 	}();
 

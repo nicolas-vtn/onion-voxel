@@ -59,6 +59,13 @@ namespace onion::voxel
 		PreRegister(BlockId::Water, TextureInfo{"water_still.png", Tint::Water, Transparency::Transparent});
 
 		PreRegister(BlockId::Sand, "sand.png");
+		PreRegister(BlockId::Sandstone,
+					{TextureInfo{"sandstone_top.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"sandstone_bottom.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"sandstone.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"sandstone.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"sandstone.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"sandstone.png", Tint::None, Transparency::Opaque}});
 
 		PreRegister(BlockId::Gravel, "gravel.png");
 
@@ -104,6 +111,29 @@ namespace onion::voxel
 					 TextureInfo{"birch_log.png", Tint::None, Transparency::Opaque}});
 
 		PreRegister(BlockId::BirchLeaves, TextureInfo{"birch_leaves.png", Tint::Foliage, Transparency::Cutout});
+
+		PreRegister(BlockId::Ice, TextureInfo{"ice.png", Tint::None, Transparency::Transparent});
+
+		PreRegister(BlockId::SpruceLog,
+					{TextureInfo{"spruce_log.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"spruce_log.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"spruce_log_top.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"spruce_log_top.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"spruce_log.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"spruce_log.png", Tint::None, Transparency::Opaque}});
+
+		PreRegister(BlockId::SpruceLeaves, TextureInfo{"spruce_leaves.png", Tint::Foliage, Transparency::Cutout});
+
+		PreRegister(BlockId::Cactus,
+					{TextureInfo{"cactus_top.png", Tint::None, Transparency::Cutout},
+					 TextureInfo{"cactus_bottom.png", Tint::None, Transparency::Cutout},
+					 TextureInfo{"cactus_side.png", Tint::None, Transparency::Cutout},
+					 TextureInfo{"cactus_side.png", Tint::None, Transparency::Cutout},
+					 TextureInfo{"cactus_side.png", Tint::None, Transparency::Cutout},
+					 TextureInfo{"cactus_side.png", Tint::None, Transparency::Cutout}});
+
+		PreRegister(
+			BlockId::CactusFlower, TextureInfo{"cactus_flower.png", Tint::None, Transparency::Cutout}, Model::Cross);
 	}
 
 	void BlockRegistry::PreRegister(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel)

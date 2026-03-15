@@ -43,6 +43,13 @@ namespace onion::voxel
 			float weights[9];
 		};
 
+		struct ColumnBlocks
+		{
+			// pair<height, blockId>, sorted by height descending (top block first)
+			std::vector<std::pair<int, BlockId>> layers;
+			BlockId fillBlock = BlockId::Stone;
+		};
+
 		// ----- Constructor / Destructor -----
 	  public:
 		WorldGenerator(std::shared_ptr<WorldManager> worldManager);
@@ -74,11 +81,12 @@ namespace onion::voxel
 		{
 			DemoBlocks,
 			Superflat,
+			ClassicNoBiomes,
 			Classic,
 			BiomeVisualizer,
 		};
 
-		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::Classic;
+		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::ClassicNoBiomes;
 
 		// ----- Chunk Generation Thread -----
 	  private:
@@ -89,14 +97,18 @@ namespace onion::voxel
 		GenChunk GenerateChunk_DemoBlocks(const glm::ivec2& chunkPosition);
 		GenChunk GenerateChunk_Superflat(const glm::ivec2& chunkPosition);
 		GenChunk GenerateChunk_Classic(const glm::ivec2& chunkPosition);
+		GenChunk GenerateChunk_ClassicNoBiomes(const glm::ivec2& chunkPosition);
 		GenChunk GenerateChunk_BiomeVisualizer(const glm::ivec2& chunkPosition);
 
 		// ----- Structures Generation -----
 	  private:
-		bool ShouldGenerateTree(const glm::ivec3& position) const;
-		bool ShouldGenerateShortGrass(const glm::ivec3& position) const;
-		bool ShouldGenerateFlower(const glm::ivec3& position) const;
+		bool ShouldGenerateTree(const glm::ivec3& position, Biome biome = Biome::Plains) const;
+		bool ShouldGenerateShortGrass(const glm::ivec3& position, Biome biome = Biome::Plains) const;
+		bool ShouldGenerateFlower(const glm::ivec3& position, Biome biome = Biome::Plains) const;
 		BlockId GetFlowerType(const glm::ivec3& position) const;
+
+		void SetBlocksColumn(GenChunk& chunk, const glm::ivec2& localPos, int height, const ColumnBlocks& columnBlocks);
+		const ColumnBlocks& GetColumnBlocksForBiome(Biome biome) const;
 
 		BiomeBlend GetBiome(const glm::ivec3& pos) const;
 
@@ -105,13 +117,17 @@ namespace onion::voxel
 		static float GetBiomeHeight(Biome biome);
 
 		static std::vector<float> s_BiomeHeightsLookup;
+		static std::vector<ColumnBlocks> s_BiomeColumnBlocksLookup;
 
 		// ------------ STRUCTURES ------------
 		static void MergeSchematicInChunk(const Schematic& schematic,
 										  GenChunk& chunk,
 										  const std::unordered_set<BlockId>& overwritables = {BlockId::Air});
 
-		Schematic GenerateTree(const glm::ivec3& position, int height, BlockId logType, BlockId leavesType) const;
+		static Schematic GenerateTree(const glm::ivec3& position, int height, BlockId logType, BlockId leavesType);
+		static Schematic GenerateCactus(const glm::ivec3& position, int height);
+
+		void AddFoliage(GenChunk& genChunk, const glm::ivec3& worldPosition, glm::ivec3& localPosition, Biome biome);
 
 		// ----- Classic Generation Parameters -----
 	  private:
@@ -125,16 +141,10 @@ namespace onion::voxel
 		float m_FrequencyContinent = 0.0006f; // Smaller = smoother, larger = more rugged
 
 		FastNoiseLite m_NoiseMountain;
-		float m_FrequencyMountain = 0.003f; // Smaller = smoother, larger = more rugged
+		float m_FrequencyMountain = 0.0015f; // Smaller = smoother, larger = more rugged
 
 		FastNoiseLite m_NoiseDetail;
 		float m_FrequencyDetail = 0.02f; // Smaller = smoother, larger = more rugged
-
-		FastNoiseLite m_NoiseTemperature;
-		float m_FrequencyTemperature = 0.0006f; // Smaller = smoother, larger = more rugged
-
-		FastNoiseLite m_NoiseHumidity;
-		float m_FrequencyHumidity = 0.0006f; // Smaller = smoother, larger = more rugged
 
 		FastNoiseLite m_NoiseWarp;
 		float m_FrequencyWarp = 0.0008f; // Smaller = smoother, larger = more rugged
