@@ -5,7 +5,8 @@ namespace onion::voxel
 
 	DemoPanel::DemoPanel(const std::string& name)
 		: GuiElement(name), m_Button("DemoButton"), m_Sprite("DemoSprite", m_SpritePath, Sprite::eOrigin::Asset),
-		  m_Button2("DemoButton2"), m_ButtonMainMenu("MainMenuButton"), m_Checkbox("DemoCheckbox")
+		  m_Button2("DemoButton2"), m_ButtonMainMenu("MainMenuButton"), m_Checkbox("DemoCheckbox"),
+		  m_TextField("DemoTextField")
 	{
 
 		SubscribeToControlEvents();
@@ -24,6 +25,11 @@ namespace onion::voxel
 		m_ButtonMainMenu.SetSize({200.f, 40.f});
 		m_ButtonMainMenu.SetText("Main Menu");
 		m_ButtonMainMenu.SetEnabled(true);
+
+		m_TextField.SetPosition({400, 600});
+		m_TextField.SetSize({200.f, 40.f});
+		m_TextField.SetText("");
+		m_TextField.SetPlaceholderText("Placeholder text...");
 	}
 
 	void DemoPanel::Render()
@@ -87,6 +93,15 @@ namespace onion::voxel
 		m_Checkbox.SetPosition(cbPosition);
 		m_Checkbox.SetSize(cbSize);
 		m_Checkbox.Render();
+
+		// ---- Render TextField ----
+		float textFieldXRatio = 0.5f;
+		float textFieldYRatio = 0.7f;
+		const glm::vec2 textFieldPos{s_ScreenWidth * textFieldXRatio, s_ScreenHeight * textFieldYRatio};
+
+		m_TextField.SetPosition(textFieldPos);
+		m_TextField.SetSize(buttonSize);
+		m_TextField.Render();
 	}
 
 	void DemoPanel::Initialize()
@@ -96,6 +111,7 @@ namespace onion::voxel
 		m_ButtonMainMenu.Initialize();
 		m_Sprite.Initialize();
 		m_Checkbox.Initialize();
+		m_TextField.Initialize();
 
 		SetInitState(true);
 	}
@@ -107,6 +123,7 @@ namespace onion::voxel
 		m_ButtonMainMenu.Delete();
 		m_Sprite.Delete();
 		m_Checkbox.Delete();
+		m_TextField.Delete();
 
 		SetDeletedState(true);
 	}
@@ -118,6 +135,7 @@ namespace onion::voxel
 		m_ButtonMainMenu.ReloadTextures();
 		m_Sprite.ReloadTextures();
 		m_Checkbox.ReloadTextures();
+		m_TextField.ReloadTextures();
 	}
 
 	void DemoPanel::SubscribeToControlEvents()

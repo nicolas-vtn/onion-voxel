@@ -9,6 +9,14 @@ namespace onion::voxel
 	void Gui::StaticInitialize()
 	{
 		GuiElement::Load();
+
+		const auto& inputsManager = EngineContext::Get().Inputs;
+		s_HandleFramebufferResized = inputsManager->EventFramebufferResized.Subscribe(
+			[](const FramebufferState& framebufferState) { Handle_FramebufferResized(framebufferState); });
+
+		// Initialize the framebuffer size based on the current state of the InputsManager
+		FramebufferState framebufferState = inputsManager->GetFramebufferState();
+		Handle_FramebufferResized(framebufferState);
 	}
 
 	void Gui::StaticShutdown()
@@ -124,9 +132,9 @@ namespace onion::voxel
 		GuiElement::SetInputsSnapshot(inputsSnapshot);
 	}
 
-	void Gui::SetScreenSize(int screenWidth, int screenHeight)
+	void Gui::Handle_FramebufferResized(const FramebufferState& framebufferState)
 	{
-		GuiElement::SetScreenSize(screenWidth, screenHeight);
+		GuiElement::SetScreenSize(framebufferState.Width, framebufferState.Height);
 	}
 
 	void Gui::RenderDebugPanel()

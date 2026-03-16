@@ -97,8 +97,6 @@ namespace onion::voxel
 		std::filesystem::path m_WindowIconPath = GetAssetsPath() / "app_icons" / "Vox_Client_Title.png";
 		void SetupWindowIcon();
 
-		void FramebufferSizeCallback(int width, int height);
-
 		double m_DeltaTime = 0.0f;
 		double m_LastFrame = 0.0f;
 
@@ -106,6 +104,10 @@ namespace onion::voxel
 	  private:
 		InputsManager m_InputsManager;
 		std::shared_ptr<InputsSnapshot> m_InputsSnapshot;
+		std::vector<EventHandle> m_InputsManagerEventHandles;
+		void SubscribeToInputsManagerEvents();
+
+		void Handle_FramebufferResized(const FramebufferState& framebufferState);
 
 		void RegisterInputs();
 		void ProcessInputs(const std::shared_ptr<InputsSnapshot>& inputs);

@@ -18,11 +18,21 @@ namespace onion::voxel
 			float shadowOffset = m_TextHeight / s_TextFont.GetGlyphSize().y;
 			glm::vec2 shadowOffsetVec{shadowOffset, shadowOffset};
 
+			glm::vec4 shadowColor;
+			if (m_DefaultShadowColor)
+			{
+				shadowColor = m_TextColor / 4.f;
+			}
+			else
+			{
+				shadowColor = m_ShadowColor;
+			}
+
 			s_TextFont.RenderText(m_Text,
 								  m_TextAlignment,
 								  m_Position + shadowOffsetVec,
 								  m_TextHeight,
-								  m_ShadowColor,
+								  shadowColor,
 								  m_zOffset - 0.01f,
 								  m_RotationDegrees);
 		}
@@ -115,7 +125,19 @@ namespace onion::voxel
 	void Label::SetShadowColor(const glm::vec4& color)
 	{
 		std::lock_guard lock(m_MutexState);
+		m_DefaultShadowColor = false;
 		m_ShadowColor = color;
+	}
+
+	void Label::SetShadowColor(const glm::vec3& color)
+	{
+		SetShadowColor(glm::vec4(color, 1.f));
+	}
+
+	void Label::ResetShadowColor()
+	{
+		std::lock_guard lock(m_MutexState);
+		m_DefaultShadowColor = true;
 	}
 
 	glm::vec4 Label::GetShadowColor() const

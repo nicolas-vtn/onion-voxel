@@ -65,7 +65,7 @@ add_executable(OnionVoxel
 	"src/renderer/assets_manager/AssetsManager.cpp"
 	"src/renderer/assets_manager/resource_pack_manager/ResourcePackManager.cpp"
 
-)
+ "src/renderer/gui/controls/text_field/TextField.cpp")
 
 if (WIN32)
     target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)

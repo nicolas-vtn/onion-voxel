@@ -3,6 +3,8 @@
 #include <shared_mutex>
 #include <unordered_map>
 
+#include <onion/Event.hpp>
+
 #include <renderer/OpenGL.hpp>
 
 #include "inputs.hpp"
@@ -143,6 +145,11 @@ namespace onion::voxel
 		void SetCursorStyle(const CursorStyle& style);
 		/// @brief Retrieves the current cursor style for the application.
 		CursorStyle GetCursorStyle() const;
+
+		// ------------ Events ------------
+	  public:
+		/// @brief Event triggered when the framebuffer is resized. Triggered functions will be called on Render Thread.
+		Event<const FramebufferState&> EventFramebufferResized;
 
 		// ------------ INPUTS SNAPSHOT MANAGEMENT ------------
 	  private:

@@ -4,6 +4,7 @@
 #include <renderer/gui/controls/button/Button.hpp>
 #include <renderer/gui/controls/checkbox/Checkbox.hpp>
 #include <renderer/gui/controls/sprite/Sprite.hpp>
+#include <renderer/gui/controls/text_field/TextField.hpp>
 
 namespace onion::voxel
 {
@@ -36,6 +37,7 @@ namespace onion::voxel
 		Button m_ButtonMainMenu;
 		Sprite m_Sprite;
 		Checkbox m_Checkbox;
+		TextField m_TextField;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:

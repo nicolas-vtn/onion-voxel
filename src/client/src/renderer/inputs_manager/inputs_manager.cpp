@@ -225,10 +225,14 @@ void InputsManager::InitCallbacks()
 
 void InputsManager::FramebufferSizeCallback(int width, int height)
 {
-	std::lock_guard lock(m_MutexFramebuffer);
-	m_FramebufferState.Resized = true;
-	m_FramebufferState.Width = width;
-	m_FramebufferState.Height = height;
+	{
+		std::lock_guard lock(m_MutexFramebuffer);
+		m_FramebufferState.Resized = true;
+		m_FramebufferState.Width = width;
+		m_FramebufferState.Height = height;
+	}
+
+	EventFramebufferResized.Trigger(m_FramebufferState);
 }
 
 void InputsManager::MouseScrollCallback(double xoffset, double yoffset)

@@ -80,7 +80,9 @@ namespace onion::voxel
 		// ----- Set Static States -----
 	  public:
 		static void SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot);
-		static void SetScreenSize(int screenWidth, int screenHeight);
+
+		static inline EventHandle s_HandleFramebufferResized;
+		static void Handle_FramebufferResized(const FramebufferState& framebufferState);
 
 		// ----- States -----
 	  private:

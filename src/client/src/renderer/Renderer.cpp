@@ -134,6 +134,7 @@ namespace onion::voxel
 		SetupWindowIcon();
 
 		// Initialize Inputs Manager
+		SubscribeToInputsManagerEvents();
 		m_InputsManager.Init(m_Window);
 		m_InputsManager.SetMouseCaptureEnabled(false);
 		m_InputsManager.SetCursorStyle(CursorStyle::Arrow);
@@ -167,7 +168,6 @@ namespace onion::voxel
 		InitOpenGlState();
 
 		Gui::StaticInitialize();
-		Gui::SetScreenSize(m_WindowWidth, m_WindowHeight);
 
 		m_Gui.Initialize();
 		m_WorldRenderer.Initialize();
@@ -271,14 +271,18 @@ namespace onion::voxel
 		stbi_image_free(pixels);
 	}
 
-	void Renderer::FramebufferSizeCallback(int width, int height)
+	void Renderer::SubscribeToInputsManagerEvents()
 	{
-		glViewport(0, 0, width, height);
+		m_InputsManagerEventHandles.push_back(m_InputsManager.EventFramebufferResized.Subscribe(
+			[this](const FramebufferState& framebufferState) { Handle_FramebufferResized(framebufferState); }));
+	}
 
-		m_WindowWidth = width;
-		m_WindowHeight = height;
+	void Renderer::Handle_FramebufferResized(const FramebufferState& framebufferState)
+	{
+		glViewport(0, 0, framebufferState.Width, framebufferState.Height);
 
-		GuiElement::SetScreenSize(m_WindowWidth, m_WindowHeight);
+		m_WindowWidth = framebufferState.Width;
+		m_WindowHeight = framebufferState.Height;
 
 		if (m_WindowWidth != 0 && m_WindowHeight != 0)
 		{
@@ -308,11 +312,6 @@ namespace onion::voxel
 
 	void Renderer::ProcessInputs(const std::shared_ptr<InputsSnapshot>& inputs)
 	{
-		if (inputs->Framebuffer.Resized)
-		{
-			FramebufferSizeCallback(inputs->Framebuffer.Width, inputs->Framebuffer.Height);
-		}
-
 		if (inputs->GetKeyState(m_InputIdUnfocus).IsPressed && inputs->Mouse.CaptureEnabled)
 		{
 			m_InputsManager.SetMouseCaptureEnabled(false);

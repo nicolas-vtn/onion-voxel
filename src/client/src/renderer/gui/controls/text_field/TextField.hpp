@@ -16,12 +16,12 @@
 
 namespace onion::voxel
 {
-	class Button : public GuiElement
+	class TextField : public GuiElement
 	{
 		// ----- Constructor / Destructor -----
 	  public:
-		Button(const std::string& name);
-		~Button();
+		TextField(const std::string& name);
+		~TextField();
 
 		// ----- Public API -----
 	  public:
@@ -35,6 +35,9 @@ namespace onion::voxel
 		void SetText(const std::string& text);
 		std::string GetText() const;
 
+		void SetPlaceholderText(const std::string& placeholderText);
+		std::string GetPlaceholderText() const;
+
 		/// @brief Sets the size of the button. (In Pixels)
 		/// @param size The new size of the button in pixels.
 		void SetSize(const glm::ivec2& size);
@@ -45,15 +48,11 @@ namespace onion::voxel
 		void SetPosition(const glm::ivec2& pos);
 		glm::ivec2 GetPosition() const;
 
-		bool IsEnabled() const;
-		void SetEnabled(bool enabled);
+		bool IsReadOnly() const;
+		void SetReadOnly(bool readOnly);
 
 		// ----- Events -----
 	  public:
-		Event<const Button&> OnClick;
-		Event<const Button&> OnHoverEnter;
-		Event<const Button&> OnHoverLeave;
-
 	  private:
 		void SubscribeToSpriteEvents();
 
@@ -70,12 +69,16 @@ namespace onion::voxel
 
 		// ----- Properties -----
 	  private:
-		bool m_IsEnabled = true;
+		bool m_ReadOnly = false;
+		bool m_IsActive = false;
+		std::string m_PlaceholderText = "Enter text...";
 
+		float m_TextScaleFactor = 0.4f;
+
+		std::string m_Text;
 		glm::ivec2 m_Position{0, 0};
 		glm::ivec2 m_Size{1, 1};
 		bool m_IsPressed = false;
-		float m_ScaleFactorOnClick = 0.95f;
 
 		// ----- Label -----
 	  private:
@@ -83,20 +86,19 @@ namespace onion::voxel
 
 		// ----- NineSliceSprites -----
 	  private:
-		NineSliceSprite m_NineSliceSprite_Basic;
-		NineSliceSprite m_NineSliceSprite_Disabled;
-		NineSliceSprite m_NineSliceSprite_Highlighted;
+		NineSliceSprite m_NineSliceSprite_TextField;
+		NineSliceSprite m_NineSliceSprite_TextFieldHighlighted;
 
 		// ----- Static Helpers -----
 	  private:
 		static inline const std::filesystem::path s_SpritePathFromGui =
-			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "button.png";
-
-		static inline const std::filesystem::path s_SpritePathFromGui_Disabled =
-			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "button_disabled.png";
+			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "text_field.png";
 
 		static inline const std::filesystem::path s_SpritePathFromGui_Highlighted =
-			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "button_highlighted.png";
+			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "text_field_highlighted.png";
+
+		static inline constexpr glm::vec3 s_TextColor = glm::vec3(224.f / 255.f);
+		static inline constexpr glm::vec3 s_PlaceholderTextColor = glm::vec3(85.f / 255.f);
 
 		// ----- DEBUG -----
 	  private:
