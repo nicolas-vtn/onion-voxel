@@ -49,7 +49,7 @@ namespace onion::voxel
 
 		// Pulls events
 		m_NineSliceSprite_TextField.PullEvents();
-		bool isCurrentlyHovered = m_NineSliceSprite_TextField.IsHovered();
+		//bool isCurrentlyHovered = m_NineSliceSprite_TextField.IsHovered();
 
 		// Calculate text position
 		glm::ivec2 size = GetSize();
@@ -217,24 +217,38 @@ namespace onion::voxel
 		m_InputId_Escape = InputsManager->RegisterInput(Key::Escape, keyRepeatConfig);
 		m_InputId_Left = InputsManager->RegisterInput(Key::Left, keyRepeatConfig);
 		m_InputId_Right = InputsManager->RegisterInput(Key::Right, keyRepeatConfig);
+		m_InputId_Delete = InputsManager->RegisterInput(Key::Delete, keyRepeatConfig);
+		m_InputId_V = InputsManager->RegisterInput(Key::V, keyRepeatConfig);
+
+		InputConfig noKeyRepeatConfig = InputConfig(false);
+		m_InputId_Ctrl = InputsManager->RegisterInput(Key::LeftControl, noKeyRepeatConfig);
 	}
 
 	void TextField::Handle_MouseDown(const NineSliceSprite& sprite)
 	{
+		(void) sprite;
 		m_IsActive = true;
 	}
 
-	void TextField::Handle_MouseUp(const NineSliceSprite& sprite) {}
+	void TextField::Handle_MouseUp(const NineSliceSprite& sprite)
+	{
+		(void) sprite;
+	}
 
-	void TextField::Handle_SpriteClick(const NineSliceSprite& sprite) {}
+	void TextField::Handle_SpriteClick(const NineSliceSprite& sprite)
+	{
+		(void) sprite;
+	}
 
 	void TextField::Handle_SpriteHoverEnter(const NineSliceSprite& sprite)
 	{
+		(void) sprite;
 		GuiElement::RequestCursorStyleChange.Trigger(CursorStyle::IBeam);
 	}
 
 	void TextField::Handle_SpriteHoverLeave(const NineSliceSprite& sprite)
 	{
+		(void) sprite;
 		GuiElement::RequestCursorStyleChange.Trigger(CursorStyle::Arrow);
 	}
 
@@ -249,66 +263,96 @@ namespace onion::voxel
 			return;
 
 		const auto& snapshot = s_InputsSnapshot;
+		const auto& inputsManager = EngineContext::Get().Inputs;
 
 		bool backspacePressed = snapshot->GetKeyState(m_InputId_Backspace).IsPressed;
 		bool enterPressed = snapshot->GetKeyState(m_InputId_Enter).IsPressed;
 		bool escapePressed = snapshot->GetKeyState(m_InputId_Escape).IsPressed;
 		bool leftPressed = snapshot->GetKeyState(m_InputId_Left).IsPressed;
 		bool rightPressed = snapshot->GetKeyState(m_InputId_Right).IsPressed;
+		bool ctrlPressed = snapshot->GetKeyState(m_InputId_Ctrl).IsPressed;
+		bool deletePressed = snapshot->GetKeyState(m_InputId_Delete).IsPressed;
+		bool vPressed = snapshot->GetKeyState(m_InputId_V).IsPressed;
 
 		if (enterPressed || escapePressed)
 		{
 			ValidateText();
 		}
+
+		if (vPressed && ctrlPressed)
+		{
+			// Ctrl + V: Paste from clipboard
+			std::string clipboardText = inputsManager->GetClipboardText();
+
+			m_Text.insert(m_Text.begin() + m_CursorPosition, clipboardText.begin(), clipboardText.end());
+			m_CursorPosition += clipboardText.size();
+		}
+
+		if (m_Text.empty())
+		{
+			return;
+		}
+
 		else if (backspacePressed)
 		{
-			if (!m_Text.empty() && m_CursorPosition > 0)
+			if (ctrlPressed)
 			{
+				// Ctrl + Backspace: delete the previous word
+				size_t lastWordBoundary = GetNextWordBoundary(m_Text, m_CursorPosition, eDirection::Left);
+				m_Text.erase(m_Text.begin() + lastWordBoundary, m_Text.begin() + m_CursorPosition);
+				m_CursorPosition = lastWordBoundary;
+			}
+			else if (m_CursorPosition > 0)
+			{
+				// Backspace: delete the character before the cursor position
 				m_Text.erase(m_Text.begin() + m_CursorPosition - 1);
 				m_CursorPosition--;
 			}
 		}
 		else if (leftPressed)
 		{
-			if (m_CursorPosition > 0)
+			if (ctrlPressed)
 			{
+				// Ctrl + Left: move cursor to the left of the previous word
+				size_t lastWordBoundary = GetNextWordBoundary(m_Text, m_CursorPosition, eDirection::Left);
+				m_CursorPosition = lastWordBoundary;
+			}
+			else if (m_CursorPosition > 0)
+			{
+				// Left: move cursor one position to the left
 				m_CursorPosition--;
 			}
 		}
 		else if (rightPressed)
 		{
+			if (ctrlPressed)
+			{
+				// Ctrl + Right: move cursor to the right of the next word
+				size_t nextWordBoundary = GetNextWordBoundary(m_Text, m_CursorPosition, eDirection::Right);
+				m_CursorPosition = nextWordBoundary;
+			}
+			else if (m_CursorPosition < m_Text.size())
+			{
+				// Right: move cursor one position to the right
+				m_CursorPosition++;
+			}
+		}
+		else if (deletePressed)
+		{
 			if (m_CursorPosition < m_Text.size())
 			{
-				m_CursorPosition++;
+				m_Text.erase(m_Text.begin() + m_CursorPosition);
 			}
 		}
 	}
 
 	void TextField::Handle_CharInputs()
 	{
-
 		unsigned int codepoint = m_LastCharInput;
 		m_LastCharInput = 0; // Reset after handling
 
 		if (!m_IsActive || m_ReadOnly || codepoint == 0)
 			return;
-
-		// Handle backspace
-		if (codepoint == 8) // Backspace
-		{
-			if (!m_Text.empty())
-			{
-				m_Text.pop_back();
-			}
-			return;
-		}
-
-		// Handle Validation
-		if (codepoint == 13 || codepoint == 27) // Enter or Echap
-		{
-			ValidateText();
-			return;
-		}
 
 		// Append the new character to the text
 		m_Text.insert(m_Text.begin() + m_CursorPosition, static_cast<char>(codepoint));
@@ -319,6 +363,45 @@ namespace onion::voxel
 	{
 		m_IsActive = false;
 		OnTextChanged.Trigger(*this);
+	}
+
+	size_t TextField::GetNextWordBoundary(const std::string& text, size_t cursorPosition, eDirection direction) const
+	{
+		if (direction == eDirection::Left)
+		{
+			if (cursorPosition == 0)
+				return 0;
+
+			size_t startWordPos = cursorPosition - 1;
+			while (startWordPos > 0 && text[startWordPos] == ' ')
+			{
+				startWordPos--;
+			}
+
+			size_t lastSpacePos = text.find_last_of(' ', startWordPos);
+			return lastSpacePos == std::string::npos ? 0 : lastSpacePos + 1;
+		}
+		else // direction == eDirection::Right
+		{
+			if (cursorPosition >= text.size())
+				return text.size();
+
+			size_t endWordPos = cursorPosition;
+			while (endWordPos < text.size() && text[endWordPos] == ' ')
+			{
+				endWordPos++;
+			}
+
+			endWordPos = text.find_first_of(' ', endWordPos);
+
+			// If there are spaces after the next word, skip them
+			while (endWordPos < text.size() && text[endWordPos] == ' ')
+			{
+				endWordPos++;
+			}
+
+			return endWordPos == std::string::npos ? text.size() : endWordPos;
+		}
 	}
 
 	void TextField::RenderImGuiDebug()

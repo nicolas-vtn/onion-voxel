@@ -86,6 +86,9 @@ namespace onion::voxel
 		int m_InputId_Escape;
 		int m_InputId_Left;
 		int m_InputId_Right;
+		int m_InputId_Delete;
+		int m_InputId_Ctrl;
+		int m_InputId_V;
 
 		void ValidateText();
 
@@ -97,7 +100,7 @@ namespace onion::voxel
 
 		float m_TextScaleFactor = 0.4f;
 		float m_TextStartXratio = 2.1f;
-		float m_CursorWidth = 4.f;
+		int m_CursorWidth = 4;
 		float m_CursorHeightRatio = 0.6f;
 
 		std::string m_Text;
@@ -126,6 +129,14 @@ namespace onion::voxel
 
 		static inline constexpr glm::vec3 s_TextColor = glm::vec3(224.f / 255.f);
 		static inline constexpr glm::vec3 s_PlaceholderTextColor = glm::vec3(85.f / 255.f);
+
+		enum class eDirection
+		{
+			Left,
+			Right
+		};
+
+		size_t GetNextWordBoundary(const std::string& text, size_t cursorPosition, eDirection direction) const;
 
 		// ----- DEBUG -----
 	  private:

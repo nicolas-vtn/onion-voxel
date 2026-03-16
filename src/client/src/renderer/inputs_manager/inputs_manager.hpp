@@ -146,6 +146,11 @@ namespace onion::voxel
 		/// @brief Retrieves the current cursor style for the application.
 		CursorStyle GetCursorStyle() const;
 
+		/// @brief Retrieves the current text from the clipboard.
+		std::string GetClipboardText();
+		/// @brief Sets the text in the clipboard to the specified string.
+		void SetClipboardText(const std::string& text);
+
 		// ------------ Events ------------
 	  public:
 		/// @brief Event triggered when the framebuffer is resized. Triggered functions will be called on Render Thread.

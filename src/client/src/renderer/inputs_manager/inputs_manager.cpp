@@ -314,7 +314,7 @@ void InputsManager::UnregisterInput(int inputId)
 	m_RegisteredInputs.erase(inputId);
 }
 
-void onion::voxel::InputsManager::SetCursorStyle(const CursorStyle& style)
+void InputsManager::SetCursorStyle(const CursorStyle& style)
 {
 	std::lock_guard<std::mutex> lock(m_MutexCursors);
 
@@ -328,10 +328,24 @@ void onion::voxel::InputsManager::SetCursorStyle(const CursorStyle& style)
 		glfwSetCursor(m_Window, it->second);
 }
 
-CursorStyle onion::voxel::InputsManager::GetCursorStyle() const
+CursorStyle InputsManager::GetCursorStyle() const
 {
 	std::lock_guard<std::mutex> lock(m_MutexCursors);
 	return m_CurrentStyle;
+}
+
+std::string InputsManager::GetClipboardText()
+{
+	const char* text = glfwGetClipboardString(m_Window);
+	if (!text)
+		return {};
+
+	return std::string(text);
+}
+
+void InputsManager::SetClipboardText(const std::string& text)
+{
+	glfwSetClipboardString(m_Window, text.c_str());
 }
 
 void InputsManager::UpdateInputsSnapshot()
