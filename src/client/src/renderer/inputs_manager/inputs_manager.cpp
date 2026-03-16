@@ -204,6 +204,7 @@ std::shared_ptr<InputsSnapshot> InputsManager::GetInputsSnapshot()
 
 void InputsManager::InitCallbacks()
 {
+	// FRAMEBUFFER SIZE CALLBACK (Screen Resize)
 	glfwSetFramebufferSizeCallback(m_Window,
 								   [](GLFWwindow* window, int width, int height)
 								   {
@@ -213,6 +214,7 @@ void InputsManager::InitCallbacks()
 										   self->FramebufferSizeCallback(width, height);
 								   });
 
+	// MOUSE SCROLL CALLBACK (For zooming, etc.)
 	glfwSetScrollCallback(m_Window,
 						  [](GLFWwindow* window, double xoffset, double yoffset)
 						  {
@@ -221,6 +223,16 @@ void InputsManager::InitCallbacks()
 							  if (self)
 								  self->MouseScrollCallback(xoffset, yoffset);
 						  });
+
+	// CHARACTER INPUT CALLBACK (For text input, etc.)
+	glfwSetCharCallback(m_Window,
+						[](GLFWwindow* window, unsigned int codepoint)
+						{
+							// Retrieve the user pointer
+							auto* self = static_cast<InputsManager*>(glfwGetWindowUserPointer(window));
+							if (self)
+								self->CharCallback(codepoint);
+						});
 }
 
 void InputsManager::FramebufferSizeCallback(int width, int height)
@@ -241,6 +253,11 @@ void InputsManager::MouseScrollCallback(double xoffset, double yoffset)
 	m_MouseState.ScrollOffsetChanged = true;
 	m_MouseState.ScrollXoffset = xoffset;
 	m_MouseState.ScrollYoffset = yoffset;
+}
+
+void onion::voxel::InputsManager::CharCallback(unsigned int codepoint)
+{
+	EventCharInput.Trigger(codepoint);
 }
 
 void InputsManager::SetMouseCaptureEnabled(bool enabled)

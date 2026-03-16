@@ -21,6 +21,9 @@ namespace onion::voxel
 
 	void TextField::Initialize()
 	{
+		SubscribeToInputsManagerEvents();
+		RegisterInputsToInputsManager();
+
 		m_NineSliceSprite_TextField.Initialize();
 		m_NineSliceSprite_TextFieldHighlighted.Initialize();
 		m_Label.Initialize();
@@ -35,6 +38,9 @@ namespace onion::voxel
 			std::cerr << "Error: TextField::Render() called without a valid InputsSnapshot." << std::endl;
 			return;
 		}
+
+		Handle_CharInputs();
+		Handle_KeyInputs();
 
 		// DEBUG
 		RenderImGuiDebug();
@@ -152,35 +158,120 @@ namespace onion::voxel
 	void TextField::SubscribeToSpriteEvents()
 	{
 		m_HandleMouseDown = m_NineSliceSprite_TextField.OnMouseDown.Subscribe([this](const NineSliceSprite& sprite)
-																			  { HandleMouseDown(sprite); });
+																			  { Handle_MouseDown(sprite); });
 
 		m_HandleMouseUp = m_NineSliceSprite_TextField.OnMouseUp.Subscribe([this](const NineSliceSprite& sprite)
-																		  { HandleMouseUp(sprite); });
+																		  { Handle_MouseUp(sprite); });
 
 		m_HandleSpriteClick = m_NineSliceSprite_TextField.OnClick.Subscribe([this](const NineSliceSprite& sprite)
-																			{ HandleSpriteClick(sprite); });
+																			{ Handle_SpriteClick(sprite); });
 
 		m_HandleSpriteHoverEnter = m_NineSliceSprite_TextField.OnHoverEnter.Subscribe(
-			[this](const NineSliceSprite& sprite) { HandleSpriteHoverEnter(sprite); });
+			[this](const NineSliceSprite& sprite) { Handle_SpriteHoverEnter(sprite); });
 
 		m_HandleSpriteHoverLeave = m_NineSliceSprite_TextField.OnHoverLeave.Subscribe(
-			[this](const NineSliceSprite& sprite) { HandleSpriteHoverLeave(sprite); });
+			[this](const NineSliceSprite& sprite) { Handle_SpriteHoverLeave(sprite); });
 	}
 
-	void TextField::HandleMouseDown(const NineSliceSprite& sprite) {}
+	void TextField::SubscribeToInputsManagerEvents()
+	{
+		const auto& InputsManager = EngineContext::Get().Inputs;
+		m_HandleCharInput = InputsManager->EventCharInput.Subscribe([this](const unsigned int& codepoint)
+																	{ Handle_CharInput(codepoint); });
+	}
 
-	void TextField::HandleMouseUp(const NineSliceSprite& sprite) {}
+	void TextField::RegisterInputsToInputsManager()
+	{
+		const auto& InputsManager = EngineContext::Get().Inputs;
 
-	void TextField::HandleSpriteClick(const NineSliceSprite& sprite) {}
+		InputConfig keyRepeatConfig(true, 0.6f, 0.4f, 0.5f);
+		m_InputId_Backspace = InputsManager->RegisterInput(Key::Backspace, keyRepeatConfig);
+		m_InputId_Enter = InputsManager->RegisterInput(Key::Enter, keyRepeatConfig);
+		m_InputId_Escape = InputsManager->RegisterInput(Key::Escape, keyRepeatConfig);
+	}
 
-	void TextField::HandleSpriteHoverEnter(const NineSliceSprite& sprite)
+	void TextField::Handle_MouseDown(const NineSliceSprite& sprite)
+	{
+		m_IsActive = true;
+	}
+
+	void TextField::Handle_MouseUp(const NineSliceSprite& sprite) {}
+
+	void TextField::Handle_SpriteClick(const NineSliceSprite& sprite) {}
+
+	void TextField::Handle_SpriteHoverEnter(const NineSliceSprite& sprite)
 	{
 		GuiElement::RequestCursorStyleChange.Trigger(CursorStyle::IBeam);
 	}
 
-	void TextField::HandleSpriteHoverLeave(const NineSliceSprite& sprite)
+	void TextField::Handle_SpriteHoverLeave(const NineSliceSprite& sprite)
 	{
 		GuiElement::RequestCursorStyleChange.Trigger(CursorStyle::Arrow);
+	}
+
+	void TextField::Handle_CharInput(const unsigned int& codepoint)
+	{
+		m_LastCharInput = codepoint;
+	}
+
+	void TextField::Handle_KeyInputs()
+	{
+		if (!m_IsActive || m_ReadOnly)
+			return;
+
+		const auto& snapshot = s_InputsSnapshot;
+
+		bool backspacePressed = snapshot->GetKeyState(m_InputId_Backspace).IsPressed;
+		bool enterPressed = snapshot->GetKeyState(m_InputId_Enter).IsPressed;
+		bool escapePressed = snapshot->GetKeyState(m_InputId_Escape).IsPressed;
+
+		if (enterPressed || escapePressed)
+		{
+			ValidateText();
+		}
+		else if (backspacePressed)
+		{
+			if (!m_Text.empty())
+			{
+				m_Text.pop_back();
+			}
+		}
+	}
+
+	void TextField::Handle_CharInputs()
+	{
+
+		unsigned int codepoint = m_LastCharInput;
+		m_LastCharInput = 0; // Reset after handling
+
+		if (!m_IsActive || m_ReadOnly || codepoint == 0)
+			return;
+
+		// Handle backspace
+		if (codepoint == 8) // Backspace
+		{
+			if (!m_Text.empty())
+			{
+				m_Text.pop_back();
+			}
+			return;
+		}
+
+		// Handle Validation
+		if (codepoint == 13 || codepoint == 27) // Enter or Echap
+		{
+			ValidateText();
+			return;
+		}
+
+		// Append the new character to the text
+		m_Text += static_cast<char>(codepoint);
+	}
+
+	void TextField::ValidateText()
+	{
+		m_IsActive = false;
+		OnTextChanged.Trigger(*this);
 	}
 
 	void TextField::RenderImGuiDebug()

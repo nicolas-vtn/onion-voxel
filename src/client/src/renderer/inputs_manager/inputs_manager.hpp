@@ -150,6 +150,8 @@ namespace onion::voxel
 	  public:
 		/// @brief Event triggered when the framebuffer is resized. Triggered functions will be called on Render Thread.
 		Event<const FramebufferState&> EventFramebufferResized;
+		/// @brief Event triggered when the user inputs a character (e.g., for text input). The event provides the Unicode code point of the character that was input. Triggered functions will be called on Render Thread.
+		Event<const unsigned int&> EventCharInput;
 
 		// ------------ INPUTS SNAPSHOT MANAGEMENT ------------
 	  private:
@@ -209,6 +211,7 @@ namespace onion::voxel
 		void InitCallbacks();
 		void FramebufferSizeCallback(int width, int height);
 		void MouseScrollCallback(double xoffset, double yoffset);
+		void CharCallback(unsigned int codepoint);
 
 		// ------------ Deleted Copy & Move Constructors and Assignment Operators ------------
 	  public:

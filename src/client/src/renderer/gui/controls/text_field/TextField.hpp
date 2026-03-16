@@ -53,19 +53,39 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
+		Event<const TextField&> OnTextChanged;
+
 	  private:
 		void SubscribeToSpriteEvents();
 
 		EventHandle m_HandleMouseDown;
-		void HandleMouseDown(const NineSliceSprite& sprite);
+		void Handle_MouseDown(const NineSliceSprite& sprite);
 		EventHandle m_HandleMouseUp;
-		void HandleMouseUp(const NineSliceSprite& sprite);
+		void Handle_MouseUp(const NineSliceSprite& sprite);
 		EventHandle m_HandleSpriteClick;
-		void HandleSpriteClick(const NineSliceSprite& sprite);
+		void Handle_SpriteClick(const NineSliceSprite& sprite);
 		EventHandle m_HandleSpriteHoverEnter;
-		void HandleSpriteHoverEnter(const NineSliceSprite& sprite);
+		void Handle_SpriteHoverEnter(const NineSliceSprite& sprite);
 		EventHandle m_HandleSpriteHoverLeave;
-		void HandleSpriteHoverLeave(const NineSliceSprite& sprite);
+		void Handle_SpriteHoverLeave(const NineSliceSprite& sprite);
+
+		// ----- Inputs Handling -----
+	  private:
+		void SubscribeToInputsManagerEvents();
+		void RegisterInputsToInputsManager();
+
+		EventHandle m_HandleCharInput;
+		void Handle_CharInput(const unsigned int& codepoint);
+		unsigned int m_LastCharInput = 0;
+
+		void Handle_KeyInputs();
+		void Handle_CharInputs();
+
+		int m_InputId_Backspace;
+		int m_InputId_Enter;
+		int m_InputId_Escape;
+
+		void ValidateText();
 
 		// ----- Properties -----
 	  private:
