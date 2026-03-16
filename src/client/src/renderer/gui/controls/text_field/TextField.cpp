@@ -3,6 +3,8 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
+#include <renderer/debug_draws/DebugDraws.hpp>
+
 namespace onion::voxel
 {
 	TextField::TextField(const std::string& name)
@@ -49,16 +51,41 @@ namespace onion::voxel
 		m_NineSliceSprite_TextField.PullEvents();
 		bool isCurrentlyHovered = m_NineSliceSprite_TextField.IsHovered();
 
+		// Calculate text position
+		glm::ivec2 size = GetSize();
+		glm::ivec2 pos = GetPosition();
+		glm::ivec2 textPos = pos - glm::ivec2(size.x / m_TextStartXratio, 0);
+
+		// Add trailing '_' or Render Cursor
+		std::string drawnText = m_Text;
+		bool visible = fmod(glfwGetTime(), 0.8) < 0.5;
+		if (visible && m_IsActive)
+		{
+			if (m_CursorPosition == m_Text.size())
+			{
+				drawnText.push_back('_');
+			}
+			else
+			{
+				std::string textBeforeCursor = m_Text.substr(0, m_CursorPosition);
+				glm::vec2 textBeforeCursorSize =
+					s_TextFont.MeasureText(textBeforeCursor, GetSize().y * m_TextScaleFactor);
+				glm::ivec2 cursorPos = textPos + glm::ivec2(textBeforeCursorSize.x, 0);
+
+				float cursorHeight = size.y * m_CursorHeightRatio;
+				glm::ivec2 bottomCursor = cursorPos + glm::ivec2(0, cursorHeight / 2.f);
+				glm::ivec2 topCursor = cursorPos - glm::ivec2(0, cursorHeight / 2.f);
+
+				DebugDraws::DrawScreenLine_Pixels(bottomCursor, topCursor, glm::vec4(s_TextColor, 1.f), m_CursorWidth);
+			}
+		}
+
 		if (m_IsActive)
 			m_NineSliceSprite_TextFieldHighlighted.Render();
 		else
 			m_NineSliceSprite_TextField.Render();
 
 		// ----- Render Label -----
-		glm::ivec2 size = GetSize();
-		glm::ivec2 pos = GetPosition();
-
-		glm::ivec2 textPos = pos - glm::ivec2(size.x / 2.1f, 0);
 
 		if (m_Text.empty() && !m_IsActive)
 		{
@@ -71,7 +98,7 @@ namespace onion::voxel
 		{
 			// NORMAL TEXT
 
-			m_Label.SetText(m_Text);
+			m_Label.SetText(drawnText);
 			m_Label.SetTextColor(s_TextColor);
 		}
 
@@ -184,10 +211,12 @@ namespace onion::voxel
 	{
 		const auto& InputsManager = EngineContext::Get().Inputs;
 
-		InputConfig keyRepeatConfig(true, 0.6f, 0.4f, 0.5f);
+		InputConfig keyRepeatConfig = InputConfig(true, 0.5f, 0.03f, 0.5f);
 		m_InputId_Backspace = InputsManager->RegisterInput(Key::Backspace, keyRepeatConfig);
 		m_InputId_Enter = InputsManager->RegisterInput(Key::Enter, keyRepeatConfig);
 		m_InputId_Escape = InputsManager->RegisterInput(Key::Escape, keyRepeatConfig);
+		m_InputId_Left = InputsManager->RegisterInput(Key::Left, keyRepeatConfig);
+		m_InputId_Right = InputsManager->RegisterInput(Key::Right, keyRepeatConfig);
 	}
 
 	void TextField::Handle_MouseDown(const NineSliceSprite& sprite)
@@ -224,6 +253,8 @@ namespace onion::voxel
 		bool backspacePressed = snapshot->GetKeyState(m_InputId_Backspace).IsPressed;
 		bool enterPressed = snapshot->GetKeyState(m_InputId_Enter).IsPressed;
 		bool escapePressed = snapshot->GetKeyState(m_InputId_Escape).IsPressed;
+		bool leftPressed = snapshot->GetKeyState(m_InputId_Left).IsPressed;
+		bool rightPressed = snapshot->GetKeyState(m_InputId_Right).IsPressed;
 
 		if (enterPressed || escapePressed)
 		{
@@ -231,9 +262,24 @@ namespace onion::voxel
 		}
 		else if (backspacePressed)
 		{
-			if (!m_Text.empty())
+			if (!m_Text.empty() && m_CursorPosition > 0)
 			{
-				m_Text.pop_back();
+				m_Text.erase(m_Text.begin() + m_CursorPosition - 1);
+				m_CursorPosition--;
+			}
+		}
+		else if (leftPressed)
+		{
+			if (m_CursorPosition > 0)
+			{
+				m_CursorPosition--;
+			}
+		}
+		else if (rightPressed)
+		{
+			if (m_CursorPosition < m_Text.size())
+			{
+				m_CursorPosition++;
 			}
 		}
 	}
@@ -265,7 +311,8 @@ namespace onion::voxel
 		}
 
 		// Append the new character to the text
-		m_Text += static_cast<char>(codepoint);
+		m_Text.insert(m_Text.begin() + m_CursorPosition, static_cast<char>(codepoint));
+		m_CursorPosition++;
 	}
 
 	void TextField::ValidateText()

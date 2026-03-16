@@ -93,6 +93,12 @@ namespace onion::voxel
 		return m_TextHeight;
 	}
 
+	glm::ivec2 Label::GetTextSize() const
+	{
+		std::lock_guard lock(m_MutexState);
+		return s_TextFont.MeasureText(m_Text, m_TextHeight);
+	}
+
 	void Label::SetTextAlignment(Font::eTextAlignment alignment)
 	{
 		std::lock_guard lock(m_MutexState);

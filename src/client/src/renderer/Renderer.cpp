@@ -168,6 +168,8 @@ namespace onion::voxel
 		InitOpenGlState();
 
 		Gui::StaticInitialize();
+		DebugDraws::ScreenWidth = m_WindowWidth;
+		DebugDraws::ScreenHeight = m_WindowHeight;
 
 		m_Gui.Initialize();
 		m_WorldRenderer.Initialize();
@@ -283,6 +285,9 @@ namespace onion::voxel
 
 		m_WindowWidth = framebufferState.Width;
 		m_WindowHeight = framebufferState.Height;
+
+		DebugDraws::ScreenWidth = m_WindowWidth;
+		DebugDraws::ScreenHeight = m_WindowHeight;
 
 		if (m_WindowWidth != 0 && m_WindowHeight != 0)
 		{

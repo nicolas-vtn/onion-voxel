@@ -84,6 +84,8 @@ namespace onion::voxel
 		int m_InputId_Backspace;
 		int m_InputId_Enter;
 		int m_InputId_Escape;
+		int m_InputId_Left;
+		int m_InputId_Right;
 
 		void ValidateText();
 
@@ -94,11 +96,16 @@ namespace onion::voxel
 		std::string m_PlaceholderText = "Enter text...";
 
 		float m_TextScaleFactor = 0.4f;
+		float m_TextStartXratio = 2.1f;
+		float m_CursorWidth = 4.f;
+		float m_CursorHeightRatio = 0.6f;
 
 		std::string m_Text;
 		glm::ivec2 m_Position{0, 0};
 		glm::ivec2 m_Size{1, 1};
 		bool m_IsPressed = false;
+
+		size_t m_CursorPosition = 0;
 
 		// ----- Label -----
 	  private:

@@ -42,6 +42,9 @@ namespace onion::voxel
 		void SetTextHeight(float height);
 		float GetTextHeight() const;
 
+		/// @brief Gets the size of the text in pixels. This can be used to calculate the position to render the text based on the desired alignment.
+		glm::ivec2 GetTextSize() const;
+
 		/// @brief Sets the alignment of the text relative to the position.
 		/// @param alignment The new text alignment (Left, Center, Right).
 		void SetTextAlignment(Font::eTextAlignment alignment);

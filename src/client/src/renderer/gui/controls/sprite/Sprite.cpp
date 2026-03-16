@@ -26,10 +26,9 @@ void Sprite::Render()
 	glm::vec2 topLeft = m_Position - m_Size * 0.5f;
 
 	// ----- Setup state for sprites -----
+	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glDepthMask(GL_FALSE);
 
 	// ----- Render Sprite -----
 	m_Texture.Bind();
@@ -44,6 +43,9 @@ void Sprite::Render()
 	glBindVertexArray(m_VAO);
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(s_Indices.size()), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
+
+	// ----- Reset state -----
+	glDepthMask(GL_TRUE);
 }
 
 void Sprite::Initialize()
