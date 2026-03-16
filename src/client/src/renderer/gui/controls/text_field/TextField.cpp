@@ -228,6 +228,41 @@ namespace onion::voxel
 	{
 		(void) sprite;
 		m_IsActive = true;
+
+		// Move cursor to the clicked position
+		int mouseX = s_InputsSnapshot->Mouse.Xpos;
+		int startTextX = GetPosition().x - static_cast<int>(GetSize().x / m_TextStartXratio);
+		int relativeMouseX = mouseX - startTextX;
+
+		//std::cout << "MouseX: " << mouseX << ", StartTextX: " << startTextX << ", RelativeMouseX: " << relativeMouseX
+		//		  << std::endl;
+
+		float textHeight = GetSize().y * m_TextScaleFactor;
+		std::string textToMeasure;
+
+		// Iterate through the text character by character to find where the mouse click occurred
+		for (size_t i = 0; i < m_Text.size(); i++)
+		{
+			textToMeasure += m_Text[i];
+			float textWidth = s_TextFont.MeasureText(textToMeasure, textHeight).x;
+
+			textWidth -= 5; // Magic number
+
+			int textEndX = startTextX + static_cast<int>(textWidth);
+
+			// If the mouse click is before the end of the current character, place the cursor here
+			if (textEndX >= mouseX)
+			{
+				m_CursorPosition = i;
+				break;
+			}
+
+			// If we reached the end of the text and the mouse is still to the right, move cursor to the end
+			if (i == m_Text.size() - 1)
+			{
+				m_CursorPosition = m_Text.size();
+			}
+		}
 	}
 
 	void TextField::Handle_MouseUp(const NineSliceSprite& sprite)
