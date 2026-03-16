@@ -338,7 +338,7 @@ namespace onion::voxel
 
 	void Client::Handle_EntitySnapshotMessageReceived(const EntitySnapshotMsg& msg)
 	{
-		std::cout << "Received EntitySnapshotMsg: " << msg.Entities.size() << " entities\n";
+		//std::cout << "Received EntitySnapshotMsg: " << msg.Entities.size() << " entities\n";
 
 		std::vector<std::shared_ptr<Entity>> entities;
 		for (const auto& entityDTO : msg.Entities)

@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <chrono>
-#include <conio.h>
 #include <csignal>
 #include <iostream>
 #include <thread>
@@ -38,12 +37,6 @@ int main()
 	}
 
 	std::cout << "\n --- Client Destroyed Successfully --- \n";
-
-	std::cout << "Press any key to exit..." << std::endl;
-	while (!_kbhit())
-	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
-	}
 
 	return 0;
 }
