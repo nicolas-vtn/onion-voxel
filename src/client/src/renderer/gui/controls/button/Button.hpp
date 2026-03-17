@@ -98,10 +98,6 @@ namespace onion::voxel
 		static inline const std::filesystem::path s_SpritePathFromGui_Highlighted =
 			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "button_highlighted.png";
 
-		//static std::filesystem::path GetSpritePath_Basic();
-		//static std::filesystem::path GetSpritePath_Disabled();
-		//static std::filesystem::path GetSpritePath_Highlighted();
-
 		// ----- DEBUG -----
 	  private:
 		void RenderImGuiDebug();

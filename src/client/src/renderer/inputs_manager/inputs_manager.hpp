@@ -3,6 +3,8 @@
 #include <shared_mutex>
 #include <unordered_map>
 
+#include <onion/Event.hpp>
+
 #include <renderer/OpenGL.hpp>
 
 #include "inputs.hpp"
@@ -144,6 +146,18 @@ namespace onion::voxel
 		/// @brief Retrieves the current cursor style for the application.
 		CursorStyle GetCursorStyle() const;
 
+		/// @brief Retrieves the current text from the clipboard.
+		std::string GetClipboardText();
+		/// @brief Sets the text in the clipboard to the specified string.
+		void SetClipboardText(const std::string& text);
+
+		// ------------ Events ------------
+	  public:
+		/// @brief Event triggered when the framebuffer is resized. Triggered functions will be called on Render Thread.
+		Event<const FramebufferState&> EventFramebufferResized;
+		/// @brief Event triggered when the user inputs a character (e.g., for text input). The event provides the Unicode code point of the character that was input. Triggered functions will be called on Render Thread.
+		Event<const unsigned int&> EventCharInput;
+
 		// ------------ INPUTS SNAPSHOT MANAGEMENT ------------
 	  private:
 		mutable std::mutex m_MutexSnapshot;
@@ -202,6 +216,7 @@ namespace onion::voxel
 		void InitCallbacks();
 		void FramebufferSizeCallback(int width, int height);
 		void MouseScrollCallback(double xoffset, double yoffset);
+		void CharCallback(unsigned int codepoint);
 
 		// ------------ Deleted Copy & Move Constructors and Assignment Operators ------------
 	  public:

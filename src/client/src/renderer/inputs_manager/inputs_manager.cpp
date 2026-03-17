@@ -204,6 +204,7 @@ std::shared_ptr<InputsSnapshot> InputsManager::GetInputsSnapshot()
 
 void InputsManager::InitCallbacks()
 {
+	// FRAMEBUFFER SIZE CALLBACK (Screen Resize)
 	glfwSetFramebufferSizeCallback(m_Window,
 								   [](GLFWwindow* window, int width, int height)
 								   {
@@ -213,6 +214,7 @@ void InputsManager::InitCallbacks()
 										   self->FramebufferSizeCallback(width, height);
 								   });
 
+	// MOUSE SCROLL CALLBACK (For zooming, etc.)
 	glfwSetScrollCallback(m_Window,
 						  [](GLFWwindow* window, double xoffset, double yoffset)
 						  {
@@ -221,14 +223,28 @@ void InputsManager::InitCallbacks()
 							  if (self)
 								  self->MouseScrollCallback(xoffset, yoffset);
 						  });
+
+	// CHARACTER INPUT CALLBACK (For text input, etc.)
+	glfwSetCharCallback(m_Window,
+						[](GLFWwindow* window, unsigned int codepoint)
+						{
+							// Retrieve the user pointer
+							auto* self = static_cast<InputsManager*>(glfwGetWindowUserPointer(window));
+							if (self)
+								self->CharCallback(codepoint);
+						});
 }
 
 void InputsManager::FramebufferSizeCallback(int width, int height)
 {
-	std::lock_guard lock(m_MutexFramebuffer);
-	m_FramebufferState.Resized = true;
-	m_FramebufferState.Width = width;
-	m_FramebufferState.Height = height;
+	{
+		std::lock_guard lock(m_MutexFramebuffer);
+		m_FramebufferState.Resized = true;
+		m_FramebufferState.Width = width;
+		m_FramebufferState.Height = height;
+	}
+
+	EventFramebufferResized.Trigger(m_FramebufferState);
 }
 
 void InputsManager::MouseScrollCallback(double xoffset, double yoffset)
@@ -237,6 +253,11 @@ void InputsManager::MouseScrollCallback(double xoffset, double yoffset)
 	m_MouseState.ScrollOffsetChanged = true;
 	m_MouseState.ScrollXoffset = xoffset;
 	m_MouseState.ScrollYoffset = yoffset;
+}
+
+void onion::voxel::InputsManager::CharCallback(unsigned int codepoint)
+{
+	EventCharInput.Trigger(codepoint);
 }
 
 void InputsManager::SetMouseCaptureEnabled(bool enabled)
@@ -293,7 +314,7 @@ void InputsManager::UnregisterInput(int inputId)
 	m_RegisteredInputs.erase(inputId);
 }
 
-void onion::voxel::InputsManager::SetCursorStyle(const CursorStyle& style)
+void InputsManager::SetCursorStyle(const CursorStyle& style)
 {
 	std::lock_guard<std::mutex> lock(m_MutexCursors);
 
@@ -307,10 +328,24 @@ void onion::voxel::InputsManager::SetCursorStyle(const CursorStyle& style)
 		glfwSetCursor(m_Window, it->second);
 }
 
-CursorStyle onion::voxel::InputsManager::GetCursorStyle() const
+CursorStyle InputsManager::GetCursorStyle() const
 {
 	std::lock_guard<std::mutex> lock(m_MutexCursors);
 	return m_CurrentStyle;
+}
+
+std::string InputsManager::GetClipboardText()
+{
+	const char* text = glfwGetClipboardString(m_Window);
+	if (!text)
+		return {};
+
+	return std::string(text);
+}
+
+void InputsManager::SetClipboardText(const std::string& text)
+{
+	glfwSetClipboardString(m_Window, text.c_str());
 }
 
 void InputsManager::UpdateInputsSnapshot()

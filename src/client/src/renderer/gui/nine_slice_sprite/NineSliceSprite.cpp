@@ -222,6 +222,29 @@ namespace onion::voxel
 		m_MeshDirty = true;
 	}
 
+	void voxel::NineSliceSprite::SetZOffset(float zOffset)
+	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+		if (zOffset == m_Zoffset)
+			return;
+
+		// Clamp in [-1, 1]
+		if (zOffset < -1.0f)
+			zOffset = -1.0f;
+		else if (zOffset > 1.0f)
+			zOffset = 1.0f;
+
+		m_Zoffset = zOffset;
+
+		m_MeshDirty = true;
+	}
+
+	float voxel::NineSliceSprite::GetZOffset() const
+	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+		return m_Zoffset;
+	}
+
 	void voxel::NineSliceSprite::DeleteTextures()
 	{
 		m_TextureTopLeft.Delete();
@@ -671,10 +694,10 @@ namespace onion::voxel
 
 		// TopLeft Texture (no repeat / no crop)
 		m_Vertices_TopLeft = {
-			{xs[0], ys[0], 0.0f, 0.0f, 0.0f}, // Top Left
-			{xs[1], ys[0], 0.0f, 1.0f, 0.0f}, // Top Right
-			{xs[1], ys[1], 0.0f, 1.0f, 1.0f}, // Bottom Right
-			{xs[0], ys[1], 0.0f, 0.0f, 1.0f}  // Bottom Left
+			{xs[0], ys[0], m_Zoffset, 0.0f, 0.0f}, // Top Left
+			{xs[1], ys[0], m_Zoffset, 1.0f, 0.0f}, // Top Right
+			{xs[1], ys[1], m_Zoffset, 1.0f, 1.0f}, // Bottom Right
+			{xs[0], ys[1], m_Zoffset, 0.0f, 1.0f}  // Bottom Left
 		};
 
 		// Top Texture (repeat horizontally, no crop vertically)
@@ -684,18 +707,18 @@ namespace onion::voxel
 		float v0 = 0.0f;
 		float v1 = 1.0f;
 		m_Vertices_Top = {
-			{xs[1], ys[0], 0.0f, u0, v0}, // Top Left
-			{xs[2], ys[0], 0.0f, u1, v0}, // Top Right
-			{xs[2], ys[1], 0.0f, u1, v1}, // Bottom Right
-			{xs[1], ys[1], 0.0f, u0, v1}  // Bottom Left
+			{xs[1], ys[0], m_Zoffset, u0, v0}, // Top Left
+			{xs[2], ys[0], m_Zoffset, u1, v0}, // Top Right
+			{xs[2], ys[1], m_Zoffset, u1, v1}, // Bottom Right
+			{xs[1], ys[1], m_Zoffset, u0, v1}  // Bottom Left
 		};
 
 		// TopRight Texture (no repeat / no crop)
 		m_Vertices_TopRight = {
-			{xs[2], ys[0], 0.0f, 0.0f, 0.0f}, // Top Left
-			{xs[3], ys[0], 0.0f, 1.0f, 0.0f}, // Top Right
-			{xs[3], ys[1], 0.0f, 1.0f, 1.0f}, // Bottom Right
-			{xs[2], ys[1], 0.0f, 0.0f, 1.0f}  // Bottom Left
+			{xs[2], ys[0], m_Zoffset, 0.0f, 0.0f}, // Top Left
+			{xs[3], ys[0], m_Zoffset, 1.0f, 0.0f}, // Top Right
+			{xs[3], ys[1], m_Zoffset, 1.0f, 1.0f}, // Bottom Right
+			{xs[2], ys[1], m_Zoffset, 0.0f, 1.0f}  // Bottom Left
 		};
 
 		// Left Texture (no repeat horizontally, repeat vertically)
@@ -705,10 +728,10 @@ namespace onion::voxel
 		v0 = 0.5f - repeatV * 0.5f;
 		v1 = 0.5f + repeatV * 0.5f;
 		m_Vertices_Left = {
-			{xs[0], ys[1], 0.0f, u0, v0}, // Top Left
-			{xs[1], ys[1], 0.0f, u1, v0}, // Top Right
-			{xs[1], ys[2], 0.0f, u1, v1}, // Bottom Right
-			{xs[0], ys[2], 0.0f, u0, v1}  // Bottom Left
+			{xs[0], ys[1], m_Zoffset, u0, v0}, // Top Left
+			{xs[1], ys[1], m_Zoffset, u1, v0}, // Top Right
+			{xs[1], ys[2], m_Zoffset, u1, v1}, // Bottom Right
+			{xs[0], ys[2], m_Zoffset, u0, v1}  // Bottom Left
 		};
 
 		// Center Texture (repeat both horizontally and vertically)
@@ -717,10 +740,10 @@ namespace onion::voxel
 		v0 = 0.5f - repeatV * 0.5f;
 		v1 = 0.5f + repeatV * 0.5f;
 		m_Vertices_Center = {
-			{xs[1], ys[1], 0.0f, u0, v0}, // Top Left
-			{xs[2], ys[1], 0.0f, u1, v0}, // Top Right
-			{xs[2], ys[2], 0.0f, u1, v1}, // Bottom Right
-			{xs[1], ys[2], 0.0f, u0, v1}  // Bottom Left
+			{xs[1], ys[1], m_Zoffset, u0, v0}, // Top Left
+			{xs[2], ys[1], m_Zoffset, u1, v0}, // Top Right
+			{xs[2], ys[2], m_Zoffset, u1, v1}, // Bottom Right
+			{xs[1], ys[2], m_Zoffset, u0, v1}  // Bottom Left
 		};
 
 		// Right Texture (no repeat horizontally, repeat vertically)
@@ -729,18 +752,18 @@ namespace onion::voxel
 		v0 = 0.5f - repeatV * 0.5f;
 		v1 = 0.5f + repeatV * 0.5f;
 		m_Vertices_Right = {
-			{xs[2], ys[1], 0.0f, u0, v0}, // Top Left
-			{xs[3], ys[1], 0.0f, u1, v0}, // Top Right
-			{xs[3], ys[2], 0.0f, u1, v1}, // Bottom Right
-			{xs[2], ys[2], 0.0f, u0, v1}  // Bottom Left
+			{xs[2], ys[1], m_Zoffset, u0, v0}, // Top Left
+			{xs[3], ys[1], m_Zoffset, u1, v0}, // Top Right
+			{xs[3], ys[2], m_Zoffset, u1, v1}, // Bottom Right
+			{xs[2], ys[2], m_Zoffset, u0, v1}  // Bottom Left
 		};
 
 		// Bottom Left Texture (no repeat / no crop)
 		m_Vertices_BottomLeft = {
-			{xs[0], ys[2], 0.0f, 0.0f, 0.0f}, // Top Left
-			{xs[1], ys[2], 0.0f, 1.0f, 0.0f}, // Top Right
-			{xs[1], ys[3], 0.0f, 1.0f, 1.0f}, // Bottom Right
-			{xs[0], ys[3], 0.0f, 0.0f, 1.0f}  // Bottom Left
+			{xs[0], ys[2], m_Zoffset, 0.0f, 0.0f}, // Top Left
+			{xs[1], ys[2], m_Zoffset, 1.0f, 0.0f}, // Top Right
+			{xs[1], ys[3], m_Zoffset, 1.0f, 1.0f}, // Bottom Right
+			{xs[0], ys[3], m_Zoffset, 0.0f, 1.0f}  // Bottom Left
 		};
 
 		// Bottom Texture (repeat horizontally, no crop vertically)
@@ -749,18 +772,18 @@ namespace onion::voxel
 		v0 = 0.0f;
 		v1 = 1.0f;
 		m_Vertices_Bottom = {
-			{xs[1], ys[2], 0.0f, u0, v0}, // Top Left
-			{xs[2], ys[2], 0.0f, u1, v0}, // Top Right
-			{xs[2], ys[3], 0.0f, u1, v1}, // Bottom Right
-			{xs[1], ys[3], 0.0f, u0, v1}  // Bottom Left
+			{xs[1], ys[2], m_Zoffset, u0, v0}, // Top Left
+			{xs[2], ys[2], m_Zoffset, u1, v0}, // Top Right
+			{xs[2], ys[3], m_Zoffset, u1, v1}, // Bottom Right
+			{xs[1], ys[3], m_Zoffset, u0, v1}  // Bottom Left
 		};
 
 		// Bottom Right Texture (no repeat / no crop)
 		m_Vertices_BottomRight = {
-			{xs[2], ys[2], 0.0f, 0.0f, 0.0f}, // Top Left
-			{xs[3], ys[2], 0.0f, 1.0f, 0.0f}, // Top Right
-			{xs[3], ys[3], 0.0f, 1.0f, 1.0f}, // Bottom Right
-			{xs[2], ys[3], 0.0f, 0.0f, 1.0f}  // Bottom Left
+			{xs[2], ys[2], m_Zoffset, 0.0f, 0.0f}, // Top Left
+			{xs[3], ys[2], m_Zoffset, 1.0f, 0.0f}, // Top Right
+			{xs[3], ys[3], m_Zoffset, 1.0f, 1.0f}, // Bottom Right
+			{xs[2], ys[3], m_Zoffset, 0.0f, 1.0f}  // Bottom Left
 		};
 	}
 

@@ -5,7 +5,8 @@ namespace onion::voxel
 
 	DemoPanel::DemoPanel(const std::string& name)
 		: GuiElement(name), m_Button("DemoButton"), m_Sprite("DemoSprite", m_SpritePath, Sprite::eOrigin::Asset),
-		  m_Button2("DemoButton2"), m_ButtonMainMenu("MainMenuButton"), m_Checkbox("DemoCheckbox")
+		  m_Button2("DemoButton2"), m_ButtonMainMenu("MainMenuButton"), m_Checkbox("DemoCheckbox"),
+		  m_TextField("DemoTextField"), m_Slider("DemoSlider")
 	{
 
 		SubscribeToControlEvents();
@@ -24,28 +25,27 @@ namespace onion::voxel
 		m_ButtonMainMenu.SetSize({200.f, 40.f});
 		m_ButtonMainMenu.SetText("Main Menu");
 		m_ButtonMainMenu.SetEnabled(true);
+
+		m_TextField.SetPosition({400, 600});
+		m_TextField.SetSize({200.f, 40.f});
+		m_TextField.SetText("");
+		m_TextField.SetPlaceholderText("Placeholder text...");
+
+		m_Slider.SetPosition({400, 700});
+		m_Slider.SetSize({200.f, 40.f});
+		m_Slider.SetValue(0);
+		m_Slider.SetMaxValue(100);
 	}
 
 	void DemoPanel::Render()
 	{
 		glm::vec2 buttonSizeRatio{0.415f, 0.08f};
-
 		glm::vec2 buttonSize{buttonSizeRatio.x * s_ScreenWidth, buttonSizeRatio.y * s_ScreenHeight};
-
-		// ---- Render Button ----
-		float buttonXPosRatio = 0.5f;
-		float buttonYPosRatio = 0.5f;
-
-		const glm::vec2 buttonPos{s_ScreenWidth * buttonXPosRatio, s_ScreenHeight * buttonYPosRatio};
-
-		m_Button.SetPosition(buttonPos);
-		m_Button.SetSize(buttonSize);
-		m_Button.Render();
 
 		// ---- Render Sprite ----
 		float spriteXScaleFacor = 0.5f;
 		float spriteXRatio = 0.5f;
-		float spriteYRatio = 0.2f;
+		float spriteYRatio = 0.15f;
 		float aspectRatio = (float) m_Sprite.GetTextureHeight() / m_Sprite.GetTextureWidth();
 
 		const glm::vec2 spritePos{s_ScreenWidth * spriteXRatio, s_ScreenHeight * spriteYRatio};
@@ -57,15 +57,56 @@ namespace onion::voxel
 		m_Sprite.SetSize(spriteSize);
 		m_Sprite.Render();
 
+		// ---- Render Button ----
+		float buttonXPosRatio = 0.5f;
+		float buttonYPosRatio = 0.4f;
+
+		const glm::vec2 buttonPos{s_ScreenWidth * buttonXPosRatio, s_ScreenHeight * buttonYPosRatio};
+
+		m_Button.SetPosition(buttonPos);
+		m_Button.SetSize(buttonSize);
+		m_Button.Render();
+
 		// ---- Render Button 2 ----
 		float button2XPosRatio = 0.5f;
-		float button2YPosRatio = 0.6f;
+		float button2YPosRatio = 0.5f;
 
 		const glm::vec2 button2Pos{s_ScreenWidth * button2XPosRatio, s_ScreenHeight * button2YPosRatio};
 
 		m_Button2.SetPosition(button2Pos);
 		m_Button2.SetSize(buttonSize);
 		m_Button2.Render();
+
+		// ---- Render Checkbox ----
+		float cbPositionYRatio = 0.5f;
+		float rightEdgeXButton2 = button2Pos.x + buttonSize.x / 2;
+		int margin = 5;
+		const glm::vec2 cbSize{buttonSize.y, buttonSize.y};
+		const glm::vec2 cbPosition{rightEdgeXButton2 + margin + cbSize.x / 2, s_ScreenHeight * cbPositionYRatio};
+
+		m_Checkbox.SetPosition(cbPosition);
+		m_Checkbox.SetSize(cbSize);
+		m_Checkbox.Render();
+
+		// ---- Render TextField ----
+		float textFieldXRatio = 0.5f;
+		float textFieldYRatio = 0.6f;
+		const glm::vec2 textFieldPos{s_ScreenWidth * textFieldXRatio, s_ScreenHeight * textFieldYRatio};
+
+		m_TextField.SetPosition(textFieldPos);
+		m_TextField.SetSize(buttonSize);
+		m_TextField.Render();
+
+		// ---- Render Slider ----
+		float sliderXRatio = 0.5f;
+		float sliderYRatio = 0.7f;
+		const glm::vec2 sliderPos{s_ScreenWidth * sliderXRatio, s_ScreenHeight * sliderYRatio};
+		std::string sliderText = "Slider Value: " + std::to_string(m_Slider.GetValue());
+
+		m_Slider.SetPosition(sliderPos);
+		m_Slider.SetSize(buttonSize);
+		m_Slider.SetText(sliderText);
+		m_Slider.Render();
 
 		// ---- Render Main Menu Button ----
 		float buttonMainMenuXPosRatio = 0.5f;
@@ -77,16 +118,6 @@ namespace onion::voxel
 		m_ButtonMainMenu.SetPosition(buttonMainMenuPos);
 		m_ButtonMainMenu.SetSize(buttonSize);
 		m_ButtonMainMenu.Render();
-
-		// ---- Render Checkbox ----
-		float cbPositionXRatio = 0.1f;
-		float cbPositionYRatio = 0.17f;
-		const glm::vec2 cbPosition{s_ScreenWidth * cbPositionXRatio, s_ScreenHeight * cbPositionYRatio};
-		const glm::vec2 cbSize{40, 40};
-
-		m_Checkbox.SetPosition(cbPosition);
-		m_Checkbox.SetSize(cbSize);
-		m_Checkbox.Render();
 	}
 
 	void DemoPanel::Initialize()
@@ -96,6 +127,8 @@ namespace onion::voxel
 		m_ButtonMainMenu.Initialize();
 		m_Sprite.Initialize();
 		m_Checkbox.Initialize();
+		m_TextField.Initialize();
+		m_Slider.Initialize();
 
 		SetInitState(true);
 	}
@@ -107,6 +140,8 @@ namespace onion::voxel
 		m_ButtonMainMenu.Delete();
 		m_Sprite.Delete();
 		m_Checkbox.Delete();
+		m_TextField.Delete();
+		m_Slider.Delete();
 
 		SetDeletedState(true);
 	}
@@ -118,6 +153,8 @@ namespace onion::voxel
 		m_ButtonMainMenu.ReloadTextures();
 		m_Sprite.ReloadTextures();
 		m_Checkbox.ReloadTextures();
+		m_TextField.ReloadTextures();
+		m_Slider.ReloadTextures();
 	}
 
 	void DemoPanel::SubscribeToControlEvents()
@@ -135,12 +172,22 @@ namespace onion::voxel
 
 		m_HandleCheckboxCheckedChanged = m_Checkbox.OnCheckedChanged.Subscribe(
 			[this](const Checkbox& checkbox) { Handle_CheckboxCheckedChanged(checkbox); });
+
+		m_HandleSliderValueChanged =
+			m_Slider.OnValueChanged.Subscribe([this](const Slider& slider) { Handle_SliderValueChanged(slider); });
 	}
 
 	void DemoPanel::Handle_CheckboxCheckedChanged(const Checkbox& checkbox)
 	{
 		std::cout << "Checkbox '" + checkbox.GetName() + "' Checked Changed. New Value: " << checkbox.IsChecked()
 				  << std::endl;
+
+		m_Button2.SetEnabled(checkbox.IsChecked());
+	}
+
+	void DemoPanel::Handle_SliderValueChanged(const Slider& slider)
+	{
+		std::cout << "Slider '" + slider.GetName() + "' Value Changed. New Value: " << slider.GetValue() << std::endl;
 	}
 
 	void DemoPanel::Handle_ButtonClick(const Button& button)

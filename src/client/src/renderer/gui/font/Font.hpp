@@ -58,13 +58,15 @@ namespace onion::voxel
 		/// @param color The color of the text
 		/// @param rotationDegrees The rotation of the text in degrees
 		/// @param zOffset The offset of the text in the Z direction
+		/// @param backgroundColor The background color of the text
 		void RenderText(const std::string& text,
 						eTextAlignment alignment,
 						const glm::vec2& position,
 						float textHeightPx,
 						const glm::vec3& color,
 						float zOffset = 0.0f,
-						float rotationDegrees = 0.0f);
+						float rotationDegrees = 0.0f,
+						const glm::vec4& backgroundColor = glm::vec4(0.0f));
 
 		/// @brief Gets the size of the given text when rendered with the specified height. This can be used to calculate the position to render the text based on the desired alignment.
 		glm::vec2 MeasureText(const std::string& text, float textHeightPx) const;
@@ -80,6 +82,11 @@ namespace onion::voxel
 			float texX, texY;
 		};
 
+		struct VertexBackground
+		{
+			glm::vec3 position;
+		};
+
 		struct Glyph
 		{
 			float advance;
@@ -92,7 +99,11 @@ namespace onion::voxel
 		GLuint m_VAO = 0;
 		GLuint m_VBO = 0;
 
+		GLuint m_VAO_Background = 0;
+		GLuint m_VBO_Background = 0;
+
 		std::vector<Vertex> m_Vertices;
+		std::vector<VertexBackground> m_VerticesBackground;
 
 		void GenerateBuffers();
 		void DeleteBuffers();
@@ -113,5 +124,6 @@ namespace onion::voxel
 	  private:
 		static glm::mat4 s_ProjectionMatrix;
 		static Shader s_ShaderFont;
+		static Shader s_ShaderBackground;
 	};
 } // namespace onion::voxel

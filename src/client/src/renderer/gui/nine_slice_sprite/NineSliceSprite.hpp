@@ -66,11 +66,20 @@ namespace onion::voxel
 
 		// ----- Getters / Setters -----
 	  public:
+		/// @brief Gets the position of the sprite. The position is interpreted as the center of the sprite.
 		const glm::ivec2& GetPosition() const;
+		/// @brief Sets the position of the sprite. The position is interpreted as the center of the sprite.
 		void SetPosition(const glm::ivec2& position);
 
+		/// @brief Gets the size of the sprite in pixels.
 		const glm::ivec2& GetSize() const;
+		/// @brief Sets the size of the sprite in pixels.
 		void SetSize(const glm::ivec2& size);
+
+		/// @brief Sets the offset of the sprite in the Z direction. In range [-1, 1], where 1 is the closest to the camera and -1 is the farthest from the camera.
+		void SetZOffset(float zOffset);
+		/// @brief Gets the offset of the sprite in the Z direction. In range [-1, 1], where 1 is the closest to the camera and -1 is the farthest from the camera.
+		float GetZOffset() const;
 
 		// ----- Internal Variables -----
 	  private:
@@ -80,6 +89,7 @@ namespace onion::voxel
 		mutable std::mutex m_Mutex;
 		glm::ivec2 m_Position{0, 0};
 		glm::ivec2 m_Size{1, 1};
+		float m_Zoffset = 0.f;
 
 		glm::ivec2 m_LastBuiltSize{-1, -1};
 		glm::ivec2 m_LastBuiltPosition{-1, -1};

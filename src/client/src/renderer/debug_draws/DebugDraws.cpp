@@ -94,7 +94,10 @@ namespace onion::voxel
 		DrawWorldBoxMinMax(minCorner, maxCorner, color, widthPx, topMost);
 	}
 
-	void DebugDraws::DrawScreenLine(const glm::vec2& start, const glm::vec2& end, const glm::vec4& color, int widthPx)
+	void DebugDraws::DrawScreenLine_Normalized(const glm::vec2& start,
+											   const glm::vec2& end,
+											   const glm::vec4& color,
+											   int widthPx)
 	{
 		Initialize();
 
@@ -118,33 +121,77 @@ namespace onion::voxel
 		glBindVertexArray(0);
 	}
 
-	void DebugDraws::DrawScreenBoxMinMax(const glm::vec2& minCorner,
-										 const glm::vec2& maxCorner,
-										 const glm::vec4& color,
-										 int widthPx)
+	void DebugDraws::DrawScreenBoxMinMax_Normalized(const glm::vec2& minCorner,
+													const glm::vec2& maxCorner,
+													const glm::vec4& color,
+													int widthPx)
 	{
 		glm::vec2 v0 = {minCorner.x, minCorner.y};
 		glm::vec2 v1 = {maxCorner.x, minCorner.y};
 		glm::vec2 v2 = {maxCorner.x, maxCorner.y};
 		glm::vec2 v3 = {minCorner.x, maxCorner.y};
 
-		DrawScreenLine(v0, v1, color, widthPx);
-		DrawScreenLine(v1, v2, color, widthPx);
-		DrawScreenLine(v2, v3, color, widthPx);
-		DrawScreenLine(v3, v0, color, widthPx);
+		DrawScreenLine_Normalized(v0, v1, color, widthPx);
+		DrawScreenLine_Normalized(v1, v2, color, widthPx);
+		DrawScreenLine_Normalized(v2, v3, color, widthPx);
+		DrawScreenLine_Normalized(v3, v0, color, widthPx);
 	}
 
-	void DebugDraws::DrawScreenBoxCenterSize(const glm::vec2& center,
-											 const glm::vec2& size,
-											 const glm::vec4& color,
-											 int widthPx)
+	void DebugDraws::DrawScreenBoxCenterSize_Normalized(const glm::vec2& center,
+														const glm::vec2& size,
+														const glm::vec4& color,
+														int widthPx)
 	{
 		glm::vec2 half = size * 0.5f;
 
 		glm::vec2 minCorner = center - half;
 		glm::vec2 maxCorner = center + half;
 
-		DrawScreenBoxMinMax(minCorner, maxCorner, color, widthPx);
+		DrawScreenBoxMinMax_Normalized(minCorner, maxCorner, color, widthPx);
+	}
+
+	void DebugDraws::DrawScreenLine_Pixels(const glm::ivec2& start,
+										   const glm::ivec2& end,
+										   const glm::vec4& color,
+										   int widthPx)
+	{
+		glm::vec2 startNorm = PixelsToNormalized(glm::vec2(start));
+		glm::vec2 endNorm = PixelsToNormalized(glm::vec2(end));
+		DrawScreenLine_Normalized(startNorm, endNorm, color, widthPx);
+	}
+
+	void DebugDraws::DrawScreenBoxMinMax_Pixels(const glm::vec2& minCorner,
+												const glm::vec2& maxCorner,
+												const glm::vec4& color,
+												int widthPx)
+	{
+		glm::vec2 minNorm = PixelsToNormalized(minCorner);
+		glm::vec2 maxNorm = PixelsToNormalized(maxCorner);
+		DrawScreenBoxMinMax_Normalized(minNorm, maxNorm, color, widthPx);
+	}
+
+	void DebugDraws::DrawScreenBoxCenterSize_Pixels(const glm::vec2& center,
+													const glm::vec2& size,
+													const glm::vec4& color,
+													int widthPx)
+	{
+		glm::vec2 centerNorm = PixelsToNormalized(center);
+		glm::vec2 sizeNorm = PixelsToNormalized(size);
+		DrawScreenBoxCenterSize_Normalized(centerNorm, sizeNorm, color, widthPx);
+	}
+
+	glm::vec2 DebugDraws::PixelsToNormalized(const glm::vec2& pixels)
+	{
+		if (ScreenHeight == 0 || ScreenWidth == 0)
+		{
+			return glm::vec2(0.0f);
+		}
+
+		const float x = pixels.x / static_cast<float>(ScreenWidth);
+		// Invert Y because pixel coordinates have origin at top-left
+		const float y = 1.0f - (pixels.y / static_cast<float>(ScreenHeight));
+
+		return glm::vec2(x, y);
 	}
 
 	void DebugDraws::Initialize()
