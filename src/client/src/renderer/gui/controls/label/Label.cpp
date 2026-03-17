@@ -34,11 +34,18 @@ namespace onion::voxel
 								  m_TextHeight,
 								  shadowColor,
 								  m_zOffset - 0.01f,
-								  m_RotationDegrees);
+								  m_RotationDegrees,
+								  m_BackgroundColor);
 		}
 
-		s_TextFont.RenderText(
-			m_Text, m_TextAlignment, m_Position, m_TextHeight, m_TextColor, m_zOffset, m_RotationDegrees);
+		s_TextFont.RenderText(m_Text,
+							  m_TextAlignment,
+							  m_Position,
+							  m_TextHeight,
+							  m_TextColor,
+							  m_zOffset,
+							  m_RotationDegrees,
+							  m_BackgroundColor);
 	}
 
 	void Label::Initialize()
@@ -186,6 +193,23 @@ namespace onion::voxel
 	{
 		std::lock_guard lock(m_MutexState);
 		return m_ShadowEnabled;
+	}
+
+	void Label::SetBackgroundColor(const glm::vec4& color)
+	{
+		std::lock_guard lock(m_MutexState);
+		m_BackgroundColor = color;
+	}
+
+	void Label::SetBackgroundColor(const glm::vec3& color)
+	{
+		SetBackgroundColor(glm::vec4(color, 1.f));
+	}
+
+	glm::vec4 Label::GetBackgroundColor() const
+	{
+		std::lock_guard lock(m_MutexState);
+		return m_BackgroundColor;
 	}
 
 } // namespace onion::voxel

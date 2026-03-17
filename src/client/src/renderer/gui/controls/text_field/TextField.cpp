@@ -59,7 +59,7 @@ namespace onion::voxel
 		// Add trailing '_' or Render Cursor
 		std::string drawnText = m_Text;
 		bool visible = fmod(glfwGetTime(), 0.8) < 0.5;
-		if (visible && m_IsActive)
+		if (visible && m_IsActive && !m_ReadOnly)
 		{
 			if (m_CursorPosition == m_Text.size())
 			{
@@ -86,7 +86,8 @@ namespace onion::voxel
 			m_NineSliceSprite_TextField.Render();
 
 		// ----- Render Label -----
-
+		float textHeight = size.y * m_TextScaleFactor;
+		m_Label.SetTextHeight(textHeight);
 		if (m_Text.empty() && !m_IsActive)
 		{
 			// PLACEHOLDER TEXT
@@ -98,13 +99,54 @@ namespace onion::voxel
 		{
 			// NORMAL TEXT
 
-			m_Label.SetText(drawnText);
-			m_Label.SetTextColor(s_TextColor);
-		}
+			if (m_SelectionEnd > m_SelectionStart)
+			{
+				// SELECTION
+				// Render 3 parts: text before selection, selected text, text after selection
+				std::string textBeforeSelection = m_Text.substr(0, m_SelectionStart);
+				std::string selectedText = m_Text.substr(m_SelectionStart, m_SelectionEnd - m_SelectionStart);
+				std::string textAfterSelection = m_Text.substr(m_SelectionEnd);
 
-		m_Label.SetPosition(textPos);
-		m_Label.SetTextHeight(size.y * m_TextScaleFactor);
-		m_Label.Render();
+				// Measure text sizes for positioning
+				glm::vec2 textBeforeSelectionSize = s_TextFont.MeasureText(textBeforeSelection, textHeight);
+				glm::vec2 selectedTextSize = s_TextFont.MeasureText(selectedText, textHeight);
+				glm::vec2 textAfterSelectionSize = s_TextFont.MeasureText(textAfterSelection, textHeight);
+
+				// Calculate positions
+				glm::ivec2 selectedTextPos = textPos + glm::ivec2(textBeforeSelectionSize.x, 0);
+				glm::ivec2 textAfterSelectionPos = selectedTextPos + glm::ivec2(selectedTextSize.x, 0);
+
+				// Render text before selection
+				m_Label.SetText(textBeforeSelection);
+				m_Label.SetTextColor(s_TextColor);
+				m_Label.SetPosition(textPos);
+				m_Label.Render();
+
+				// Render selected text with highlight
+				m_Label.SetText(selectedText);
+				m_Label.SetTextColor(s_SelectedTextColor);
+				m_Label.SetShadowColor(s_SelectedTextShadowColor);
+				m_Label.SetBackgroundColor(glm::vec4(1.f));
+				m_Label.SetPosition(selectedTextPos);
+				m_Label.Render();
+
+				// Render text after selection
+				m_Label.SetText(textAfterSelection);
+				m_Label.SetTextColor(s_TextColor);
+				m_Label.ResetShadowColor(); // Reset shadow color for non-selected text
+				m_Label.SetPosition(textAfterSelectionPos);
+				m_Label.SetBackgroundColor(glm::vec4(0.f)); // Disable background for non-selected text
+				m_Label.Render();
+			}
+			else
+			{
+				// NO SELECTION
+				m_Label.SetText(drawnText);
+				m_Label.SetTextColor(s_TextColor);
+				m_Label.SetPosition(textPos);
+				m_Label.Render();
+			}
+		}
 	}
 
 	void TextField::Delete()
@@ -120,6 +162,7 @@ namespace onion::voxel
 	{
 		m_NineSliceSprite_TextField.ReloadTextures();
 		m_NineSliceSprite_TextFieldHighlighted.ReloadTextures();
+		m_Label.ReloadTextures();
 	}
 
 	void TextField::SetText(const std::string& text)
@@ -471,6 +514,18 @@ namespace onion::voxel
 		{
 			SetPosition(position);
 		}
+
+		ImGui::Separator();
+
+		ImGui::SliderInt("Cursor Width", &m_CursorWidth, 1, 10);
+		ImGui::SliderFloat("Cursor Height Ratio", &m_CursorHeightRatio, 0.1f, 1.f);
+
+		ImGui::Separator();
+
+		ImGui::SliderInt("Selection Start", (int*) &m_SelectionStart, 0, static_cast<int>(text.size()));
+		ImGui::SliderInt("Selection End", (int*) &m_SelectionEnd, 0, static_cast<int>(text.size()));
+
+		ImGui::Separator();
 
 		glm::ivec2 size = GetSize();
 		if (ImGui::SliderInt2("Size", &size.x, 20, 1500))

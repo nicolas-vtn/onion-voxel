@@ -109,6 +109,8 @@ namespace onion::voxel
 		bool m_IsPressed = false;
 
 		size_t m_CursorPosition = 0;
+		size_t m_SelectionStart = 0;
+		size_t m_SelectionEnd = 0;
 
 		// ----- Label -----
 	  private:
@@ -129,6 +131,8 @@ namespace onion::voxel
 
 		static inline constexpr glm::vec3 s_TextColor = glm::vec3(224.f / 255.f);
 		static inline constexpr glm::vec3 s_PlaceholderTextColor = glm::vec3(85.f / 255.f);
+		static inline constexpr glm::vec3 s_SelectedTextColor = glm::vec3(0.1f, 0.1f, 1.f);
+		static inline constexpr glm::vec3 s_SelectedTextShadowColor = glm::vec3(0.75f, 0.75f, 1.f);
 
 		enum class eDirection
 		{

@@ -9,6 +9,8 @@ using namespace onion::voxel;
 // -------- Static Member Definitions --------
 
 Shader Font::s_ShaderFont(GetAssetsPath() / "shaders" / "font.vert", GetAssetsPath() / "shaders" / "font.frag");
+Shader Font::s_ShaderBackground(GetAssetsPath() / "shaders" / "rectangle.vert",
+								GetAssetsPath() / "shaders" / "rectangle.frag");
 
 glm::mat4 Font::s_ProjectionMatrix{1.0f};
 
@@ -54,6 +56,7 @@ void Font::StaticInitialize() {}
 void Font::StaticShutdown()
 {
 	s_ShaderFont.Delete();
+	s_ShaderBackground.Delete();
 }
 
 void Font::SetProjectionMatrix(const glm::mat4& projection)
@@ -61,6 +64,8 @@ void Font::SetProjectionMatrix(const glm::mat4& projection)
 	s_ProjectionMatrix = projection;
 	s_ShaderFont.Use();
 	s_ShaderFont.setMat4("uProjection", s_ProjectionMatrix);
+	s_ShaderBackground.Use();
+	s_ShaderBackground.setMat4("uProjection", s_ProjectionMatrix);
 }
 
 void onion::voxel::Font::RenderText(const std::string& text,
@@ -69,7 +74,8 @@ void onion::voxel::Font::RenderText(const std::string& text,
 									float textHeightPx,
 									const glm::vec3& color,
 									float zOffset,
-									float rotationDegrees)
+									float rotationDegrees,
+									const glm::vec4& backgroundColor)
 {
 	if (text.empty())
 		return;
@@ -78,21 +84,31 @@ void onion::voxel::Font::RenderText(const std::string& text,
 
 	// Calculate Starting position based on alignment
 	float startX = 0.f, startY = 0.f;
+	glm::ivec2 topLeftCorner{};
+	glm::ivec2 bottomRightCorner{};
 	switch (alignment)
 	{
 		case eTextAlignment::Left:
 			startX = position.x;
 			startY = position.y - size.y * 0.5f; // Center vertically
+			topLeftCorner = {static_cast<int>(position.x), static_cast<int>(position.y - size.y * 0.5f)};
+			bottomRightCorner = {static_cast<int>(position.x + size.x), static_cast<int>(position.y + size.y * 0.5f)};
 			break;
 
 		case eTextAlignment::Center:
 			startX = position.x - size.x * 0.5f;
 			startY = position.y - size.y * 0.5f; // Center vertically
+			topLeftCorner = {static_cast<int>(position.x - size.x * 0.5f),
+							 static_cast<int>(position.y - size.y * 0.5f)};
+			bottomRightCorner = {static_cast<int>(position.x + size.x * 0.5f),
+								 static_cast<int>(position.y + size.y * 0.5f)};
 			break;
 
 		case eTextAlignment::Right:
 			startX = position.x - size.x;
 			startY = position.y - size.y * 0.5f; // Center vertically
+			topLeftCorner = {static_cast<int>(position.x - size.x), static_cast<int>(position.y - size.y * 0.5f)};
+			bottomRightCorner = {static_cast<int>(position.x), static_cast<int>(position.y + size.y * 0.5f)};
 			break;
 	}
 
@@ -133,7 +149,50 @@ void onion::voxel::Font::RenderText(const std::string& text,
 		model = glm::translate(model, glm::vec3(-position, 0.0f));
 	}
 
-	// --- Render ---
+	// --- Render Background ---
+	if (backgroundColor.a > 0.0f)
+	{
+		const float glyphPixelSize = textHeightPx / m_GlyphSize.y;
+
+		const float paddingTop = 1.2f * glyphPixelSize;
+		const float paddingBottom = 1.f * glyphPixelSize;
+		const float paddingLeft = 1.f * glyphPixelSize;
+		const float paddingRight = -0.8f * glyphPixelSize;
+
+		topLeftCorner.x -= paddingLeft;
+		topLeftCorner.y -= paddingTop;
+		bottomRightCorner.x += paddingRight;
+		bottomRightCorner.y += paddingBottom;
+
+		// Build background vertices
+		m_VerticesBackground = {{{topLeftCorner.x, topLeftCorner.y, zOffset - 0.02f}},
+								{{bottomRightCorner.x, topLeftCorner.y, zOffset - 0.02f}},
+								{{bottomRightCorner.x, bottomRightCorner.y, zOffset - 0.02f}},
+								{{topLeftCorner.x, topLeftCorner.y, zOffset - 0.02f}},
+								{{bottomRightCorner.x, bottomRightCorner.y, zOffset - 0.02f}},
+								{{topLeftCorner.x, bottomRightCorner.y, zOffset - 0.02f}}};
+
+		// Upload background vertices
+		glBindVertexArray(m_VAO_Background);
+		glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Background);
+
+		glBufferData(GL_ARRAY_BUFFER,
+					 m_VerticesBackground.size() * sizeof(VertexBackground),
+					 m_VerticesBackground.data(),
+					 GL_DYNAMIC_DRAW);
+
+		// Set Uniforms
+		s_ShaderBackground.Use();
+		s_ShaderBackground.setMat4("uModel", model);
+		s_ShaderBackground.setVec4("uColor", backgroundColor);
+
+		// Draw background
+		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m_VerticesBackground.size()));
+
+		glBindVertexArray(0);
+	}
+
+	// --- Render Text ---
 	glBindVertexArray(m_VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
 
@@ -182,6 +241,7 @@ glm::ivec2 onion::voxel::Font::GetGlyphSize() const
 
 void Font::GenerateBuffers()
 {
+	// ----- Text Vertices -----
 	glGenVertexArrays(1, &m_VAO);
 	glGenBuffers(1, &m_VBO);
 
@@ -196,6 +256,18 @@ void Font::GenerateBuffers()
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
 	glEnableVertexAttribArray(1);
 
+	// ----- Background Vertices -----
+	glGenVertexArrays(1, &m_VAO_Background);
+	glGenBuffers(1, &m_VBO_Background);
+
+	glBindVertexArray(m_VAO_Background);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Background);
+	glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+
+	glVertexAttribPointer(
+		0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexBackground), (void*) offsetof(VertexBackground, position));
+	glEnableVertexAttribArray(0);
+
 	glBindVertexArray(0);
 }
 
@@ -207,8 +279,16 @@ void Font::DeleteBuffers()
 	if (m_VBO)
 		glDeleteBuffers(1, &m_VBO);
 
+	if (m_VAO_Background)
+		glDeleteVertexArrays(1, &m_VAO_Background);
+
+	if (m_VBO_Background)
+		glDeleteBuffers(1, &m_VBO_Background);
+
 	m_VAO = 0;
 	m_VBO = 0;
+	m_VAO_Background = 0;
+	m_VBO_Background = 0;
 }
 
 float GetGlyphAdvance(

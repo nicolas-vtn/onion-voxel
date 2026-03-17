@@ -81,6 +81,10 @@ namespace onion::voxel
 		void EnableShadow(bool enable);
 		bool IsShadowEnabled() const;
 
+		void SetBackgroundColor(const glm::vec4& color);
+		void SetBackgroundColor(const glm::vec3& color);
+		glm::vec4 GetBackgroundColor() const;
+
 		// ----- Properties -----
 	  public:
 		mutable std::mutex m_MutexState;
@@ -90,6 +94,7 @@ namespace onion::voxel
 		Font::eTextAlignment m_TextAlignment{Font::eTextAlignment::Left};
 		glm::vec4 m_TextColor{1, 1, 1, 1};
 		glm::vec4 m_ShadowColor{0.246f, 0.246f, 0.246f, 1.f};
+		glm::vec4 m_BackgroundColor{0.f, 0.f, 0.f, 0.f};
 		std::atomic_bool m_ShadowEnabled{true};
 		float m_zOffset{0.5f};
 		float m_RotationDegrees{0.f};
