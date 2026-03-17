@@ -38,13 +38,13 @@ namespace onion::voxel
 		void SetPlaceholderText(const std::string& placeholderText);
 		std::string GetPlaceholderText() const;
 
-		/// @brief Sets the size of the button. (In Pixels)
-		/// @param size The new size of the button in pixels.
+		/// @brief Sets the size of the text field. (In Pixels)
+		/// @param size The new size of the text field in pixels.
 		void SetSize(const glm::ivec2& size);
 		glm::ivec2 GetSize() const;
 
-		/// @brief Sets the position of the button. (In Pixels)
-		/// @param pos The new position of the button in pixels.
+		/// @brief Sets the position of the text field. (In Pixels)
+		/// @param pos The new position of the text field in pixels.
 		void SetPosition(const glm::ivec2& pos);
 		glm::ivec2 GetPosition() const;
 
@@ -83,6 +83,7 @@ namespace onion::voxel
 
 		int m_InputId_Backspace;
 		int m_InputId_Enter;
+		int m_InputId_KpEnter;
 		int m_InputId_Escape;
 		int m_InputId_Left;
 		int m_InputId_Right;
@@ -109,20 +110,22 @@ namespace onion::voxel
 		bool m_IsActive = false;
 		std::string m_PlaceholderText = "Enter text...";
 
+		std::string m_Text;
+		std::string m_TextAtActivation;
+		glm::ivec2 m_Position{0, 0};
+		glm::ivec2 m_Size{1, 1};
+		bool m_IsPressed = false;
+
 		float m_TextScaleFactor = 0.4f;
 		float m_TextStartXratio = 2.1f;
 		int m_CursorWidth = 4;
 		float m_CursorHeightRatio = 0.6f;
 
-		std::string m_Text;
-		glm::ivec2 m_Position{0, 0};
-		glm::ivec2 m_Size{1, 1};
-		bool m_IsPressed = false;
-
 		size_t m_CursorPosition = 0;
 		size_t m_SelectionStart = SIZE_MAX;
 		bool m_IsSelecting = false;
 		glm::ivec2 m_DoubleClickPosition{0, 0};
+		bool m_WasClickDown = false;
 
 		// ----- Label -----
 	  private:
@@ -143,8 +146,8 @@ namespace onion::voxel
 
 		static inline constexpr glm::vec3 s_TextColor = glm::vec3(224.f / 255.f);
 		static inline constexpr glm::vec3 s_PlaceholderTextColor = glm::vec3(85.f / 255.f);
-		static inline constexpr glm::vec3 s_SelectedTextColor = glm::vec3(0.1f, 0.1f, 1.f);
-		static inline constexpr glm::vec3 s_SelectedTextShadowColor = glm::vec3(0.75f, 0.75f, 1.f);
+		static inline constexpr glm::vec3 s_SelectedTextColor = glm::vec3(0.1216f, 0.1216f, 1.f);
+		static inline constexpr glm::vec3 s_SelectedTextShadowColor = glm::vec3(0.7804f, 0.7804f, 1.f);
 
 		enum class eDirection
 		{

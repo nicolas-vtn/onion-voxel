@@ -49,7 +49,7 @@ namespace onion::voxel
 		Handle_KeyInputs();
 
 		// DEBUG
-		RenderImGuiDebug();
+		// RenderImGuiDebug();
 
 		// Calculate text position
 		glm::ivec2 size = GetSize();
@@ -262,6 +262,7 @@ namespace onion::voxel
 		InputConfig keyRepeatConfig = InputConfig(true, 0.5f, 0.03f, 0.5f);
 		m_InputId_Backspace = InputsManager->RegisterInput(Key::Backspace, keyRepeatConfig);
 		m_InputId_Enter = InputsManager->RegisterInput(Key::Enter, keyRepeatConfig);
+		m_InputId_KpEnter = InputsManager->RegisterInput(Key::KPEnter, keyRepeatConfig);
 		m_InputId_Escape = InputsManager->RegisterInput(Key::Escape, keyRepeatConfig);
 		m_InputId_Left = InputsManager->RegisterInput(Key::Left, keyRepeatConfig);
 		m_InputId_Right = InputsManager->RegisterInput(Key::Right, keyRepeatConfig);
@@ -287,11 +288,13 @@ namespace onion::voxel
 		m_IsActive = true;
 		m_IsSelecting = true;
 
+		m_TextAtActivation = m_Text; // Store the text at the moment of activation for potential cancellation
+
 		// Sets the selection start position based on the mouse click position
 		bool shiftPressed = s_InputsSnapshot->GetKeyState(m_InputId_Shift).IsPressed;
 		if (!shiftPressed)
 		{
-			int mouseX = s_InputsSnapshot->Mouse.Xpos;
+			int mouseX = static_cast<int>(std::round(s_InputsSnapshot->Mouse.Xpos));
 			m_SelectionStart = GetCursorPositionFromMouseX(mouseX);
 		}
 	}
@@ -339,7 +342,8 @@ namespace onion::voxel
 		const auto& inputsManager = EngineContext::Get().Inputs;
 
 		bool backspacePressed = snapshot->GetKeyState(m_InputId_Backspace).IsPressed;
-		bool enterPressed = snapshot->GetKeyState(m_InputId_Enter).IsPressed;
+		bool enterPressed =
+			snapshot->GetKeyState(m_InputId_Enter).IsPressed || snapshot->GetKeyState(m_InputId_KpEnter).IsPressed;
 		bool escapePressed = snapshot->GetKeyState(m_InputId_Escape).IsPressed;
 		bool leftPressed = snapshot->GetKeyState(m_InputId_Left).IsPressed;
 		bool rightPressed = snapshot->GetKeyState(m_InputId_Right).IsPressed;
@@ -355,11 +359,28 @@ namespace onion::voxel
 
 		glm::ivec2 mousePos{snapshot->Mouse.Xpos, snapshot->Mouse.Ypos};
 
-		if (enterPressed || escapePressed)
+		if (enterPressed)
 		{
 			ValidateText();
 			return;
 		}
+
+		if (escapePressed)
+		{
+			// Revert to the text at activation if Escape is pressed
+			m_Text = m_TextAtActivation;
+			ValidateText();
+			return;
+		}
+
+		if (!m_WasClickDown && clickPressed && !m_NineSliceSprite_TextField.IsHovered())
+		{
+			// Validate text and deactivate if there's a mouse click outside the text field while it's active
+			m_IsActive = false;
+			ValidateText();
+			return;
+		}
+		m_WasClickDown = clickPressed;
 
 		if (aPressed && ctrlPressed)
 		{
@@ -618,7 +639,6 @@ namespace onion::voxel
 	size_t TextField::GetCursorPositionFromMouseX(int mouseX)
 	{
 		int startTextX = GetPosition().x - static_cast<int>(GetSize().x / m_TextStartXratio);
-		int relativeMouseX = mouseX - startTextX;
 
 		float textHeight = GetSize().y * m_TextScaleFactor;
 		std::string textToMeasure;

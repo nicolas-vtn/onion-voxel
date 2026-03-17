@@ -84,24 +84,22 @@ void onion::voxel::Font::RenderText(const std::string& text,
 
 	// Calculate Starting position based on alignment
 	float startX = 0.f, startY = 0.f;
-	glm::ivec2 topLeftCorner{};
-	glm::ivec2 bottomRightCorner{};
+	glm::vec2 topLeftCorner{};
+	glm::vec2 bottomRightCorner{};
 	switch (alignment)
 	{
 		case eTextAlignment::Left:
 			startX = position.x;
 			startY = position.y - size.y * 0.5f; // Center vertically
-			topLeftCorner = {static_cast<int>(position.x), static_cast<int>(position.y - size.y * 0.5f)};
-			bottomRightCorner = {static_cast<int>(position.x + size.x), static_cast<int>(position.y + size.y * 0.5f)};
+			topLeftCorner = {position.x, position.y - size.y * 0.5f};
+			bottomRightCorner = {position.x + size.x, position.y + size.y * 0.5f};
 			break;
 
 		case eTextAlignment::Center:
 			startX = position.x - size.x * 0.5f;
 			startY = position.y - size.y * 0.5f; // Center vertically
-			topLeftCorner = {static_cast<int>(position.x - size.x * 0.5f),
-							 static_cast<int>(position.y - size.y * 0.5f)};
-			bottomRightCorner = {static_cast<int>(position.x + size.x * 0.5f),
-								 static_cast<int>(position.y + size.y * 0.5f)};
+			topLeftCorner = {position.x - size.x * 0.5f, position.y - size.y * 0.5f};
+			bottomRightCorner = {position.x + size.x * 0.5f, position.y + size.y * 0.5f};
 			break;
 
 		case eTextAlignment::Right:
@@ -164,13 +162,16 @@ void onion::voxel::Font::RenderText(const std::string& text,
 		bottomRightCorner.x += paddingRight;
 		bottomRightCorner.y += paddingBottom;
 
+		glm::ivec2 topLeftCornerInt = glm::ivec2(std::floor(topLeftCorner.x), std::floor(topLeftCorner.y));
+		glm::ivec2 bottomRightCornerInt = glm::ivec2(std::floor(bottomRightCorner.x), std::floor(bottomRightCorner.y));
+
 		// Build background vertices
-		m_VerticesBackground = {{{topLeftCorner.x, topLeftCorner.y, zOffset - 0.02f}},
-								{{bottomRightCorner.x, topLeftCorner.y, zOffset - 0.02f}},
-								{{bottomRightCorner.x, bottomRightCorner.y, zOffset - 0.02f}},
-								{{topLeftCorner.x, topLeftCorner.y, zOffset - 0.02f}},
-								{{bottomRightCorner.x, bottomRightCorner.y, zOffset - 0.02f}},
-								{{topLeftCorner.x, bottomRightCorner.y, zOffset - 0.02f}}};
+		m_VerticesBackground = {{{topLeftCornerInt.x, topLeftCornerInt.y, zOffset - 0.02f}},
+								{{bottomRightCornerInt.x, topLeftCornerInt.y, zOffset - 0.02f}},
+								{{bottomRightCornerInt.x, bottomRightCornerInt.y, zOffset - 0.02f}},
+								{{topLeftCornerInt.x, topLeftCornerInt.y, zOffset - 0.02f}},
+								{{bottomRightCornerInt.x, bottomRightCornerInt.y, zOffset - 0.02f}},
+								{{topLeftCornerInt.x, bottomRightCornerInt.y, zOffset - 0.02f}}};
 
 		// Upload background vertices
 		glBindVertexArray(m_VAO_Background);

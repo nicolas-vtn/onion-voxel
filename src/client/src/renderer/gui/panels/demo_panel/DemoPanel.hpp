@@ -3,6 +3,7 @@
 #include <renderer/gui/GuiElement.hpp>
 #include <renderer/gui/controls/button/Button.hpp>
 #include <renderer/gui/controls/checkbox/Checkbox.hpp>
+#include <renderer/gui/controls/slider/Slider.hpp>
 #include <renderer/gui/controls/sprite/Sprite.hpp>
 #include <renderer/gui/controls/text_field/TextField.hpp>
 
@@ -38,6 +39,7 @@ namespace onion::voxel
 		Sprite m_Sprite;
 		Checkbox m_Checkbox;
 		TextField m_TextField;
+		Slider m_Slider;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:
@@ -57,5 +59,8 @@ namespace onion::voxel
 
 		EventHandle m_HandleCheckboxCheckedChanged;
 		void Handle_CheckboxCheckedChanged(const Checkbox& checkbox);
+
+		EventHandle m_HandleSliderValueChanged;
+		void Handle_SliderValueChanged(const Slider& slider);
 	};
 } // namespace onion::voxel

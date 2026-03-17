@@ -854,6 +854,8 @@ namespace onion::voxel
 	MeshBuilder::PointsAndOcclusion
 	MeshBuilder::GetPointsAndOcclusionForCross(SubChunkMesh* mesh, const int lx, const int wy, const int lz)
 	{
+		(void) mesh; // Cross model does not use occlusion values
+
 		PointsAndOcclusion result;
 		result.p000 = glm::vec3(lx, wy, lz);
 		result.p001 = glm::vec3(lx, wy, lz + 1);

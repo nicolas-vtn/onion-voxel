@@ -124,6 +124,8 @@ namespace onion::voxel
 	void Server::Handle_PlayerInfoMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
 											  const PlayerInfoMsg& msg)
 	{
+		(void) args; // Unused parameter
+
 		//std::cout << "Received PlayerInfoMsg from client " << args.Sender << ": Username=" << msg.Username
 		//		  << ", UUID=" << msg.UUID << ", Position=" << msg.Position.x << "," << msg.Position.y << ","
 		//		  << msg.Position.z << "\n";
