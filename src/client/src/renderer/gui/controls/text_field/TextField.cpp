@@ -41,15 +41,15 @@ namespace onion::voxel
 			return;
 		}
 
+		// Pulls events
+		m_NineSliceSprite_TextField.PullEvents();
+
+		// Handle inputs
 		Handle_CharInputs();
 		Handle_KeyInputs();
 
 		// DEBUG
 		RenderImGuiDebug();
-
-		// Pulls events
-		m_NineSliceSprite_TextField.PullEvents();
-		//bool isCurrentlyHovered = m_NineSliceSprite_TextField.IsHovered();
 
 		// Calculate text position
 		glm::ivec2 size = GetSize();
@@ -99,13 +99,18 @@ namespace onion::voxel
 		{
 			// NORMAL TEXT
 
-			if (m_SelectionEnd > m_SelectionStart)
+			if (m_SelectionStart != SIZE_MAX)
 			{
 				// SELECTION
+
+				// Calculates real selection start and end positions
+				size_t selectionStart = std::min(m_SelectionStart, m_CursorPosition);
+				size_t selectionEnd = std::max(m_SelectionStart, m_CursorPosition);
+
 				// Render 3 parts: text before selection, selected text, text after selection
-				std::string textBeforeSelection = m_Text.substr(0, m_SelectionStart);
-				std::string selectedText = m_Text.substr(m_SelectionStart, m_SelectionEnd - m_SelectionStart);
-				std::string textAfterSelection = m_Text.substr(m_SelectionEnd);
+				std::string textBeforeSelection = drawnText.substr(0, selectionStart);
+				std::string selectedText = drawnText.substr(selectionStart, selectionEnd - selectionStart);
+				std::string textAfterSelection = drawnText.substr(selectionEnd);
 
 				// Measure text sizes for positioning
 				glm::vec2 textBeforeSelectionSize = s_TextFont.MeasureText(textBeforeSelection, textHeight);
@@ -261,56 +266,46 @@ namespace onion::voxel
 		m_InputId_Left = InputsManager->RegisterInput(Key::Left, keyRepeatConfig);
 		m_InputId_Right = InputsManager->RegisterInput(Key::Right, keyRepeatConfig);
 		m_InputId_Delete = InputsManager->RegisterInput(Key::Delete, keyRepeatConfig);
+		m_InputId_C = InputsManager->RegisterInput(Key::C, keyRepeatConfig);
 		m_InputId_V = InputsManager->RegisterInput(Key::V, keyRepeatConfig);
+		m_InputId_X = InputsManager->RegisterInput(Key::X, keyRepeatConfig);
+		m_InputId_A = InputsManager->RegisterInput(Key::Q, keyRepeatConfig);
 
 		InputConfig noKeyRepeatConfig = InputConfig(false);
 		m_InputId_Ctrl = InputsManager->RegisterInput(Key::LeftControl, noKeyRepeatConfig);
+		m_InputId_Click = InputsManager->RegisterInput(Key::MouseButtonLeft, noKeyRepeatConfig);
+		m_InputId_Shift = InputsManager->RegisterInput(Key::LeftShift, noKeyRepeatConfig);
+
+		InputConfig doubleClickConfig = InputConfig(true, 0.5f, 0.5f, 0.2f);
+		m_InputId_DoubleClick = InputsManager->RegisterInput(Key::MouseButtonLeft, doubleClickConfig);
 	}
 
 	void TextField::Handle_MouseDown(const NineSliceSprite& sprite)
 	{
 		(void) sprite;
+
 		m_IsActive = true;
+		m_IsSelecting = true;
 
-		// Move cursor to the clicked position
-		int mouseX = s_InputsSnapshot->Mouse.Xpos;
-		int startTextX = GetPosition().x - static_cast<int>(GetSize().x / m_TextStartXratio);
-		int relativeMouseX = mouseX - startTextX;
-
-		//std::cout << "MouseX: " << mouseX << ", StartTextX: " << startTextX << ", RelativeMouseX: " << relativeMouseX
-		//		  << std::endl;
-
-		float textHeight = GetSize().y * m_TextScaleFactor;
-		std::string textToMeasure;
-
-		// Iterate through the text character by character to find where the mouse click occurred
-		for (size_t i = 0; i < m_Text.size(); i++)
+		// Sets the selection start position based on the mouse click position
+		bool shiftPressed = s_InputsSnapshot->GetKeyState(m_InputId_Shift).IsPressed;
+		if (!shiftPressed)
 		{
-			textToMeasure += m_Text[i];
-			float textWidth = s_TextFont.MeasureText(textToMeasure, textHeight).x;
-
-			textWidth -= 5; // Magic number
-
-			int textEndX = startTextX + static_cast<int>(textWidth);
-
-			// If the mouse click is before the end of the current character, place the cursor here
-			if (textEndX >= mouseX)
-			{
-				m_CursorPosition = i;
-				break;
-			}
-
-			// If we reached the end of the text and the mouse is still to the right, move cursor to the end
-			if (i == m_Text.size() - 1)
-			{
-				m_CursorPosition = m_Text.size();
-			}
+			int mouseX = s_InputsSnapshot->Mouse.Xpos;
+			m_SelectionStart = GetCursorPositionFromMouseX(mouseX);
 		}
 	}
 
 	void TextField::Handle_MouseUp(const NineSliceSprite& sprite)
 	{
 		(void) sprite;
+
+		if (!HasSelection())
+		{
+			ResetSelection();
+		}
+
+		m_IsSelecting = false;
 	}
 
 	void TextField::Handle_SpriteClick(const NineSliceSprite& sprite)
@@ -350,11 +345,37 @@ namespace onion::voxel
 		bool rightPressed = snapshot->GetKeyState(m_InputId_Right).IsPressed;
 		bool ctrlPressed = snapshot->GetKeyState(m_InputId_Ctrl).IsPressed;
 		bool deletePressed = snapshot->GetKeyState(m_InputId_Delete).IsPressed;
+		bool aPressed = snapshot->GetKeyState(m_InputId_A).IsPressed;
+		bool cPressed = snapshot->GetKeyState(m_InputId_C).IsPressed;
 		bool vPressed = snapshot->GetKeyState(m_InputId_V).IsPressed;
+		bool xPressed = snapshot->GetKeyState(m_InputId_X).IsPressed;
+		bool clickPressed = snapshot->GetKeyState(m_InputId_Click).IsPressed;
+		bool doubleClick = snapshot->GetKeyState(m_InputId_DoubleClick).IsDoublePressed;
+		bool shiftPressed = snapshot->GetKeyState(m_InputId_Shift).IsPressed;
+
+		glm::ivec2 mousePos{snapshot->Mouse.Xpos, snapshot->Mouse.Ypos};
 
 		if (enterPressed || escapePressed)
 		{
 			ValidateText();
+			return;
+		}
+
+		if (aPressed && ctrlPressed)
+		{
+			// Ctrl + A: Select all text
+			m_SelectionStart = 0;
+			m_CursorPosition = m_Text.size();
+		}
+
+		if (cPressed && ctrlPressed)
+		{
+			// Ctrl + C: Copy selected text to clipboard
+			if (HasSelection())
+			{
+				std::string selectedText = GetSelectedText();
+				inputsManager->SetClipboardText(selectedText);
+			}
 		}
 
 		if (vPressed && ctrlPressed)
@@ -362,8 +383,40 @@ namespace onion::voxel
 			// Ctrl + V: Paste from clipboard
 			std::string clipboardText = inputsManager->GetClipboardText();
 
+			// If there's a selection, remove it before pasting the clipboard text
+			if (HasSelection())
+			{
+				auto [selectionStart, selectionEnd] = GetSelectionRange();
+				m_Text.erase(m_Text.begin() + selectionStart, m_Text.begin() + selectionEnd);
+				m_CursorPosition = selectionStart;
+				ResetSelection();
+			}
+
+			// Insert the clipboard text at the current cursor position
 			m_Text.insert(m_Text.begin() + m_CursorPosition, clipboardText.begin(), clipboardText.end());
 			m_CursorPosition += clipboardText.size();
+		}
+
+		if (xPressed && ctrlPressed)
+		{
+			// Ctrl + X: Cut selected text to clipboard
+			if (HasSelection())
+			{
+				std::string selectedText = GetSelectedText();
+
+				inputsManager->SetClipboardText(selectedText);
+
+				auto [selectionStart, selectionEnd] = GetSelectionRange();
+				m_Text.erase(m_Text.begin() + selectionStart, m_Text.begin() + selectionEnd);
+				m_CursorPosition = selectionStart;
+				ResetSelection();
+			}
+		}
+
+		// Reset selection if Shift is not pressed and there's no mouse click
+		if (!shiftPressed && !clickPressed && !HasSelection())
+		{
+			ResetSelection();
 		}
 
 		if (m_Text.empty())
@@ -371,11 +424,59 @@ namespace onion::voxel
 			return;
 		}
 
+		// Initiate selection if Shift is pressed and there's no active selection.
+		if (shiftPressed && !clickPressed)
+		{
+			if (!HasSelection())
+			{
+				m_SelectionStart = m_CursorPosition;
+			}
+		}
+
+		// Update cursor position based on mouse click (For selection )
+		if (clickPressed && m_IsSelecting && mousePos != m_DoubleClickPosition)
+		{
+			m_CursorPosition = GetCursorPositionFromMouseX(mousePos.x);
+		}
+
+		// Select the current word on double click
+		if (doubleClick)
+		{
+			size_t wordStart = GetNextWordBoundary(m_Text, m_CursorPosition, eDirection::Left);
+			size_t wordEnd = GetNextWordBoundary(m_Text, m_CursorPosition, eDirection::Right);
+			m_SelectionStart = wordStart;
+			m_CursorPosition = wordEnd;
+			m_DoubleClickPosition = mousePos;
+		}
+
+		bool hasSelection = HasSelection();
+		std::pair<size_t, size_t> selectionRange = GetSelectionRange();
+
+		if (m_Text.empty())
+		{
+			ResetSelection();
+			return;
+		}
 		else if (backspacePressed)
 		{
+			// If there's a selection, delete the selected text
+			if (hasSelection)
+			{
+				m_Text.erase(m_Text.begin() + selectionRange.first, m_Text.begin() + selectionRange.second);
+				m_CursorPosition = selectionRange.first;
+				ResetSelection();
+				return;
+			}
+
+			// Bugfix : (Shift + Backspace was selecting a char)
+			if (shiftPressed)
+			{
+				ResetSelection();
+			}
+
+			// Ctrl + Backspace: delete the previous word
 			if (ctrlPressed)
 			{
-				// Ctrl + Backspace: delete the previous word
 				size_t lastWordBoundary = GetNextWordBoundary(m_Text, m_CursorPosition, eDirection::Left);
 				m_Text.erase(m_Text.begin() + lastWordBoundary, m_Text.begin() + m_CursorPosition);
 				m_CursorPosition = lastWordBoundary;
@@ -389,9 +490,15 @@ namespace onion::voxel
 		}
 		else if (leftPressed)
 		{
+			// Reset selection if Shift is not pressed
+			if (!shiftPressed)
+			{
+				ResetSelection();
+			}
+
+			// Ctrl + Left: move cursor to the left of the previous word
 			if (ctrlPressed)
 			{
-				// Ctrl + Left: move cursor to the left of the previous word
 				size_t lastWordBoundary = GetNextWordBoundary(m_Text, m_CursorPosition, eDirection::Left);
 				m_CursorPosition = lastWordBoundary;
 			}
@@ -403,9 +510,15 @@ namespace onion::voxel
 		}
 		else if (rightPressed)
 		{
+			// Reset selection if Shift is not pressed
+			if (!shiftPressed)
+			{
+				ResetSelection();
+			}
+
+			// Ctrl + Right: move cursor to the right of the next word
 			if (ctrlPressed)
 			{
-				// Ctrl + Right: move cursor to the right of the next word
 				size_t nextWordBoundary = GetNextWordBoundary(m_Text, m_CursorPosition, eDirection::Right);
 				m_CursorPosition = nextWordBoundary;
 			}
@@ -417,6 +530,15 @@ namespace onion::voxel
 		}
 		else if (deletePressed)
 		{
+			// If there's a selection, delete the selected text
+			if (hasSelection)
+			{
+				m_Text.erase(m_Text.begin() + selectionRange.first, m_Text.begin() + selectionRange.second);
+				m_CursorPosition = selectionRange.first;
+				ResetSelection();
+				return;
+			}
+
 			if (m_CursorPosition < m_Text.size())
 			{
 				m_Text.erase(m_Text.begin() + m_CursorPosition);
@@ -432,6 +554,21 @@ namespace onion::voxel
 		if (!m_IsActive || m_ReadOnly || codepoint == 0)
 			return;
 
+		if (HasSelection())
+		{
+			// If there's a selection, replace it with the new character
+			auto [selectionStart, selectionEnd] = GetSelectionRange();
+			m_Text.erase(m_Text.begin() + selectionStart, m_Text.begin() + selectionEnd);
+			m_CursorPosition = selectionStart;
+			ResetSelection();
+		}
+
+		bool shiftPressed = s_InputsSnapshot->GetKeyState(m_InputId_Shift).IsPressed;
+		if (shiftPressed)
+		{
+			ResetSelection();
+		}
+
 		// Append the new character to the text
 		m_Text.insert(m_Text.begin() + m_CursorPosition, static_cast<char>(codepoint));
 		m_CursorPosition++;
@@ -440,7 +577,77 @@ namespace onion::voxel
 	void TextField::ValidateText()
 	{
 		m_IsActive = false;
+		ResetSelection();
 		OnTextChanged.Trigger(*this);
+	}
+
+	bool TextField::HasSelection() const
+	{
+		return m_SelectionStart != SIZE_MAX && m_SelectionStart != m_CursorPosition;
+	}
+
+	std::pair<size_t, size_t> TextField::GetSelectionRange() const
+	{
+		if (!HasSelection())
+			return {0, 0};
+
+		size_t selectionStart = std::min(m_SelectionStart, m_CursorPosition);
+		size_t selectionEnd = std::max(m_SelectionStart, m_CursorPosition);
+
+		return {selectionStart, selectionEnd};
+	}
+
+	std::string TextField::GetSelectedText() const
+	{
+		if (m_SelectionStart == SIZE_MAX || m_SelectionStart == m_CursorPosition)
+			return "";
+
+		size_t selectionStart = std::min(m_SelectionStart, m_CursorPosition);
+		size_t selectionEnd = std::max(m_SelectionStart, m_CursorPosition);
+
+		return m_Text.substr(selectionStart, selectionEnd - selectionStart);
+	}
+
+	void TextField::ResetSelection()
+	{
+		m_SelectionStart = SIZE_MAX;
+		m_IsSelecting = false;
+		m_DoubleClickPosition = glm::ivec2{0, 0};
+	}
+
+	size_t TextField::GetCursorPositionFromMouseX(int mouseX)
+	{
+		int startTextX = GetPosition().x - static_cast<int>(GetSize().x / m_TextStartXratio);
+		int relativeMouseX = mouseX - startTextX;
+
+		float textHeight = GetSize().y * m_TextScaleFactor;
+		std::string textToMeasure;
+
+		// Iterate through the text character by character to find where the mouse click occurred
+		for (size_t i = 0; i < m_Text.size(); i++)
+		{
+			textToMeasure += m_Text[i];
+			float textWidth = s_TextFont.MeasureText(textToMeasure, textHeight).x;
+
+			textWidth -= 5; // Magic number
+
+			int textEndX = startTextX + static_cast<int>(textWidth);
+
+			// If the mouse click is before the end of the current character, place the cursor here
+			if (textEndX >= mouseX)
+			{
+				return i;
+				break;
+			}
+
+			// If we reached the end of the text and the mouse is still to the right, move cursor to the end
+			if (i == m_Text.size() - 1)
+			{
+				return m_Text.size();
+			}
+		}
+
+		return 0; // Default to start if something goes wrong
 	}
 
 	size_t TextField::GetNextWordBoundary(const std::string& text, size_t cursorPosition, eDirection direction) const
@@ -523,7 +730,6 @@ namespace onion::voxel
 		ImGui::Separator();
 
 		ImGui::SliderInt("Selection Start", (int*) &m_SelectionStart, 0, static_cast<int>(text.size()));
-		ImGui::SliderInt("Selection End", (int*) &m_SelectionEnd, 0, static_cast<int>(text.size()));
 
 		ImGui::Separator();
 

@@ -88,9 +88,20 @@ namespace onion::voxel
 		int m_InputId_Right;
 		int m_InputId_Delete;
 		int m_InputId_Ctrl;
+		int m_InputId_A;
+		int m_InputId_C;
 		int m_InputId_V;
+		int m_InputId_X;
+		int m_InputId_Click;
+		int m_InputId_DoubleClick;
+		int m_InputId_Shift;
 
 		void ValidateText();
+
+		bool HasSelection() const;
+		std::pair<size_t, size_t> GetSelectionRange() const;
+		std::string GetSelectedText() const;
+		void ResetSelection();
 
 		// ----- Properties -----
 	  private:
@@ -109,8 +120,9 @@ namespace onion::voxel
 		bool m_IsPressed = false;
 
 		size_t m_CursorPosition = 0;
-		size_t m_SelectionStart = 0;
-		size_t m_SelectionEnd = 0;
+		size_t m_SelectionStart = SIZE_MAX;
+		bool m_IsSelecting = false;
+		glm::ivec2 m_DoubleClickPosition{0, 0};
 
 		// ----- Label -----
 	  private:
@@ -140,6 +152,7 @@ namespace onion::voxel
 			Right
 		};
 
+		size_t GetCursorPositionFromMouseX(int mouseX);
 		size_t GetNextWordBoundary(const std::string& text, size_t cursorPosition, eDirection direction) const;
 
 		// ----- DEBUG -----
