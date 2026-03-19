@@ -177,13 +177,30 @@ namespace onion::voxel
 			return false;
 		}
 
+		Visibility visibility = GetVisibility();
+		if (!visibility.IsVisible)
+		{
+			return false;
+		}
+
 		int mouseX = (int) std::lround(s_InputsSnapshot->Mouse.Xpos);
 		int mouseY = (int) std::lround(s_InputsSnapshot->Mouse.Ypos);
 
-		glm::vec2 topLeft = glm::vec2(m_Position) - glm::vec2(m_Size) * 0.5f;
+		glm::vec2 topLeft;
+		glm::vec2 bottomRight;
 
-		bool hovered = mouseX >= topLeft.x && mouseX <= topLeft.x + m_Size.x && mouseY >= topLeft.y &&
-			mouseY <= topLeft.y + m_Size.y;
+		if (visibility.IsFullyVisible)
+		{
+			topLeft = glm::vec2(m_Position) - glm::vec2(m_Size) * 0.5f;
+			bottomRight = glm::vec2(m_Position) + glm::vec2(m_Size) * 0.5f;
+		}
+		else
+		{
+			topLeft = glm::vec2(visibility.VisibleAreaTopLeftCorner);
+			bottomRight = glm::vec2(visibility.VisibleAreaBottomRightCorner);
+		}
+
+		bool hovered = mouseX >= topLeft.x && mouseX <= bottomRight.x && mouseY >= topLeft.y && mouseY <= bottomRight.y;
 
 		return hovered;
 	}

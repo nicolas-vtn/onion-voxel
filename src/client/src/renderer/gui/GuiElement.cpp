@@ -83,6 +83,16 @@ namespace onion::voxel
 		m_Name = name;
 	}
 
+	GuiElement::Visibility GuiElement::GetVisibility() const
+	{
+		return m_Visibility;
+	}
+
+	void GuiElement::SetVisibility(const Visibility& visibility)
+	{
+		m_Visibility = visibility;
+	}
+
 	void GuiElement::SetScreenSize(int screenWidth, int screenHeight)
 	{
 		s_ScreenWidth = screenWidth;

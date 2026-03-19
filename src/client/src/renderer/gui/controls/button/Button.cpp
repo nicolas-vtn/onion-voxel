@@ -23,7 +23,10 @@ namespace onion::voxel
 		m_Label.SetZOffset(0.8f);
 	}
 
-	Button::~Button() {}
+	Button::~Button()
+	{
+		m_EventHandles.clear();
+	}
 
 	// -------- Public API --------
 
@@ -145,6 +148,16 @@ namespace onion::voxel
 		return m_Position;
 	}
 
+	void Button::SetVisibility(const Visibility& visibility)
+	{
+		GuiElement::SetVisibility(visibility);
+
+		m_NineSliceSprite_Basic.SetVisibility(visibility);
+		m_NineSliceSprite_Disabled.SetVisibility(visibility);
+		m_NineSliceSprite_Highlighted.SetVisibility(visibility);
+		m_Label.SetVisibility(visibility);
+	}
+
 	bool Button::IsEnabled() const
 	{
 		return m_IsEnabled;
@@ -160,20 +173,20 @@ namespace onion::voxel
 
 		// We subscribe to only ONE sprite, since they all share the same position and size, so their hovered state will always be the same.
 
-		m_HandleMouseDown = m_NineSliceSprite_Basic.OnMouseDown.Subscribe([this](const NineSliceSprite& sprite)
-																		  { HandleMouseDown(sprite); });
+		m_EventHandles.push_back(m_NineSliceSprite_Basic.OnMouseDown.Subscribe([this](const NineSliceSprite& sprite)
+																			   { HandleMouseDown(sprite); }));
 
-		m_HandleMouseUp = m_NineSliceSprite_Basic.OnMouseUp.Subscribe([this](const NineSliceSprite& sprite)
-																	  { HandleMouseUp(sprite); });
+		m_EventHandles.push_back(m_NineSliceSprite_Basic.OnMouseUp.Subscribe([this](const NineSliceSprite& sprite)
+																			 { HandleMouseUp(sprite); }));
 
-		m_HandleSpriteClick = m_NineSliceSprite_Basic.OnClick.Subscribe([this](const NineSliceSprite& sprite)
-																		{ HandleSpriteClick(sprite); });
+		m_EventHandles.push_back(m_NineSliceSprite_Basic.OnClick.Subscribe([this](const NineSliceSprite& sprite)
+																		   { HandleSpriteClick(sprite); }));
 
-		m_HandleSpriteHoverEnter = m_NineSliceSprite_Basic.OnHoverEnter.Subscribe([this](const NineSliceSprite& sprite)
-																				  { HandleSpriteHoverEnter(sprite); });
+		m_EventHandles.push_back(m_NineSliceSprite_Basic.OnHoverEnter.Subscribe([this](const NineSliceSprite& sprite)
+																				{ HandleSpriteHoverEnter(sprite); }));
 
-		m_HandleSpriteHoverLeave = m_NineSliceSprite_Basic.OnHoverLeave.Subscribe([this](const NineSliceSprite& sprite)
-																				  { HandleSpriteHoverLeave(sprite); });
+		m_EventHandles.push_back(m_NineSliceSprite_Basic.OnHoverLeave.Subscribe([this](const NineSliceSprite& sprite)
+																				{ HandleSpriteHoverLeave(sprite); }));
 	}
 
 	void Button::HandleMouseDown(const NineSliceSprite& sprite)

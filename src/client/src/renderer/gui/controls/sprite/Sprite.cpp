@@ -86,6 +86,64 @@ void onion::voxel::Sprite::ReloadTextures()
 	m_Texture = Texture(m_SpritePath.string(), data);
 }
 
+void onion::voxel::Sprite::PullEvents()
+{
+	// ----- Hover Events -----
+	bool isHovered = IsHovered();
+	if (isHovered && !m_WasHovered)
+	{
+		OnHoverEnter.Trigger(*this);
+	}
+	else if (!isHovered && m_WasHovered)
+	{
+		OnHoverLeave.Trigger(*this);
+	}
+	m_WasHovered = isHovered;
+
+	// ----- Click Events -----
+	bool isMouseDown = s_InputsSnapshot->Mouse.LeftButtonPressed;
+	if (isHovered && isMouseDown && !m_WasMouseDown)
+	{
+		OnClick.Trigger(*this);
+	}
+	m_WasMouseDown = isMouseDown;
+}
+
+bool onion::voxel::Sprite::IsHovered() const
+{
+	if (!s_InputsSnapshot)
+	{
+		return false;
+	}
+
+	Visibility visibility = GetVisibility();
+	if (!visibility.IsVisible)
+	{
+		return false;
+	}
+
+	int mouseX = (int) std::lround(s_InputsSnapshot->Mouse.Xpos);
+	int mouseY = (int) std::lround(s_InputsSnapshot->Mouse.Ypos);
+
+	glm::vec2 topLeft;
+	glm::vec2 bottomRight;
+
+	if (visibility.IsFullyVisible)
+	{
+		topLeft = glm::vec2(m_Position) - glm::vec2(m_Size) * 0.5f;
+		bottomRight = glm::vec2(m_Position) + glm::vec2(m_Size) * 0.5f;
+	}
+	else
+	{
+		topLeft = glm::vec2(visibility.VisibleAreaTopLeftCorner);
+		bottomRight = glm::vec2(visibility.VisibleAreaBottomRightCorner);
+	}
+
+	bool hovered = mouseX >= topLeft.x && mouseX <= bottomRight.x && mouseY >= topLeft.y && mouseY <= bottomRight.y;
+
+	return hovered;
+}
+
 void Sprite::SetSize(const glm::vec2& size)
 {
 	m_Size = size;

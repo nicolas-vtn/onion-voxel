@@ -20,6 +20,7 @@ namespace onion::voxel
 	{
 		None,
 		DemoPanel,
+		DemoScrollingPanel,
 		MainMenu,
 		Singleplayer,
 		Multiplayer,
@@ -35,6 +36,16 @@ namespace onion::voxel
 
 	class GuiElement
 	{
+		// ----- Structs -----
+	  public:
+		struct Visibility
+		{
+			bool IsVisible = false;
+			bool IsFullyVisible = false;
+			glm::ivec2 VisibleAreaTopLeftCorner{0, 0};
+			glm::ivec2 VisibleAreaBottomRightCorner{0, 0};
+		};
+
 		// ----- Constructor / Destructor -----
 	  public:
 		GuiElement(const std::string& name);
@@ -51,6 +62,9 @@ namespace onion::voxel
 	  public:
 		std::string GetName() const;
 		void SetName(const std::string& name);
+
+		Visibility GetVisibility() const;
+		virtual void SetVisibility(const Visibility& visibility);
 
 		static void SetGuiScale(int scale);
 		static int GetGuiScale();
@@ -76,6 +90,10 @@ namespace onion::voxel
 		bool HasBeenInit() const;
 		void SetDeletedState(bool state);
 		bool HasBeenDeleted() const;
+
+		// ----- Private Members -----
+	  private:
+		Visibility m_Visibility{true, true};
 
 		// ----- Static Resources ----- (shared across all GUI elements)
 	  protected:

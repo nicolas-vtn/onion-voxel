@@ -40,8 +40,12 @@ add_executable(OnionVoxel
 	"src/renderer/gui/controls/sprite/Sprite.cpp"
 	"src/renderer/gui/controls/label/Label.cpp"
 	"src/renderer/gui/controls/checkbox/Checkbox.cpp"
+	"src/renderer/gui/controls/text_field/TextField.cpp"
+	"src/renderer/gui/controls/slider/Slider.cpp"
+	"src/renderer/gui/controls/scroller/Scroller.cpp"
 
 	"src/renderer/gui/panels/demo_panel/DemoPanel.cpp"
+	"src/renderer/gui/panels/demo_scrolling_panel/DemoScrollingPanel.cpp"
 	"src/renderer/gui/panels/main_menu_panel/MainMenuPanel.cpp"
 	"src/renderer/gui/panels/pause_panel/PausePanel.cpp"
 	"src/renderer/gui/panels/options_panel/OptionsPanel.cpp"
@@ -65,7 +69,7 @@ add_executable(OnionVoxel
 	"src/renderer/assets_manager/AssetsManager.cpp"
 	"src/renderer/assets_manager/resource_pack_manager/ResourcePackManager.cpp"
 
- "src/renderer/gui/controls/text_field/TextField.cpp" "src/renderer/gui/controls/slider/Slider.cpp")
+)
 
 if (WIN32)
     target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)

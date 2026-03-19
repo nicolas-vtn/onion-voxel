@@ -1,6 +1,7 @@
 #pragma once
 
 #include "panels/demo_panel/DemoPanel.hpp"
+#include "panels/demo_scrolling_panel/DemoScrollingPanel.hpp"
 #include "panels/main_menu_panel/MainMenuPanel.hpp"
 #include "panels/options_panel/OptionsPanel.hpp"
 #include "panels/pause_panel/PausePanel.hpp"
@@ -59,6 +60,7 @@ namespace onion::voxel
 		// ----- Panels -----
 	  private:
 		DemoPanel m_DemoPanel;
+		DemoScrollingPanel m_DemoScrollingPanel;
 		MainMenuPanel m_MainMenuPanel;
 		PausePanel m_PausePanel;
 		OptionsPanel m_OptionsPanel;

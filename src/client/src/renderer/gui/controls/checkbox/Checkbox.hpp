@@ -41,6 +41,8 @@ namespace onion::voxel
 		void SetChecked(bool checked);
 		bool IsChecked() const;
 
+		void SetVisibility(const Visibility& visibility) override;
+
 		// ----- Properties -----
 	  public:
 		glm::vec2 m_Position{0, 0};
@@ -48,6 +50,16 @@ namespace onion::voxel
 		bool m_Checked = false;
 
 		bool m_WasMouseDown = false;
+
+		// ----- Internal Event Subscription and Handlers -----
+	  private:
+		void SubscribeToSpriteEvents();
+
+		std::vector<EventHandle> m_EventHandles;
+
+		void Handle_Click(const Sprite& sprite);
+		void Handle_HoverEnter(const Sprite& sprite);
+		void Handle_HoverLeave(const Sprite& sprite);
 
 		// ----- Internal Helpers -----
 	  private:

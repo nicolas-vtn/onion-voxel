@@ -27,7 +27,10 @@ namespace onion::voxel
 		m_Label.SetShadowColor(s_TextShadowColor);
 	}
 
-	Slider::~Slider() {}
+	Slider::~Slider()
+	{
+		m_EventHandles.clear();
+	}
 
 	void Slider::Initialize()
 	{
@@ -76,7 +79,7 @@ namespace onion::voxel
 		int startX = centerPos.x - m_Size.x / 2 + m_HandleWidth / 2;
 		int endX = centerPos.x + m_Size.x / 2 - m_HandleWidth / 2;
 		float valueRatio = static_cast<float>(m_Value) / m_MaxValue;
-		float slidingWidth = endX - startX;
+		float slidingWidth = static_cast<float>(endX - startX);
 		int handleX = static_cast<int>(startX + valueRatio * slidingWidth);
 		const glm::ivec2 handlePos{handleX, centerPos.y};
 
@@ -135,7 +138,7 @@ namespace onion::voxel
 		m_NineSliceSprite_SliderHighlighted.SetSize(size);
 
 		// Update Handle Height
-		m_HandleWidth = 0.4f * size.y;
+		m_HandleWidth = static_cast<int>(std::lround(0.4f * size.y));
 		const glm::ivec2 handleSize = {m_HandleWidth, size.y};
 		m_NineSliceSprite_HandleBasic.SetSize(handleSize);
 		m_NineSliceSprite_HandleHighlighted.SetSize(handleSize);
@@ -247,7 +250,7 @@ namespace onion::voxel
 		if (mousePosition.x >= endX)
 			return m_MaxValue;
 
-		float slidingWidth = endX - startX;
+		float slidingWidth = static_cast<float>(endX - startX);
 		float valueRatio = static_cast<float>(mousePosition.x - startX) / slidingWidth;
 
 		return static_cast<uint32_t>(std::round(valueRatio * m_MaxValue));

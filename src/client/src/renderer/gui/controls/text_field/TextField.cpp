@@ -19,7 +19,10 @@ namespace onion::voxel
 		m_Label.SetZOffset(0.8f);
 	}
 
-	TextField::~TextField() {}
+	TextField::~TextField()
+	{
+		m_EventHandles.clear();
+	}
 
 	void TextField::Initialize()
 	{
@@ -220,6 +223,14 @@ namespace onion::voxel
 		return m_Position;
 	}
 
+	void TextField::SetVisibility(const Visibility& visibility)
+	{
+		GuiElement::SetVisibility(visibility);
+
+		m_NineSliceSprite_TextField.SetVisibility(visibility);
+		m_NineSliceSprite_TextFieldHighlighted.SetVisibility(visibility);
+	}
+
 	bool TextField::IsReadOnly() const
 	{
 		return m_ReadOnly;
@@ -232,20 +243,20 @@ namespace onion::voxel
 
 	void TextField::SubscribeToSpriteEvents()
 	{
-		m_HandleMouseDown = m_NineSliceSprite_TextField.OnMouseDown.Subscribe([this](const NineSliceSprite& sprite)
-																			  { Handle_MouseDown(sprite); });
+		m_EventHandles.push_back(m_NineSliceSprite_TextField.OnMouseDown.Subscribe([this](const NineSliceSprite& sprite)
+																				   { Handle_MouseDown(sprite); }));
 
-		m_HandleMouseUp = m_NineSliceSprite_TextField.OnMouseUp.Subscribe([this](const NineSliceSprite& sprite)
-																		  { Handle_MouseUp(sprite); });
+		m_EventHandles.push_back(m_NineSliceSprite_TextField.OnMouseUp.Subscribe([this](const NineSliceSprite& sprite)
+																				 { Handle_MouseUp(sprite); }));
 
-		m_HandleSpriteClick = m_NineSliceSprite_TextField.OnClick.Subscribe([this](const NineSliceSprite& sprite)
-																			{ Handle_SpriteClick(sprite); });
+		m_EventHandles.push_back(m_NineSliceSprite_TextField.OnClick.Subscribe([this](const NineSliceSprite& sprite)
+																			   { Handle_SpriteClick(sprite); }));
 
-		m_HandleSpriteHoverEnter = m_NineSliceSprite_TextField.OnHoverEnter.Subscribe(
-			[this](const NineSliceSprite& sprite) { Handle_SpriteHoverEnter(sprite); });
+		m_EventHandles.push_back(m_NineSliceSprite_TextField.OnHoverEnter.Subscribe(
+			[this](const NineSliceSprite& sprite) { Handle_SpriteHoverEnter(sprite); }));
 
-		m_HandleSpriteHoverLeave = m_NineSliceSprite_TextField.OnHoverLeave.Subscribe(
-			[this](const NineSliceSprite& sprite) { Handle_SpriteHoverLeave(sprite); });
+		m_EventHandles.push_back(m_NineSliceSprite_TextField.OnHoverLeave.Subscribe(
+			[this](const NineSliceSprite& sprite) { Handle_SpriteHoverLeave(sprite); }));
 	}
 
 	void TextField::SubscribeToInputsManagerEvents()
