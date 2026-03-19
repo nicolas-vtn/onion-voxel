@@ -6,7 +6,7 @@ namespace onion::voxel
 	DemoPanel::DemoPanel(const std::string& name)
 		: GuiElement(name), m_Button("DemoButton"), m_Sprite("DemoSprite", m_SpritePath, Sprite::eOrigin::Asset),
 		  m_Button2("DemoButton2"), m_ButtonMainMenu("MainMenuButton"), m_Checkbox("DemoCheckbox"),
-		  m_TextField("DemoTextField"), m_Slider("DemoSlider")
+		  m_TextField("DemoTextField"), m_Slider("DemoSlider"), m_ButtonScrollingPanel("DemoScrollingPanelButton")
 	{
 
 		SubscribeToControlEvents();
@@ -35,6 +35,11 @@ namespace onion::voxel
 		m_Slider.SetSize({200.f, 40.f});
 		m_Slider.SetValue(0);
 		m_Slider.SetMaxValue(100);
+
+		m_ButtonScrollingPanel.SetPosition({400, 500});
+		m_ButtonScrollingPanel.SetSize({200.f, 40.f});
+		m_ButtonScrollingPanel.SetText("Demo Scrolling Panel");
+		m_ButtonScrollingPanel.SetEnabled(true);
 	}
 
 	void DemoPanel::Render()
@@ -108,9 +113,18 @@ namespace onion::voxel
 		m_Slider.SetText(sliderText);
 		m_Slider.Render();
 
+		// ---- Render Button Demo Scrolling Panel ----
+		float buttonScrollingPanelXRatio = 0.5f;
+		float buttonScrollingPanelYRatio = 0.8f;
+		const glm::vec2 buttonScrollingPanelPos{s_ScreenWidth * buttonScrollingPanelXRatio,
+												s_ScreenHeight * buttonScrollingPanelYRatio};
+		m_ButtonScrollingPanel.SetPosition(buttonScrollingPanelPos);
+		m_ButtonScrollingPanel.SetSize(buttonSize);
+		m_ButtonScrollingPanel.Render();
+
 		// ---- Render Main Menu Button ----
 		float buttonMainMenuXPosRatio = 0.5f;
-		float buttonMainMenuYPosRatio = 0.8f;
+		float buttonMainMenuYPosRatio = 0.9f;
 
 		const glm::vec2 buttonMainMenuPos{s_ScreenWidth * buttonMainMenuXPosRatio,
 										  s_ScreenHeight * buttonMainMenuYPosRatio};
@@ -124,6 +138,7 @@ namespace onion::voxel
 	{
 		m_Button.Initialize();
 		m_Button2.Initialize();
+		m_ButtonScrollingPanel.Initialize();
 		m_ButtonMainMenu.Initialize();
 		m_Sprite.Initialize();
 		m_Checkbox.Initialize();
@@ -138,6 +153,7 @@ namespace onion::voxel
 		m_Button.Delete();
 		m_Button2.Delete();
 		m_ButtonMainMenu.Delete();
+		m_ButtonScrollingPanel.Delete();
 		m_Sprite.Delete();
 		m_Checkbox.Delete();
 		m_TextField.Delete();
@@ -151,6 +167,7 @@ namespace onion::voxel
 		m_Button.ReloadTextures();
 		m_Button2.ReloadTextures();
 		m_ButtonMainMenu.ReloadTextures();
+		m_ButtonScrollingPanel.ReloadTextures();
 		m_Sprite.ReloadTextures();
 		m_Checkbox.ReloadTextures();
 		m_TextField.ReloadTextures();
@@ -159,22 +176,25 @@ namespace onion::voxel
 
 	void DemoPanel::SubscribeToControlEvents()
 	{
-		m_HandleButtonClick = m_Button.OnClick.Subscribe([this](const Button& button) { Handle_ButtonClick(button); });
+		m_EventHandles.push_back(
+			m_Button.OnClick.Subscribe([this](const Button& button) { Handle_ButtonClick(button); }));
 
-		m_HandleButtonHoverEnter =
-			m_Button.OnHoverEnter.Subscribe([this](const Button& button) { Handle_ButtonHoverEnter(button); });
+		m_EventHandles.push_back(
+			m_Button.OnHoverEnter.Subscribe([this](const Button& button) { Handle_ButtonHoverEnter(button); }));
 
-		m_HandleButtonHoverLeave =
-			m_Button.OnHoverLeave.Subscribe([this](const Button& button) { Handle_ButtonHoverLeave(button); });
+		m_EventHandles.push_back(
+			m_Button.OnHoverLeave.Subscribe([this](const Button& button) { Handle_ButtonHoverLeave(button); }));
 
-		m_HandleButtonMainMenuClick =
-			m_ButtonMainMenu.OnClick.Subscribe([this](const Button& button) { Handle_ButtonMainMenuClick(button); });
+		m_EventHandles.push_back(
+			m_ButtonMainMenu.OnClick.Subscribe([this](const Button& button) { Handle_ButtonMainMenuClick(button); }));
 
-		m_HandleCheckboxCheckedChanged = m_Checkbox.OnCheckedChanged.Subscribe(
-			[this](const Checkbox& checkbox) { Handle_CheckboxCheckedChanged(checkbox); });
+		m_EventHandles.push_back(m_Checkbox.OnCheckedChanged.Subscribe([this](const Checkbox& checkbox)
+																	   { Handle_CheckboxCheckedChanged(checkbox); }));
+		m_EventHandles.push_back(
+			m_Slider.OnValueChanged.Subscribe([this](const Slider& slider) { Handle_SliderValueChanged(slider); }));
 
-		m_HandleSliderValueChanged =
-			m_Slider.OnValueChanged.Subscribe([this](const Slider& slider) { Handle_SliderValueChanged(slider); });
+		m_EventHandles.push_back(m_ButtonScrollingPanel.OnClick.Subscribe(
+			[this](const Button& button) { Handle_ButtonScrollingPanelClick(button); }));
 	}
 
 	void DemoPanel::Handle_CheckboxCheckedChanged(const Checkbox& checkbox)
@@ -188,6 +208,11 @@ namespace onion::voxel
 	void DemoPanel::Handle_SliderValueChanged(const Slider& slider)
 	{
 		std::cout << "Slider '" + slider.GetName() + "' Value Changed. New Value: " << slider.GetValue() << std::endl;
+	}
+
+	void DemoPanel::Handle_ButtonScrollingPanelClick(const Button& button)
+	{
+		RequestMenuNavigation.Trigger({this, eMenu::DemoScrollingPanel});
 	}
 
 	void DemoPanel::Handle_ButtonClick(const Button& button)

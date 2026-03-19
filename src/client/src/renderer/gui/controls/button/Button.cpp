@@ -145,6 +145,16 @@ namespace onion::voxel
 		return m_Position;
 	}
 
+	void Button::SetVisibility(const Visibility& visibility)
+	{
+		GuiElement::SetVisibility(visibility);
+
+		m_NineSliceSprite_Basic.SetVisibility(visibility);
+		m_NineSliceSprite_Disabled.SetVisibility(visibility);
+		m_NineSliceSprite_Highlighted.SetVisibility(visibility);
+		m_Label.SetVisibility(visibility);
+	}
+
 	bool Button::IsEnabled() const
 	{
 		return m_IsEnabled;

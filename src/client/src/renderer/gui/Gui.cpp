@@ -26,7 +26,8 @@ namespace onion::voxel
 
 	Gui::Gui()
 		: m_DemoPanel("DemoPanel"), m_MainMenuPanel("MainMenuPanel"), m_PausePanel("PausePanel"),
-		  m_OptionsPanel("OptionsPanel"), m_ResourcePacksPanel("ResourcePacksPanel")
+		  m_OptionsPanel("OptionsPanel"), m_ResourcePacksPanel("ResourcePacksPanel"),
+		  m_DemoScrollingPanel("DemoScrollingPanel")
 	{
 		SubscribeToPannelsEvents();
 	}
@@ -70,6 +71,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_ResourcePacksPanel.RequestResourcePackChange.Subscribe(
 			[this](const std::string& resourcePackName) { Handle_ResourcePackChangeRequest(resourcePackName); }));
+
+		m_EventHandles.push_back(m_DemoScrollingPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
+																					  { Handle_BackRequest(sender); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -242,6 +246,7 @@ namespace onion::voxel
 	{
 		m_DemoPanel.Initialize();
 		m_MainMenuPanel.Initialize();
+		m_DemoScrollingPanel.Initialize();
 		m_PausePanel.Initialize();
 		m_OptionsPanel.Initialize();
 		m_ResourcePacksPanel.Initialize();
@@ -265,6 +270,9 @@ namespace onion::voxel
 		{
 			case eMenu::DemoPanel:
 				m_DemoPanel.Render();
+				break;
+			case eMenu::DemoScrollingPanel:
+				m_DemoScrollingPanel.Render();
 				break;
 			case eMenu::MainMenu:
 				m_MainMenuPanel.Render();
@@ -290,6 +298,7 @@ namespace onion::voxel
 	{
 		m_DemoPanel.Delete();
 		m_MainMenuPanel.Delete();
+		m_DemoScrollingPanel.Delete();
 		m_PausePanel.Delete();
 		m_OptionsPanel.Delete();
 		m_ResourcePacksPanel.Delete();
@@ -299,6 +308,7 @@ namespace onion::voxel
 	{
 		m_DemoPanel.ReloadTextures();
 		m_MainMenuPanel.ReloadTextures();
+		m_DemoScrollingPanel.ReloadTextures();
 		m_PausePanel.ReloadTextures();
 		m_OptionsPanel.ReloadTextures();
 		m_ResourcePacksPanel.ReloadTextures();
