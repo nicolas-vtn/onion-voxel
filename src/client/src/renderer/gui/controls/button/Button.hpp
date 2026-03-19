@@ -59,15 +59,12 @@ namespace onion::voxel
 	  private:
 		void SubscribeToSpriteEvents();
 
-		EventHandle m_HandleMouseDown;
+		std::vector<EventHandle> m_EventHandles;
+
 		void HandleMouseDown(const NineSliceSprite& sprite);
-		EventHandle m_HandleMouseUp;
 		void HandleMouseUp(const NineSliceSprite& sprite);
-		EventHandle m_HandleSpriteClick;
 		void HandleSpriteClick(const NineSliceSprite& sprite);
-		EventHandle m_HandleSpriteHoverEnter;
 		void HandleSpriteHoverEnter(const NineSliceSprite& sprite);
-		EventHandle m_HandleSpriteHoverLeave;
 		void HandleSpriteHoverLeave(const NineSliceSprite& sprite);
 
 		// ----- Properties -----

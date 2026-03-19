@@ -14,7 +14,7 @@ namespace onion::voxel
 		// ----- Constructor / Destructor -----
 	  public:
 		DemoPanel(const std::string& name);
-		~DemoPanel() override = default;
+		~DemoPanel() override;
 
 		// ----- Public API -----
 	  public:

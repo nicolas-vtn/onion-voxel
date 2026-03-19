@@ -49,6 +49,11 @@ namespace onion::voxel
 		m_TextFieldDemo.SetPlaceholderText("Type something...");
 	}
 
+	DemoScrollingPanel::~DemoScrollingPanel()
+	{
+		m_EventHandles.clear();
+	}
+
 	void DemoScrollingPanel::Render()
 	{
 		// ---- Calculate Control Sizes and Positions ----
@@ -57,7 +62,7 @@ namespace onion::voxel
 		int centerX = s_ScreenWidth / 2;
 
 		// ---- Constants for Dynamic Buttons Layout ----
-		float dynamicButtonsStartYRatio = 0.4f;
+		float dynamicButtonsStartYRatio = 0.7f;
 		float dynamicButtonsSpacingYRatio = 0.1f;
 
 		// ---- Pre Configure ----
@@ -96,8 +101,42 @@ namespace onion::voxel
 		m_Scroller.StartCissoring();
 
 		// ---- Render Demo Label ----
-		float labelPositionRatioY = 0.2f;
-		m_LabelDemo.SetPosition({centerX, s_ScreenHeight * labelPositionRatioY});
+		float labelPositionRatioY = 0.3f;
+		glm::ivec2 labelPosition{centerX, static_cast<int>(s_ScreenHeight * labelPositionRatioY)};
+		labelPosition = m_Scroller.ProjectContentPosition(labelPosition);
+		m_LabelDemo.SetPosition(labelPosition);
+		m_LabelDemo.SetText("There are " + std::to_string(m_DynamicButtons.size()) + " buttons in the scroller.");
+		m_LabelDemo.SetTextHeight(controlsSize.y * 0.4f);
+		m_LabelDemo.Render();
+
+		// ---- Render Demo Sprite ----
+		float spritePositionRatioY = 0.4f;
+		glm::ivec2 spritePosition{centerX, static_cast<int>(s_ScreenHeight * spritePositionRatioY)};
+		spritePosition = m_Scroller.ProjectContentPosition(spritePosition);
+		m_SpriteDemo.SetPosition(spritePosition);
+		m_SpriteDemo.SetSize(controlsSize);
+		m_SpriteDemo.Render();
+
+		// ---- Render Demo Checkbox ----
+		float checkboxPositionRatioY = 0.5f;
+		glm::ivec2 checkboxSize{static_cast<int>(controlsSize.y), static_cast<int>(controlsSize.y)};
+		glm::ivec2 checkboxPosition{centerX, static_cast<int>(s_ScreenHeight * checkboxPositionRatioY)};
+		checkboxPosition = m_Scroller.ProjectContentPosition(checkboxPosition);
+		Visibility checkboxVisibility = m_Scroller.GetControlVisibleArea(checkboxPosition, checkboxSize);
+		m_CheckboxDemo.SetPosition(checkboxPosition);
+		m_CheckboxDemo.SetSize(checkboxSize);
+		m_CheckboxDemo.SetVisibility(checkboxVisibility);
+		m_CheckboxDemo.Render();
+
+		// ---- Render Demo TextField ----
+		float textFieldPositionRatioY = 0.6f;
+		glm::ivec2 textFieldPosition{centerX, static_cast<int>(s_ScreenHeight * textFieldPositionRatioY)};
+		textFieldPosition = m_Scroller.ProjectContentPosition(textFieldPosition);
+		Visibility textFieldVisibility = m_Scroller.GetControlVisibleArea(textFieldPosition, controlsSize);
+		m_TextFieldDemo.SetPosition(textFieldPosition);
+		m_TextFieldDemo.SetSize(controlsSize);
+		m_TextFieldDemo.SetVisibility(textFieldVisibility);
+		m_TextFieldDemo.Render();
 
 		// ---- Render Dynamic Buttons ----
 		for (size_t i = 0; i < m_DynamicButtons.size(); i++)
@@ -146,6 +185,12 @@ namespace onion::voxel
 		m_ButtonBack.Initialize();
 		m_SliderButtonCount.Initialize();
 		m_Scroller.Initialize();
+		m_SliderDemo.Initialize();
+		m_LabelDemo.Initialize();
+		m_SpriteDemo.Initialize();
+		m_CheckboxDemo.Initialize();
+		m_TextFieldDemo.Initialize();
+
 		for (auto& button : m_DynamicButtons)
 		{
 			button->Initialize();
@@ -159,6 +204,11 @@ namespace onion::voxel
 		m_ButtonBack.Delete();
 		m_SliderButtonCount.Delete();
 		m_Scroller.Delete();
+		m_SliderDemo.Delete();
+		m_LabelDemo.Delete();
+		m_SpriteDemo.Delete();
+		m_CheckboxDemo.Delete();
+		m_TextFieldDemo.Delete();
 		for (auto& button : m_DynamicButtons)
 		{
 			button->Delete();
@@ -172,6 +222,11 @@ namespace onion::voxel
 		m_ButtonBack.ReloadTextures();
 		m_SliderButtonCount.ReloadTextures();
 		m_Scroller.ReloadTextures();
+		m_SliderDemo.ReloadTextures();
+		m_LabelDemo.ReloadTextures();
+		m_SpriteDemo.ReloadTextures();
+		m_CheckboxDemo.ReloadTextures();
+		m_TextFieldDemo.ReloadTextures();
 		for (auto& button : m_DynamicButtons)
 		{
 			button->ReloadTextures();
@@ -213,6 +268,7 @@ namespace onion::voxel
 
 	void DemoScrollingPanel::Handle_ButtonBackClick(const Button& button)
 	{
+		(void) button; // Unused parameter
 		RequestBackNavigation.Trigger(this);
 	}
 

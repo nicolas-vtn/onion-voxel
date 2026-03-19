@@ -48,6 +48,8 @@ namespace onion::voxel
 		void SetPosition(const glm::ivec2& pos);
 		glm::ivec2 GetPosition() const;
 
+		void SetVisibility(const Visibility& visibility) override;
+
 		bool IsReadOnly() const;
 		void SetReadOnly(bool readOnly);
 
@@ -58,15 +60,12 @@ namespace onion::voxel
 	  private:
 		void SubscribeToSpriteEvents();
 
-		EventHandle m_HandleMouseDown;
+		std::vector<EventHandle> m_EventHandles;
+
 		void Handle_MouseDown(const NineSliceSprite& sprite);
-		EventHandle m_HandleMouseUp;
 		void Handle_MouseUp(const NineSliceSprite& sprite);
-		EventHandle m_HandleSpriteClick;
 		void Handle_SpriteClick(const NineSliceSprite& sprite);
-		EventHandle m_HandleSpriteHoverEnter;
 		void Handle_SpriteHoverEnter(const NineSliceSprite& sprite);
-		EventHandle m_HandleSpriteHoverLeave;
 		void Handle_SpriteHoverLeave(const NineSliceSprite& sprite);
 
 		// ----- Inputs Handling -----

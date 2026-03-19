@@ -16,7 +16,7 @@ namespace onion::voxel
 		// ----- Constructor / Destructor -----
 	  public:
 		DemoScrollingPanel(const std::string& name);
-		~DemoScrollingPanel() override = default;
+		~DemoScrollingPanel() override;
 
 		// ----- Public API -----
 	  public:
@@ -47,10 +47,6 @@ namespace onion::voxel
 		std::vector<std::unique_ptr<Button>> m_DynamicButtons;
 
 		void AdjustDynamicButtons(size_t buttonCount);
-
-		// ----- Variables -----
-	  private:
-		std::string m_SpritePath = (GetAssetsPath() / "textures" / "OnionVoxelTitle.png").string();
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:

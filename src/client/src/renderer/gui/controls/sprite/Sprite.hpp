@@ -37,6 +37,9 @@ namespace onion::voxel
 		void Delete() override;
 		void ReloadTextures() override;
 
+		void PullEvents();
+		bool IsHovered() const;
+
 		// ----- Getters / Setters -----
 	  public:
 		void SetSize(const glm::vec2& size);
@@ -53,13 +56,22 @@ namespace onion::voxel
 
 		void SwapTexture(Texture newTexture);
 
-		// ----- Properties -----
+		// ----- Events -----
 	  public:
+		Event<const Sprite&> OnClick;
+		Event<const Sprite&> OnHoverEnter;
+		Event<const Sprite&> OnHoverLeave;
+
+		// ----- Properties -----
+	  private:
 		std::filesystem::path m_SpritePath;
 		glm::vec2 m_Position{0, 0};
 		glm::vec2 m_Size{1, 1};
 		eOrigin m_Origin = eOrigin::Asset;
 		bool m_UnreloadableTexture = false;
+
+		bool m_WasHovered = false;
+		bool m_WasMouseDown = false;
 
 		// ----- Texture -----
 	  private:

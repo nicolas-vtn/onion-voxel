@@ -12,25 +12,19 @@ namespace onion::voxel
 											   s_SpritePathFromGui_SelectedHighlighted,
 											   Sprite::eOrigin::ResourcePack)
 	{
+		SubscribeToSpriteEvents();
 	}
 
-	Checkbox::~Checkbox() {}
+	Checkbox::~Checkbox()
+	{
+		m_EventHandles.clear();
+	}
 
 	void Checkbox::Render()
 	{
-		bool hovered = IsHovered();
+		m_Checkbox_Sprite.PullEvents();
 
-		// Click detection
-		if (s_InputsSnapshot)
-		{
-			bool isMouseDown = s_InputsSnapshot->Mouse.LeftButtonPressed;
-			if (hovered && isMouseDown && !m_WasMouseDown)
-			{
-				m_Checked = !m_Checked;
-				OnCheckedChanged.Trigger(*this);
-			}
-			m_WasMouseDown = isMouseDown;
-		}
+		bool hovered = IsHovered();
 
 		Sprite* spriteToRender = nullptr;
 		if (hovered)
@@ -42,8 +36,6 @@ namespace onion::voxel
 			spriteToRender = m_Checked ? &m_CheckboxSelected_Sprite : &m_Checkbox_Sprite;
 		}
 
-		spriteToRender->SetPosition(m_Position);
-		spriteToRender->SetSize(m_Size);
 		spriteToRender->Render();
 	}
 
@@ -77,7 +69,14 @@ namespace onion::voxel
 
 	void Checkbox::SetSize(const glm::vec2& size)
 	{
+		if (size == m_Size)
+			return;
+
 		m_Size = size;
+		m_Checkbox_Sprite.SetSize(size);
+		m_CheckboxHighlighted_Sprite.SetSize(size);
+		m_CheckboxSelected_Sprite.SetSize(size);
+		m_CheckboxSelectedHighlighted_Sprite.SetSize(size);
 	}
 
 	glm::vec2 Checkbox::GetSize() const
@@ -87,7 +86,14 @@ namespace onion::voxel
 
 	void Checkbox::SetPosition(const glm::vec2& pos)
 	{
+		if (pos == m_Position)
+			return;
+
 		m_Position = pos;
+		m_Checkbox_Sprite.SetPosition(pos);
+		m_CheckboxHighlighted_Sprite.SetPosition(pos);
+		m_CheckboxSelected_Sprite.SetPosition(pos);
+		m_CheckboxSelectedHighlighted_Sprite.SetPosition(pos);
 	}
 
 	glm::vec2 Checkbox::GetPosition() const
@@ -105,18 +111,55 @@ namespace onion::voxel
 		return m_Checked;
 	}
 
+	void Checkbox::SetVisibility(const Visibility& visibility)
+	{
+		GuiElement::SetVisibility(visibility);
+
+		m_Checkbox_Sprite.SetVisibility(visibility);
+		m_CheckboxHighlighted_Sprite.SetVisibility(visibility);
+		m_CheckboxSelected_Sprite.SetVisibility(visibility);
+		m_CheckboxSelectedHighlighted_Sprite.SetVisibility(visibility);
+	}
+
+	void Checkbox::SubscribeToSpriteEvents()
+	{
+		m_EventHandles.push_back(
+			m_Checkbox_Sprite.OnClick.Subscribe([this](const Sprite& sprite) { Handle_Click(sprite); }));
+
+		m_EventHandles.push_back(
+			m_Checkbox_Sprite.OnHoverEnter.Subscribe([this](const Sprite& sprite) { Handle_HoverEnter(sprite); }));
+
+		m_EventHandles.push_back(
+			m_Checkbox_Sprite.OnHoverLeave.Subscribe([this](const Sprite& sprite) { Handle_HoverLeave(sprite); }));
+	}
+
+	void Checkbox::Handle_Click(const Sprite& sprite)
+	{
+		(void) sprite; // Unused parameter
+
+		m_Checked = !m_Checked;
+		OnCheckedChanged.Trigger(*this);
+	}
+
+	void Checkbox::Handle_HoverEnter(const Sprite& sprite)
+	{
+		(void) sprite; // Unused parameter
+
+		auto& inputs = EngineContext::Get().Inputs;
+		inputs->SetCursorStyle(CursorStyle::Hand);
+	}
+
+	void Checkbox::Handle_HoverLeave(const Sprite& sprite)
+	{
+		(void) sprite; // Unused parameter
+
+		auto& inputs = EngineContext::Get().Inputs;
+		inputs->SetCursorStyle(CursorStyle::Arrow);
+	}
+
 	bool Checkbox::IsHovered() const
 	{
-		if (s_InputsSnapshot == nullptr)
-		{
-			return false;
-		}
-
-		glm::vec2 mousePos{s_InputsSnapshot->Mouse.Xpos, s_InputsSnapshot->Mouse.Ypos};
-		glm::vec2 topLeft = m_Position - m_Size * 0.5f;
-		glm::vec2 bottomRight = m_Position + m_Size * 0.5f;
-		return mousePos.x >= topLeft.x && mousePos.x <= bottomRight.x && mousePos.y >= topLeft.y &&
-			mousePos.y <= bottomRight.y;
+		return m_Checkbox_Sprite.IsHovered();
 	}
 
 } // namespace onion::voxel

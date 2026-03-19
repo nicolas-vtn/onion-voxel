@@ -42,6 +42,11 @@ namespace onion::voxel
 		m_ButtonScrollingPanel.SetEnabled(true);
 	}
 
+	DemoPanel::~DemoPanel()
+	{
+		m_EventHandles.clear();
+	}
+
 	void DemoPanel::Render()
 	{
 		glm::vec2 buttonSizeRatio{0.415f, 0.08f};
@@ -212,6 +217,7 @@ namespace onion::voxel
 
 	void DemoPanel::Handle_ButtonScrollingPanelClick(const Button& button)
 	{
+		(void) button; // Unused parameter
 		RequestMenuNavigation.Trigger({this, eMenu::DemoScrollingPanel});
 	}
 

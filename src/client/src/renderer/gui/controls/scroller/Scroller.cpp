@@ -18,7 +18,10 @@ namespace onion::voxel
 		m_NineSliceSprite_ScrollerBackground.SetZOffset(0.4f);
 	}
 
-	Scroller::~Scroller() {}
+	Scroller::~Scroller()
+	{
+		m_EventHandles.clear();
+	}
 
 	void Scroller::Initialize()
 	{
@@ -68,14 +71,14 @@ namespace onion::voxel
 		glm::ivec2 scrollerAreaSize = m_BottomRightCorner - m_TopLeftCorner;
 		float scrollWidth = m_ScrollerWidthRatio * s_ScreenWidth;
 		glm::ivec2 scrollBackgroundSize{static_cast<int>(scrollWidth), scrollerAreaSize.y};
-		int scrollPosX = m_BottomRightCorner.x - scrollWidth / 2;
+		int scrollPosX = m_BottomRightCorner.x - std::lround(scrollWidth / 2.f);
 		int scrollBackgroundPosY = m_TopLeftCorner.y + scrollerAreaSize.y / 2;
 		glm::ivec2 scrollerBackgroundPosition{scrollPosX, scrollBackgroundPosY};
 
 		glm::ivec2 scrollSize = GetScrollHandleSize();
 		int amplitude = scrollerAreaSize.y - scrollSize.y;
 		int propAmp = static_cast<int>(amplitude * m_ScrollRatio);
-		int scrollPosY = m_TopLeftCorner.y + propAmp + (scrollSize.y / 2.f);
+		int scrollPosY = m_TopLeftCorner.y + propAmp + std::lround(scrollSize.y / 2.f);
 		glm::ivec2 scrollPosition{scrollPosX, scrollPosY};
 
 		// ---- Render Scroll Background ----
@@ -230,22 +233,26 @@ namespace onion::voxel
 
 	void Scroller::Handle_MouseDown(const NineSliceSprite& sprite)
 	{
+		(void) sprite; // Unused parameter
+
 		const auto& inputs = EngineContext::Get().Inputs;
 		inputs->SetCursorStyle(CursorStyle::VResize);
 
 		m_IsScrolling = true;
 
-		m_MouseYOnScrollStart = s_InputsSnapshot->Mouse.Ypos;
+		m_MouseYOnScrollStart = std::lround(s_InputsSnapshot->Mouse.Ypos);
 		m_ScrollRatioOnDragStart = m_ScrollRatio;
 
 		glm::ivec2 handleSize = GetScrollHandleSize();
 		glm::ivec2 handleCenter = m_NineSliceSprite_Scroller.GetPosition();
 		int handleTop = handleCenter.y - handleSize.y / 2;
-		m_ClickOffsetInsideHandle = s_InputsSnapshot->Mouse.Ypos - handleTop;
+		m_ClickOffsetInsideHandle = std::lround(s_InputsSnapshot->Mouse.Ypos) - handleTop;
 	}
 
 	void Scroller::Handle_MouseUp(const NineSliceSprite& sprite)
 	{
+		(void) sprite; // Unused parameter
+
 		const auto& inputs = EngineContext::Get().Inputs;
 
 		bool backgroundHovered = m_NineSliceSprite_ScrollerBackground.IsHovered();
@@ -263,12 +270,16 @@ namespace onion::voxel
 
 	void Scroller::Handle_HoverEnter(const NineSliceSprite& sprite)
 	{
+		(void) sprite; // Unused parameter
+
 		const auto& inputs = EngineContext::Get().Inputs;
 		inputs->SetCursorStyle(CursorStyle::Hand);
 	}
 
 	void Scroller::Handle_HoverLeave(const NineSliceSprite& sprite)
 	{
+		(void) sprite; // Unused parameter
+
 		const auto& inputs = EngineContext::Get().Inputs;
 		inputs->SetCursorStyle(CursorStyle::Arrow);
 	}
@@ -300,7 +311,7 @@ namespace onion::voxel
 
 		int deltaY = mousePosition.y - m_MouseYOnScrollStart;
 
-		float scrollHeight = GetScrollHandleSize().y;
+		float scrollHeight = static_cast<float>(GetScrollHandleSize().y);
 
 		float amplitude = scrollerAreaSizeY - scrollHeight;
 

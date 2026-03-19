@@ -15,7 +15,10 @@ namespace onion::voxel
 		m_DescriptionLabel.SetTextColor(s_ColorSecondaryText);
 	}
 
-	ResourcePackTile::~ResourcePackTile() {}
+	ResourcePackTile::~ResourcePackTile()
+	{
+		m_EventHandles.clear();
+	}
 
 	void ResourcePackTile::Render()
 	{
