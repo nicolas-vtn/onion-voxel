@@ -10,6 +10,7 @@
 #include <renderer/OpenGL.hpp>
 
 #include <renderer/gui/GuiElement.hpp>
+#include <renderer/gui/controls/sprite/Sprite.hpp>
 #include <renderer/gui/nine_slice_sprite/NineSliceSprite.hpp>
 
 namespace onion::voxel
@@ -47,6 +48,8 @@ namespace onion::voxel
 		glm::ivec2 ProjectContentPosition(const glm::ivec2& contentPosition) const;
 		Visibility GetControlVisibleArea(const glm::ivec2& controlCenter, const glm::ivec2& controlSize) const;
 
+		bool IsCissoring() const;
+
 		void SetScrollRatio(float scrollRatio);
 		float GetScrollRatio() const;
 
@@ -69,6 +72,7 @@ namespace onion::voxel
 		glm::ivec2 m_TopLeftCorner{0, 0};
 		glm::ivec2 m_BottomRightCorner{0, 0};
 		uint32_t m_ScrollAreaHeight = 0;
+		bool m_Cissoring = false;
 
 		float m_ScrollRatio = 0.0f;
 
@@ -81,6 +85,8 @@ namespace onion::voxel
 		bool m_DebugRenderScrollArea = false;
 
 		float m_ScrollerWidthRatio = 30.f / 1920.f;
+		float m_HandleXPositionRatio = 0.875f;
+		float m_HeaderHeightRatio = 8.f / 1009.f;
 
 		glm::ivec2 GetScrollHandleSize() const;
 		float GetScrollRatioFromMousePosition(const glm::ivec2& mousePosition) const;
@@ -91,6 +97,10 @@ namespace onion::voxel
 		NineSliceSprite m_NineSliceSprite_Scroller;
 		NineSliceSprite m_NineSliceSprite_ScrollerBackground;
 
+		Sprite m_SpriteHeader;
+		Sprite m_SpriteFooter;
+		Sprite m_SpriteBackground;
+
 		// ----- Static Helpers -----
 	  private:
 		static inline const std::filesystem::path s_SpritePathFromGui_Scroller =
@@ -98,6 +108,15 @@ namespace onion::voxel
 
 		static inline const std::filesystem::path s_SpritePathFromGui_ScrollerBackground =
 			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "scroller_background.png";
+
+		static inline const std::filesystem::path s_SpritePathFromGui_Header =
+			GuiElement::s_BasePathGuiAssets / "header_separator.png";
+
+		static inline const std::filesystem::path s_SpritePathFromGui_Footer =
+			GuiElement::s_BasePathGuiAssets / "footer_separator.png";
+
+		static inline const std::filesystem::path s_SpritePathFromGui_Background =
+			GuiElement::s_BasePathGuiAssets / "menu_background.png";
 
 		// ----- DEBUG -----
 	  private:

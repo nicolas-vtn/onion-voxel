@@ -8,14 +8,20 @@
 namespace onion::voxel
 {
 	Scroller::Scroller(const std::string& name)
-		: GuiElement(name), m_NineSliceSprite_Scroller("DemoScrollingPanelScroller", s_SpritePathFromGui_Scroller),
-		  m_NineSliceSprite_ScrollerBackground("DemoScrollingPanelScrollerBackground",
-											   s_SpritePathFromGui_ScrollerBackground)
+		: GuiElement(name), m_NineSliceSprite_Scroller("ScrollerHandle", s_SpritePathFromGui_Scroller),
+		  m_NineSliceSprite_ScrollerBackground("ScrollerBackground", s_SpritePathFromGui_ScrollerBackground),
+		  m_SpriteHeader("Header", s_SpritePathFromGui_Header, Sprite::eOrigin::ResourcePack),
+		  m_SpriteFooter("Footer", s_SpritePathFromGui_Footer, Sprite::eOrigin::ResourcePack),
+		  m_SpriteBackground("Background", s_SpritePathFromGui_Background, Sprite::eOrigin::ResourcePack)
 	{
 		SubscribeToSpriteEvents();
 
 		m_NineSliceSprite_Scroller.SetZOffset(0.5f);
 		m_NineSliceSprite_ScrollerBackground.SetZOffset(0.4f);
+
+		m_SpriteBackground.SetZOffset(-0.9f);
+		m_SpriteHeader.SetZOffset(-0.8f);
+		m_SpriteFooter.SetZOffset(-0.8f);
 	}
 
 	Scroller::~Scroller()
@@ -27,6 +33,9 @@ namespace onion::voxel
 	{
 		m_NineSliceSprite_Scroller.Initialize();
 		m_NineSliceSprite_ScrollerBackground.Initialize();
+		m_SpriteHeader.Initialize();
+		m_SpriteFooter.Initialize();
+		m_SpriteBackground.Initialize();
 
 		SetInitState(true);
 	}
@@ -35,6 +44,9 @@ namespace onion::voxel
 	{
 		// DEBUG
 		RenderImGuiDebug();
+
+		bool wasCissoring = m_Cissoring;
+		StopCissoring();
 
 		if (m_DebugRenderScrollArea)
 		{
@@ -70,10 +82,15 @@ namespace onion::voxel
 		m_NineSliceSprite_ScrollerBackground.PullEvents();
 
 		// ---- Calculations ----
+		glm::ivec2 centerPos = (m_TopLeftCorner + m_BottomRightCorner) / 2;
 		glm::ivec2 scrollerAreaSize = m_BottomRightCorner - m_TopLeftCorner;
+
+		int headerHeight = m_HeaderHeightRatio * s_ScreenHeight;
+
 		float scrollWidth = m_ScrollerWidthRatio * s_ScreenWidth;
 		glm::ivec2 scrollBackgroundSize{static_cast<int>(scrollWidth), scrollerAreaSize.y};
-		int scrollPosX = m_BottomRightCorner.x - std::lround(scrollWidth / 2.f);
+		int scrollPosX = m_BottomRightCorner.x - (int) (scrollerAreaSize.x * (1.f - m_HandleXPositionRatio)) -
+			std::lround(scrollWidth / 2.f);
 		int scrollBackgroundPosY = m_TopLeftCorner.y + scrollerAreaSize.y / 2;
 		glm::ivec2 scrollerBackgroundPosition{scrollPosX, scrollBackgroundPosY};
 
@@ -82,6 +99,25 @@ namespace onion::voxel
 		int propAmp = static_cast<int>(amplitude * m_ScrollRatio);
 		int scrollPosY = m_TopLeftCorner.y + propAmp + std::lround(scrollSize.y / 2.f);
 		glm::ivec2 scrollPosition{scrollPosX, scrollPosY};
+
+		// ---- Render Background ----
+		m_SpriteBackground.SetPosition(centerPos);
+		m_SpriteBackground.SetSize(scrollerAreaSize);
+		m_SpriteBackground.Render();
+
+		// ---- Render Header ----
+		glm::ivec2 headerSize{scrollerAreaSize.x, headerHeight};
+		glm::ivec2 headerPos{centerPos.x, m_TopLeftCorner.y - headerSize.y / 2};
+		m_SpriteHeader.SetPosition(headerPos);
+		m_SpriteHeader.SetSize(headerSize);
+		m_SpriteHeader.Render();
+
+		// ---- Render Footer ----
+		glm::ivec2 footerSize{scrollerAreaSize.x, headerHeight};
+		glm::ivec2 footerPos{centerPos.x, m_BottomRightCorner.y + footerSize.y / 2};
+		m_SpriteFooter.SetPosition(footerPos);
+		m_SpriteFooter.SetSize(footerSize);
+		m_SpriteFooter.Render();
 
 		// ---- Render Scroll Background ----
 		m_NineSliceSprite_ScrollerBackground.SetPosition(scrollerBackgroundPosition);
@@ -92,12 +128,20 @@ namespace onion::voxel
 		m_NineSliceSprite_Scroller.SetPosition(scrollPosition);
 		m_NineSliceSprite_Scroller.SetSize(scrollSize);
 		m_NineSliceSprite_Scroller.Render();
+
+		if (wasCissoring)
+		{
+			StartCissoring();
+		}
 	}
 
 	void Scroller::Delete()
 	{
 		m_NineSliceSprite_Scroller.Delete();
 		m_NineSliceSprite_ScrollerBackground.Delete();
+		m_SpriteHeader.Delete();
+		m_SpriteFooter.Delete();
+		m_SpriteBackground.Delete();
 
 		SetDeletedState(true);
 	}
@@ -106,6 +150,9 @@ namespace onion::voxel
 	{
 		m_NineSliceSprite_Scroller.ReloadTextures();
 		m_NineSliceSprite_ScrollerBackground.ReloadTextures();
+		m_SpriteHeader.ReloadTextures();
+		m_SpriteFooter.ReloadTextures();
+		m_SpriteBackground.ReloadTextures();
 	}
 
 	void Scroller::StartCissoring()
@@ -206,6 +253,11 @@ namespace onion::voxel
 		bool isFullyVisible = (visibleTopLeft == controlTopLeft) && (visibleBottomRight == controlBottomRight);
 
 		return {true, isFullyVisible, visibleTopLeft, visibleBottomRight};
+	}
+
+	bool Scroller::IsCissoring() const
+	{
+		return m_IsScrolling;
 	}
 
 	void Scroller::SetScrollRatio(float scrollRatio)

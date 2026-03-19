@@ -51,6 +51,9 @@ namespace onion::voxel
 		int GetTextureWidth() const;
 		int GetTextureHeight() const;
 
+		void SetZOffset(float zOffset);
+		float GetZOffset() const;
+
 		void SetOrigin(eOrigin origin);
 		eOrigin GetOrigin() const;
 
@@ -69,6 +72,7 @@ namespace onion::voxel
 		glm::vec2 m_Size{1, 1};
 		eOrigin m_Origin = eOrigin::Asset;
 		bool m_UnreloadableTexture = false;
+		float m_Zoffset = 0.f;
 
 		bool m_WasHovered = false;
 		bool m_WasMouseDown = false;
@@ -81,7 +85,7 @@ namespace onion::voxel
 	  private:
 		struct Vertex
 		{
-			float posX, posY, posZ;
+			float posX, posY;
 			float texX, texY;
 		};
 

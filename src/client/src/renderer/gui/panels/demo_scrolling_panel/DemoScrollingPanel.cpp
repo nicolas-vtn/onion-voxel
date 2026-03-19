@@ -78,7 +78,7 @@ namespace onion::voxel
 		m_SliderButtonCount.Render();
 
 		// ---- Render Scroller ----
-		float scrollerWidthRatio = 0.5f;
+		float scrollerWidthRatio = 1.f;
 		float scrollerHeightRatio = 0.6f;
 		glm::ivec2 scrollerSize{static_cast<int>(s_ScreenWidth * scrollerWidthRatio),
 								static_cast<int>(s_ScreenHeight * scrollerHeightRatio)};

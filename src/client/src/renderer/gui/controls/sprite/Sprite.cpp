@@ -5,7 +5,7 @@ using namespace onion::voxel;
 // -------- Static Data --------
 
 std::vector<Sprite::Vertex> Sprite::s_Vertices = {
-	{0.f, 0.f, 0.f, 0.f, 0.f}, {1.f, 0.f, 0.f, 1.f, 0.f}, {1.f, 1.f, 0.f, 1.f, 1.f}, {0.f, 1.f, 0.f, 0.f, 1.f}};
+	{0.f, 0.f, 0.f, 0.f}, {1.f, 0.f, 1.f, 0.f}, {1.f, 1.f, 1.f, 1.f}, {0.f, 1.f, 0.f, 1.f}};
 
 std::vector<unsigned int> Sprite::s_Indices = {0, 1, 2, 2, 3, 0};
 
@@ -36,6 +36,7 @@ void Sprite::Render()
 	s_ShaderSprites.Use();
 	s_ShaderSprites.setVec2("uPos", topLeft.x, topLeft.y);
 	s_ShaderSprites.setVec2("uSize", m_Size.x, m_Size.y);
+	s_ShaderSprites.setFloat("uZOffset", m_Zoffset);
 	s_ShaderSprites.setInt("uTexture", 0);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -174,6 +175,16 @@ int Sprite::GetTextureHeight() const
 	return m_Texture.Height();
 }
 
+void onion::voxel::Sprite::SetZOffset(float zOffset)
+{
+	m_Zoffset = zOffset;
+}
+
+float onion::voxel::Sprite::GetZOffset() const
+{
+	return m_Zoffset;
+}
+
 void onion::voxel::Sprite::SetOrigin(eOrigin origin)
 {
 	m_Origin = origin;
@@ -207,7 +218,7 @@ void Sprite::InitBuffers()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, s_Indices.size() * sizeof(unsigned int), s_Indices.data(), GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, posX));
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, posX));
 	glEnableVertexAttribArray(0);
 
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
