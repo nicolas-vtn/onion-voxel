@@ -36,7 +36,6 @@ namespace onion::voxel
 		// DEBUG
 		RenderImGuiDebug();
 
-		// TODO : Implement Scroller::Render()
 		if (m_DebugRenderScrollArea)
 		{
 			DebugDraws::DrawScreenBoxMinMax_Pixels(
@@ -62,6 +61,9 @@ namespace onion::voxel
 			{
 			}
 		}
+
+		// Handle Mouse Scroll Inputs
+		HandleMouseScrollY();
 
 		// ---- Pull Events ---
 		m_NineSliceSprite_Scroller.PullEvents();
@@ -323,6 +325,36 @@ namespace onion::voxel
 		float newRatio = m_ScrollRatioOnDragStart + deltaRatio;
 
 		return std::clamp(newRatio, 0.0f, 1.0f);
+	}
+
+	void Scroller::HandleMouseScrollY()
+	{
+		bool scrollYChanged = s_InputsSnapshot->Mouse.ScrollOffsetChanged;
+		double scrollOffsetY = s_InputsSnapshot->Mouse.ScrollYoffset;
+
+		if (scrollYChanged)
+		{
+			int visibleHeight = m_BottomRightCorner.y - m_TopLeftCorner.y;
+			int scrollableHeight = static_cast<int>(m_ScrollAreaHeight) - visibleHeight;
+
+			if (scrollableHeight > 0)
+			{
+				// 6% of visible area per scroll step
+				float deltaPixels = visibleHeight * 0.06f;
+
+				float deltaRatio = deltaPixels / scrollableHeight;
+
+				float previousScrollRatio = m_ScrollRatio;
+
+				m_ScrollRatio -= static_cast<float>(scrollOffsetY) * deltaRatio;
+				m_ScrollRatio = std::clamp(m_ScrollRatio, 0.f, 1.f);
+
+				if (m_ScrollRatio != previousScrollRatio)
+				{
+					OnScrollRatioChanged.Trigger(*this);
+				}
+			}
+		}
 	}
 
 	void Scroller::RenderImGuiDebug()

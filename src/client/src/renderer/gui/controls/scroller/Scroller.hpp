@@ -84,6 +84,7 @@ namespace onion::voxel
 
 		glm::ivec2 GetScrollHandleSize() const;
 		float GetScrollRatioFromMousePosition(const glm::ivec2& mousePosition) const;
+		void HandleMouseScrollY();
 
 		// ----- NineSliceSprites -----
 	  private:
