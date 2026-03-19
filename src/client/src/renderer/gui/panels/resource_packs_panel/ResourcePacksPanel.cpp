@@ -331,7 +331,7 @@ namespace onion::voxel
 	void ResourcePacksPanel::Handle_OpenPackFolder_Click(const Button& sender)
 	{
 		(void) sender; // Unused parameter)
-		std::filesystem::path resourcePacksFolderPath = GetResourcePacksDirectory();
+		std::filesystem::path resourcePacksFolderPath = EngineContext::Get().Assets->GetResourcePacksDirectory();
 		ShellExecuteA(
 			nullptr, "open", "explorer.exe", resourcePacksFolderPath.string().c_str(), nullptr, SW_SHOWNORMAL);
 	}
