@@ -16,6 +16,7 @@
 
 #include "gui/Gui.hpp"
 #include "inputs_manager/inputs_manager.hpp"
+#include "key_binds/KeyBinds.hpp"
 #include "world_renderer/WorldRenderer.hpp"
 
 #include "EngineContext.hpp"
@@ -103,31 +104,33 @@ namespace onion::voxel
 		// ----- Inputs -----
 	  private:
 		InputsManager m_InputsManager;
-		std::shared_ptr<InputsSnapshot> m_InputsSnapshot;
+		//std::shared_ptr<InputsSnapshot> m_InputsSnapshot;
 		std::vector<EventHandle> m_InputsManagerEventHandles;
 		void SubscribeToInputsManagerEvents();
 
 		void Handle_FramebufferResized(const FramebufferState& framebufferState);
 
 		void RegisterInputs();
-		void ProcessInputs(const std::shared_ptr<InputsSnapshot>& inputs);
-		void ProcessGameplayInputs(const std::shared_ptr<InputsSnapshot>& inputs);
+		void ProcessInputs();
+		void ProcessGameplayInputs();
 
-		int m_InputIdMoveForward = -1;
-		int m_InputIdMoveBackward = -1;
-		int m_InputIdMoveLeft = -1;
-		int m_InputIdMoveRight = -1;
-		int m_InputIdMoveUp = -1;
-		int m_InputIdMoveDown = -1;
-		int m_InputIdSpeedUp = -1;
-		int m_InputIdPause = -1;
-		int m_InputIdUnfocus = -1;
-		int m_InputIdFocus = -1;
+		KeyBinds m_KeyBinds;
 
-		int m_InputIdPlaceBlock = -1;
-		int m_InputIdRemoveBlock = -1;
+		//int m_InputIdMoveForward = -1;
+		//int m_InputIdMoveBackward = -1;
+		//int m_InputIdMoveLeft = -1;
+		//int m_InputIdMoveRight = -1;
+		//int m_InputIdMoveUp = -1;
+		//int m_InputIdMoveDown = -1;
+		//int m_InputIdSpeedUp = -1;
+		//int m_InputIdPause = -1;
+		//int m_InputIdUnfocus = -1;
+		//int m_InputIdFocus = -1;
 
-		int m_InputIdGuiBack = -1;
+		//int m_InputIdPlaceBlock = -1;
+		//int m_InputIdRemoveBlock = -1;
+
+		//int m_InputIdGuiBack = -1;
 
 		// ----- Actions -----
 	  private:
@@ -147,7 +150,7 @@ namespace onion::voxel
 		float m_CameraSpeed = 5.0f;
 		WorldRenderer m_WorldRenderer;
 		bool m_IsFreeCamera = true;
-		void UpdateCameraFromInputs(const std::shared_ptr<InputsSnapshot>& inputs);
+		void UpdateCameraFromInputs();
 
 		// ----- Server Info -----
 	  private:
