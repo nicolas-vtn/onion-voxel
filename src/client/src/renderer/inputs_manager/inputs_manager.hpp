@@ -84,10 +84,12 @@ namespace onion::voxel
 
 		InputConfig(bool repeat) : EnableKeyRepeat(repeat) {}
 
-		InputConfig(bool enableKeyRepeat, float keyRepeatDelay, float keyRepeatInterval, float doublePressDelay)
-			: EnableKeyRepeat(enableKeyRepeat), KeyRepeatDelay(keyRepeatDelay), KeyRepeatInterval(keyRepeatInterval),
-			  DoublePressDelay(doublePressDelay)
+		InputConfig(bool enableKeyRepeat, float keyRepeatDelay_s, float keyRepeatInterval_s, float doublePressDelay_s)
 		{
+			EnableKeyRepeat = enableKeyRepeat;
+			KeyRepeatDelay = keyRepeatDelay_s;
+			KeyRepeatInterval = keyRepeatInterval_s;
+			DoublePressDelay = doublePressDelay_s;
 		}
 
 		/// @brief Indicates whether controlled key repeat is enabled when holding the key. If enabled, the key will repeat after a delay when held down.

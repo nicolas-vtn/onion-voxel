@@ -21,7 +21,7 @@ namespace onion::voxel
 {
 	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager)
 		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), 800, 600)),
-		  m_WorldRenderer(worldManager, m_Camera)
+		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager)
 	{
 		// Sets the Engine Context
 		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager);
@@ -186,10 +186,10 @@ namespace onion::voxel
 
 			// Pool inputs
 			m_InputsManager.PoolInputs();
-			m_InputsSnapshot = m_InputsManager.GetInputsSnapshot();
+			//m_InputsSnapshot = m_InputsManager.GetInputsSnapshot();
 
 			// Process Global Inputs
-			ProcessInputs(m_InputsSnapshot);
+			ProcessInputs();
 
 			// Calculate Delta Time
 			double currentFrame = glfwGetTime();
@@ -297,52 +297,57 @@ namespace onion::voxel
 
 	void Renderer::RegisterInputs()
 	{
-		m_InputIdMoveForward = m_InputsManager.RegisterInput(Key::W);
-		m_InputIdMoveBackward = m_InputsManager.RegisterInput(Key::S);
-		m_InputIdMoveLeft = m_InputsManager.RegisterInput(Key::A);
-		m_InputIdMoveRight = m_InputsManager.RegisterInput(Key::D);
-		m_InputIdMoveUp = m_InputsManager.RegisterInput(Key::Space);
-		m_InputIdMoveDown = m_InputsManager.RegisterInput(Key::LeftShift);
-		m_InputIdSpeedUp = m_InputsManager.RegisterInput(Key::LeftControl);
+		// Eventually Loads from Config File or something like that, but for now it's hardcoded
 
-		m_InputIdUnfocus = m_InputsManager.RegisterInput(Key::KP8);
-		m_InputIdFocus = m_InputsManager.RegisterInput(Key::KP7);
-		m_InputIdPause = m_InputsManager.RegisterInput(Key::Escape, InputConfig(true, 999999, 0, 0));
+		InputConfig everyFrame(false, 0, 0, 0);
+		InputConfig noRepeat(true, 9999999, 0, 0);
+		InputConfig repeatWithDelay(true, 0.6f, 0.4f, 0.5f);
 
-		m_InputIdRemoveBlock = m_InputsManager.RegisterInput(Key::MouseButtonLeft, InputConfig(true));
-		m_InputIdPlaceBlock = m_InputsManager.RegisterInput(Key::MouseButtonRight, InputConfig(true));
+		m_KeyBinds.RemapAction(eAction::MoveForward, Key::W, everyFrame);
+		m_KeyBinds.RemapAction(eAction::MoveBackward, Key::S, everyFrame);
+		m_KeyBinds.RemapAction(eAction::MoveLeft, Key::A, everyFrame);
+		m_KeyBinds.RemapAction(eAction::MoveRight, Key::D, everyFrame);
+		m_KeyBinds.RemapAction(eAction::Jump, Key::Space, everyFrame);
+		m_KeyBinds.RemapAction(eAction::Crouch, Key::LeftShift, everyFrame);
+		m_KeyBinds.RemapAction(eAction::Sprint, Key::LeftControl, everyFrame);
 
-		m_InputIdGuiBack = m_InputsManager.RegisterInput(Key::Escape, InputConfig(true, 999999, 0, 0));
+		m_KeyBinds.RemapAction(eAction::ToggleMouseCapture, Key::KP7, noRepeat);
+		m_KeyBinds.RemapAction(eAction::Pause, Key::Escape, noRepeat);
+		m_KeyBinds.RemapAction(eAction::CloseMenu, Key::Escape, noRepeat);
+
+		m_KeyBinds.RemapAction(eAction::Attack, Key::MouseButtonLeft, repeatWithDelay);
+		m_KeyBinds.RemapAction(eAction::Interact, Key::MouseButtonRight, repeatWithDelay);
 	}
 
-	void Renderer::ProcessInputs(const std::shared_ptr<InputsSnapshot>& inputs)
+	void Renderer::ProcessInputs()
 	{
-		if (inputs->GetKeyState(m_InputIdUnfocus).IsPressed && inputs->Mouse.CaptureEnabled)
+		KeyState toggleMouseCaptureKeyState = m_KeyBinds.GetKeyState(eAction::ToggleMouseCapture);
+		if (toggleMouseCaptureKeyState.IsPressed)
 		{
-			m_InputsManager.SetMouseCaptureEnabled(false);
+			bool mouseCapture = m_InputsManager.IsMouseCaptureEnabled();
+			m_InputsManager.SetMouseCaptureEnabled(!mouseCapture);
 		}
 
-		if (inputs->GetKeyState(m_InputIdFocus).IsPressed && !inputs->Mouse.CaptureEnabled)
-		{
-			m_InputsManager.SetMouseCaptureEnabled(true);
-		}
-
-		if (inputs->GetKeyState(m_InputIdPause).IsPressed && GetRenderState() == eRenderState::InGame)
+		KeyState pauseKeyState = m_KeyBinds.GetKeyState(eAction::Pause);
+		if (pauseKeyState.IsPressed && GetRenderState() == eRenderState::InGame)
 		{
 			PauseGame(true);
 		}
 
+		auto inputs = m_InputsManager.GetInputsSnapshot();
 		GuiElement::SetInputsSnapshot(inputs);
-		GuiElement::s_IsBackPressed = inputs->GetKeyState(m_InputIdGuiBack).IsPressed;
+		KeyState closeMenuKeyState = m_KeyBinds.GetKeyState(eAction::CloseMenu);
+		GuiElement::s_IsBackPressed = closeMenuKeyState.IsPressed;
 
 		// Process Camera Movement Inputs (Only if in Free Camera Mode)
-		UpdateCameraFromInputs(inputs);
+		if (m_IsFreeCamera)
+			UpdateCameraFromInputs();
 
 		if (m_RenderState == eRenderState::InGame && !m_IsPaused)
-			ProcessGameplayInputs(inputs);
+			ProcessGameplayInputs();
 	}
 
-	void Renderer::ProcessGameplayInputs(const std::shared_ptr<InputsSnapshot>& inputs)
+	void Renderer::ProcessGameplayInputs()
 	{
 		// Raycast from the camera's position.
 		glm::vec3 rayOrigin = m_Camera->GetPosition();
@@ -369,7 +374,8 @@ namespace onion::voxel
 			//DebugDraws::DrawBlockOutline(prevBlockPos, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 3, true);
 		}
 
-		if (inputs->GetKeyState(m_InputIdRemoveBlock).IsPressed)
+		KeyState attackKeyState = m_KeyBinds.GetKeyState(eAction::Attack);
+		if (attackKeyState.IsPressed)
 		{
 			Block airBlockToPlace = Block(hitBlock.Position, BlockId::Air);
 
@@ -380,7 +386,8 @@ namespace onion::voxel
 					  << hitBlock.Position.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
 		}
 
-		if (inputs->GetKeyState(m_InputIdPlaceBlock).IsPressed)
+		KeyState interactKeyState = m_KeyBinds.GetKeyState(eAction::Interact);
+		if (interactKeyState.IsPressed)
 		{
 			Block blockToPlace = Block(prevBlock.Position, BlockId::Cobblestone);
 
@@ -412,15 +419,14 @@ namespace onion::voxel
 		m_IsPaused = pause;
 	}
 
-	void Renderer::UpdateCameraFromInputs(const std::shared_ptr<InputsSnapshot>& inputs)
+	void Renderer::UpdateCameraFromInputs()
 	{
-		if (!m_IsFreeCamera)
-			return;
-
-		if (!inputs->Mouse.CaptureEnabled)
+		if (!m_InputsManager.IsMouseCaptureEnabled())
 		{
 			return; // If mouse capture is not enabled, skip camera movement processing
 		}
+
+		auto inputs = m_InputsManager.GetInputsSnapshot();
 
 		// Camera's Orientation
 		if (inputs->Mouse.MovementOffsetChanged)
@@ -460,7 +466,8 @@ namespace onion::voxel
 		// Camera's Position
 		float velocity = m_CameraSpeed * (float) m_DeltaTime;
 
-		if (inputs->GetKeyState(m_InputIdSpeedUp).IsPressed)
+		KeyState speedUpKeyState = m_KeyBinds.GetKeyState(eAction::Sprint);
+		if (speedUpKeyState.IsPressed)
 		{
 			velocity *= 2.0f; // Double speed if left control is pressed
 		}
@@ -470,17 +477,24 @@ namespace onion::voxel
 		glm::vec3 frontXZ = glm::normalize(glm::vec3(CamFront.x, 0.0f, CamFront.z));
 		const glm::vec3 Up(0.0f, 1.0f, 0.0f); // Up vector
 
-		if (inputs->GetKeyState(m_InputIdMoveForward).IsPressed)
+		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveForward);
+		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveBackward);
+		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::MoveLeft);
+		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::MoveRight);
+		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
+		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Crouch);
+
+		if (moveForwardKeyState.IsPressed)
 			m_Camera->SetPosition(m_Camera->GetPosition() + frontXZ * velocity);
-		if (inputs->GetKeyState(m_InputIdMoveBackward).IsPressed)
+		if (moveBackwardKeyState.IsPressed)
 			m_Camera->SetPosition(m_Camera->GetPosition() - frontXZ * velocity);
-		if (inputs->GetKeyState(m_InputIdMoveLeft).IsPressed)
+		if (moveLeftKeyState.IsPressed)
 			m_Camera->SetPosition(m_Camera->GetPosition() - glm::normalize(glm::cross(frontXZ, Up)) * velocity);
-		if (inputs->GetKeyState(m_InputIdMoveRight).IsPressed)
+		if (moveRightKeyState.IsPressed)
 			m_Camera->SetPosition(m_Camera->GetPosition() + glm::normalize(glm::cross(frontXZ, Up)) * velocity);
-		if (inputs->GetKeyState(m_InputIdMoveUp).IsPressed) // Jump / up
+		if (moveUpKeyState.IsPressed)
 			m_Camera->SetPosition(m_Camera->GetPosition() + Up * velocity);
-		if (inputs->GetKeyState(m_InputIdMoveDown).IsPressed) // Down
+		if (moveDownKeyState.IsPressed)
 			m_Camera->SetPosition(m_Camera->GetPosition() - Up * velocity);
 	}
 

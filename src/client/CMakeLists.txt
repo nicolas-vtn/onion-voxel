@@ -69,6 +69,8 @@ add_executable(OnionVoxel
 	"src/renderer/assets_manager/AssetsManager.cpp"
 	"src/renderer/assets_manager/resource_pack_manager/ResourcePackManager.cpp"
 
+	"src/renderer/key_binds/KeyBinds.cpp"
+
 )
 
 if (WIN32)
