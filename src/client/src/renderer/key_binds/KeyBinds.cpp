@@ -48,4 +48,16 @@ namespace onion::voxel
 		auto snapshot = m_InputsManager.GetInputsSnapshot();
 		return snapshot->GetKeyState(inputId);
 	}
+
+	float KeyBinds::GetMouseSensitivity() const
+	{
+		std::lock_guard lock(m_Mutex);
+		return m_MouseSensitivity;
+	}
+
+	void KeyBinds::SetMouseSensitivity(float sensitivity)
+	{
+		std::lock_guard lock(m_Mutex);
+		m_MouseSensitivity = sensitivity;
+	}
 } // namespace onion::voxel

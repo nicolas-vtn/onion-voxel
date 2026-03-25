@@ -95,6 +95,5 @@ namespace onion::voxel
 
 		void AddPlayer(const PlayerInfo& playerInfo);
 		void RemovePlayer(const std::string& uuid);
-		void UpdatePlayerPosition(const std::string& uuid, const glm::vec3& newPosition);
 	};
 } // namespace onion::voxel

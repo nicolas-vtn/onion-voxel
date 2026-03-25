@@ -168,25 +168,9 @@ namespace onion::voxel
 		return Entities->GetAllPlayersPosition();
 	}
 
-	void WorldManager::SetPlayerPosition(const std::string& uuid, const glm::vec3& position)
+	std::shared_ptr<Player> WorldManager::GetPlayer(const std::string& uuid) const
 	{
-		glm::vec3 previousPosition = Entities->GetPlayerPosition(uuid);
-
-		// Early out if the player didn't move.
-		if (previousPosition == position)
-		{
-			return;
-		}
-
-		Entities->SetPlayerPosition(uuid, position);
-
-		glm::ivec2 previousChunkPosition = Utils::WorldToChunkPosition(previousPosition);
-		glm::ivec2 newChunkPosition = Utils::WorldToChunkPosition(position);
-
-		if (previousChunkPosition != newChunkPosition)
-		{
-			PlayerChangedChunk.Trigger({uuid, previousChunkPosition, newChunkPosition});
-		}
+		return Entities->GetPlayer(uuid);
 	}
 
 	uint8_t WorldManager::GetChunkPersistanceDistance() const

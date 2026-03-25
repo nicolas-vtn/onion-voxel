@@ -130,8 +130,8 @@ namespace onion::voxel
 		//		  << ", UUID=" << msg.UUID << ", Position=" << msg.Position.x << "," << msg.Position.y << ","
 		//		  << msg.Position.z << "\n";
 
-		// Update player position
-		UpdatePlayerPosition(msg.UUID, msg.Position);
+		// Update player
+		m_WorldManager->Entities->UpdatePlayer(msg.UUID, msg.Position, msg.Facing);
 	}
 
 	void Server::Handle_TimerSendEvents()
@@ -286,11 +286,6 @@ namespace onion::voxel
 				m_UUIDToPlayerInfo.erase(it);
 			}
 		}
-	}
-
-	void Server::UpdatePlayerPosition(const std::string& uuid, const glm::vec3& newPosition)
-	{
-		m_WorldManager->Entities->SetPlayerPosition(uuid, newPosition);
 	}
 
 	void Server::SubscribeToWorldManagerEvents()

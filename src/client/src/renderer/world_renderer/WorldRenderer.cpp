@@ -464,6 +464,10 @@ namespace onion::voxel
 			constexpr glm::vec3 boxSize = glm::vec3(0.6f, 1.8f, 0.6f);
 
 			DebugDraws::DrawWorldBoxCenterSize(playerPos, boxSize, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 2, false);
+
+			// Draw a line indicating the player's facing direction
+			const glm::vec3 forward = player->GetFacing();
+			DebugDraws::DrawWorldLine(playerPos, playerPos + forward, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 2);
 		}
 	}
 

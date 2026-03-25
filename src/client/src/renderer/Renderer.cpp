@@ -77,11 +77,6 @@ namespace onion::voxel
 		}
 	}
 
-	glm::vec3 Renderer::GetPlayerPosition() const
-	{
-		return m_Camera->GetPosition();
-	}
-
 	void Renderer::SetServerInfo(std::shared_ptr<ServerInfo> serverInfo)
 	{
 		m_ServerInfo = serverInfo;
@@ -206,12 +201,8 @@ namespace onion::voxel
 			// Render World
 			if (GetRenderState() == eRenderState::InGame)
 			{
+				m_WorldManager->RemoveDistantChunks();
 				m_WorldRenderer.Render();
-				const auto& entityMana = m_WorldManager->Entities;
-				if (entityMana->IsPlayerExists(m_PlayerUUID))
-				{
-					m_WorldManager->SetPlayerPosition(m_PlayerUUID, m_Camera->GetPosition());
-				}
 			}
 
 			// Render GUI
@@ -341,7 +332,21 @@ namespace onion::voxel
 
 		// Process Camera Movement Inputs (Only if in Free Camera Mode)
 		if (m_IsFreeCamera)
+		{
 			UpdateCameraFromInputs();
+		}
+		else
+		{
+			UpdatePlayerFromInputs();
+
+			// Stick the camera to the player
+			std::shared_ptr<Player> player = GetPlayer();
+			if (player)
+			{
+				m_Camera->SetPosition(player->GetPosition());
+				m_Camera->SetFront(player->GetFacing());
+			}
+		}
 
 		if (m_RenderState == eRenderState::InGame && !m_IsPaused)
 			ProcessGameplayInputs();
@@ -419,6 +424,127 @@ namespace onion::voxel
 		m_IsPaused = pause;
 	}
 
+	std::shared_ptr<Player> Renderer::GetPlayer() const
+	{
+		if (m_PlayerUUID.empty())
+		{
+			return nullptr;
+		}
+
+		return m_WorldManager->Entities->GetPlayer(m_PlayerUUID);
+	}
+
+	glm::vec3 Renderer::GetPlayerPosition() const
+	{
+		std::shared_ptr<Player> player = GetPlayer();
+		if (player)
+		{
+			return player->GetPosition();
+		}
+		return glm::vec3(0.0f);
+	}
+
+	void Renderer::UpdatePlayerFromInputs()
+	{
+		std::shared_ptr<Player> player = GetPlayer();
+
+		// No player found, skip processing
+		if (!player)
+		{
+			return;
+		}
+
+		// If mouse capture is not enabled, skip player movement processing
+		if (!m_InputsManager.IsMouseCaptureEnabled())
+		{
+			return;
+		}
+
+		auto inputs = m_InputsManager.GetInputsSnapshot();
+
+		glm::vec3 playerFront = glm::normalize(player->GetFacing());
+
+		// Player Orientation
+		if (inputs->Mouse.MovementOffsetChanged)
+		{
+			const float sensitivity = m_KeyBinds.GetMouseSensitivity();
+			const float xoffset = static_cast<float>(inputs->Mouse.Xoffset) * sensitivity;
+			const float yoffset = static_cast<float>(inputs->Mouse.Yoffset) * sensitivity;
+
+			// Extract yaw/pitch from current direction vector
+			float yaw = glm::degrees(std::atan2(playerFront.z, playerFront.x));
+			float pitch = glm::degrees(std::asin(playerFront.y));
+
+			// Apply mouse deltas
+			yaw += xoffset;
+			pitch += yoffset;
+
+			// Clamp vertical look
+			pitch = glm::clamp(pitch, -89.0f, 89.0f);
+
+			// Rebuild normalized direction vector
+			glm::vec3 newFront;
+			newFront.x = std::cos(glm::radians(yaw)) * std::cos(glm::radians(pitch));
+			newFront.y = std::sin(glm::radians(pitch));
+			newFront.z = std::sin(glm::radians(yaw)) * std::cos(glm::radians(pitch));
+
+			player->SetFacing(glm::normalize(newFront));
+			playerFront = glm::normalize(newFront);
+		}
+
+		// Adjust Player Speed
+		if (inputs->Mouse.ScrollOffsetChanged)
+		{
+			const double yoffset = inputs->Mouse.ScrollYoffset;
+			if (yoffset != 0.f)
+			{
+				float coeefIncrease = 1.3f;
+				float coeefDecrease = 0.7f;
+				if (yoffset > 0)
+				{
+					m_PlayerSpeed *= coeefIncrease; // Speed up
+				}
+				else if (yoffset < 0)
+				{
+					m_PlayerSpeed *= coeefDecrease; // Slow down
+				}
+			}
+		}
+
+		// Player Position
+		float velocity = m_PlayerSpeed * (float) m_DeltaTime;
+
+		KeyState speedUpKeyState = m_KeyBinds.GetKeyState(eAction::Sprint);
+		if (speedUpKeyState.IsPressed)
+		{
+			velocity *= 2.0f; // Double speed if left control is pressed
+		}
+
+		// Flatten the front vector for XZ movement
+		glm::vec3 frontXZ = glm::normalize(glm::vec3(playerFront.x, 0.0f, playerFront.z));
+		const glm::vec3 Up(0.0f, 1.0f, 0.0f); // Up vector
+
+		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveForward);
+		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveBackward);
+		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::MoveLeft);
+		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::MoveRight);
+		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
+		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Crouch);
+
+		if (moveForwardKeyState.IsPressed)
+			player->SetPosition(player->GetPosition() + frontXZ * velocity);
+		if (moveBackwardKeyState.IsPressed)
+			player->SetPosition(player->GetPosition() - frontXZ * velocity);
+		if (moveLeftKeyState.IsPressed)
+			player->SetPosition(player->GetPosition() - glm::normalize(glm::cross(frontXZ, Up)) * velocity);
+		if (moveRightKeyState.IsPressed)
+			player->SetPosition(player->GetPosition() + glm::normalize(glm::cross(frontXZ, Up)) * velocity);
+		if (moveUpKeyState.IsPressed)
+			player->SetPosition(player->GetPosition() + Up * velocity);
+		if (moveDownKeyState.IsPressed)
+			player->SetPosition(player->GetPosition() - Up * velocity);
+	}
+
 	void Renderer::UpdateCameraFromInputs()
 	{
 		if (!m_InputsManager.IsMouseCaptureEnabled())
@@ -431,7 +557,7 @@ namespace onion::voxel
 		// Camera's Orientation
 		if (inputs->Mouse.MovementOffsetChanged)
 		{
-			const double sensitivity = 0.1f;
+			const double sensitivity = m_KeyBinds.GetMouseSensitivity();
 			const double xoffset = inputs->Mouse.Xoffset * sensitivity;
 			const double yoffset = inputs->Mouse.Yoffset * sensitivity;
 
@@ -625,6 +751,8 @@ namespace onion::voxel
 			float pitch = m_Camera->GetPitch();
 			float fov = m_Camera->GetFovY();
 			float aspect = m_Camera->GetAspectRatio();
+
+			ImGui::Checkbox("Free Camera", &m_IsFreeCamera);
 
 			if (ImGui::DragFloat3("Position", &position.x, 0.1f))
 				m_Camera->SetPosition(position);

@@ -35,6 +35,9 @@ namespace onion::voxel
 		Key GetKeyForAction(eAction action) const;
 		KeyState GetKeyState(eAction action) const;
 
+		float GetMouseSensitivity() const;
+		void SetMouseSensitivity(float sensitivity);
+
 		// ----- Private Members -----
 	  private:
 		InputsManager& m_InputsManager;
@@ -42,5 +45,6 @@ namespace onion::voxel
 		mutable std::mutex m_Mutex;
 		std::unordered_map<eAction, Key> m_ActionToKey;
 		std::unordered_map<eAction, int> m_ActionToInputId;
+		float m_MouseSensitivity = 0.1f;
 	};
 } // namespace onion::voxel

@@ -57,6 +57,7 @@ namespace onion::voxel
 		void AddChunk(const std::shared_ptr<Chunk> chunk, const std::vector<Block>& outOfBoundsBlocks);
 		void RemoveChunk(const glm::ivec2& chunkPosition);
 
+		void RemoveDistantChunks();
 		void RemoveAllChunks();
 
 		void ClearWorld();
@@ -81,7 +82,8 @@ namespace onion::voxel
 		void SetSeed(uint32_t seed);
 
 		std::unordered_map<std::string, glm::vec3> GetPlayersPosition() const;
-		void SetPlayerPosition(const std::string& uuid, const glm::vec3& position);
+
+		std::shared_ptr<Player> GetPlayer(const std::string& uuid) const;
 
 		uint8_t GetChunkPersistanceDistance() const;
 		void SetChunkPersistanceDistance(uint8_t distance);
@@ -129,7 +131,5 @@ namespace onion::voxel
 		Timer m_TimerRequestMissingChunks;
 		void RequestAllMissingChunks() const;
 		void RequestMissingChunksAround(const glm::ivec2& chunkPosition) const;
-
-		void RemoveDistantChunks();
 	};
 } // namespace onion::voxel

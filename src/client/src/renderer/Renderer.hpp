@@ -57,6 +57,7 @@ namespace onion::voxel
 		eRenderState GetRenderState() const;
 		void SetRenderState(eRenderState renderState);
 
+		std::shared_ptr<Player> GetPlayer() const;
 		glm::vec3 GetPlayerPosition() const;
 
 		void SetServerInfo(std::shared_ptr<ServerInfo> serverInfo);
@@ -116,22 +117,6 @@ namespace onion::voxel
 
 		KeyBinds m_KeyBinds;
 
-		//int m_InputIdMoveForward = -1;
-		//int m_InputIdMoveBackward = -1;
-		//int m_InputIdMoveLeft = -1;
-		//int m_InputIdMoveRight = -1;
-		//int m_InputIdMoveUp = -1;
-		//int m_InputIdMoveDown = -1;
-		//int m_InputIdSpeedUp = -1;
-		//int m_InputIdPause = -1;
-		//int m_InputIdUnfocus = -1;
-		//int m_InputIdFocus = -1;
-
-		//int m_InputIdPlaceBlock = -1;
-		//int m_InputIdRemoveBlock = -1;
-
-		//int m_InputIdGuiBack = -1;
-
 		// ----- Actions -----
 	  private:
 		void PauseGame(bool pause);
@@ -143,6 +128,9 @@ namespace onion::voxel
 		// ------ World Manager ------
 	  private:
 		std::shared_ptr<WorldManager> m_WorldManager;
+
+		void UpdatePlayerFromInputs();
+		float m_PlayerSpeed = 5.0f;
 
 		// ------ World Renderer ------
 	  private:

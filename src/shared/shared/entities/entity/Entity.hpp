@@ -35,6 +35,6 @@ namespace onion::voxel
 		std::string m_Name;
 
 		glm::vec3 m_Position{};
-		glm::vec3 m_Facing{};
+		glm::vec3 m_Facing{1.f, 0.f, 0.f};
 	};
 } // namespace onion::voxel

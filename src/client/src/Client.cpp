@@ -355,7 +355,32 @@ namespace onion::voxel
 				playerEntity->SetPosition(entity->GetPosition());
 				playerEntity->SetFacing(entity->GetFacing());
 
-				entities.push_back(playerEntity);
+				// If the entity is the player itself, update only if player not present in entities manager, or if position has changed a lot.
+				if (playerEntity->GetUUID() == m_Config.clientData.UUID)
+				{
+					bool hasPlayerBeenSet = m_WorldManager->GetPlayer(m_Config.clientData.UUID) != nullptr;
+					if (hasPlayerBeenSet)
+					{
+						glm::vec3 currentPlayerPosition = m_Renderer.GetPlayerPosition();
+						float distance = glm::distance(currentPlayerPosition, playerEntity->GetPosition());
+						// If the distance is greater than a threshold, update the player position in the EntityManager
+						const float positionUpdateThreshold = 5000000.f; // Adjust this threshold as needed
+						if (distance > positionUpdateThreshold)
+						{
+							entities.push_back(playerEntity);
+						}
+					}
+					else
+					{
+						// If the player has not been set yet, add it to the EntityManager
+						entities.push_back(playerEntity);
+					}
+				}
+				else
+				{
+					// For other players, always update their position in the EntityManager
+					entities.push_back(playerEntity);
+				}
 			}
 			else
 			{
@@ -368,10 +393,18 @@ namespace onion::voxel
 
 	void Client::SendPlayerInfosToServer()
 	{
+		// If the player position is not initialized yet, do not send infos to server
+		std::shared_ptr<Player> player = m_Renderer.GetPlayer();
+		if (!player)
+		{
+			return;
+		}
+
 		PlayerInfoMsg playerInfoMsg;
 		playerInfoMsg.Username = m_Config.clientData.Username;
 		playerInfoMsg.UUID = m_Config.clientData.UUID;
-		playerInfoMsg.Position = m_Renderer.GetPlayerPosition();
+		playerInfoMsg.Position = player->GetPosition();
+		playerInfoMsg.Facing = player->GetFacing();
 
 		m_NetworkClient.Send(std::move(playerInfoMsg), false);
 	}
