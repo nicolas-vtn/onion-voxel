@@ -33,11 +33,17 @@ namespace onion::voxel
 
 		std::vector<std::shared_ptr<Entity>> GetAllEntities() const;
 
+		void SetLocalPlayer(const std::shared_ptr<Player>& player);
+		std::shared_ptr<Player> GetLocalPlayer() const;
+
 	  private:
 		mutable std::shared_mutex m_MutexPlayers;
 		std::unordered_map<std::string, std::shared_ptr<Player>> m_Players;
 
 		mutable std::shared_mutex m_MutexEntities;
 		std::vector<std::shared_ptr<Entity>> m_Entities;
+
+		mutable std::shared_mutex m_MutexLocalPlayer;
+		std::shared_ptr<Player> m_LocalPlayer;
 	};
 } // namespace onion::voxel

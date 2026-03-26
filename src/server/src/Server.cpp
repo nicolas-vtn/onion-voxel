@@ -166,15 +166,15 @@ namespace onion::voxel
 		EntitySnapshotMsg entitySnapshotMsg;
 		for (const auto& [clientHandle, player] : players)
 		{
-			EntityDTO playerDTO = Serializer::SerializeEntity(*player);
-			entitySnapshotMsg.Entities.push_back(playerDTO);
+			PlayerDTO playerDTO = Serializer::SerializePlayer(*player);
+			entitySnapshotMsg.Players.push_back(std::move(playerDTO));
 		}
 
 		auto entities = m_WorldManager->Entities->GetAllEntities();
 		for (const auto& entity : entities)
 		{
 			EntityDTO entityDTO = Serializer::SerializeEntity(*entity);
-			entitySnapshotMsg.Entities.push_back(entityDTO);
+			entitySnapshotMsg.Entities.push_back(std::move(entityDTO));
 		}
 
 		m_NetworkServer.Broadcast(entitySnapshotMsg);

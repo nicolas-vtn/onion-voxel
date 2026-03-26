@@ -21,7 +21,7 @@ namespace onion::voxel
 {
 	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager)
 		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), 800, 600)),
-		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager)
+		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager->Entities)
 	{
 		// Sets the Engine Context
 		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager);
@@ -202,14 +202,16 @@ namespace onion::voxel
 			if (GetRenderState() == eRenderState::InGame)
 			{
 				m_WorldManager->RemoveDistantChunks();
+				m_PhysicsEngine.Update(static_cast<float>(m_DeltaTime));
 				m_WorldRenderer.Render();
 			}
 
 			// Render GUI
 			m_Gui.Render();
 
-			// Render Debug Panel
+			// Render Debug Panels
 			RenderDebugPanel();
+			RenderPhysicsDebugPanel();
 
 			// End ImGui Frame
 			EndImGuiFrame();
@@ -773,6 +775,19 @@ namespace onion::voxel
 				m_Camera->SetAspectRatio(aspect);
 
 			ImGui::DragFloat("Speed", &m_CameraSpeed, 0.1f, 0.1f, 50.f);
+		}
+
+		ImGui::End();
+	}
+
+	void Renderer::RenderPhysicsDebugPanel()
+	{
+		ImGui::Begin("Physics Debug");
+
+		float gravity = m_PhysicsEngine.GetGravity();
+		if (ImGui::DragFloat("Gravity", &gravity, 0.1f, -50.f, 50.f))
+		{
+			m_PhysicsEngine.SetGravity(gravity);
 		}
 
 		ImGui::End();

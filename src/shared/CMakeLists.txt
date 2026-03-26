@@ -18,6 +18,8 @@ add_library(onion_voxel_shared
  "shared/entities/entity_manager/EntityManager.cpp"
  "shared/entities/entity/Entity.cpp"
 
+ "shared/physics/PhysicsEngine.cpp"
+
 )
 
 target_link_libraries(onion_voxel_shared

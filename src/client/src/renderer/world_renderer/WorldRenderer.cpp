@@ -122,6 +122,7 @@ namespace onion::voxel
 
 		// Render Debug Panel
 		RenderDebugPanel();
+		RenderPlayerDebugPanel();
 
 		if (!m_HasShaderBeenInitialized)
 		{
@@ -580,6 +581,59 @@ namespace onion::voxel
 		if (ImGui::ColorEdit3("Light Color", color))
 		{
 			SubChunkMesh::SetLightColor(glm::vec3(color[0], color[1], color[2]));
+		}
+
+		ImGui::End();
+	}
+
+	void WorldRenderer::RenderPlayerDebugPanel()
+	{
+		std::shared_ptr<Player> player = m_WorldManager->Entities->GetLocalPlayer();
+
+		ImGui::Begin("Player Debug");
+		if (player)
+		{
+			if (player->HasTransform())
+			{
+				Transform transform = player->GetTransform();
+				if (ImGui::InputFloat3("Position", &transform.Position.x))
+				{
+					player->SetTransform(transform);
+				}
+				if (ImGui::InputFloat3("Rotation", &transform.Rotation.x))
+				{
+					player->SetTransform(transform);
+				}
+				if (ImGui::InputFloat3("Scale", &transform.Scale.x))
+				{
+					player->SetTransform(transform);
+				}
+			}
+
+			if (player->HasPhysicsBody())
+			{
+				PhysicsBody physicsBody = player->GetPhysicsBody();
+				if (ImGui::InputFloat3("Velocity", &physicsBody.Velocity.x))
+				{
+					player->SetPhysicsBody(physicsBody);
+				}
+				if (ImGui::Checkbox("On Ground", &physicsBody.OnGround))
+				{
+					player->SetPhysicsBody(physicsBody);
+				}
+				if (ImGui::Checkbox("Enable Gravity", &physicsBody.EnableGravity))
+				{
+					player->SetPhysicsBody(physicsBody);
+				}
+				if (ImGui::InputFloat("Mass", &physicsBody.Mass))
+				{
+					player->SetPhysicsBody(physicsBody);
+				}
+			}
+		}
+		else
+		{
+			ImGui::Text("No local player");
 		}
 
 		ImGui::End();
