@@ -385,7 +385,7 @@ namespace onion::voxel
 		}
 
 		PlayerInfoMsg playerInfoMsg;
-		playerInfoMsg.player = Serializer::SerializeEntity(*player);
+		playerInfoMsg.player = Serializer::SerializePlayer(*player);
 
 		m_NetworkClient.Send(std::move(playerInfoMsg), false);
 	}

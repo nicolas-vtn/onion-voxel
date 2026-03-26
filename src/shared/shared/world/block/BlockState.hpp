@@ -52,14 +52,19 @@ namespace onion::voxel
 	  public:
 		static bool IsOpaque(BlockId blockID);
 		static bool IsTransparent(BlockId blockID);
+		static bool IsSolid(BlockId blockID);
 		static RotationType GetRotationType(BlockId blockID);
 
 		// ----- Static Members -----
 	  private:
-		static const std::vector<bool>
-			s_TransparencyLookupTable; // A lookup table for block transparency, indexed by BlockId
-		static const std::vector<RotationType>
-			s_RotationTypeLookupTable; // A lookup table for block rotation types, indexed by BlockId
+		// A lookup table for block transparency, indexed by BlockId
+		static const std::vector<bool> s_TransparencyLookupTable;
+
+		// A lookup table for block rotation types, indexed by BlockId
+		static const std::vector<RotationType> s_RotationTypeLookupTable;
+
+		// A lookup table for block solidity, indexed by BlockId
+		static const std::vector<bool> s_SolidLookupTable;
 
 		// ----- Lists of block IDs for different categories -----
 	  public:

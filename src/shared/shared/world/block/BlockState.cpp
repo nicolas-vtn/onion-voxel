@@ -40,6 +40,22 @@ namespace onion::voxel
 		return table;
 	}();
 
+	const std::vector<bool> BlockState::s_SolidLookupTable = []()
+	{
+		std::vector<bool> table(static_cast<size_t>(GetBlockIdCount()), true);
+		table[static_cast<size_t>(BlockId::Air)] = false;
+		table[static_cast<size_t>(BlockId::Water)] = false;
+		table[static_cast<size_t>(BlockId::Kelp)] = false;
+		table[static_cast<size_t>(BlockId::DeadBush)] = false;
+		table[static_cast<size_t>(BlockId::OakSapling)] = false;
+		table[static_cast<size_t>(BlockId::ShortGrass)] = false;
+		table[static_cast<size_t>(BlockId::RedTulip)] = false;
+		table[static_cast<size_t>(BlockId::OrangeTulip)] = false;
+		table[static_cast<size_t>(BlockId::WhiteTulip)] = false;
+		table[static_cast<size_t>(BlockId::PinkTulip)] = false;
+		return table;
+	}();
+
 	const std::vector<BlockId> BlockState::Flowers = {BlockId::Poppy,
 													  BlockId::Dandelion,
 													  BlockId::RedTulip,
@@ -71,6 +87,11 @@ namespace onion::voxel
 	bool BlockState::IsTransparent(BlockId blockID)
 	{
 		return s_TransparencyLookupTable[static_cast<size_t>(blockID)];
+	}
+
+	bool BlockState::IsSolid(BlockId blockID)
+	{
+		return s_SolidLookupTable[static_cast<size_t>(blockID)];
 	}
 
 	BlockState::RotationType BlockState::GetRotationType(BlockId blockID)

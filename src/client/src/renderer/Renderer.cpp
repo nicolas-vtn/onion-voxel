@@ -21,7 +21,7 @@ namespace onion::voxel
 {
 	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager)
 		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), 800, 600)),
-		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager->Entities)
+		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager)
 	{
 		// Sets the Engine Context
 		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager);
@@ -464,6 +464,8 @@ namespace onion::voxel
 
 		auto inputs = m_InputsManager.GetInputsSnapshot();
 
+		auto physics = player->GetPhysicsBody();
+
 		glm::vec3 playerFront = glm::normalize(player->GetFacing());
 
 		// Player Orientation
@@ -533,18 +535,36 @@ namespace onion::voxel
 		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
 		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Crouch);
 
+		glm::vec3 moveDir(0.0f);
+
 		if (moveForwardKeyState.IsPressed)
-			player->SetPosition(player->GetPosition() + frontXZ * velocity);
+			moveDir += frontXZ;
 		if (moveBackwardKeyState.IsPressed)
-			player->SetPosition(player->GetPosition() - frontXZ * velocity);
+			moveDir -= frontXZ;
 		if (moveLeftKeyState.IsPressed)
-			player->SetPosition(player->GetPosition() - glm::normalize(glm::cross(frontXZ, Up)) * velocity);
+			moveDir -= glm::normalize(glm::cross(frontXZ, Up));
 		if (moveRightKeyState.IsPressed)
-			player->SetPosition(player->GetPosition() + glm::normalize(glm::cross(frontXZ, Up)) * velocity);
-		if (moveUpKeyState.IsPressed)
-			player->SetPosition(player->GetPosition() + Up * velocity);
-		if (moveDownKeyState.IsPressed)
-			player->SetPosition(player->GetPosition() - Up * velocity);
+			moveDir += glm::normalize(glm::cross(frontXZ, Up));
+
+		if (glm::length(moveDir) > 0.0f)
+			moveDir = glm::normalize(moveDir);
+
+		float speed = m_PlayerSpeed;
+
+		if (speedUpKeyState.IsPressed)
+			speed *= 2.0f;
+
+		// Only affect XZ, keep Y for gravity
+		physics.Velocity.x = moveDir.x * speed;
+		physics.Velocity.z = moveDir.z * speed;
+
+		if (moveUpKeyState.IsPressed && physics.OnGround)
+		{
+			physics.Velocity.y = 5.0f; // jump strength
+			physics.OnGround = false;
+		}
+
+		player->SetPhysicsBody(physics);
 	}
 
 	void Renderer::UpdateCameraFromInputs()

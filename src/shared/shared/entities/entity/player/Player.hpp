@@ -31,7 +31,11 @@ namespace onion::voxel
 		Player(const std::string& uuid) : Entity(EntityType::Player, uuid)
 		{
 			SetTransform(Transform{});
-			SetPhysicsBody(PhysicsBody{});
+
+			PhysicsBody physicsBody;
+			physicsBody.HalfSize = Size * 0.5f;
+			physicsBody.Offset = glm::vec3(0.f, Size.y * 0.5f, 0.f);
+			SetPhysicsBody(physicsBody);
 		}
 
 		~Player() override {}

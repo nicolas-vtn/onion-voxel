@@ -3,6 +3,7 @@
 #include <shared_mutex>
 
 #include <shared/entities/entity_manager/EntityManager.hpp>
+#include <shared/world/world_manager/WorldManager.hpp>
 
 namespace onion::voxel
 {
@@ -11,7 +12,7 @@ namespace onion::voxel
 
 		// ----- Constructor / Destructor -----
 	  public:
-		PhysicsEngine(EntityManager& entityManager);
+		PhysicsEngine(WorldManager& worldManager);
 		~PhysicsEngine();
 
 		// ----- Public API -----
@@ -25,7 +26,13 @@ namespace onion::voxel
 
 		// ----- Private Members -----
 	  private:
-		EntityManager& m_entityManager;
+		EntityManager& m_EntityManager;
+		WorldManager& m_WorldManager;
+
+		// ----- Internal Methods -----
+	  private:
+		void UpdateEntityPhysics(std::shared_ptr<Entity> entity, float deltaTime);
+		void ResolveTerrainCollisions(std::shared_ptr<Entity> entity, float deltaTime);
 
 		// ----- Private Constants -----
 	  private:

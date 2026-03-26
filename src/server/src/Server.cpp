@@ -134,8 +134,7 @@ namespace onion::voxel
 
 		std::shared_ptr<Player> player = m_WorldManager->GetPlayer(msg.player.UUID);
 
-		std::shared_ptr<Player> deserializedPlayer =
-			std::dynamic_pointer_cast<Player>(Serializer::DeserializeEntity(msg.player));
+		std::shared_ptr<Player> deserializedPlayer = Serializer::DeserializePlayer(msg.player);
 
 		if (player && deserializedPlayer)
 		{
