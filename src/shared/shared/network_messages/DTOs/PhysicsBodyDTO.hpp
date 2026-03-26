@@ -1,0 +1,18 @@
+#pragma once
+
+#include <cereal/archives/binary.hpp>
+#include <cereal/cereal.hpp>
+
+#include <shared/network_messages/GlmSerialization.hpp>
+
+namespace onion::voxel
+{
+	struct PhysicsBodyDTO
+	{
+		glm::vec3 Velocity{};
+		bool OnGround = false;
+		bool EnableGravity = true;
+
+		template <class Archive> void serialize(Archive& ar) { ar(Velocity, OnGround, EnableGravity); }
+	};
+} // namespace onion::voxel

@@ -8,6 +8,8 @@
 #include <shared/entities/entity/player/Player.hpp>
 #include <shared/world/chunk/Chunk.hpp>
 
+#include <shared/network_messages/DTOs/DTOs.hpp>
+
 namespace onion::voxel
 {
 	class Serializer
@@ -34,7 +36,15 @@ namespace onion::voxel
 
 		// ----- Entity -----
 	  public:
+		static TransformDTO SerializeTransform(const Transform& transform);
+		static Transform DeserializeTransform(const TransformDTO& dto);
+		static PhysicsBodyDTO SerializePhysicsBody(const PhysicsBody& physicsBody);
+		static PhysicsBody DeserializePhysicsBody(const PhysicsBodyDTO& dto);
+
+		static void ApplyEntityDTO(const EntityDTO& dto, std::shared_ptr<Entity> entity);
 		static EntityDTO SerializeEntity(const Entity& entity);
-		static Entity DeserializeEntity(const EntityDTO& dto);
+		static std::shared_ptr<Entity> DeserializeEntity(const EntityDTO& dto);
+		static PlayerDTO SerializePlayer(const Player& player);
+		static std::shared_ptr<Player> DeserializePlayer(const PlayerDTO& dto);
 	};
 } // namespace onion::voxel

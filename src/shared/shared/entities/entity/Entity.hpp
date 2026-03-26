@@ -2,39 +2,48 @@
 
 #include <glm/glm.hpp>
 
+#include <optional>
+#include <shared_mutex>
 #include <string>
 
 #include "EntityTypes.hpp"
+
+#include <shared/entities/components/PhysicsBody.hpp>
+#include <shared/entities/components/Transform.hpp>
 
 namespace onion::voxel
 {
 	class Entity
 	{
 	  public:
-		Entity(EntityType type, const std::string& uuid, const std::string& name);
+		Entity(EntityType type, const std::string& uuid);
 		virtual ~Entity();
 
-		EntityType GetType() const;
+		const EntityType Type;
+		const std::string UUID;
 
-		const std::string& GetUUID() const;
-		void SetUUID(const std::string& uuid);
+		// ----- Getters / Setters -----
+	  public:
+		bool HasPhysicsBody() const;
+		PhysicsBody GetPhysicsBody() const;
+		void SetPhysicsBody(const PhysicsBody& physicsBody);
 
-		const std::string& GetName() const;
-		void SetName(const std::string& name);
+		bool HasTransform() const;
+		Transform GetTransform() const;
+		void SetTransform(const Transform& transform);
 
-		const glm::vec3& GetPosition() const;
+		glm::vec3 GetPosition() const;
 		void SetPosition(const glm::vec3& position);
 
-		const glm::vec3& GetFacing() const;
+		glm::vec3 GetFacing() const;
 		void SetFacing(const glm::vec3& facing);
 
-	  protected:
-		EntityType m_Type = EntityType::None;
+		// ----- Private Members -----
+	  private:
+		mutable std::shared_mutex m_MutexPhysicsBody;
+		std::optional<PhysicsBody> m_PhysicsBody;
 
-		std::string m_UUID;
-		std::string m_Name;
-
-		glm::vec3 m_Position{};
-		glm::vec3 m_Facing{1.f, 0.f, 0.f};
+		mutable std::shared_mutex m_MutexTransform;
+		std::optional<Transform> m_Transform;
 	};
 } // namespace onion::voxel

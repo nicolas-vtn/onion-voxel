@@ -131,7 +131,26 @@ namespace onion::voxel
 		//		  << msg.Position.z << "\n";
 
 		// Update player
-		m_WorldManager->Entities->UpdatePlayer(msg.UUID, msg.Position, msg.Facing);
+
+		std::shared_ptr<Player> player = m_WorldManager->GetPlayer(msg.player.UUID);
+
+		std::shared_ptr<Player> deserializedPlayer =
+			std::dynamic_pointer_cast<Player>(Serializer::DeserializeEntity(msg.player));
+
+		if (player && deserializedPlayer)
+		{
+			player->SetName(deserializedPlayer->GetName());
+
+			if (deserializedPlayer->HasTransform())
+			{
+				player->SetTransform(deserializedPlayer->GetTransform());
+			}
+
+			if (deserializedPlayer->HasPhysicsBody())
+			{
+				player->SetPhysicsBody(deserializedPlayer->GetPhysicsBody());
+			}
+		}
 	}
 
 	void Server::Handle_TimerSendEvents()
@@ -265,7 +284,11 @@ namespace onion::voxel
 
 	void Server::AddPlayer(const PlayerInfo& playerInfo)
 	{
-		m_WorldManager->Entities->AddPlayer(playerInfo.UUID, playerInfo.Username);
+
+		std::shared_ptr<Player> player = std::make_shared<Player>(playerInfo.UUID);
+
+		m_WorldManager->Entities->AddPlayer(player);
+
 		{
 			std::lock_guard lock(m_MutexPlayers);
 			m_ClientHandleToPlayerInfo[playerInfo.ClientHandle] = playerInfo;

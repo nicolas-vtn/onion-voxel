@@ -344,19 +344,19 @@ namespace onion::voxel
 		for (const auto& entityDTO : msg.Entities)
 		{
 			// Deserialize the entity and add it to the list of entities to update in the EntityManager
-			std::shared_ptr<Entity> entity = std::make_shared<Entity>(Serializer::DeserializeEntity(entityDTO));
+			std::shared_ptr<Entity> entity = Serializer::DeserializeEntity(entityDTO);
 
-			if (entity->GetType() == EntityType::Player)
+			if (entity->Type == EntityType::Player)
 			{
 				//std::cout << "Received player entity: " << entity->GetName() << " (UUID: " << entity->GetUUID()
 				//		  << ")\n";
 
-				std::shared_ptr<Player> playerEntity = std::make_shared<Player>(entity->GetUUID(), entity->GetName());
+				std::shared_ptr<Player> playerEntity = std::make_shared<Player>(entity->UUID);
 				playerEntity->SetPosition(entity->GetPosition());
 				playerEntity->SetFacing(entity->GetFacing());
 
 				// If the entity is the player itself, update only if player not present in entities manager, or if position has changed a lot.
-				if (playerEntity->GetUUID() == m_Config.clientData.UUID)
+				if (playerEntity->UUID == m_Config.clientData.UUID)
 				{
 					bool hasPlayerBeenSet = m_WorldManager->GetPlayer(m_Config.clientData.UUID) != nullptr;
 					if (hasPlayerBeenSet)
@@ -401,10 +401,7 @@ namespace onion::voxel
 		}
 
 		PlayerInfoMsg playerInfoMsg;
-		playerInfoMsg.Username = m_Config.clientData.Username;
-		playerInfoMsg.UUID = m_Config.clientData.UUID;
-		playerInfoMsg.Position = player->GetPosition();
-		playerInfoMsg.Facing = player->GetFacing();
+		playerInfoMsg.player = Serializer::SerializeEntity(*player);
 
 		m_NetworkClient.Send(std::move(playerInfoMsg), false);
 	}

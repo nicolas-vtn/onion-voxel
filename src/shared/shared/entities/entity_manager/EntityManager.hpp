@@ -17,8 +17,7 @@ namespace onion::voxel
 		~EntityManager();
 
 		std::shared_ptr<Player> GetPlayer(const std::string& uuid) const;
-		void AddPlayer(const std::string& uuid, const std::string& username);
-		void UpdatePlayer(const std::string& uuid, const glm::vec3& newPosition, const glm::vec3& newFacing);
+		void AddPlayer(const std::shared_ptr<Player>& player);
 		bool RemovePlayer(const std::string& uuid);
 
 		glm::ivec3 GetPlayerPosition(const std::string& uuid) const;

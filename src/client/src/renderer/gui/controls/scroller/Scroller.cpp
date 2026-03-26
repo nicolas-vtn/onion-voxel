@@ -85,7 +85,7 @@ namespace onion::voxel
 		glm::ivec2 centerPos = (m_TopLeftCorner + m_BottomRightCorner) / 2;
 		glm::ivec2 scrollerAreaSize = m_BottomRightCorner - m_TopLeftCorner;
 
-		int headerHeight = m_HeaderHeightRatio * s_ScreenHeight;
+		int headerHeight = static_cast<int>(std::ceil(m_HeaderHeightRatio * s_ScreenHeight));
 
 		float scrollWidth = m_ScrollerWidthRatio * s_ScreenWidth;
 		glm::ivec2 scrollBackgroundSize{static_cast<int>(scrollWidth), scrollerAreaSize.y};

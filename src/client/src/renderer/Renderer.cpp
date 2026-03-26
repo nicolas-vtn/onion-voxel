@@ -343,7 +343,7 @@ namespace onion::voxel
 			std::shared_ptr<Player> player = GetPlayer();
 			if (player)
 			{
-				m_Camera->SetPosition(player->GetPosition());
+				m_Camera->SetPosition(player->GetEyePosition());
 				m_Camera->SetFront(player->GetFacing());
 			}
 		}

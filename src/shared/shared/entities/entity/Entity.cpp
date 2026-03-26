@@ -1,57 +1,92 @@
 #include "Entity.hpp"
 
+#include <cassert>
+
 namespace onion::voxel
 {
-	Entity::Entity(EntityType type, const std::string& uuid, const std::string& name)
-		: m_Type(type), m_UUID(uuid), m_Name(name)
+	Entity::Entity(EntityType type, const std::string& uuid) : Type(type), UUID(uuid) {}
+
+	Entity::~Entity() {}
+
+	bool Entity::HasPhysicsBody() const
 	{
+		std::shared_lock lock(m_MutexPhysicsBody);
+		return m_PhysicsBody.has_value();
 	}
 
-	Entity::~Entity() = default;
-
-	EntityType Entity::GetType() const
+	PhysicsBody Entity::GetPhysicsBody() const
 	{
-		return m_Type;
+		assert(m_PhysicsBody.has_value() && "Entity must have a PhysicsBody component to get it.");
+		std::shared_lock lock(m_MutexPhysicsBody);
+		return *m_PhysicsBody;
 	}
 
-	const std::string& Entity::GetUUID() const
+	void Entity::SetPhysicsBody(const PhysicsBody& physicsBody)
 	{
-		return m_UUID;
+		std::unique_lock lock(m_MutexPhysicsBody);
+		m_PhysicsBody = physicsBody;
 	}
 
-	void Entity::SetUUID(const std::string& uuid)
+	bool Entity::HasTransform() const
 	{
-		m_UUID = uuid;
+		std::shared_lock lock(m_MutexTransform);
+		return m_Transform.has_value();
 	}
 
-	const std::string& Entity::GetName() const
+	Transform Entity::GetTransform() const
 	{
-		return m_Name;
+		assert(m_Transform.has_value() && "Entity must have a Transform component to get it.");
+		std::shared_lock lock(m_MutexTransform);
+		return *m_Transform;
 	}
 
-	void Entity::SetName(const std::string& name)
+	void Entity::SetTransform(const Transform& transform)
 	{
-		m_Name = name;
+		std::unique_lock lock(m_MutexTransform);
+		m_Transform = transform;
 	}
 
-	const glm::vec3& Entity::GetPosition() const
+	glm::vec3 Entity::GetPosition() const
 	{
-		return m_Position;
+		assert(m_Transform.has_value() && "Entity must have a Transform component to get its position.");
+		std::shared_lock lock(m_MutexTransform);
+		return m_Transform->Position;
 	}
 
 	void Entity::SetPosition(const glm::vec3& position)
 	{
-		m_Position = position;
+		assert(m_Transform.has_value() && "Entity must have a Transform component to set its position.");
+		std::unique_lock lock(m_MutexTransform);
+		m_Transform->Position = position;
 	}
 
-	const glm::vec3& Entity::GetFacing() const
+	glm::vec3 Entity::GetFacing() const
 	{
-		return m_Facing;
+		assert(m_Transform.has_value() && "Entity must have a Transform component to get its facing direction.");
+
+		std::shared_lock lock(m_MutexTransform);
+
+		// Calculate facing direction from rotation (assuming Y-axis is up)
+		float yaw = m_Transform->Rotation.y;
+		float pitch = m_Transform->Rotation.x;
+		glm::vec3 facing;
+		facing.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		facing.y = sin(glm::radians(pitch));
+		facing.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		return glm::normalize(facing);
 	}
 
 	void Entity::SetFacing(const glm::vec3& facing)
 	{
-		m_Facing = facing;
+		assert(m_Transform.has_value() && "Entity must have a Transform component to set its facing direction.");
+
+		std::unique_lock lock(m_MutexTransform);
+
+		// Calculate yaw and pitch from facing direction
+		float yaw = glm::degrees(atan2(facing.z, facing.x));
+		float pitch = glm::degrees(asin(facing.y));
+		m_Transform->Rotation.y = yaw;
+		m_Transform->Rotation.x = pitch;
 	}
 
 } // namespace onion::voxel
