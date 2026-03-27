@@ -53,6 +53,8 @@ namespace onion::voxel
 		table[static_cast<size_t>(BlockId::OrangeTulip)] = false;
 		table[static_cast<size_t>(BlockId::WhiteTulip)] = false;
 		table[static_cast<size_t>(BlockId::PinkTulip)] = false;
+		table[static_cast<size_t>(BlockId::Poppy)] = false;
+		table[static_cast<size_t>(BlockId::Dandelion)] = false;
 		return table;
 	}();
 

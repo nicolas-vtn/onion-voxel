@@ -334,15 +334,19 @@ namespace onion::voxel
 		KeyState closeMenuKeyState = m_KeyBinds.GetKeyState(eAction::CloseMenu);
 		GuiElement::s_IsBackPressed = closeMenuKeyState.IsPressed;
 
-		// Process Camera Movement Inputs (Only if in Free Camera Mode)
-		if (m_IsFreeCamera)
-		{
-			UpdateCameraFromInputs();
+		if (m_RenderState == eRenderState::InGame && !m_IsPaused){
+			if (m_IsFreeCamera)
+			{
+				UpdateCameraFromInputs();
+			}
+			else
+			{
+				UpdatePlayerFromInputs();
+				ProcessGameplayInputs();
+			}
 		}
-		else
-		{
-			UpdatePlayerFromInputs();
 
+		if (m_RenderState == eRenderState::InGame && !m_IsFreeCamera){
 			// Stick the camera to the player
 			std::shared_ptr<Player> player = GetPlayer();
 			if (player)
@@ -351,14 +355,11 @@ namespace onion::voxel
 				m_Camera->SetFront(player->GetFacing());
 			}
 		}
-
-		if (m_RenderState == eRenderState::InGame && !m_IsPaused)
-			ProcessGameplayInputs();
 	}
 
 	void Renderer::ProcessGameplayInputs()
 	{
-		// Raycast from the camera's position.
+		// ----- RAYCASTING TO DETECT BLOCKS -----
 		glm::vec3 rayOrigin = m_Camera->GetPosition();
 		glm::vec3 rayDirection = m_Camera->GetFront();
 
@@ -472,7 +473,16 @@ namespace onion::voxel
 
 		glm::vec3 playerFront = glm::normalize(player->GetFacing());
 
-		// Player Orientation
+		// ----- KEY STATES -----
+		KeyState speedUpKeyState = m_KeyBinds.GetKeyState(eAction::Sprint);
+		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveForward);
+		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveBackward);
+		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::MoveLeft);
+		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::MoveRight);
+		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
+		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Crouch);
+
+		// ----- PLAYER ORIENTATION -----
 		if (inputs->Mouse.MovementOffsetChanged)
 		{
 			const float sensitivity = m_KeyBinds.GetMouseSensitivity();
@@ -500,8 +510,9 @@ namespace onion::voxel
 			playerFront = glm::normalize(newFront);
 		}
 
-		// Adjust Player Speed
-		if (inputs->Mouse.ScrollOffsetChanged)
+		// ----- PLAYER FLYING SPEED -----
+		float flyVelocity = m_PlayerFlySpeed * (float) m_DeltaTime;
+		if (physics.IsFlying && inputs->Mouse.ScrollOffsetChanged)
 		{
 			const double yoffset = inputs->Mouse.ScrollYoffset;
 			if (yoffset != 0.f)
@@ -510,69 +521,83 @@ namespace onion::voxel
 				float coeefDecrease = 0.7f;
 				if (yoffset > 0)
 				{
-					m_PlayerSpeed *= coeefIncrease; // Speed up
+					m_PlayerFlySpeed *= coeefIncrease; // Speed up
 				}
 				else if (yoffset < 0)
 				{
-					m_PlayerSpeed *= coeefDecrease; // Slow down
+					m_PlayerFlySpeed *= coeefDecrease; // Slow down
 				}
 			}
-		}
 
-		float velocity = m_PlayerSpeed * (float) m_DeltaTime;
-
-		KeyState speedUpKeyState = m_KeyBinds.GetKeyState(eAction::Sprint);
-		if (speedUpKeyState.IsPressed)
-		{
-			velocity *= 2.0f; // Double speed if left control is pressed
+			if (speedUpKeyState.IsPressed)
+			{
+				flyVelocity *= 2.0f; // Double speed if left control is pressed
+			}
 		}
 
 		// Flatten the front vector for XZ movement
 		glm::vec3 frontXZ = glm::normalize(glm::vec3(playerFront.x, 0.0f, playerFront.z));
 		const glm::vec3 Up(0.0f, 1.0f, 0.0f); // Up vector
 
-		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveForward);
-		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveBackward);
-		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::MoveLeft);
-		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::MoveRight);
-		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
-		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Crouch);
-
 		glm::vec3 moveDir(0.0f);
 
-		if (moveForwardKeyState.IsPressed)
-			moveDir += frontXZ;
-		if (moveBackwardKeyState.IsPressed)
-			moveDir -= frontXZ;
-		if (moveLeftKeyState.IsPressed)
-			moveDir -= glm::normalize(glm::cross(frontXZ, Up));
-		if (moveRightKeyState.IsPressed)
-			moveDir += glm::normalize(glm::cross(frontXZ, Up));
+		if(physics.IsFlying){
 
-		if (physics.IsFlying)
-		{
+			// Flying movement
+			if (moveForwardKeyState.IsPressed)
+				moveDir += frontXZ;
+			if (moveBackwardKeyState.IsPressed)
+				moveDir -= frontXZ;
+			if (moveLeftKeyState.IsPressed)
+				moveDir -= glm::normalize(glm::cross(frontXZ, Up));
+			if (moveRightKeyState.IsPressed)
+				moveDir += glm::normalize(glm::cross(frontXZ, Up));
 			if (moveUpKeyState.IsPressed)
 				moveDir += Up;
 			if (moveDownKeyState.IsPressed)
 				moveDir -= Up;
-		}
 
-		if (glm::length(moveDir) > 0.0f)
-			moveDir = glm::normalize(moveDir);
+			if (glm::length(moveDir) > 0.0f)
+				moveDir = glm::normalize(moveDir);
 
-		float speed = m_PlayerSpeed;
+			float speed = m_PlayerFlySpeed;
+			if (speedUpKeyState.IsPressed)
+				speed *= 2.0f;
 
-		if (speedUpKeyState.IsPressed)
-			speed *= 2.0f;
+			physics.Velocity.x = moveDir.x * speed;
+			physics.Velocity.y = moveDir.y * speed;
+			physics.Velocity.z = moveDir.z * speed;
 
-		physics.Velocity.x = moveDir.x * speed;
-		physics.Velocity.y = moveDir.y * speed;
-		physics.Velocity.z = moveDir.z * speed;
+		}else{
+			// Walking movement
 
-		if (moveUpKeyState.IsPressed && physics.OnGround && !physics.IsFlying)
-		{
-			physics.Velocity.y = 5.0f; // jump strength
-			physics.OnGround = false;
+			if (moveForwardKeyState.IsPressed)
+				moveDir += frontXZ;
+			if (moveBackwardKeyState.IsPressed)
+				moveDir -= frontXZ;
+			if (moveLeftKeyState.IsPressed)
+				moveDir -= glm::normalize(glm::cross(frontXZ, Up));
+			if (moveRightKeyState.IsPressed)
+				moveDir += glm::normalize(glm::cross(frontXZ, Up));
+
+			if (glm::length(moveDir) > 0.0f)
+				moveDir = glm::normalize(moveDir);
+
+			float walkSpeed = 5.0f; // Walking speed
+			if (speedUpKeyState.IsPressed)
+				walkSpeed *= 2.0f;
+
+			physics.Velocity.x = moveDir.x * walkSpeed;
+			physics.Velocity.z = moveDir.z * walkSpeed;
+
+
+			// Jumping
+			if (moveUpKeyState.IsPressed && physics.OnGround)
+			{
+				physics.Velocity.y = m_PhysicsEngine.GetJumpStrength();
+				physics.OnGround = false;
+			}
+
 		}
 
 		player->SetPhysicsBody(physics);
@@ -827,6 +852,12 @@ namespace onion::voxel
 		if (ImGui::DragFloat("Gravity", &gravity, 0.1f, -50.f, 50.f))
 		{
 			m_PhysicsEngine.SetGravity(gravity);
+		}
+
+		float jumpStrength = m_PhysicsEngine.GetJumpStrength();
+		if (ImGui::DragFloat("Jump Strength", &jumpStrength, 0.1f, 0.f, 50.f))
+		{
+			m_PhysicsEngine.SetJumpStrength(jumpStrength);
 		}
 
 		ImGui::End();

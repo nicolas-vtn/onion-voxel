@@ -24,6 +24,9 @@ namespace onion::voxel
 		float GetGravity() const;
 		void SetGravity(float gravity);
 
+		float GetJumpStrength() const;
+		void SetJumpStrength(float jumpStrength);
+
 		// ----- Private Members -----
 	  private:
 		EntityManager& m_EntityManager;
@@ -38,6 +41,7 @@ namespace onion::voxel
 	  private:
 		mutable std::shared_mutex m_MutexPhysics;
 
-		float m_Gravity = 9.81f; // Gravity acceleration in m/s^2
+		float m_Gravity = 50.0f; // Gravity acceleration in m/s^2
+		float m_JumpStrength = 13.0f; // Initial jump velocity
 	};
 } // namespace onion::voxel

@@ -623,6 +623,7 @@ namespace onion::voxel
 				}
 				if (ImGui::Checkbox("Is Flying", &physicsBody.IsFlying))
 				{
+					physicsBody.Velocity = glm::vec3(0.f);
 					player->SetPhysicsBody(physicsBody);
 				}
 				if (ImGui::InputFloat("Mass", &physicsBody.Mass))
