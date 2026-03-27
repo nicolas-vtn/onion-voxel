@@ -35,6 +35,7 @@ namespace onion::voxel
 		// ----- Internal Methods -----
 	  private:
 		void UpdateEntityPhysics(std::shared_ptr<Entity> entity, float deltaTime);
+		void ApplyFriction(glm::vec3& velocity, float deltaTime);
 		void ResolveTerrainCollisions(std::shared_ptr<Entity> entity, float deltaTime);
 
 		// ----- Private Constants -----
@@ -43,5 +44,7 @@ namespace onion::voxel
 
 		float m_Gravity = 50.0f; // Gravity acceleration in m/s^2
 		float m_JumpStrength = 13.0f; // Initial jump velocity
+
+		float m_GroundFriction = 10.0f; // Friction applied when on the ground
 	};
 } // namespace onion::voxel

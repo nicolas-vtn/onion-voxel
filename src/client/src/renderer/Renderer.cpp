@@ -507,8 +507,8 @@ namespace onion::voxel
 
 		// Flying
 		float flyMaxSpeed = m_PlayerFlySpeed;
-		float flyAcceleration = 100.f;
-		float flyDeceleration = 200.f;
+		float flyAcceleration = m_PlayerFlySpeed * 5.f;
+		float flyDeceleration = m_PlayerFlySpeed * 5.f;
 
 		auto inputs = m_InputsManager.GetInputsSnapshot();
 

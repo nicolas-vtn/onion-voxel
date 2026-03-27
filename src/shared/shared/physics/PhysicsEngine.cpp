@@ -77,22 +77,44 @@ namespace onion::voxel
 		if (entity->HasPhysicsBody() && entity->HasTransform())
 		{
 			PhysicsBody physicsBody = entity->GetPhysicsBody();
-			//Transform transform = entity->GetTransform();
 
-			// Apply gravity if enabled
+			// Apply gravity if not flying and not on the ground
 			if (!physicsBody.IsFlying && !physicsBody.OnGround)
 			{
-				physicsBody.Velocity.y -= GetGravity() * deltaTime; // Simple gravity
+				physicsBody.Velocity.y -= GetGravity() * deltaTime;
 			}
 
-			// Update position based on velocity
-			//transform.Position += physicsBody.Velocity * deltaTime;
+			// Apply friction if on the ground and not flying
+			if (!physicsBody.IsFlying && physicsBody.OnGround){
+				ApplyFriction(physicsBody.Velocity, deltaTime);
+			}
 
-			// Here you would typically check for collisions and adjust the position and velocity accordingly
 			// Update the entity's components
 			entity->SetPhysicsBody(physicsBody);
-			//entity->SetTransform(transform);
 		}
+	}
+
+	void PhysicsEngine::ApplyFriction(glm::vec3& velocity, float deltaTime) {
+
+		const float epsilon = 0.0001f; // Small value to prevent floating-point issues
+
+		float speedX = std::abs(velocity.x);
+		if(speedX < epsilon)
+			velocity.x = 0.0f;
+
+		float speedZ = std::abs(velocity.z);
+		if (speedZ < epsilon)
+			velocity.z = 0.0f;
+
+			float k = 2.0f; // Tuning parameter for friction strength
+
+		float frictionAmountX = (m_GroundFriction + k * speedX) * deltaTime;
+		float frictionAmountZ = (m_GroundFriction + k * speedZ) * deltaTime;
+
+		std::cout << "frictionAmountX: " << frictionAmountX << ", frictionAmountZ: " << frictionAmountZ << std::endl;
+
+		velocity.x -= std::min(speedX, frictionAmountX) * glm::sign(velocity.x);
+		velocity.z -= std::min(speedZ, frictionAmountZ) * glm::sign(velocity.z);
 	}
 
 	void PhysicsEngine::ResolveTerrainCollisions(std::shared_ptr<Entity> entity, float dt)
