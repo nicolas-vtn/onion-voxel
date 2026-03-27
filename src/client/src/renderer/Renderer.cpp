@@ -210,6 +210,7 @@ namespace onion::voxel
 				}
 
 				m_WorldRenderer.Render();
+				m_EntityRenderer.RenderEntities(viewMatrix, projectionMatrix, m_WorldManager->Entities, {});
 			}
 
 			// Render GUI

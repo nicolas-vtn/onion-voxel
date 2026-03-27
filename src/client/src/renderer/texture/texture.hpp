@@ -18,7 +18,8 @@ namespace onion::voxel
 
 		/// @brief Constructs a texture object and loads the texture from the specified file path.
 		/// @param filePath The path to the texture file to load.
-		explicit Texture(const std::filesystem::path& filePath);
+		/// @param flipVertically Whether to flip the texture vertically when loading. Default is false.
+		explicit Texture(const std::filesystem::path& filePath, bool flipVertically = false);
 		Texture(const std::string& name, const std::vector<unsigned char>& data, int width, int height, int channels);
 		Texture(const std::string& name, const std::vector<unsigned char>& data);
 		~Texture();
@@ -97,6 +98,9 @@ namespace onion::voxel
 		std::filesystem::path m_FilePath;
 		/// @brief The OpenGL texture ID. This is generated when the texture is uploaded to the GPU.
 		mutable unsigned int m_TextureID = 0;
+
+		/// @brief Flag indicating whether to flip the texture vertically when loading. This is used to convert from the top-left origin used by image files to the bottom-left origin used by OpenGL.
+		bool m_FlipVertically = false;
 
 		/// @brief Uploads the texture data to the GPU. This is called internally when binding the texture for the first time. After uploading, the raw data is freed.
 		void UploadToGPU() const;

@@ -15,6 +15,7 @@
 #include <shared/physics/PhysicsEngine.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
+#include "entity_renderer/entity_renderer.hpp"
 #include "gui/Gui.hpp"
 #include "inputs_manager/inputs_manager.hpp"
 #include "key_binds/KeyBinds.hpp"
@@ -141,6 +142,10 @@ namespace onion::voxel
 		WorldRenderer m_WorldRenderer;
 		bool m_IsFreeCamera = false;
 		void UpdateCameraFromInputs();
+
+		// ----- Entity Renderer -----
+	  private:
+		EntityRenderer m_EntityRenderer;
 
 		// ----- Physics Engine -----
 	  private:
