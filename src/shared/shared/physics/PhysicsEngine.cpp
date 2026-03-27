@@ -1,5 +1,7 @@
 #include "PhysicsEngine.hpp"
 
+#include <iostream>
+
 namespace
 {
 	using namespace onion::voxel;
@@ -95,6 +97,8 @@ namespace onion::voxel
 		glm::vec3 vel = physics.Velocity;
 		glm::vec3 half = physics.HalfSize;
 
+		constexpr float epsilon = 0.0001f; // Small value to prevent floating-point issues
+
 		// ---- AXIS RESOLUTION ----
 
 		// === Y AXIS (vertical first = important for gravity) ===
@@ -127,7 +131,8 @@ namespace onion::voxel
 							float penetration = box.Min.y - blockMaxY;
 							if (penetration < 0.0f)
 							{
-								pos.y -= penetration;
+								std::cout << "Collision detected on Y axis - Penetration: " << penetration << std::endl;
+								pos.y -= penetration + glm::sign(penetration) * epsilon;
 								vel.y = 0.0f;
 								physics.OnGround = true;
 							}
@@ -138,7 +143,8 @@ namespace onion::voxel
 							float penetration = box.Max.y - blockMinY;
 							if (penetration > 0.0f)
 							{
-								pos.y -= penetration;
+								std::cout << "Collision detected on Y axis - Penetration: " << penetration << std::endl;
+								pos.y -= penetration + glm::sign(penetration) * epsilon;
 								vel.y = 0.0f;
 							}
 						}
@@ -171,7 +177,8 @@ namespace onion::voxel
 							float penetration = box.Max.x - x;
 							if (penetration > 0.0f)
 							{
-								pos.x -= penetration;
+								std::cout << "Collision detected on X axis - Penetration: " << penetration << std::endl;
+								pos.x -= penetration + glm::sign(penetration) * epsilon;
 								vel.x = 0.0f;
 							}
 						}
@@ -180,7 +187,8 @@ namespace onion::voxel
 							float penetration = box.Min.x - (x + 1.0f);
 							if (penetration < 0.0f)
 							{
-								pos.x -= penetration;
+								std::cout << "Collision detected on X axis - Penetration: " << penetration << std::endl;
+								pos.x -= penetration + glm::sign(penetration) * epsilon;
 								vel.x = 0.0f;
 							}
 						}
@@ -213,7 +221,8 @@ namespace onion::voxel
 							float penetration = box.Max.z - z;
 							if (penetration > 0.0f)
 							{
-								pos.z -= penetration;
+								std::cout << "Collision detected on Z axis - Penetration: " << penetration << std::endl;
+								pos.z -= penetration + glm::sign(penetration) * epsilon;
 								vel.z = 0.0f;
 							}
 						}
@@ -222,7 +231,8 @@ namespace onion::voxel
 							float penetration = box.Min.z - (z + 1.0f);
 							if (penetration < 0.0f)
 							{
-								pos.z -= penetration;
+								std::cout << "Collision detected on Z axis - Penetration: " << penetration << std::endl;
+								pos.z -= penetration + glm::sign(penetration) * epsilon;
 								vel.z = 0.0f;
 							}
 						}
