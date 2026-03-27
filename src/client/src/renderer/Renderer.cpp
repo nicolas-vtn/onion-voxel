@@ -201,10 +201,13 @@ namespace onion::voxel
 			// Render World
 			if (GetRenderState() == eRenderState::InGame)
 			{
-				m_WorldManager->RemoveDistantChunks();
-				constexpr float maxDeltaTime = 1.f / 30.f; // Cap delta time to avoid big jumps
-				float deltaTime = static_cast<float>(m_DeltaTime);
-				m_PhysicsEngine.Update(std::min(deltaTime, maxDeltaTime));
+				if(!m_IsPaused){
+					m_WorldManager->RemoveDistantChunks();
+					constexpr float maxDeltaTime = 1.f / 30.f; // Cap delta time to avoid big jumps
+					float deltaTime = static_cast<float>(m_DeltaTime);
+					m_PhysicsEngine.Update(std::min(deltaTime, maxDeltaTime));
+				}
+
 				m_WorldRenderer.Render();
 			}
 
@@ -312,6 +315,7 @@ namespace onion::voxel
 
 		m_KeyBinds.RemapAction(eAction::Attack, Key::MouseButtonLeft, repeatWithDelay);
 		m_KeyBinds.RemapAction(eAction::Interact, Key::MouseButtonRight, repeatWithDelay);
+		m_KeyBinds.RemapAction(eAction::ToggleFlyMode, m_KeyBinds.GetKeyForAction(eAction::Jump), repeatWithDelay);
 	}
 
 	void Renderer::ProcessInputs()
@@ -451,6 +455,29 @@ namespace onion::voxel
 		return glm::vec3(0.0f);
 	}
 
+	namespace{
+		static glm::vec3 MoveTowards(const glm::vec3& current, const glm::vec3& target, float maxDelta)
+		{
+			glm::vec3 delta = target - current;
+			float len = glm::length(delta);
+
+			if (len <= maxDelta || len == 0.0f)
+				return target;
+
+			return current + (delta / len) * maxDelta;
+		}
+
+		static float MoveTowards(float current, float target, float maxDelta)
+		{
+			float delta = target - current;
+
+			if (std::abs(delta) <= maxDelta)
+				return target;
+
+			return current + std::copysign(maxDelta, delta);
+		}
+	}
+
 	void Renderer::UpdatePlayerFromInputs()
 	{
 		std::shared_ptr<Player> player = GetPlayer();
@@ -467,6 +494,22 @@ namespace onion::voxel
 			return;
 		}
 
+		// Constants
+		// Ground
+		float groundMaxSpeed = 10.0f;
+		float groundAcceleration = 95.0f;
+		float groundDeceleration = 90.0f;
+
+		// Air
+		float airMaxSpeed = 5.0f;
+		float airAcceleration = 8.0f;
+		float airDeceleration = 8.0f; // optional, often low
+
+		// Flying
+		float flyMaxSpeed = m_PlayerFlySpeed;
+		float flyAcceleration = 100.f;
+		float flyDeceleration = 200.f;
+
 		auto inputs = m_InputsManager.GetInputsSnapshot();
 
 		auto physics = player->GetPhysicsBody();
@@ -481,6 +524,7 @@ namespace onion::voxel
 		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::MoveRight);
 		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
 		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Crouch);
+		KeyState toggleFlyModeKeyState = m_KeyBinds.GetKeyState(eAction::ToggleFlyMode);
 
 		// ----- PLAYER ORIENTATION -----
 		if (inputs->Mouse.MovementOffsetChanged)
@@ -508,6 +552,19 @@ namespace onion::voxel
 
 			player->SetFacing(glm::normalize(newFront));
 			playerFront = glm::normalize(newFront);
+		}
+
+		// ----- TOGGLE FLYING MODE -----
+		if (toggleFlyModeKeyState.IsDoublePressed)
+		{
+			physics.IsFlying = !physics.IsFlying;
+			if(physics.IsFlying){
+				std::cout << "Flying mode enabled\n";
+				// Reset vertical velocity
+				physics.Velocity.y = 0.0f;
+			}else{
+				std::cout << "Flying mode disabled\n";
+			}
 		}
 
 		// ----- PLAYER FLYING SPEED -----
@@ -560,16 +617,26 @@ namespace onion::voxel
 			if (glm::length(moveDir) > 0.0f)
 				moveDir = glm::normalize(moveDir);
 
-			float speed = m_PlayerFlySpeed;
 			if (speedUpKeyState.IsPressed)
-				speed *= 2.0f;
+				flyMaxSpeed *= 2.0f;
 
-			physics.Velocity.x = moveDir.x * speed;
-			physics.Velocity.y = moveDir.y * speed;
-			physics.Velocity.z = moveDir.z * speed;
+			glm::vec3 desiredVelocity = moveDir * flyMaxSpeed;
+
+			if (glm::length(moveDir) > 0.0f)
+			{
+				physics.Velocity = MoveTowards(physics.Velocity, desiredVelocity, flyAcceleration * m_DeltaTime);
+			}
+			else
+			{
+				physics.Velocity = MoveTowards(physics.Velocity, glm::vec3(0.0f), flyDeceleration * m_DeltaTime);
+			}
 
 		}else{
 			// Walking movement
+
+			float maxSpeed = physics.OnGround ? groundMaxSpeed : airMaxSpeed;
+			float acceleration = physics.OnGround ? groundAcceleration : airAcceleration;
+			float deceleration = physics.OnGround ? groundDeceleration : airDeceleration;
 
 			if (moveForwardKeyState.IsPressed)
 				moveDir += frontXZ;
@@ -580,16 +647,21 @@ namespace onion::voxel
 			if (moveRightKeyState.IsPressed)
 				moveDir += glm::normalize(glm::cross(frontXZ, Up));
 
-			if (glm::length(moveDir) > 0.0f)
-				moveDir = glm::normalize(moveDir);
-
-			float walkSpeed = 5.0f; // Walking speed
 			if (speedUpKeyState.IsPressed)
-				walkSpeed *= 2.0f;
+			{
+				maxSpeed *= 2.0f;
+				acceleration *= 2.0f;
+			}
 
-			physics.Velocity.x = moveDir.x * walkSpeed;
-			physics.Velocity.z = moveDir.z * walkSpeed;
-
+			if (glm::length(moveDir) > 0.0f)
+			{
+				physics.Velocity = MoveTowards(physics.Velocity, moveDir * maxSpeed, acceleration * m_DeltaTime);
+			}
+			else
+			{
+				physics.Velocity =
+					MoveTowards(physics.Velocity, glm::vec3(0.0f), deceleration * m_DeltaTime);
+			}
 
 			// Jumping
 			if (moveUpKeyState.IsPressed && physics.OnGround)
