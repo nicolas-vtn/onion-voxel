@@ -201,7 +201,8 @@ namespace onion::voxel
 			// Render World
 			if (GetRenderState() == eRenderState::InGame)
 			{
-				if(!m_IsPaused){
+				if (!m_IsPaused)
+				{
 					m_WorldManager->RemoveDistantChunks();
 					constexpr float maxDeltaTime = 1.f / 30.f; // Cap delta time to avoid big jumps
 					float deltaTime = static_cast<float>(m_DeltaTime);
@@ -338,7 +339,8 @@ namespace onion::voxel
 		KeyState closeMenuKeyState = m_KeyBinds.GetKeyState(eAction::CloseMenu);
 		GuiElement::s_IsBackPressed = closeMenuKeyState.IsPressed;
 
-		if (m_RenderState == eRenderState::InGame && !m_IsPaused){
+		if (m_RenderState == eRenderState::InGame && !m_IsPaused)
+		{
 			if (m_IsFreeCamera)
 			{
 				UpdateCameraFromInputs();
@@ -350,7 +352,8 @@ namespace onion::voxel
 			}
 		}
 
-		if (m_RenderState == eRenderState::InGame && !m_IsFreeCamera){
+		if (m_RenderState == eRenderState::InGame && !m_IsFreeCamera)
+		{
 			// Stick the camera to the player
 			std::shared_ptr<Player> player = GetPlayer();
 			if (player)
@@ -455,7 +458,8 @@ namespace onion::voxel
 		return glm::vec3(0.0f);
 	}
 
-	namespace{
+	namespace
+	{
 		static glm::vec3 MoveTowards(const glm::vec3& current, const glm::vec3& target, float maxDelta)
 		{
 			glm::vec3 delta = target - current;
@@ -476,7 +480,7 @@ namespace onion::voxel
 
 			return current + std::copysign(maxDelta, delta);
 		}
-	}
+	} // namespace
 
 	void Renderer::UpdatePlayerFromInputs()
 	{
@@ -496,14 +500,14 @@ namespace onion::voxel
 
 		// Constants
 		// Ground
-		float groundMaxSpeed = 10.0f;
-		float groundAcceleration = 95.0f;
-		float groundDeceleration = 90.0f;
+		float groundMaxSpeed = 6.0f;
+		float groundAcceleration = 120.0f;
+		float groundDeceleration = 150.f;
 
 		// Air
 		float airMaxSpeed = 5.0f;
 		float airAcceleration = 8.0f;
-		float airDeceleration = 8.0f; // optional, often low
+		float airDeceleration = 4.0f; // optional, often low
 
 		// Flying
 		float flyMaxSpeed = m_PlayerFlySpeed;
@@ -558,11 +562,14 @@ namespace onion::voxel
 		if (toggleFlyModeKeyState.IsDoublePressed)
 		{
 			physics.IsFlying = !physics.IsFlying;
-			if(physics.IsFlying){
+			if (physics.IsFlying)
+			{
 				std::cout << "Flying mode enabled\n";
 				// Reset vertical velocity
 				physics.Velocity.y = 0.0f;
-			}else{
+			}
+			else
+			{
 				std::cout << "Flying mode disabled\n";
 			}
 		}
@@ -598,7 +605,8 @@ namespace onion::voxel
 
 		glm::vec3 moveDir(0.0f);
 
-		if(physics.IsFlying){
+		if (physics.IsFlying)
+		{
 
 			// Flying movement
 			if (moveForwardKeyState.IsPressed)
@@ -630,8 +638,9 @@ namespace onion::voxel
 			{
 				physics.Velocity = MoveTowards(physics.Velocity, glm::vec3(0.0f), flyDeceleration * m_DeltaTime);
 			}
-
-		}else{
+		}
+		else
+		{
 			// Walking movement
 
 			float maxSpeed = physics.OnGround ? groundMaxSpeed : airMaxSpeed;
@@ -649,8 +658,8 @@ namespace onion::voxel
 
 			if (speedUpKeyState.IsPressed)
 			{
-				maxSpeed *= 2.0f;
-				acceleration *= 2.0f;
+				maxSpeed *= 1.5f;
+				acceleration *= 1.5f;
 			}
 
 			if (glm::length(moveDir) > 0.0f)
@@ -659,17 +668,50 @@ namespace onion::voxel
 			}
 			else
 			{
-				physics.Velocity =
-					MoveTowards(physics.Velocity, glm::vec3(0.0f), deceleration * m_DeltaTime);
+				physics.Velocity = MoveTowards(physics.Velocity, glm::vec3(0.0f), deceleration * m_DeltaTime);
 			}
 
 			// Jumping
 			if (moveUpKeyState.IsPressed && physics.OnGround)
 			{
 				physics.Velocity.y = m_PhysicsEngine.GetJumpStrength();
+
+				glm::vec3 horizontalVelocity = glm::vec3(physics.Velocity.x, 0.0f, physics.Velocity.z);
+				float horizontalSpeed = glm::length(horizontalVelocity);
+
+				if (horizontalSpeed > 0.0001f)
+				{
+					glm::vec3 currentDir = glm::normalize(horizontalVelocity);
+					glm::vec3 desiredDir = glm::normalize(glm::vec3(playerFront.x, 0.0f, playerFront.z));
+
+					float dot = glm::dot(currentDir, desiredDir);
+
+					// Threshold ~90° (cos(90°) = 0)
+					if (dot > 0.0f)
+					{
+						// Smooth blend for small angles
+						float control = 0.3f;
+						glm::vec3 newDir = glm::normalize(glm::mix(currentDir, desiredDir, control));
+
+						physics.Velocity.x = newDir.x * horizontalSpeed;
+						physics.Velocity.z = newDir.z * horizontalSpeed;
+
+						// Add a small kick in facing direction for better feel
+						glm::vec3 frontXZ = glm::normalize(glm::vec3(playerFront.x, 0.0f, playerFront.z));
+						physics.Velocity += frontXZ * (groundMaxSpeed / 3);
+					}
+					else
+					{
+						// Snap for large angles, but reduce speed
+						float penalty = 0.7f; //
+
+						physics.Velocity.x = desiredDir.x * horizontalSpeed * penalty;
+						physics.Velocity.z = desiredDir.z * horizontalSpeed * penalty;
+					}
+				}
+
 				physics.OnGround = false;
 			}
-
 		}
 
 		player->SetPhysicsBody(physics);

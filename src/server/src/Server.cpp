@@ -227,8 +227,8 @@ namespace onion::voxel
 		// Add the new Player
 		AddPlayer(playerInfo);
 
-		// Arbitrary Set player position to 8 , 100, 8
-		m_WorldManager->Entities->SetPlayerPosition(args.UUID, glm::vec3(8.0f, 100.0f, 8.0f));
+		// Arbitrary Set player position to 8 , 20, 8
+		m_WorldManager->Entities->SetPlayerPosition(args.UUID, glm::vec3(8.0f, 20.0f, 8.0f));
 
 		ServerInfoMsg srvInfoMsg;
 		srvInfoMsg.ServerName = m_Config.serverData.ServerName;

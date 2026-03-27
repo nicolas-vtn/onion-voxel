@@ -10,7 +10,7 @@ namespace onion::voxel
 	  public:
 		glm::vec3 GetEyePosition() const { return GetPosition() + s_EyeOffset; }
 
-		static constexpr glm::vec3 Size{0.6f, 1.8f, 0.6f};
+		static constexpr glm::vec3 Size{0.6f, 1.875f, 0.6f};
 
 		// ------ Getters / Setters ------
 	  public:
@@ -47,6 +47,6 @@ namespace onion::voxel
 
 		// ------ Static Members ------
 	  private:
-		static constexpr glm::vec3 s_EyeOffset{0.f, 1.6f, 0.f};
+		static constexpr glm::vec3 s_EyeOffset{0.f, 1.625f, 0.f};
 	};
 } // namespace onion::voxel

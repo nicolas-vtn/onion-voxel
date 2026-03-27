@@ -85,7 +85,8 @@ namespace onion::voxel
 			}
 
 			// Apply friction if on the ground and not flying
-			if (!physicsBody.IsFlying && physicsBody.OnGround){
+			if (!physicsBody.IsFlying && physicsBody.OnGround)
+			{
 				ApplyFriction(physicsBody.Velocity, deltaTime);
 			}
 
@@ -94,24 +95,25 @@ namespace onion::voxel
 		}
 	}
 
-	void PhysicsEngine::ApplyFriction(glm::vec3& velocity, float deltaTime) {
+	void PhysicsEngine::ApplyFriction(glm::vec3& velocity, float deltaTime)
+	{
 
 		const float epsilon = 0.0001f; // Small value to prevent floating-point issues
 
 		float speedX = std::abs(velocity.x);
-		if(speedX < epsilon)
+		if (speedX < epsilon)
 			velocity.x = 0.0f;
 
 		float speedZ = std::abs(velocity.z);
 		if (speedZ < epsilon)
 			velocity.z = 0.0f;
 
-			float k = 2.0f; // Tuning parameter for friction strength
+		float k = 2.0f; // Tuning parameter for friction strength
 
 		float frictionAmountX = (m_GroundFriction + k * speedX) * deltaTime;
 		float frictionAmountZ = (m_GroundFriction + k * speedZ) * deltaTime;
 
-		std::cout << "frictionAmountX: " << frictionAmountX << ", frictionAmountZ: " << frictionAmountZ << std::endl;
+		//std::cout << "frictionAmountX: " << frictionAmountX << ", frictionAmountZ: " << frictionAmountZ << std::endl;
 
 		velocity.x -= std::min(speedX, frictionAmountX) * glm::sign(velocity.x);
 		velocity.z -= std::min(speedZ, frictionAmountZ) * glm::sign(velocity.z);
@@ -166,7 +168,7 @@ namespace onion::voxel
 							if (penetration < 0.0f)
 							{
 								//std::cout << "Collision detected on Y axis - Penetration: " << penetration << std::endl;
-								pos.y -= penetration + glm::sign(penetration) * epsilon;
+								pos.y -= penetration;
 								vel.y = 0.0f;
 								physics.OnGround = true;
 							}
@@ -178,7 +180,7 @@ namespace onion::voxel
 							if (penetration > 0.0f)
 							{
 								//std::cout << "Collision detected on Y axis - Penetration: " << penetration << std::endl;
-								pos.y -= penetration + glm::sign(penetration) * epsilon;
+								pos.y -= penetration;
 								vel.y = 0.0f;
 							}
 						}
