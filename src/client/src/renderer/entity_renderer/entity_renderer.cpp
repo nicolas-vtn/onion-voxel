@@ -1,9 +1,13 @@
 #include "entity_renderer.hpp"
 
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
+
 #include <chrono>
 #include <iostream>
 
 #include <renderer/Variables.hpp>
+#include <renderer/debug_draws/DebugDraws.hpp>
 
 namespace onion::voxel
 {
@@ -18,11 +22,10 @@ namespace onion::voxel
 
 	void EntityRenderer::Initialize()
 	{
-		// Initialize the entity shader
-		//m_ShaderEntity = Shader("../../shaders/shader_entity.vert", "../../shaders/shader_entity.frag");
-
 		// Load textures
-		// m_TexturePlayer.LoadFromFile(m_TexturePlayerPath);
+		ReloadTextures();
+
+		// Setup Shader
 		m_ShaderEntity.Use();
 		m_ShaderEntity.setInt("atlas", 0);
 
@@ -62,12 +65,26 @@ namespace onion::voxel
 			Initialize();
 		}
 
+		// Render DEBUG
+		RenderPlayerDebugPanel();
+		if (m_RenderPlayerBoundingBoxes)
+		{
+			RenderPlayersBoundingBoxes();
+		}
+
+		// Delete the textures that are in the deletion queue
+		Texture tex;
+		while (m_TexturesToDelete.TryPop(tex))
+		{
+			tex.Delete();
+		}
+
 		auto entities = Entities->GetAllPlayers();
 
 		// Clear the vertices after rendering
 		m_VerticesEntities.clear();
 
-		// Clea the players skins index
+		// Clear the players skins index
 		{
 			std::unique_lock<std::shared_mutex> lock(m_MutexPlayersSkinsIndex);
 			m_PlayersSkinsIndex.clear();
@@ -94,7 +111,7 @@ namespace onion::voxel
 		m_ShaderEntity.Use();
 		m_ShaderEntity.setMat4("view", view);
 		m_ShaderEntity.setMat4("projection", proj);
-		m_TexturePlayer.Bind();
+		m_DefaultPlayerTexture.Bind();
 
 		// Sends the vertices to the GPU
 		glBindVertexArray(m_VAO);
@@ -105,6 +122,8 @@ namespace onion::voxel
 		// Draw the Players
 		{
 			std::shared_lock<std::shared_mutex> lock(m_MutexPlayersSkinsIndex);
+			std::shared_lock<std::shared_mutex> lockSkins(m_MutexPlayersSkins);
+
 			for (const auto& [index, playerName] : m_PlayersSkinsIndex)
 			{
 
@@ -117,7 +136,7 @@ namespace onion::voxel
 				else
 				{
 					// Bind the default player texture
-					m_TexturePlayer.Bind();
+					m_DefaultPlayerTexture.Bind();
 					// Load the player's skin texture from the URL (ASYNC)
 					LoadPlayerSkinAsync(playerName);
 				}
@@ -128,6 +147,34 @@ namespace onion::voxel
 		}
 
 		glBindVertexArray(0);
+	}
+
+	void EntityRenderer::ReloadTextures()
+	{
+		m_DefaultPlayerTexture.Delete();
+
+		auto defaultPlayerTextureData =
+			EngineContext::Get().Assets->GetResourcePackFileBinary(m_DefaultPlayerTexturePath);
+
+		m_DefaultPlayerTexture = Texture("DefaultPlayerTexture", defaultPlayerTextureData, true);
+	}
+
+	void EntityRenderer::Unload()
+	{
+		glDeleteVertexArrays(1, &m_VAO);
+		glDeleteBuffers(1, &m_VBO);
+
+		m_ShaderEntity.Delete();
+		m_DefaultPlayerTexture.Delete();
+
+		{
+			std::unique_lock<std::shared_mutex> lock(m_MutexPlayersSkins);
+			for (auto& [playerName, texture] : m_PlayersSkins)
+			{
+				texture.Delete();
+			}
+			m_PlayersSkins.clear();
+		}
 	}
 
 	void EntityRenderer::BuildEntityMesh(const std::shared_ptr<Entity>& Entity)
@@ -190,10 +237,7 @@ namespace onion::voxel
 		const float speed = 2.0f;
 		const float progress = glm::fract(fractional_seconds_now() * speed);
 
-		//auto PlayerState = Player->GetState();
-		auto PlayerState = Skeleton::State::IDLE;
-		auto PlayerStateSkeleton = static_cast<Skeleton::State>(PlayerState);
-		skeleton.SetState(PlayerStateSkeleton, progress);
+		skeleton.SetState(Player->GetState(), progress);
 
 		BuildPlayerMesh(skeleton, skinVersion);
 	}
@@ -609,6 +653,122 @@ namespace onion::voxel
 		m_VerticesEntities.insert(m_VerticesEntities.end(), tmpVertices.begin(), tmpVertices.end());
 	}
 
+	void EntityRenderer::RenderPlayerDebugPanel()
+	{
+		std::shared_ptr<Player> player = EngineContext::Get().GetLocalPlayer();
+
+		ImGui::Begin("Player Debug");
+
+		// Global Options
+		ImGui::Text("Global Options");
+
+		ImGui::Checkbox("Render Player Boxes", &m_RenderPlayerBoundingBoxes);
+
+		ImGui::Separator();
+
+		if (player)
+		{
+			std::string name = player->GetName();
+			if (ImGui::InputText("Name", &name))
+			{
+				player->SetName(name);
+			}
+
+			if (ImGui::CollapsingHeader("Player Transform"))
+			{
+				if (player->HasTransform())
+				{
+					Transform transform = player->GetTransform();
+					if (ImGui::InputFloat3("Position", &transform.Position.x))
+					{
+						player->SetTransform(transform);
+					}
+					if (ImGui::InputFloat3("Rotation", &transform.Rotation.x))
+					{
+						player->SetTransform(transform);
+					}
+					if (ImGui::InputFloat3("Scale", &transform.Scale.x))
+					{
+						player->SetTransform(transform);
+					}
+				}
+				else
+				{
+					ImGui::Text("Player has no transform component");
+				}
+			}
+
+			if (ImGui::CollapsingHeader("Player Physics Body"))
+			{
+				if (player->HasPhysicsBody())
+				{
+					PhysicsBody physicsBody = player->GetPhysicsBody();
+					if (ImGui::InputFloat3("Velocity", &physicsBody.Velocity.x))
+					{
+						player->SetPhysicsBody(physicsBody);
+					}
+					if (ImGui::Checkbox("On Ground", &physicsBody.OnGround))
+					{
+						player->SetPhysicsBody(physicsBody);
+					}
+					if (ImGui::Checkbox("Is Flying", &physicsBody.IsFlying))
+					{
+						physicsBody.Velocity = glm::vec3(0.f);
+						player->SetPhysicsBody(physicsBody);
+					}
+					if (ImGui::InputFloat("Mass", &physicsBody.Mass))
+					{
+						player->SetPhysicsBody(physicsBody);
+					}
+				}
+				else
+				{
+					ImGui::Text("Player has no physics body component");
+				}
+			}
+		}
+		else
+		{
+			ImGui::Text("No local player");
+		}
+
+		ImGui::End();
+	}
+
+	void EntityRenderer::RenderPlayersBoundingBoxes()
+	{
+		const auto& players = EngineContext::Get().World->Entities->GetAllPlayers();
+
+		for (const auto& [uuid, player] : players)
+		{
+			const glm::vec3 playerPos = player->GetPosition();
+			const glm::vec3 centerPos = playerPos + glm::vec3(0.f, Player::Size.y * 0.5f, 0.f);
+			const glm::vec3 boxColor = glm::vec3(1.0f, 0.0f, 0.0f);
+			DebugDraws::DrawWorldBoxCenterSize(centerPos, Player::Size, glm::vec4(boxColor, 1.0f), 2, false);
+
+			// Draw a line indicating the player's facing direction
+			const glm::vec3 forward = player->GetFacing();
+			const glm::vec3 playerEyePos = player->GetEyePosition();
+			const glm::vec3 lineColor = glm::vec3(0.0f, 1.0f, 0.0f);
+			DebugDraws::DrawWorldLine(playerEyePos, playerEyePos + forward, glm::vec4(lineColor, 1.0f), 2, false);
+
+			// Draw a cross indicating the player's exact position
+			const float crossSize = 0.1f;
+			const glm::vec3 crossColor = glm::vec3(0.0f, 0.0f, 1.0f);
+			DebugDraws::DrawWorldLine(playerPos - glm::vec3(crossSize, 0.0f, 0.0f),
+									  playerPos + glm::vec3(crossSize, 0.0f, 0.0f),
+									  glm::vec4(crossColor, 1.0f),
+									  2,
+									  false);
+
+			DebugDraws::DrawWorldLine(playerPos - glm::vec3(0.0f, 0.0f, crossSize),
+									  playerPos + glm::vec3(0.0f, 0.0f, crossSize),
+									  glm::vec4(crossColor, 1.0f),
+									  2,
+									  false);
+		}
+	}
+
 	void EntityRenderer::LoadPlayerSkinAsync(const std::string& playerName)
 	{
 
@@ -640,24 +800,22 @@ namespace onion::voxel
 		// Load the player's skin from the URL
 		const std::string url = "https://minecraft.tools/download-skin/" + playerName;
 
-		const std::string fileName = playerName + ".png";
-
 		// Download the skin
-		bool DownloadSucces = HttpFileDownloader::DownloadFile(url, fileName);
+		std::vector<uint8_t> skinData = HttpFileDownloader::DownloadFile(url);
 
-		if (DownloadSucces)
+		if (!skinData.empty())
 		{
-			std::filesystem::path spritePath =
-				std::filesystem::path("assets") / "minecraft" / "textures" / "entity" / "player" / "slim" / "steve.png";
-			std::vector<unsigned char> spriteData = EngineContext::Get().Assets->GetResourcePackFileBinary(spritePath);
-			Texture playerSkin("Player_Texture", spriteData);
-
-			// Remove the temporary file
-			//std::remove(fileName.c_str());
-
+			Texture playerSkin("Player_" + playerName, skinData, true);
 			std::unique_lock<std::shared_mutex> lock(m_MutexPlayersSkins);
+
+			// If the skin was already loaded, move the previous to delete queue, and replace it with the new one
+			if (auto it = m_PlayersSkins.find(playerName); it != m_PlayersSkins.end())
+			{
+				m_TexturesToDelete.Push(std::move(it->second));
+				m_PlayersSkins.erase(it);
+			}
+
 			m_PlayersSkins[playerName] = std::move(playerSkin);
-			std::cout << "[EntityRenderer] : Successfully loaded skin for player " << playerName << std::endl;
 		}
 	}
 

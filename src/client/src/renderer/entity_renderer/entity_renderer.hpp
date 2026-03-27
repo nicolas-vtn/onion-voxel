@@ -4,6 +4,8 @@
 #include <memory>
 #include <string>
 
+#include <onion/ThreadSafeQueue.hpp>
+
 #include <renderer/OpenGL.hpp>
 
 #include <renderer/EngineContext.hpp>
@@ -44,6 +46,10 @@ namespace onion::voxel
 							const std::shared_ptr<EntityManager>& Entities,
 							std::vector<std::string> HiddenEntities = std::vector<std::string>());
 
+		void ReloadTextures();
+
+		void Unload();
+
 	  private:
 		void Initialize();
 		bool m_IsInitialized = false;
@@ -74,6 +80,8 @@ namespace onion::voxel
 		mutable std::shared_mutex m_MutexPlayersSkins;
 		std::unordered_map<std::string, Texture> m_PlayersSkins; // Maps one PlayerName to one Texture
 
+		ThreadSafeQueue<Texture> m_TexturesToDelete;
+
 		// ------ ASYNC SKIN LOADER ------
 	  private:
 		void LoadPlayerSkinAsync(const std::string& playerName);
@@ -98,10 +106,10 @@ namespace onion::voxel
 	  private:
 		TextureTileMapper m_PlayerTextureTileMapper_Modern;
 		TextureTileMapper m_PlayerTextureTileMapper_Legacy;
-		static inline const std::string m_TexturePlayerPath =
-			"C:\\Users\\Nico\\Desktop\\Extracted "
-			"Minecraft\\assets\\minecraft\\textures\\entity\\player\\wide\\steve.png";
-		Texture m_TexturePlayer{m_TexturePlayerPath, true};
+
+		static inline const std::filesystem::path m_DefaultPlayerTexturePath =
+			std::filesystem::path("assets") / "minecraft" / "textures" / "entity" / "player" / "wide" / "steve.png";
+		Texture m_DefaultPlayerTexture;
 
 		void MapPlayerTexture();
 
@@ -126,6 +134,13 @@ namespace onion::voxel
 								  const TextureTile& left,
 								  const TextureTile& right);
 		void AddCuboidFace(const Cuboid::FacePositions& facePositions, const TextureTile& textureTile);
+
+		// ------- DEBUG RENDERING -------
+	  private:
+		void RenderPlayerDebugPanel();
+
+		bool m_RenderPlayerBoundingBoxes{true};
+		void RenderPlayersBoundingBoxes();
 
 		// ------- ENUMS -------
 	  private:

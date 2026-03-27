@@ -90,6 +90,7 @@ namespace onion::voxel
 	void Renderer::SetPlayerUUID(const std::string& uuid)
 	{
 		m_PlayerUUID = uuid;
+		EngineContext::Get().PlayerUUID = uuid;
 	}
 
 	void Renderer::InitWindow()
@@ -210,7 +211,15 @@ namespace onion::voxel
 				}
 
 				m_WorldRenderer.Render();
-				m_EntityRenderer.RenderEntities(viewMatrix, projectionMatrix, m_WorldManager->Entities, {});
+
+				// Render the Player entity only when in freecam mode.
+				std::vector<std::string> hiddenEntities;
+				if (!m_IsFreeCamera)
+				{
+					hiddenEntities.push_back(m_PlayerUUID);
+				}
+
+				m_EntityRenderer.RenderEntities(viewMatrix, projectionMatrix, m_WorldManager->Entities, hiddenEntities);
 			}
 
 			// Render GUI
@@ -234,6 +243,7 @@ namespace onion::voxel
 		m_Gui.Shutdown();
 		m_InputsManager.Delete();
 		m_WorldRenderer.Unload();
+		m_EntityRenderer.Unload();
 
 		Gui::StaticShutdown();
 		WorldRenderer::StaticUnload();
@@ -633,10 +643,14 @@ namespace onion::voxel
 
 			if (glm::length(moveDir) > 0.0f)
 			{
+				Entity::State state = speedUpKeyState.IsPressed ? Entity::State::Running : Entity::State::Walking;
+				player->SetState(state);
+
 				physics.Velocity = MoveTowards(physics.Velocity, desiredVelocity, flyAcceleration * m_DeltaTime);
 			}
 			else
 			{
+				player->SetState(Entity::State::Idle);
 				physics.Velocity = MoveTowards(physics.Velocity, glm::vec3(0.0f), flyDeceleration * m_DeltaTime);
 			}
 		}
@@ -661,10 +675,14 @@ namespace onion::voxel
 			{
 				glm::vec3 desiredDir = glm::normalize(moveDir);
 
+				player->SetState(Entity::State::Walking);
+
 				float sprintFactor = 1.0f;
 
 				if (speedUpKeyState.IsPressed)
 				{
+					player->SetState(Entity::State::Running);
+
 					// How aligned we are with forward direction
 					float forwardDot = glm::dot(desiredDir, frontXZ);
 
@@ -684,6 +702,7 @@ namespace onion::voxel
 			else
 			{
 				physics.Velocity = MoveTowards(physics.Velocity, glm::vec3(0.0f), deceleration * m_DeltaTime);
+				player->SetState(Entity::State::Idle);
 			}
 
 			// Jumping
@@ -882,6 +901,7 @@ namespace onion::voxel
 		// Reload everything that uses assets
 		m_Gui.ReloadTextures();
 		m_WorldRenderer.ReloadTextures();
+		m_EntityRenderer.ReloadTextures();
 	}
 
 	void Renderer::InitImGui()

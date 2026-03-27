@@ -84,7 +84,7 @@ namespace onion::voxel
 	  private:
 		struct PlayerInfo
 		{
-			std::string Username;
+			std::string PlayerName;
 			std::string UUID;
 			uint32_t ClientHandle = 0;
 		};

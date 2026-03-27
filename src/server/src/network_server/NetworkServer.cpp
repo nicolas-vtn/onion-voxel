@@ -223,7 +223,7 @@ namespace onion::voxel
 										args.Client = handle;
 										args.UUID = clientInfo.UUID;
 										args.IpAddress = ip;
-										args.Username = clientInfo.Username;
+										args.PlayerName = clientInfo.PlayerName;
 
 										ClientConnected.Trigger(args);
 									}

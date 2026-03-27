@@ -109,13 +109,13 @@ namespace onion::voxel
 	void Server::Handle_ClientInfoMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
 											  const ClientInfoMsg& msg)
 	{
-		std::cout << "Received ClientInfoMsg from client " << args.Sender << ": Username=" << msg.Username
+		std::cout << "Received ClientInfoMsg from client " << args.Sender << ": PlayerName=" << msg.PlayerName
 				  << ", UUID=" << msg.UUID << "\n";
 
 		// Update player info
 		PlayerInfo playerInfo;
 		playerInfo.ClientHandle = args.Sender;
-		playerInfo.Username = msg.Username;
+		playerInfo.PlayerName = msg.PlayerName;
 		playerInfo.UUID = msg.UUID;
 
 		//AddOrUpdatePlayer(playerInfo);
@@ -216,12 +216,12 @@ namespace onion::voxel
 
 	void Server::Handle_ClientConnected(const NetworkServer::ClientConnectedEventArgs& args)
 	{
-		std::cout << "New client connected: " << args.Client << " (" << args.Username << ", " << args.UUID << ", "
+		std::cout << "New client connected: " << args.Client << " (" << args.PlayerName << ", " << args.UUID << ", "
 				  << args.IpAddress << ")\n";
 
 		PlayerInfo playerInfo;
 		playerInfo.ClientHandle = args.Client;
-		playerInfo.Username = args.Username;
+		playerInfo.PlayerName = args.PlayerName;
 		playerInfo.UUID = args.UUID;
 
 		// Add the new Player
@@ -285,6 +285,7 @@ namespace onion::voxel
 	{
 
 		std::shared_ptr<Player> player = std::make_shared<Player>(playerInfo.UUID);
+		player->SetName(playerInfo.PlayerName);
 
 		m_WorldManager->Entities->AddPlayer(player);
 

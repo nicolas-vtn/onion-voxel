@@ -2,6 +2,8 @@
 
 #include "skeleton.hpp"
 
+#include <shared/entities/entity/player/Player.hpp>
+
 namespace onion::voxel
 {
 
@@ -17,7 +19,7 @@ namespace onion::voxel
 		void SetPosition(const glm::vec3& position) override;
 		void SetFacingDirection(const glm::vec3& facingDirection) override;
 		void SetScale(float scale) override;
-		void SetState(const State state, float progress, float intensity = 1.f) override;
+		void SetState(const Entity::State state, float progress, float intensity = 1.f) override;
 
 	  public:
 		void RotateHead(const glm::vec3& facingDirection);

@@ -15,10 +15,26 @@ namespace onion::voxel
 {
 	class Entity
 	{
+		// ----- Enums -----
+	  public:
+		enum class State : uint8_t
+		{
+			Idle = 0,
+			Walking = 1,
+			Running = 2,
+			Jumping,
+			Falling,
+			Attacking,
+			Dying
+		};
+
+		// ----- Constructor / Destructor -----
 	  public:
 		Entity(EntityType type, const std::string& uuid);
 		virtual ~Entity();
 
+		// ----- Public Members -----
+	  public:
 		const EntityType Type;
 		const std::string UUID;
 
@@ -38,8 +54,14 @@ namespace onion::voxel
 		glm::vec3 GetFacing() const;
 		void SetFacing(const glm::vec3& facing);
 
+		State GetState() const;
+		void SetState(const State state);
+
 		// ----- Private Members -----
 	  private:
+		mutable std::shared_mutex m_Mutex;
+		State m_State = State::Idle;
+
 		mutable std::shared_mutex m_MutexPhysicsBody;
 		std::optional<PhysicsBody> m_PhysicsBody;
 

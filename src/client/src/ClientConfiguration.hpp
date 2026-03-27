@@ -12,7 +12,7 @@ namespace onion::voxel
 {
 	struct ClientData
 	{
-		std::string Username = "DefaultUsername";
+		std::string PlayerName = "Default";
 		std::string UUID;
 		uint8_t RenderDistance = 8;
 	};
@@ -60,7 +60,7 @@ namespace onion::voxel
 
 			file >> json;
 
-			clientData.Username = json.value("Username", "");
+			clientData.PlayerName = json.value("PlayerName", "");
 			clientData.UUID = json.value("UUID", "");
 			clientData.RenderDistance = json.value("RenderDistance", static_cast<uint8_t>(8));
 
@@ -78,7 +78,7 @@ namespace onion::voxel
 		{
 			nlohmann::json json;
 
-			json["Username"] = clientData.Username;
+			json["PlayerName"] = clientData.PlayerName;
 			json["UUID"] = clientData.UUID;
 			json["RenderDistance"] = clientData.RenderDistance;
 

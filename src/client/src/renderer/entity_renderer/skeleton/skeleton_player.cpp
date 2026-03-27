@@ -1,6 +1,7 @@
 #include "skeleton_player.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <numbers>
 
@@ -15,17 +16,20 @@ namespace onion::voxel
 
 	void SkeletonPlayer::SetPosition(const glm::vec3& position)
 	{
-		std::cout << "[SkeletonPlayer::SetPosition] Not implemented yet!" << std::endl;
+		std::cerr << "[SkeletonPlayer::SetPosition] Not implemented yet!" << std::endl;
+		assert(false && "Not implemented yet!");
 	}
 
 	void SkeletonPlayer::SetFacingDirection(const glm::vec3& facingDirection)
 	{
-		std::cout << "[SkeletonPlayer::SetFacingDirection] Not implemented yet!" << std::endl;
+		std::cerr << "[SkeletonPlayer::SetFacingDirection] Not implemented yet!" << std::endl;
+		assert(false && "Not implemented yet!");
 	}
 
 	void SkeletonPlayer::SetScale(float scale)
 	{
-		std::cout << "[SkeletonPlayer::SetScale] Not implemented yet!" << std::endl;
+		std::cerr << "[SkeletonPlayer::SetScale] Not implemented yet!" << std::endl;
+		assert(false && "Not implemented yet!");
 	}
 
 	static inline float SinusEmphasis(float input, float intensity)
@@ -34,7 +38,7 @@ namespace onion::voxel
 		return intensity * std::cos(2.0f * std::numbers::pi_v<float> * input);
 	}
 
-	void SkeletonPlayer::SetState(const State state, float progress, float intensity)
+	void SkeletonPlayer::SetState(const Entity::State state, float progress, float intensity)
 	{
 
 		const float maxArmSwing = 50.f;
@@ -43,7 +47,7 @@ namespace onion::voxel
 
 		const float idleArmSwing = 1.f;
 
-		if (state == State::WALKING)
+		if (state == Entity::State::Walking)
 		{
 			const float ArmAngle = SinusEmphasis(progress, maxArmSwing * WalkingRunningRatio);
 			const float LegAngle = SinusEmphasis(progress, maxLegSwing * WalkingRunningRatio);
@@ -55,7 +59,7 @@ namespace onion::voxel
 			RightLeg.Rotate(m_RigPoint_RightLeg, glm::vec3{-LegAngle, 0.f, 0.f});
 		}
 
-		if (state == State::RUNNING)
+		if (state == Entity::State::Running)
 		{
 			const float ArmAngle = SinusEmphasis(progress, maxArmSwing);
 			const float LegAngle = SinusEmphasis(progress, maxLegSwing);
@@ -65,7 +69,7 @@ namespace onion::voxel
 			RightLeg.Rotate(m_RigPoint_RightLeg, glm::vec3{-LegAngle, 0.f, 0.f});
 		}
 
-		if (state == State::IDLE)
+		if (state == Entity::State::Idle)
 		{
 			const float ArmAngle = SinusEmphasis(progress, idleArmSwing);
 			LeftArm.Rotate(m_RigPoint_LeftArm, glm::vec3{ArmAngle, 0.f, 0.f});

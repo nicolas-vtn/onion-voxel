@@ -20,8 +20,13 @@ namespace onion::voxel
 		/// @param filePath The path to the texture file to load.
 		/// @param flipVertically Whether to flip the texture vertically when loading. Default is false.
 		explicit Texture(const std::filesystem::path& filePath, bool flipVertically = false);
-		Texture(const std::string& name, const std::vector<unsigned char>& data, int width, int height, int channels);
-		Texture(const std::string& name, const std::vector<unsigned char>& data);
+		Texture(const std::string& name,
+				const std::vector<unsigned char>& data,
+				int width,
+				int height,
+				int channels,
+				bool flipVertically = false);
+		Texture(const std::string& name, const std::vector<unsigned char>& data, bool flipVertically = false);
 		~Texture();
 
 		Texture(Texture&&) noexcept = default;

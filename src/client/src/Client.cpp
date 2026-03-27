@@ -123,7 +123,7 @@ namespace onion::voxel
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 		ClientInfoMsg clientInfoMsg;
-		clientInfoMsg.Username = m_Config.clientData.Username;
+		clientInfoMsg.PlayerName = m_Config.clientData.PlayerName;
 		clientInfoMsg.UUID = m_Config.clientData.UUID;
 
 		m_NetworkClient.Send(std::move(clientInfoMsg), true);
@@ -151,7 +151,7 @@ namespace onion::voxel
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 		ClientInfoMsg clientInfoMsg;
-		clientInfoMsg.Username = m_Config.clientData.Username;
+		clientInfoMsg.PlayerName = m_Config.clientData.PlayerName;
 		clientInfoMsg.UUID = m_Config.clientData.UUID;
 
 		m_NetworkClient.Send(std::move(clientInfoMsg), true);

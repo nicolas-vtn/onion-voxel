@@ -2,24 +2,13 @@
 
 #include <renderer/entity_renderer/cuboid.hpp>
 
+#include <shared/entities/entity/player/Player.hpp>
+
 namespace onion::voxel
 {
 
 	class Skeleton
 	{
-		// ------- FORWARD DECLARATIONS -------
-	  public:
-		enum class State : uint8_t
-		{
-			IDLE = 0,
-			WALKING = 1,
-			RUNNING = 2,
-			JUMPING,
-			FALLING,
-			ATTACKING,
-			DYING
-		};
-
 	  public:
 		// ------- CONSTRUCTORS & DESTRUCTOR -------
 		Skeleton() = default;
@@ -43,7 +32,7 @@ namespace onion::voxel
 		/// <param name="state">State to set.</param>
 		/// <param name="progress">Progression in range [0,1].</param>
 		/// <param name="intensity">Intensity in range [0,1].</param>
-		virtual void SetState(const State state, float progress, float intensity = 1.f) = 0;
+		virtual void SetState(const Entity::State state, float progress, float intensity = 1.f) = 0;
 
 		// ------- PROTECTED VARIABLES -------
 	  protected:

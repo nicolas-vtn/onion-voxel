@@ -24,9 +24,13 @@ namespace onion::voxel
 		}
 	}
 
-	Texture::Texture(
-		const std::string& name, const std::vector<unsigned char>& data, int width, int height, int channels)
-		: m_Width(width), m_Height(height), m_NbrChannels(channels)
+	Texture::Texture(const std::string& name,
+					 const std::vector<unsigned char>& data,
+					 int width,
+					 int height,
+					 int channels,
+					 bool flipVertically)
+		: m_Width(width), m_Height(height), m_NbrChannels(channels), m_FlipVertically(flipVertically)
 	{
 		if (data.empty())
 		{
@@ -61,7 +65,8 @@ namespace onion::voxel
 		m_NbrChannels = channels;
 	}
 
-	Texture::Texture(const std::string& name, const std::vector<unsigned char>& data)
+	Texture::Texture(const std::string& name, const std::vector<unsigned char>& data, bool flipVertically)
+		: m_FlipVertically(flipVertically)
 	{
 		if (data.empty())
 		{
