@@ -656,15 +656,29 @@ namespace onion::voxel
 			if (moveRightKeyState.IsPressed)
 				moveDir += glm::normalize(glm::cross(frontXZ, Up));
 
-			if (speedUpKeyState.IsPressed)
-			{
-				maxSpeed *= 1.5f;
-				acceleration *= 1.5f;
-			}
-
 			if (glm::length(moveDir) > 0.0f)
 			{
-				physics.Velocity = MoveTowards(physics.Velocity, moveDir * maxSpeed, acceleration * m_DeltaTime);
+				glm::vec3 desiredDir = glm::normalize(moveDir);
+
+				float sprintFactor = 1.0f;
+
+				if (speedUpKeyState.IsPressed)
+				{
+					// How aligned we are with forward direction
+					float forwardDot = glm::dot(desiredDir, frontXZ);
+
+					// Only boost if moving forward
+					if (forwardDot > 0.7f) // ~45° cone (tweakable)
+					{
+						sprintFactor = 1.5f;
+					}
+				}
+
+				float finalMaxSpeed = maxSpeed * sprintFactor;
+				float finalAcceleration = acceleration * sprintFactor;
+
+				physics.Velocity =
+					MoveTowards(physics.Velocity, desiredDir * finalMaxSpeed, finalAcceleration * m_DeltaTime);
 			}
 			else
 			{
