@@ -202,7 +202,9 @@ namespace onion::voxel
 			if (GetRenderState() == eRenderState::InGame)
 			{
 				m_WorldManager->RemoveDistantChunks();
-				m_PhysicsEngine.Update(static_cast<float>(m_DeltaTime));
+				constexpr float maxDeltaTime = 1.f / 30.f; // Cap delta time to avoid big jumps
+				float deltaTime = static_cast<float>(m_DeltaTime);
+				m_PhysicsEngine.Update(std::min(deltaTime, maxDeltaTime));
 				m_WorldRenderer.Render();
 			}
 
@@ -380,6 +382,8 @@ namespace onion::voxel
 			DebugDraws::DrawBlockOutline(hitBlock.Position, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);
 			//DebugDraws::DrawBlockOutline(prevBlockPos, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 3, true);
 		}
+
+		m_HitBlock = hitBlock;
 
 		KeyState attackKeyState = m_KeyBinds.GetKeyState(eAction::Attack);
 		if (attackKeyState.IsPressed)
@@ -795,6 +799,14 @@ namespace onion::voxel
 				m_Camera->SetAspectRatio(aspect);
 
 			ImGui::DragFloat("Speed", &m_CameraSpeed, 0.1f, 0.1f, 50.f);
+		}
+
+		// ----- Raycast Debug -----
+		if (ImGui::CollapsingHeader("Raycast", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::Text(
+				"Hit Block Position: %d, %d, %d", m_HitBlock.Position.x, m_HitBlock.Position.y, m_HitBlock.Position.z);
+			ImGui::Text("Hit Block ID: %d", m_HitBlock.ID());
 		}
 
 		ImGui::End();

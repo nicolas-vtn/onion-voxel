@@ -136,6 +136,7 @@ namespace onion::voxel
 		// ------ World Renderer ------
 	  private:
 		std::shared_ptr<Camera> m_Camera;
+		Block m_HitBlock;
 		float m_CameraSpeed = 5.0f;
 		WorldRenderer m_WorldRenderer;
 		bool m_IsFreeCamera = true;

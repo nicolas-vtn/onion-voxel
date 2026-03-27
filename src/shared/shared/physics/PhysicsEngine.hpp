@@ -38,6 +38,6 @@ namespace onion::voxel
 	  private:
 		mutable std::shared_mutex m_MutexPhysics;
 
-		float m_Gravity = -9.81f; // Gravity acceleration in m/s^2
+		float m_Gravity = 9.81f; // Gravity acceleration in m/s^2
 	};
 } // namespace onion::voxel

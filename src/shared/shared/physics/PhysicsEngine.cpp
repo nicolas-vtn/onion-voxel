@@ -63,21 +63,21 @@ namespace onion::voxel
 		if (entity->HasPhysicsBody() && entity->HasTransform())
 		{
 			PhysicsBody physicsBody = entity->GetPhysicsBody();
-			Transform transform = entity->GetTransform();
+			//Transform transform = entity->GetTransform();
 
 			// Apply gravity if enabled
 			if (physicsBody.EnableGravity && !physicsBody.OnGround)
 			{
-				physicsBody.Velocity.y += GetGravity() * deltaTime; // Simple gravity
+				physicsBody.Velocity.y -= GetGravity() * deltaTime; // Simple gravity
 			}
 
 			// Update position based on velocity
-			transform.Position += physicsBody.Velocity * deltaTime;
+			//transform.Position += physicsBody.Velocity * deltaTime;
 
 			// Here you would typically check for collisions and adjust the position and velocity accordingly
 			// Update the entity's components
 			entity->SetPhysicsBody(physicsBody);
-			entity->SetTransform(transform);
+			//entity->SetTransform(transform);
 		}
 	}
 
@@ -98,8 +98,7 @@ namespace onion::voxel
 		// ---- AXIS RESOLUTION ----
 
 		// === Y AXIS (vertical first = important for gravity) ===
-		pos.y += vel.y * dt;
-
+		pos.y += vel.y * dt; // Move the entity according to its velocity before checking for collisions
 		{
 			glm::vec3 center = pos + physics.Offset;
 			AABBWorld box{center - half, center + half};
@@ -148,7 +147,6 @@ namespace onion::voxel
 
 		// === X AXIS ===
 		pos.x += vel.x * dt;
-
 		{
 			glm::vec3 center = pos + physics.Offset;
 			AABBWorld box{center - half, center + half};
@@ -191,7 +189,6 @@ namespace onion::voxel
 
 		// === Z AXIS ===
 		pos.z += vel.z * dt;
-
 		{
 			glm::vec3 center = pos + physics.Offset;
 			AABBWorld box{center - half, center + half};
