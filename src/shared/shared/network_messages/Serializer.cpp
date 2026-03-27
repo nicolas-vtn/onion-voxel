@@ -209,7 +209,7 @@ namespace onion::voxel
 		PhysicsBodyDTO dto;
 		dto.Velocity = physicsBody.Velocity;
 		dto.OnGround = physicsBody.OnGround;
-		dto.EnableGravity = physicsBody.EnableGravity;
+		dto.IsFlying = physicsBody.IsFlying;
 		dto.HalfSize = physicsBody.HalfSize;
 		dto.Offset = physicsBody.Offset;
 		return dto;
@@ -220,7 +220,7 @@ namespace onion::voxel
 		PhysicsBody physicsBody;
 		physicsBody.Velocity = dto.Velocity;
 		physicsBody.OnGround = dto.OnGround;
-		physicsBody.EnableGravity = dto.EnableGravity;
+		physicsBody.IsFlying = dto.IsFlying;
 		physicsBody.HalfSize = dto.HalfSize;
 		physicsBody.Offset = dto.Offset;
 		return physicsBody;

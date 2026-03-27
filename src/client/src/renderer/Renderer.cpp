@@ -519,7 +519,6 @@ namespace onion::voxel
 			}
 		}
 
-		// Player Position
 		float velocity = m_PlayerSpeed * (float) m_DeltaTime;
 
 		KeyState speedUpKeyState = m_KeyBinds.GetKeyState(eAction::Sprint);
@@ -550,6 +549,14 @@ namespace onion::voxel
 		if (moveRightKeyState.IsPressed)
 			moveDir += glm::normalize(glm::cross(frontXZ, Up));
 
+		if (physics.IsFlying)
+		{
+			if (moveUpKeyState.IsPressed)
+				moveDir += Up;
+			if (moveDownKeyState.IsPressed)
+				moveDir -= Up;
+		}
+
 		if (glm::length(moveDir) > 0.0f)
 			moveDir = glm::normalize(moveDir);
 
@@ -558,11 +565,11 @@ namespace onion::voxel
 		if (speedUpKeyState.IsPressed)
 			speed *= 2.0f;
 
-		// Only affect XZ, keep Y for gravity
 		physics.Velocity.x = moveDir.x * speed;
+		physics.Velocity.y = moveDir.y * speed;
 		physics.Velocity.z = moveDir.z * speed;
 
-		if (moveUpKeyState.IsPressed && physics.OnGround)
+		if (moveUpKeyState.IsPressed && physics.OnGround && !physics.IsFlying)
 		{
 			physics.Velocity.y = 5.0f; // jump strength
 			physics.OnGround = false;

@@ -353,6 +353,16 @@ namespace onion::voxel
 				if (!hasPlayerBeenSet)
 				{
 					// If the player has not been set yet, add it to the EntityManager
+
+					// Enable Fly
+					PhysicsBody physicsBody = player->GetPhysicsBody();
+					physicsBody.IsFlying = true;
+					player->SetPhysicsBody(physicsBody);
+
+					// Place a block
+					Block block(player->GetPosition() + glm::vec3(2.f, 0.f, 2.f), BlockId::Cobblestone);
+					m_WorldManager->SetBlock(block, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
+
 					players.push_back(player);
 					m_WorldManager->Entities->SetLocalPlayer(player);
 				}

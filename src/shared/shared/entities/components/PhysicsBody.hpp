@@ -8,7 +8,7 @@ namespace onion::voxel
 	{
 		glm::vec3 Velocity{0.f};
 		bool OnGround = false;
-		bool EnableGravity = true;
+		bool IsFlying = true;
 
 		float Mass = 1.f;
 

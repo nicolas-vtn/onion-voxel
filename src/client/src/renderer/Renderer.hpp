@@ -139,7 +139,7 @@ namespace onion::voxel
 		Block m_HitBlock;
 		float m_CameraSpeed = 5.0f;
 		WorldRenderer m_WorldRenderer;
-		bool m_IsFreeCamera = true;
+		bool m_IsFreeCamera = false;
 		void UpdateCameraFromInputs();
 
 		// ----- Physics Engine -----

@@ -66,7 +66,7 @@ namespace onion::voxel
 			//Transform transform = entity->GetTransform();
 
 			// Apply gravity if enabled
-			if (physicsBody.EnableGravity && !physicsBody.OnGround)
+			if (!physicsBody.IsFlying && !physicsBody.OnGround)
 			{
 				physicsBody.Velocity.y -= GetGravity() * deltaTime; // Simple gravity
 			}

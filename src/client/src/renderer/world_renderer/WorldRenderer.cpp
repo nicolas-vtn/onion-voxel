@@ -621,7 +621,7 @@ namespace onion::voxel
 				{
 					player->SetPhysicsBody(physicsBody);
 				}
-				if (ImGui::Checkbox("Enable Gravity", &physicsBody.EnableGravity))
+				if (ImGui::Checkbox("Is Flying", &physicsBody.IsFlying))
 				{
 					player->SetPhysicsBody(physicsBody);
 				}
