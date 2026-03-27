@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 
+#include <shared/network_messages/DTOs/DTOs.hpp>
 #include <shared/network_messages/GlmSerialization.hpp>
 #include <shared/network_messages/MessageHeader.hpp>
 
@@ -15,12 +16,8 @@ namespace onion::voxel
 	{
 		static constexpr MessageHeader::eType StaticType = MessageHeader::eType::PlayerInfos;
 
-		std::string Username;
-		std::string UUID;
+		PlayerDTO player;
 
-		glm::vec3 Position{};
-		glm::vec3 Facing{};
-
-		template <class Archive> void serialize(Archive& ar) { ar(Username, UUID, Position, Facing); }
+		template <class Archive> void serialize(Archive& ar) { ar(player); }
 	};
 } // namespace onion::voxel

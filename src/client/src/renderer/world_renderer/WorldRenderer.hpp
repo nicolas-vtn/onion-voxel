@@ -110,6 +110,7 @@ namespace onion::voxel
 		// ----- ImGui menu -----
 	  private:
 		void RenderDebugPanel();
+		void RenderPlayerDebugPanel();
 		bool m_UseFaceCulling{true};
 		bool m_RenderPlayerBoundingBoxes{true};
 	};

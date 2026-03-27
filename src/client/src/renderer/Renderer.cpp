@@ -21,7 +21,7 @@ namespace onion::voxel
 {
 	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager)
 		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), 800, 600)),
-		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager)
+		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager)
 	{
 		// Sets the Engine Context
 		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager);
@@ -201,15 +201,23 @@ namespace onion::voxel
 			// Render World
 			if (GetRenderState() == eRenderState::InGame)
 			{
-				m_WorldManager->RemoveDistantChunks();
+				if (!m_IsPaused)
+				{
+					m_WorldManager->RemoveDistantChunks();
+					constexpr float maxDeltaTime = 1.f / 30.f; // Cap delta time to avoid big jumps
+					float deltaTime = static_cast<float>(m_DeltaTime);
+					m_PhysicsEngine.Update(std::min(deltaTime, maxDeltaTime));
+				}
+
 				m_WorldRenderer.Render();
 			}
 
 			// Render GUI
 			m_Gui.Render();
 
-			// Render Debug Panel
+			// Render Debug Panels
 			RenderDebugPanel();
+			RenderPhysicsDebugPanel();
 
 			// End ImGui Frame
 			EndImGuiFrame();
@@ -308,6 +316,7 @@ namespace onion::voxel
 
 		m_KeyBinds.RemapAction(eAction::Attack, Key::MouseButtonLeft, repeatWithDelay);
 		m_KeyBinds.RemapAction(eAction::Interact, Key::MouseButtonRight, repeatWithDelay);
+		m_KeyBinds.RemapAction(eAction::ToggleFlyMode, m_KeyBinds.GetKeyForAction(eAction::Jump), repeatWithDelay);
 	}
 
 	void Renderer::ProcessInputs()
@@ -330,31 +339,34 @@ namespace onion::voxel
 		KeyState closeMenuKeyState = m_KeyBinds.GetKeyState(eAction::CloseMenu);
 		GuiElement::s_IsBackPressed = closeMenuKeyState.IsPressed;
 
-		// Process Camera Movement Inputs (Only if in Free Camera Mode)
-		if (m_IsFreeCamera)
+		if (m_RenderState == eRenderState::InGame && !m_IsPaused)
 		{
-			UpdateCameraFromInputs();
+			if (m_IsFreeCamera)
+			{
+				UpdateCameraFromInputs();
+			}
+			else
+			{
+				UpdatePlayerFromInputs();
+				ProcessGameplayInputs();
+			}
 		}
-		else
-		{
-			UpdatePlayerFromInputs();
 
+		if (m_RenderState == eRenderState::InGame && !m_IsFreeCamera)
+		{
 			// Stick the camera to the player
 			std::shared_ptr<Player> player = GetPlayer();
 			if (player)
 			{
-				m_Camera->SetPosition(player->GetPosition());
+				m_Camera->SetPosition(player->GetEyePosition());
 				m_Camera->SetFront(player->GetFacing());
 			}
 		}
-
-		if (m_RenderState == eRenderState::InGame && !m_IsPaused)
-			ProcessGameplayInputs();
 	}
 
 	void Renderer::ProcessGameplayInputs()
 	{
-		// Raycast from the camera's position.
+		// ----- RAYCASTING TO DETECT BLOCKS -----
 		glm::vec3 rayOrigin = m_Camera->GetPosition();
 		glm::vec3 rayDirection = m_Camera->GetFront();
 
@@ -378,6 +390,8 @@ namespace onion::voxel
 			DebugDraws::DrawBlockOutline(hitBlock.Position, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);
 			//DebugDraws::DrawBlockOutline(prevBlockPos, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 3, true);
 		}
+
+		m_HitBlock = hitBlock;
 
 		KeyState attackKeyState = m_KeyBinds.GetKeyState(eAction::Attack);
 		if (attackKeyState.IsPressed)
@@ -444,6 +458,30 @@ namespace onion::voxel
 		return glm::vec3(0.0f);
 	}
 
+	namespace
+	{
+		static glm::vec3 MoveTowards(const glm::vec3& current, const glm::vec3& target, float maxDelta)
+		{
+			glm::vec3 delta = target - current;
+			float len = glm::length(delta);
+
+			if (len <= maxDelta || len == 0.0f)
+				return target;
+
+			return current + (delta / len) * maxDelta;
+		}
+
+		static float MoveTowards(float current, float target, float maxDelta)
+		{
+			float delta = target - current;
+
+			if (std::abs(delta) <= maxDelta)
+				return target;
+
+			return current + std::copysign(maxDelta, delta);
+		}
+	} // namespace
+
 	void Renderer::UpdatePlayerFromInputs()
 	{
 		std::shared_ptr<Player> player = GetPlayer();
@@ -460,11 +498,39 @@ namespace onion::voxel
 			return;
 		}
 
+		// Constants
+		// Ground
+		float groundMaxSpeed = 6.0f;
+		float groundAcceleration = 120.0f;
+		float groundDeceleration = 150.f;
+
+		// Air
+		float airMaxSpeed = 5.0f;
+		float airAcceleration = 8.0f;
+		float airDeceleration = 4.0f; // optional, often low
+
+		// Flying
+		float flyMaxSpeed = m_PlayerFlySpeed;
+		float flyAcceleration = m_PlayerFlySpeed * 5.f;
+		float flyDeceleration = m_PlayerFlySpeed * 5.f;
+
 		auto inputs = m_InputsManager.GetInputsSnapshot();
+
+		auto physics = player->GetPhysicsBody();
 
 		glm::vec3 playerFront = glm::normalize(player->GetFacing());
 
-		// Player Orientation
+		// ----- KEY STATES -----
+		KeyState speedUpKeyState = m_KeyBinds.GetKeyState(eAction::Sprint);
+		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveForward);
+		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveBackward);
+		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::MoveLeft);
+		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::MoveRight);
+		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
+		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Crouch);
+		KeyState toggleFlyModeKeyState = m_KeyBinds.GetKeyState(eAction::ToggleFlyMode);
+
+		// ----- PLAYER ORIENTATION -----
 		if (inputs->Mouse.MovementOffsetChanged)
 		{
 			const float sensitivity = m_KeyBinds.GetMouseSensitivity();
@@ -492,8 +558,25 @@ namespace onion::voxel
 			playerFront = glm::normalize(newFront);
 		}
 
-		// Adjust Player Speed
-		if (inputs->Mouse.ScrollOffsetChanged)
+		// ----- TOGGLE FLYING MODE -----
+		if (toggleFlyModeKeyState.IsDoublePressed)
+		{
+			physics.IsFlying = !physics.IsFlying;
+			if (physics.IsFlying)
+			{
+				std::cout << "Flying mode enabled\n";
+				// Reset vertical velocity
+				physics.Velocity.y = 0.0f;
+			}
+			else
+			{
+				std::cout << "Flying mode disabled\n";
+			}
+		}
+
+		// ----- PLAYER FLYING SPEED -----
+		float flyVelocity = m_PlayerFlySpeed * (float) m_DeltaTime;
+		if (physics.IsFlying && inputs->Mouse.ScrollOffsetChanged)
 		{
 			const double yoffset = inputs->Mouse.ScrollYoffset;
 			if (yoffset != 0.f)
@@ -502,47 +585,150 @@ namespace onion::voxel
 				float coeefDecrease = 0.7f;
 				if (yoffset > 0)
 				{
-					m_PlayerSpeed *= coeefIncrease; // Speed up
+					m_PlayerFlySpeed *= coeefIncrease; // Speed up
 				}
 				else if (yoffset < 0)
 				{
-					m_PlayerSpeed *= coeefDecrease; // Slow down
+					m_PlayerFlySpeed *= coeefDecrease; // Slow down
 				}
 			}
-		}
 
-		// Player Position
-		float velocity = m_PlayerSpeed * (float) m_DeltaTime;
-
-		KeyState speedUpKeyState = m_KeyBinds.GetKeyState(eAction::Sprint);
-		if (speedUpKeyState.IsPressed)
-		{
-			velocity *= 2.0f; // Double speed if left control is pressed
+			if (speedUpKeyState.IsPressed)
+			{
+				flyVelocity *= 2.0f; // Double speed if left control is pressed
+			}
 		}
 
 		// Flatten the front vector for XZ movement
 		glm::vec3 frontXZ = glm::normalize(glm::vec3(playerFront.x, 0.0f, playerFront.z));
 		const glm::vec3 Up(0.0f, 1.0f, 0.0f); // Up vector
 
-		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveForward);
-		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveBackward);
-		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::MoveLeft);
-		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::MoveRight);
-		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
-		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Crouch);
+		glm::vec3 moveDir(0.0f);
 
-		if (moveForwardKeyState.IsPressed)
-			player->SetPosition(player->GetPosition() + frontXZ * velocity);
-		if (moveBackwardKeyState.IsPressed)
-			player->SetPosition(player->GetPosition() - frontXZ * velocity);
-		if (moveLeftKeyState.IsPressed)
-			player->SetPosition(player->GetPosition() - glm::normalize(glm::cross(frontXZ, Up)) * velocity);
-		if (moveRightKeyState.IsPressed)
-			player->SetPosition(player->GetPosition() + glm::normalize(glm::cross(frontXZ, Up)) * velocity);
-		if (moveUpKeyState.IsPressed)
-			player->SetPosition(player->GetPosition() + Up * velocity);
-		if (moveDownKeyState.IsPressed)
-			player->SetPosition(player->GetPosition() - Up * velocity);
+		if (physics.IsFlying)
+		{
+
+			// Flying movement
+			if (moveForwardKeyState.IsPressed)
+				moveDir += frontXZ;
+			if (moveBackwardKeyState.IsPressed)
+				moveDir -= frontXZ;
+			if (moveLeftKeyState.IsPressed)
+				moveDir -= glm::normalize(glm::cross(frontXZ, Up));
+			if (moveRightKeyState.IsPressed)
+				moveDir += glm::normalize(glm::cross(frontXZ, Up));
+			if (moveUpKeyState.IsPressed)
+				moveDir += Up;
+			if (moveDownKeyState.IsPressed)
+				moveDir -= Up;
+
+			if (glm::length(moveDir) > 0.0f)
+				moveDir = glm::normalize(moveDir);
+
+			if (speedUpKeyState.IsPressed)
+				flyMaxSpeed *= 2.0f;
+
+			glm::vec3 desiredVelocity = moveDir * flyMaxSpeed;
+
+			if (glm::length(moveDir) > 0.0f)
+			{
+				physics.Velocity = MoveTowards(physics.Velocity, desiredVelocity, flyAcceleration * m_DeltaTime);
+			}
+			else
+			{
+				physics.Velocity = MoveTowards(physics.Velocity, glm::vec3(0.0f), flyDeceleration * m_DeltaTime);
+			}
+		}
+		else
+		{
+			// Walking movement
+
+			float maxSpeed = physics.OnGround ? groundMaxSpeed : airMaxSpeed;
+			float acceleration = physics.OnGround ? groundAcceleration : airAcceleration;
+			float deceleration = physics.OnGround ? groundDeceleration : airDeceleration;
+
+			if (moveForwardKeyState.IsPressed)
+				moveDir += frontXZ;
+			if (moveBackwardKeyState.IsPressed)
+				moveDir -= frontXZ;
+			if (moveLeftKeyState.IsPressed)
+				moveDir -= glm::normalize(glm::cross(frontXZ, Up));
+			if (moveRightKeyState.IsPressed)
+				moveDir += glm::normalize(glm::cross(frontXZ, Up));
+
+			if (glm::length(moveDir) > 0.0f)
+			{
+				glm::vec3 desiredDir = glm::normalize(moveDir);
+
+				float sprintFactor = 1.0f;
+
+				if (speedUpKeyState.IsPressed)
+				{
+					// How aligned we are with forward direction
+					float forwardDot = glm::dot(desiredDir, frontXZ);
+
+					// Only boost if moving forward
+					if (forwardDot > 0.7f) // ~45° cone (tweakable)
+					{
+						sprintFactor = 1.5f;
+					}
+				}
+
+				float finalMaxSpeed = maxSpeed * sprintFactor;
+				float finalAcceleration = acceleration * sprintFactor;
+
+				physics.Velocity =
+					MoveTowards(physics.Velocity, desiredDir * finalMaxSpeed, finalAcceleration * m_DeltaTime);
+			}
+			else
+			{
+				physics.Velocity = MoveTowards(physics.Velocity, glm::vec3(0.0f), deceleration * m_DeltaTime);
+			}
+
+			// Jumping
+			if (moveUpKeyState.IsPressed && physics.OnGround)
+			{
+				physics.Velocity.y = m_PhysicsEngine.GetJumpStrength();
+
+				glm::vec3 horizontalVelocity = glm::vec3(physics.Velocity.x, 0.0f, physics.Velocity.z);
+				float horizontalSpeed = glm::length(horizontalVelocity);
+
+				if (horizontalSpeed > 0.0001f)
+				{
+					glm::vec3 currentDir = glm::normalize(horizontalVelocity);
+					glm::vec3 desiredDir = glm::normalize(glm::vec3(playerFront.x, 0.0f, playerFront.z));
+
+					float dot = glm::dot(currentDir, desiredDir);
+
+					// Threshold ~90° (cos(90°) = 0)
+					if (dot > 0.0f)
+					{
+						// Smooth blend for small angles
+						float control = 0.3f;
+						glm::vec3 newDir = glm::normalize(glm::mix(currentDir, desiredDir, control));
+
+						physics.Velocity.x = newDir.x * horizontalSpeed;
+						physics.Velocity.z = newDir.z * horizontalSpeed;
+
+						// Add a small kick in facing direction for better feel
+						glm::vec3 frontXZ = glm::normalize(glm::vec3(playerFront.x, 0.0f, playerFront.z));
+						physics.Velocity += frontXZ * (groundMaxSpeed / 3);
+					}
+					else
+					{
+						// Snap for large angles, but reduce speed
+						float penalty = 0.7f; //
+
+						physics.Velocity.x = desiredDir.x * horizontalSpeed * penalty;
+						physics.Velocity.z = desiredDir.z * horizontalSpeed * penalty;
+					}
+				}
+
+				physics.OnGround = false;
+			}
+		}
+
+		player->SetPhysicsBody(physics);
 	}
 
 	void Renderer::UpdateCameraFromInputs()
@@ -773,6 +959,33 @@ namespace onion::voxel
 				m_Camera->SetAspectRatio(aspect);
 
 			ImGui::DragFloat("Speed", &m_CameraSpeed, 0.1f, 0.1f, 50.f);
+		}
+
+		// ----- Raycast Debug -----
+		if (ImGui::CollapsingHeader("Raycast", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::Text(
+				"Hit Block Position: %d, %d, %d", m_HitBlock.Position.x, m_HitBlock.Position.y, m_HitBlock.Position.z);
+			ImGui::Text("Hit Block ID: %d", m_HitBlock.ID());
+		}
+
+		ImGui::End();
+	}
+
+	void Renderer::RenderPhysicsDebugPanel()
+	{
+		ImGui::Begin("Physics Debug");
+
+		float gravity = m_PhysicsEngine.GetGravity();
+		if (ImGui::DragFloat("Gravity", &gravity, 0.1f, -50.f, 50.f))
+		{
+			m_PhysicsEngine.SetGravity(gravity);
+		}
+
+		float jumpStrength = m_PhysicsEngine.GetJumpStrength();
+		if (ImGui::DragFloat("Jump Strength", &jumpStrength, 0.1f, 0.f, 50.f))
+		{
+			m_PhysicsEngine.SetJumpStrength(jumpStrength);
 		}
 
 		ImGui::End();

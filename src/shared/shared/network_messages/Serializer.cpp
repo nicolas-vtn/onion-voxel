@@ -186,23 +186,95 @@ namespace onion::voxel
 		return block;
 	}
 
-	EntityDTO Serializer::SerializeEntity(const Entity& entity)
+	TransformDTO Serializer::SerializeTransform(const Transform& transform)
 	{
-		EntityDTO dto;
-		dto.Type = static_cast<int>(entity.GetType());
-		dto.Position = entity.GetPosition();
-		dto.Facing = entity.GetFacing();
-		dto.Name = entity.GetName();
-		dto.UUID = entity.GetUUID();
+		TransformDTO dto;
+		dto.Position = transform.Position;
+		dto.Rotation = transform.Rotation;
+		dto.Scale = transform.Scale;
 		return dto;
 	}
 
-	Entity Serializer::DeserializeEntity(const EntityDTO& dto)
+	Transform Serializer::DeserializeTransform(const TransformDTO& dto)
 	{
-		Entity entity(static_cast<EntityType>(dto.Type), dto.UUID, dto.Name);
-		entity.SetPosition(dto.Position);
-		entity.SetFacing(dto.Facing);
+		Transform transform;
+		transform.Position = dto.Position;
+		transform.Rotation = dto.Rotation;
+		transform.Scale = dto.Scale;
+		return transform;
+	}
+
+	PhysicsBodyDTO Serializer::SerializePhysicsBody(const PhysicsBody& physicsBody)
+	{
+		PhysicsBodyDTO dto;
+		dto.Velocity = physicsBody.Velocity;
+		dto.OnGround = physicsBody.OnGround;
+		dto.IsFlying = physicsBody.IsFlying;
+		dto.HalfSize = physicsBody.HalfSize;
+		dto.Offset = physicsBody.Offset;
+		return dto;
+	}
+
+	PhysicsBody Serializer::DeserializePhysicsBody(const PhysicsBodyDTO& dto)
+	{
+		PhysicsBody physicsBody;
+		physicsBody.Velocity = dto.Velocity;
+		physicsBody.OnGround = dto.OnGround;
+		physicsBody.IsFlying = dto.IsFlying;
+		physicsBody.HalfSize = dto.HalfSize;
+		physicsBody.Offset = dto.Offset;
+		return physicsBody;
+	}
+
+	void Serializer::ApplyEntityDTO(const EntityDTO& dto, std::shared_ptr<Entity> entity)
+	{
+		if (dto.PhysicsBody)
+		{
+			entity->SetPhysicsBody(DeserializePhysicsBody(*dto.PhysicsBody));
+		}
+
+		if (dto.Transform)
+		{
+			entity->SetTransform(DeserializeTransform(*dto.Transform));
+		}
+	}
+
+	EntityDTO Serializer::SerializeEntity(const Entity& entity)
+	{
+		EntityDTO dto;
+		dto.Type = static_cast<int>(entity.Type);
+		dto.UUID = entity.UUID;
+		if (entity.HasPhysicsBody())
+			dto.PhysicsBody = SerializePhysicsBody(entity.GetPhysicsBody());
+		if (entity.HasTransform())
+			dto.Transform = SerializeTransform(entity.GetTransform());
+		return dto;
+	}
+
+	std::shared_ptr<Entity> Serializer::DeserializeEntity(const EntityDTO& dto)
+	{
+		auto entity = std::make_shared<Entity>(static_cast<EntityType>(dto.Type), dto.UUID);
+		ApplyEntityDTO(dto, entity);
+
 		return entity;
+	}
+
+	PlayerDTO Serializer::SerializePlayer(const Player& player)
+	{
+		EntityDTO entityDTO = SerializeEntity(player);
+		PlayerDTO playerDto(entityDTO);
+		playerDto.Name = player.GetName();
+		return playerDto;
+	}
+
+	std::shared_ptr<Player> Serializer::DeserializePlayer(const PlayerDTO& dto)
+	{
+		auto player = std::make_shared<Player>(dto.UUID);
+		ApplyEntityDTO(dto, player);
+
+		player->SetName(dto.Name);
+
+		return player;
 	}
 
 } // namespace onion::voxel

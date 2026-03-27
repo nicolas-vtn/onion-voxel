@@ -12,6 +12,7 @@
 #include <string>
 #include <thread>
 
+#include <shared/physics/PhysicsEngine.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
 #include "gui/Gui.hpp"
@@ -130,15 +131,20 @@ namespace onion::voxel
 		std::shared_ptr<WorldManager> m_WorldManager;
 
 		void UpdatePlayerFromInputs();
-		float m_PlayerSpeed = 5.0f;
+		float m_PlayerFlySpeed = 5.0f;
 
 		// ------ World Renderer ------
 	  private:
 		std::shared_ptr<Camera> m_Camera;
+		Block m_HitBlock;
 		float m_CameraSpeed = 5.0f;
 		WorldRenderer m_WorldRenderer;
-		bool m_IsFreeCamera = true;
+		bool m_IsFreeCamera = false;
 		void UpdateCameraFromInputs();
+
+		// ----- Physics Engine -----
+	  private:
+		PhysicsEngine m_PhysicsEngine;
 
 		// ----- Server Info -----
 	  private:
@@ -162,6 +168,7 @@ namespace onion::voxel
 		void InitImGui();
 		void BeginImGuiFrame();
 		void RenderDebugPanel();
+		void RenderPhysicsDebugPanel();
 		void EndImGuiFrame();
 	};
 

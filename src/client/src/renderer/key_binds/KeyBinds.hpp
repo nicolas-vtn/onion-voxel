@@ -17,6 +17,7 @@ namespace onion::voxel
 		Sprint,
 		Crouch,
 		ToggleMouseCapture,
+		ToggleFlyMode,
 		Pause,
 		Attack,
 		Interact,

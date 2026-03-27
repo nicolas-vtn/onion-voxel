@@ -131,7 +131,25 @@ namespace onion::voxel
 		//		  << msg.Position.z << "\n";
 
 		// Update player
-		m_WorldManager->Entities->UpdatePlayer(msg.UUID, msg.Position, msg.Facing);
+
+		std::shared_ptr<Player> player = m_WorldManager->GetPlayer(msg.player.UUID);
+
+		std::shared_ptr<Player> deserializedPlayer = Serializer::DeserializePlayer(msg.player);
+
+		if (player && deserializedPlayer)
+		{
+			player->SetName(deserializedPlayer->GetName());
+
+			if (deserializedPlayer->HasTransform())
+			{
+				player->SetTransform(deserializedPlayer->GetTransform());
+			}
+
+			if (deserializedPlayer->HasPhysicsBody())
+			{
+				player->SetPhysicsBody(deserializedPlayer->GetPhysicsBody());
+			}
+		}
 	}
 
 	void Server::Handle_TimerSendEvents()
@@ -147,15 +165,15 @@ namespace onion::voxel
 		EntitySnapshotMsg entitySnapshotMsg;
 		for (const auto& [clientHandle, player] : players)
 		{
-			EntityDTO playerDTO = Serializer::SerializeEntity(*player);
-			entitySnapshotMsg.Entities.push_back(playerDTO);
+			PlayerDTO playerDTO = Serializer::SerializePlayer(*player);
+			entitySnapshotMsg.Players.push_back(std::move(playerDTO));
 		}
 
 		auto entities = m_WorldManager->Entities->GetAllEntities();
 		for (const auto& entity : entities)
 		{
 			EntityDTO entityDTO = Serializer::SerializeEntity(*entity);
-			entitySnapshotMsg.Entities.push_back(entityDTO);
+			entitySnapshotMsg.Entities.push_back(std::move(entityDTO));
 		}
 
 		m_NetworkServer.Broadcast(entitySnapshotMsg);
@@ -209,8 +227,8 @@ namespace onion::voxel
 		// Add the new Player
 		AddPlayer(playerInfo);
 
-		// Arbitrary Set player position to 8 , 100, 8
-		m_WorldManager->Entities->SetPlayerPosition(args.UUID, glm::vec3(8.0f, 100.0f, 8.0f));
+		// Arbitrary Set player position to 8 , 20, 8
+		m_WorldManager->Entities->SetPlayerPosition(args.UUID, glm::vec3(8.0f, 20.0f, 8.0f));
 
 		ServerInfoMsg srvInfoMsg;
 		srvInfoMsg.ServerName = m_Config.serverData.ServerName;
@@ -265,7 +283,11 @@ namespace onion::voxel
 
 	void Server::AddPlayer(const PlayerInfo& playerInfo)
 	{
-		m_WorldManager->Entities->AddPlayer(playerInfo.UUID, playerInfo.Username);
+
+		std::shared_ptr<Player> player = std::make_shared<Player>(playerInfo.UUID);
+
+		m_WorldManager->Entities->AddPlayer(player);
+
 		{
 			std::lock_guard lock(m_MutexPlayers);
 			m_ClientHandleToPlayerInfo[playerInfo.ClientHandle] = playerInfo;

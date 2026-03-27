@@ -18,8 +18,9 @@ namespace onion::voxel
 
 		double Timestamp = 0.0; // Time when the snapshot was taken (in seconds since epoch)
 
+		std::vector<PlayerDTO> Players;
 		std::vector<EntityDTO> Entities;
 
-		template <class Archive> void serialize(Archive& ar) { ar(Timestamp, Entities); }
+		template <class Archive> void serialize(Archive& ar) { ar(Timestamp, Players, Entities); }
 	};
 } // namespace onion::voxel

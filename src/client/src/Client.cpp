@@ -340,54 +340,48 @@ namespace onion::voxel
 	{
 		//std::cout << "Received EntitySnapshotMsg: " << msg.Entities.size() << " entities\n";
 
+		std::vector<std::shared_ptr<Entity>> players;
+		for (const auto& playerDTO : msg.Players)
+		{
+			// Deserialize the player and add it to the list of players to update in the EntityManager
+			std::shared_ptr<Player> player = Serializer::DeserializePlayer(playerDTO);
+
+			// If the entity is the player itself, update only if player not present in entities manager
+			if (player->UUID == m_Config.clientData.UUID)
+			{
+				const bool hasPlayerBeenSet = m_WorldManager->GetPlayer(m_Config.clientData.UUID) != nullptr;
+				if (!hasPlayerBeenSet)
+				{
+					// If the player has not been set yet, add it to the EntityManager
+
+					// Enable Fly
+					PhysicsBody physicsBody = player->GetPhysicsBody();
+					physicsBody.IsFlying = true;
+					player->SetPhysicsBody(physicsBody);
+
+					// Place a block
+					Block block(player->GetPosition() + glm::vec3(2.f, 0.f, 2.f), BlockId::Cobblestone);
+					m_WorldManager->SetBlock(block, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
+
+					players.push_back(player);
+					m_WorldManager->Entities->SetLocalPlayer(player);
+				}
+
+				continue;
+			}
+
+			players.push_back(player);
+		}
+
 		std::vector<std::shared_ptr<Entity>> entities;
 		for (const auto& entityDTO : msg.Entities)
 		{
 			// Deserialize the entity and add it to the list of entities to update in the EntityManager
-			std::shared_ptr<Entity> entity = std::make_shared<Entity>(Serializer::DeserializeEntity(entityDTO));
-
-			if (entity->GetType() == EntityType::Player)
-			{
-				//std::cout << "Received player entity: " << entity->GetName() << " (UUID: " << entity->GetUUID()
-				//		  << ")\n";
-
-				std::shared_ptr<Player> playerEntity = std::make_shared<Player>(entity->GetUUID(), entity->GetName());
-				playerEntity->SetPosition(entity->GetPosition());
-				playerEntity->SetFacing(entity->GetFacing());
-
-				// If the entity is the player itself, update only if player not present in entities manager, or if position has changed a lot.
-				if (playerEntity->GetUUID() == m_Config.clientData.UUID)
-				{
-					bool hasPlayerBeenSet = m_WorldManager->GetPlayer(m_Config.clientData.UUID) != nullptr;
-					if (hasPlayerBeenSet)
-					{
-						glm::vec3 currentPlayerPosition = m_Renderer.GetPlayerPosition();
-						float distance = glm::distance(currentPlayerPosition, playerEntity->GetPosition());
-						// If the distance is greater than a threshold, update the player position in the EntityManager
-						const float positionUpdateThreshold = 5000000.f; // Adjust this threshold as needed
-						if (distance > positionUpdateThreshold)
-						{
-							entities.push_back(playerEntity);
-						}
-					}
-					else
-					{
-						// If the player has not been set yet, add it to the EntityManager
-						entities.push_back(playerEntity);
-					}
-				}
-				else
-				{
-					// For other players, always update their position in the EntityManager
-					entities.push_back(playerEntity);
-				}
-			}
-			else
-			{
-				entities.push_back(entity);
-			}
+			std::shared_ptr<Entity> entity = Serializer::DeserializeEntity(entityDTO);
+			entities.push_back(entity);
 		}
 
+		m_WorldManager->Entities->UpdateEntities(players);
 		m_WorldManager->Entities->UpdateEntities(entities);
 	}
 
@@ -401,10 +395,7 @@ namespace onion::voxel
 		}
 
 		PlayerInfoMsg playerInfoMsg;
-		playerInfoMsg.Username = m_Config.clientData.Username;
-		playerInfoMsg.UUID = m_Config.clientData.UUID;
-		playerInfoMsg.Position = player->GetPosition();
-		playerInfoMsg.Facing = player->GetFacing();
+		playerInfoMsg.player = Serializer::SerializePlayer(*player);
 
 		m_NetworkClient.Send(std::move(playerInfoMsg), false);
 	}
