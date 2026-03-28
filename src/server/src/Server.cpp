@@ -139,6 +139,7 @@ namespace onion::voxel
 		if (player && deserializedPlayer)
 		{
 			player->SetName(deserializedPlayer->GetName());
+			player->SetState(deserializedPlayer->GetState());
 
 			if (deserializedPlayer->HasTransform())
 			{

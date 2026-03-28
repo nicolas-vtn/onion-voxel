@@ -18,7 +18,7 @@ namespace onion::voxel
 		SubscribeToWorldManagerEvents();
 
 		m_TimerSendPlayerInfos.setTimeoutFunction([this]() { SendPlayerInfosToServer(); });
-		m_TimerSendPlayerInfos.setElapsedPeriod(std::chrono::milliseconds(500));
+		m_TimerSendPlayerInfos.setElapsedPeriod(std::chrono::milliseconds(50));
 		m_TimerSendPlayerInfos.setRepeat(true);
 	}
 

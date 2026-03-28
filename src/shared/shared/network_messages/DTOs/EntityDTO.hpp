@@ -17,10 +17,11 @@ namespace onion::voxel
 	{
 		int Type = 0;
 		std::string UUID;
+		uint8_t State = 0;
 
 		std::optional<TransformDTO> Transform;
 		std::optional<PhysicsBodyDTO> PhysicsBody;
 
-		template <class Archive> void serialize(Archive& ar) { ar(Type, UUID, Transform, PhysicsBody); }
+		template <class Archive> void serialize(Archive& ar) { ar(Type, UUID, State, Transform, PhysicsBody); }
 	};
 } // namespace onion::voxel
