@@ -1,4 +1,4 @@
-#include "skeleton_player.hpp"
+#include "SkeletonPlayer.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -16,18 +16,21 @@ namespace onion::voxel
 
 	void SkeletonPlayer::SetPosition(const glm::vec3& position)
 	{
+		(void) position; // Avoid unused parameter warning
 		std::cerr << "[SkeletonPlayer::SetPosition] Not implemented yet!" << std::endl;
 		assert(false && "Not implemented yet!");
 	}
 
 	void SkeletonPlayer::SetFacingDirection(const glm::vec3& facingDirection)
 	{
+		(void) facingDirection; // Avoid unused parameter warning
 		std::cerr << "[SkeletonPlayer::SetFacingDirection] Not implemented yet!" << std::endl;
 		assert(false && "Not implemented yet!");
 	}
 
 	void SkeletonPlayer::SetScale(float scale)
 	{
+		(void) scale; // Avoid unused parameter warning
 		std::cerr << "[SkeletonPlayer::SetScale] Not implemented yet!" << std::endl;
 		assert(false && "Not implemented yet!");
 	}
@@ -40,6 +43,7 @@ namespace onion::voxel
 
 	void SkeletonPlayer::SetState(const Entity::State state, float progress, float intensity)
 	{
+		(void) intensity; // Avoid unused parameter warning
 
 		const float maxArmSwing = 50.f;
 		const float maxLegSwing = 40.f;
@@ -79,6 +83,8 @@ namespace onion::voxel
 
 	void SkeletonPlayer::RotateHead(const glm::vec3& facingDirection)
 	{
+		(void) facingDirection; // Avoid unused parameter warning
+
 		// Head.Rotate(m_RigPoint_Head, rotationAngles_deg_local);
 	}
 

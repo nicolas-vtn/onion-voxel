@@ -71,11 +71,11 @@ add_executable(OnionVoxel
 
 	"src/renderer/key_binds/KeyBinds.cpp"
 
-	"src/renderer/entity_renderer/entity_renderer.cpp"
-	"src/renderer/entity_renderer/cuboid.cpp"
-	"src/renderer/entity_renderer/skeleton/skeleton_player.cpp"
-	"src/renderer/entity_renderer/skeleton/skeleton.cpp"
-	"src/renderer/entity_renderer/texture_tile_mapper.cpp"
+	"src/renderer/entity_renderer/EntityRenderer.cpp"
+	"src/renderer/entity_renderer/Cuboid.cpp"
+	"src/renderer/entity_renderer/skeleton/SkeletonPlayer.cpp"
+	"src/renderer/entity_renderer/skeleton/Skeleton.cpp"
+	"src/renderer/entity_renderer/TextureTileMapper.cpp"
 
 )
 

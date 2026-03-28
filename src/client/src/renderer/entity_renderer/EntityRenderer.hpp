@@ -9,6 +9,7 @@
 #include <renderer/OpenGL.hpp>
 
 #include <renderer/EngineContext.hpp>
+#include <renderer/camera/Camera.hpp>
 #include <renderer/shader/shader.hpp>
 #include <renderer/texture/texture.hpp>
 
@@ -16,9 +17,9 @@
 #include <shared/entities/entity_manager/EntityManager.hpp>
 #include <shared/http_file_downloader/HttpFileDownloader.hpp>
 
-#include "cuboid.hpp"
-#include "skeleton/skeleton_player.hpp"
-#include "texture_tile_mapper.hpp"
+#include "Cuboid.hpp"
+#include "TextureTileMapper.hpp"
+#include "skeleton/SkeletonPlayer.hpp"
 
 namespace onion::voxel
 {
@@ -28,23 +29,20 @@ namespace onion::voxel
 
 		// ------- FORWARD DECLARATIONS -------
 	  private:
-		enum class SKIN_VERSION : uint8_t
+		enum class SkinVersion : uint8_t
 		{
-			LEGACY,
-			MODERN
+			Legacy,
+			Modern
 		};
 
 		// ------- CONSTRUCTOR & DESTRUCTOR -------
 	  public:
-		EntityRenderer();
+		EntityRenderer(const std::shared_ptr<Camera>& camera);
 		~EntityRenderer() = default;
 
 		// ------- RENDERING -------
 	  public:
-		void RenderEntities(const glm::mat4& view,
-							const glm::mat4& proj,
-							const std::shared_ptr<EntityManager>& Entities,
-							std::vector<std::string> HiddenEntities = std::vector<std::string>());
+		void RenderEntities(std::vector<std::string> HiddenEntities = std::vector<std::string>());
 
 		void ReloadTextures();
 
@@ -60,7 +58,7 @@ namespace onion::voxel
 
 		void BuildPlayerMesh(const std::shared_ptr<Player>& Player);
 
-		void BuildPlayerMesh(const SkeletonPlayer& skeleton, EntityRenderer::SKIN_VERSION skinVersion);
+		void BuildPlayerMesh(const SkeletonPlayer& skeleton, EntityRenderer::SkinVersion skinVersion);
 		void BuildPlayerMesh_Legacy(const SkeletonPlayer& skeleton);
 		void BuildPlayerMesh_Modern(const SkeletonPlayer& skeleton);
 
@@ -82,6 +80,10 @@ namespace onion::voxel
 
 		ThreadSafeQueue<Texture> m_TexturesToDelete;
 
+		// ------- CAMERA -------
+	  private:
+		std::shared_ptr<Camera> m_Camera;
+
 		// ------ ASYNC SKIN LOADER ------
 	  private:
 		void LoadPlayerSkinAsync(const std::string& playerName);
@@ -96,7 +98,7 @@ namespace onion::voxel
 
 		// ------- SKIN VERSION -------
 	  private:
-		SKIN_VERSION GetPlayerSkinVersion(const std::string& playerName) const;
+		SkinVersion GetPlayerSkinVersion(const std::string& playerName) const;
 
 		// ------- SHADER -------
 	  private:

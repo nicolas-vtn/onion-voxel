@@ -21,7 +21,8 @@ namespace onion::voxel
 {
 	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager)
 		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), 800, 600)),
-		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager)
+		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager),
+		  m_EntityRenderer(m_Camera)
 	{
 		// Sets the Engine Context
 		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager);
@@ -219,7 +220,7 @@ namespace onion::voxel
 					hiddenEntities.push_back(m_PlayerUUID);
 				}
 
-				m_EntityRenderer.RenderEntities(viewMatrix, projectionMatrix, m_WorldManager->Entities, hiddenEntities);
+				m_EntityRenderer.RenderEntities(hiddenEntities);
 			}
 
 			// Render GUI
@@ -481,16 +482,6 @@ namespace onion::voxel
 
 			return current + (delta / len) * maxDelta;
 		}
-
-		static float MoveTowards(float current, float target, float maxDelta)
-		{
-			float delta = target - current;
-
-			if (std::abs(delta) <= maxDelta)
-				return target;
-
-			return current + std::copysign(maxDelta, delta);
-		}
 	} // namespace
 
 	void Renderer::UpdatePlayerFromInputs()
@@ -646,12 +637,14 @@ namespace onion::voxel
 				Entity::State state = speedUpKeyState.IsPressed ? Entity::State::Running : Entity::State::Walking;
 				player->SetState(state);
 
-				physics.Velocity = MoveTowards(physics.Velocity, desiredVelocity, flyAcceleration * m_DeltaTime);
+				physics.Velocity =
+					MoveTowards(physics.Velocity, desiredVelocity, flyAcceleration * static_cast<float>(m_DeltaTime));
 			}
 			else
 			{
 				player->SetState(Entity::State::Idle);
-				physics.Velocity = MoveTowards(physics.Velocity, glm::vec3(0.0f), flyDeceleration * m_DeltaTime);
+				physics.Velocity =
+					MoveTowards(physics.Velocity, glm::vec3(0.0f), flyDeceleration * static_cast<float>(m_DeltaTime));
 			}
 		}
 		else
@@ -696,12 +689,13 @@ namespace onion::voxel
 				float finalMaxSpeed = maxSpeed * sprintFactor;
 				float finalAcceleration = acceleration * sprintFactor;
 
-				physics.Velocity =
-					MoveTowards(physics.Velocity, desiredDir * finalMaxSpeed, finalAcceleration * m_DeltaTime);
+				physics.Velocity = MoveTowards(
+					physics.Velocity, desiredDir * finalMaxSpeed, finalAcceleration * static_cast<float>(m_DeltaTime));
 			}
 			else
 			{
-				physics.Velocity = MoveTowards(physics.Velocity, glm::vec3(0.0f), deceleration * m_DeltaTime);
+				physics.Velocity =
+					MoveTowards(physics.Velocity, glm::vec3(0.0f), deceleration * static_cast<float>(m_DeltaTime));
 				player->SetState(Entity::State::Idle);
 			}
 
@@ -731,7 +725,6 @@ namespace onion::voxel
 						physics.Velocity.z = newDir.z * horizontalSpeed;
 
 						// Add a small kick in facing direction for better feel
-						glm::vec3 frontXZ = glm::normalize(glm::vec3(playerFront.x, 0.0f, playerFront.z));
 						physics.Velocity += frontXZ * (groundMaxSpeed / 3);
 					}
 					else

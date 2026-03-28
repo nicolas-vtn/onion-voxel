@@ -15,7 +15,7 @@
 #include <shared/physics/PhysicsEngine.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
-#include "entity_renderer/entity_renderer.hpp"
+#include "entity_renderer/EntityRenderer.hpp"
 #include "gui/Gui.hpp"
 #include "inputs_manager/inputs_manager.hpp"
 #include "key_binds/KeyBinds.hpp"

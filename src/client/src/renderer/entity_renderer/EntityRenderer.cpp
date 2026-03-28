@@ -1,4 +1,4 @@
-#include "entity_renderer.hpp"
+#include "EntityRenderer.hpp"
 
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
@@ -11,8 +11,9 @@
 
 namespace onion::voxel
 {
-	EntityRenderer::EntityRenderer()
-		: m_ShaderEntity(GetAssetsPath() / "shaders" / "entity.vert", GetAssetsPath() / "shaders" / "entity.frag")
+	EntityRenderer::EntityRenderer(const std::shared_ptr<Camera>& camera)
+		: m_Camera(camera),
+		  m_ShaderEntity(GetAssetsPath() / "shaders" / "entity.vert", GetAssetsPath() / "shaders" / "entity.frag")
 	{
 
 		// Starts the thread that will download the player skins asynchronously
@@ -55,10 +56,7 @@ namespace onion::voxel
 		m_IsInitialized = true;
 	}
 
-	void EntityRenderer::RenderEntities(const glm::mat4& view,
-										const glm::mat4& proj,
-										const std::shared_ptr<EntityManager>& Entities,
-										std::vector<std::string> HiddenEntities)
+	void EntityRenderer::RenderEntities(std::vector<std::string> HiddenEntities)
 	{
 		if (!m_IsInitialized)
 		{
@@ -79,7 +77,7 @@ namespace onion::voxel
 			tex.Delete();
 		}
 
-		auto entities = Entities->GetAllPlayers();
+		const auto entities = EngineContext::Get().World->Entities->GetAllPlayers();
 
 		// Clear the vertices after rendering
 		m_VerticesEntities.clear();
@@ -108,6 +106,8 @@ namespace onion::voxel
 			return;
 
 		// Use Shader, set uniforms and bind textures
+		const glm::mat4 view = m_Camera->GetViewMatrix();
+		const glm::mat4 proj = m_Camera->GetProjectionMatrix();
 		m_ShaderEntity.Use();
 		m_ShaderEntity.setMat4("view", view);
 		m_ShaderEntity.setMat4("projection", proj);
@@ -226,7 +226,7 @@ namespace onion::voxel
 		}
 
 		// Retrieves the Skin Version
-		SKIN_VERSION skinVersion = GetPlayerSkinVersion(Player->GetName());
+		const SkinVersion skinVersion = GetPlayerSkinVersion(Player->GetName());
 
 		const float scale = (1 / 18.f);
 		// const float scale = (1.f);
@@ -858,10 +858,10 @@ namespace onion::voxel
 		}
 	}
 
-	EntityRenderer::SKIN_VERSION EntityRenderer::GetPlayerSkinVersion(const std::string& playerName) const
+	EntityRenderer::SkinVersion EntityRenderer::GetPlayerSkinVersion(const std::string& playerName) const
 	{
 
-		SKIN_VERSION skinVersion;
+		SkinVersion skinVersion;
 
 		std::shared_lock<std::shared_mutex> lock(m_MutexPlayersSkins);
 
@@ -874,32 +874,32 @@ namespace onion::voxel
 			if (playerTexture.Width() == 64 && playerTexture.Height() == 64)
 			{
 				// Skin is in the new format (64x64)
-				skinVersion = SKIN_VERSION::MODERN;
+				skinVersion = SkinVersion::Modern;
 			}
 			else
 			{
 				// Skin is in the old format (64x32)
-				skinVersion = SKIN_VERSION::LEGACY;
+				skinVersion = SkinVersion::Legacy;
 			}
 		}
 		else
 		{
 			// Skin is not loaded yet, assume modern format
-			skinVersion = SKIN_VERSION::MODERN;
+			skinVersion = SkinVersion::Modern;
 		}
 
 		return skinVersion;
 	}
 
-	void EntityRenderer::BuildPlayerMesh(const SkeletonPlayer& skeleton, EntityRenderer::SKIN_VERSION skinVersion)
+	void EntityRenderer::BuildPlayerMesh(const SkeletonPlayer& skeleton, EntityRenderer::SkinVersion skinVersion)
 	{
 		switch (skinVersion)
 		{
-			case EntityRenderer::SKIN_VERSION::LEGACY:
+			case EntityRenderer::SkinVersion::Legacy:
 				BuildPlayerMesh_Legacy(skeleton);
 				break;
 
-			case EntityRenderer::SKIN_VERSION::MODERN:
+			case EntityRenderer::SkinVersion::Modern:
 				BuildPlayerMesh_Modern(skeleton);
 				break;
 
