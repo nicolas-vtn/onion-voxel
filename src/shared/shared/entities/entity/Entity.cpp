@@ -89,4 +89,16 @@ namespace onion::voxel
 		m_Transform->Rotation.x = pitch;
 	}
 
+	Entity::State Entity::GetState() const
+	{
+		std::shared_lock lock(m_Mutex);
+		return m_State;
+	}
+
+	void Entity::SetState(const State state)
+	{
+		std::unique_lock lock(m_Mutex);
+		m_State = state;
+	}
+
 } // namespace onion::voxel

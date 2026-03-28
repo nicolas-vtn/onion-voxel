@@ -228,6 +228,8 @@ namespace onion::voxel
 
 	void Serializer::ApplyEntityDTO(const EntityDTO& dto, std::shared_ptr<Entity> entity)
 	{
+		entity->SetState(static_cast<Entity::State>(dto.State));
+
 		if (dto.PhysicsBody)
 		{
 			entity->SetPhysicsBody(DeserializePhysicsBody(*dto.PhysicsBody));
@@ -244,6 +246,7 @@ namespace onion::voxel
 		EntityDTO dto;
 		dto.Type = static_cast<int>(entity.Type);
 		dto.UUID = entity.UUID;
+		dto.State = static_cast<uint8_t>(entity.GetState());
 		if (entity.HasPhysicsBody())
 			dto.PhysicsBody = SerializePhysicsBody(entity.GetPhysicsBody());
 		if (entity.HasTransform())
@@ -254,6 +257,7 @@ namespace onion::voxel
 	std::shared_ptr<Entity> Serializer::DeserializeEntity(const EntityDTO& dto)
 	{
 		auto entity = std::make_shared<Entity>(static_cast<EntityType>(dto.Type), dto.UUID);
+		entity->SetState(static_cast<Entity::State>(dto.State));
 		ApplyEntityDTO(dto, entity);
 
 		return entity;

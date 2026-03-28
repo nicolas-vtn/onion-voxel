@@ -8,11 +8,14 @@ namespace onion::voxel
 {
 	class EngineContext
 	{
+		// ----- MEMBERS -----
 	  public:
+		std::string PlayerUUID;
 		WorldManager* World;
 		AssetsManager* Assets;
 		InputsManager* Inputs;
 
+		// ----- Public Static API -----
 	  public:
 		static void Initialize(WorldManager* world, AssetsManager* assets, InputsManager* inputs)
 		{
@@ -30,12 +33,19 @@ namespace onion::voxel
 			return *s_Instance;
 		}
 
+		// ----- Public API -----
+	  public:
+		std::shared_ptr<Player> GetLocalPlayer() const { return World->GetPlayer(PlayerUUID); }
+
+		// ----- Constructor / Destructor -----
 	  private:
 		EngineContext(WorldManager* world, AssetsManager* assets, InputsManager* inputs)
 			: World(world), Assets(assets), Inputs(inputs)
 		{
 		}
 
+		// ----- Private Static Members -----
+	  private:
 		static inline EngineContext* s_Instance = nullptr;
 	};
 } // namespace onion::voxel

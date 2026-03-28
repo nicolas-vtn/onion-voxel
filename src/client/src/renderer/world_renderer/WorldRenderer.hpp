@@ -77,10 +77,6 @@ namespace onion::voxel
 		void InitializeShaderVariables();
 		void MarkNeighboringSubChunkMeshesDirty(const glm::ivec3& blockPosition);
 
-		// ----- Internal Renderings -----
-	  private:
-		void RenderPlayersBoundingBoxes();
-
 		// ----- Camera -----
 	  private:
 		std::shared_ptr<Camera> m_Camera;
@@ -110,8 +106,6 @@ namespace onion::voxel
 		// ----- ImGui menu -----
 	  private:
 		void RenderDebugPanel();
-		void RenderPlayerDebugPanel();
 		bool m_UseFaceCulling{true};
-		bool m_RenderPlayerBoundingBoxes{true};
 	};
 } // namespace onion::voxel

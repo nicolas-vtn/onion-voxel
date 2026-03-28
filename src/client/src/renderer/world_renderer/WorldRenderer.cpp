@@ -122,7 +122,6 @@ namespace onion::voxel
 
 		// Render Debug Panel
 		RenderDebugPanel();
-		RenderPlayerDebugPanel();
 
 		if (!m_HasShaderBeenInitialized)
 		{
@@ -132,11 +131,6 @@ namespace onion::voxel
 		if (m_RenderChunkBorders)
 		{
 			RenderChunkBorders();
-		}
-
-		if (m_RenderPlayerBoundingBoxes)
-		{
-			RenderPlayersBoundingBoxes();
 		}
 
 		RebuildDirtyChunkMeshesAsync();
@@ -456,39 +450,6 @@ namespace onion::voxel
 		}
 	}
 
-	void WorldRenderer::RenderPlayersBoundingBoxes()
-	{
-		const auto& players = m_WorldManager->Entities->GetAllPlayers();
-		for (const auto& [uuid, player] : players)
-		{
-			const glm::vec3 playerPos = player->GetPosition();
-			const glm::vec3 centerPos = playerPos + glm::vec3(0.f, Player::Size.y * 0.5f, 0.f);
-			const glm::vec3 boxColor = glm::vec3(1.0f, 0.0f, 0.0f);
-			DebugDraws::DrawWorldBoxCenterSize(centerPos, Player::Size, glm::vec4(boxColor, 1.0f), 2, false);
-
-			// Draw a line indicating the player's facing direction
-			const glm::vec3 forward = player->GetFacing();
-			const glm::vec3 playerEyePos = player->GetEyePosition();
-			const glm::vec3 lineColor = glm::vec3(0.0f, 1.0f, 0.0f);
-			DebugDraws::DrawWorldLine(playerEyePos, playerEyePos + forward, glm::vec4(lineColor, 1.0f), 2, false);
-
-			// Draw a cross indicating the player's exact position
-			const float crossSize = 0.1f;
-			const glm::vec3 crossColor = glm::vec3(0.0f, 0.0f, 1.0f);
-			DebugDraws::DrawWorldLine(playerPos - glm::vec3(crossSize, 0.0f, 0.0f),
-									  playerPos + glm::vec3(crossSize, 0.0f, 0.0f),
-									  glm::vec4(crossColor, 1.0f),
-									  2,
-									  false);
-
-			DebugDraws::DrawWorldLine(playerPos - glm::vec3(0.0f, 0.0f, crossSize),
-									  playerPos + glm::vec3(0.0f, 0.0f, crossSize),
-									  glm::vec4(crossColor, 1.0f),
-									  2,
-									  false);
-		}
-	}
-
 	void WorldRenderer::RebuildDirtyChunkMeshesAsync()
 	{
 		std::shared_lock lock(m_MutexChunkMeshes);
@@ -551,7 +512,6 @@ namespace onion::voxel
 		ImGui::Separator();
 		ImGui::Checkbox("Render Chunk Borders", &m_RenderChunkBorders);
 		ImGui::Checkbox("Use Face Culling", &m_UseFaceCulling);
-		ImGui::Checkbox("Render Player Bounding Boxes", &m_RenderPlayerBoundingBoxes);
 
 		// ----- Performance Options -----
 		ImGui::Separator();
@@ -581,60 +541,6 @@ namespace onion::voxel
 		if (ImGui::ColorEdit3("Light Color", color))
 		{
 			SubChunkMesh::SetLightColor(glm::vec3(color[0], color[1], color[2]));
-		}
-
-		ImGui::End();
-	}
-
-	void WorldRenderer::RenderPlayerDebugPanel()
-	{
-		std::shared_ptr<Player> player = m_WorldManager->Entities->GetLocalPlayer();
-
-		ImGui::Begin("Player Debug");
-		if (player)
-		{
-			if (player->HasTransform())
-			{
-				Transform transform = player->GetTransform();
-				if (ImGui::InputFloat3("Position", &transform.Position.x))
-				{
-					player->SetTransform(transform);
-				}
-				if (ImGui::InputFloat3("Rotation", &transform.Rotation.x))
-				{
-					player->SetTransform(transform);
-				}
-				if (ImGui::InputFloat3("Scale", &transform.Scale.x))
-				{
-					player->SetTransform(transform);
-				}
-			}
-
-			if (player->HasPhysicsBody())
-			{
-				PhysicsBody physicsBody = player->GetPhysicsBody();
-				if (ImGui::InputFloat3("Velocity", &physicsBody.Velocity.x))
-				{
-					player->SetPhysicsBody(physicsBody);
-				}
-				if (ImGui::Checkbox("On Ground", &physicsBody.OnGround))
-				{
-					player->SetPhysicsBody(physicsBody);
-				}
-				if (ImGui::Checkbox("Is Flying", &physicsBody.IsFlying))
-				{
-					physicsBody.Velocity = glm::vec3(0.f);
-					player->SetPhysicsBody(physicsBody);
-				}
-				if (ImGui::InputFloat("Mass", &physicsBody.Mass))
-				{
-					player->SetPhysicsBody(physicsBody);
-				}
-			}
-		}
-		else
-		{
-			ImGui::Text("No local player");
 		}
 
 		ImGui::End();

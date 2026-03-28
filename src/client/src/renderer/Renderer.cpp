@@ -21,7 +21,8 @@ namespace onion::voxel
 {
 	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager)
 		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), 800, 600)),
-		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager)
+		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager),
+		  m_EntityRenderer(m_Camera)
 	{
 		// Sets the Engine Context
 		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager);
@@ -90,6 +91,7 @@ namespace onion::voxel
 	void Renderer::SetPlayerUUID(const std::string& uuid)
 	{
 		m_PlayerUUID = uuid;
+		EngineContext::Get().PlayerUUID = uuid;
 	}
 
 	void Renderer::InitWindow()
@@ -210,6 +212,15 @@ namespace onion::voxel
 				}
 
 				m_WorldRenderer.Render();
+
+				// Render the Player entity only when in freecam mode.
+				std::vector<std::string> hiddenEntities;
+				if (!m_IsFreeCamera)
+				{
+					hiddenEntities.push_back(m_PlayerUUID);
+				}
+
+				m_EntityRenderer.RenderEntities(hiddenEntities);
 			}
 
 			// Render GUI
@@ -233,6 +244,7 @@ namespace onion::voxel
 		m_Gui.Shutdown();
 		m_InputsManager.Delete();
 		m_WorldRenderer.Unload();
+		m_EntityRenderer.Unload();
 
 		Gui::StaticShutdown();
 		WorldRenderer::StaticUnload();
@@ -470,16 +482,6 @@ namespace onion::voxel
 
 			return current + (delta / len) * maxDelta;
 		}
-
-		static float MoveTowards(float current, float target, float maxDelta)
-		{
-			float delta = target - current;
-
-			if (std::abs(delta) <= maxDelta)
-				return target;
-
-			return current + std::copysign(maxDelta, delta);
-		}
 	} // namespace
 
 	void Renderer::UpdatePlayerFromInputs()
@@ -632,11 +634,17 @@ namespace onion::voxel
 
 			if (glm::length(moveDir) > 0.0f)
 			{
-				physics.Velocity = MoveTowards(physics.Velocity, desiredVelocity, flyAcceleration * m_DeltaTime);
+				Entity::State state = speedUpKeyState.IsPressed ? Entity::State::Running : Entity::State::Walking;
+				player->SetState(state);
+
+				physics.Velocity =
+					MoveTowards(physics.Velocity, desiredVelocity, flyAcceleration * static_cast<float>(m_DeltaTime));
 			}
 			else
 			{
-				physics.Velocity = MoveTowards(physics.Velocity, glm::vec3(0.0f), flyDeceleration * m_DeltaTime);
+				player->SetState(Entity::State::Idle);
+				physics.Velocity =
+					MoveTowards(physics.Velocity, glm::vec3(0.0f), flyDeceleration * static_cast<float>(m_DeltaTime));
 			}
 		}
 		else
@@ -660,10 +668,14 @@ namespace onion::voxel
 			{
 				glm::vec3 desiredDir = glm::normalize(moveDir);
 
+				player->SetState(Entity::State::Walking);
+
 				float sprintFactor = 1.0f;
 
 				if (speedUpKeyState.IsPressed)
 				{
+					player->SetState(Entity::State::Running);
+
 					// How aligned we are with forward direction
 					float forwardDot = glm::dot(desiredDir, frontXZ);
 
@@ -677,12 +689,14 @@ namespace onion::voxel
 				float finalMaxSpeed = maxSpeed * sprintFactor;
 				float finalAcceleration = acceleration * sprintFactor;
 
-				physics.Velocity =
-					MoveTowards(physics.Velocity, desiredDir * finalMaxSpeed, finalAcceleration * m_DeltaTime);
+				physics.Velocity = MoveTowards(
+					physics.Velocity, desiredDir * finalMaxSpeed, finalAcceleration * static_cast<float>(m_DeltaTime));
 			}
 			else
 			{
-				physics.Velocity = MoveTowards(physics.Velocity, glm::vec3(0.0f), deceleration * m_DeltaTime);
+				physics.Velocity =
+					MoveTowards(physics.Velocity, glm::vec3(0.0f), deceleration * static_cast<float>(m_DeltaTime));
+				player->SetState(Entity::State::Idle);
 			}
 
 			// Jumping
@@ -711,7 +725,6 @@ namespace onion::voxel
 						physics.Velocity.z = newDir.z * horizontalSpeed;
 
 						// Add a small kick in facing direction for better feel
-						glm::vec3 frontXZ = glm::normalize(glm::vec3(playerFront.x, 0.0f, playerFront.z));
 						physics.Velocity += frontXZ * (groundMaxSpeed / 3);
 					}
 					else
@@ -881,6 +894,7 @@ namespace onion::voxel
 		// Reload everything that uses assets
 		m_Gui.ReloadTextures();
 		m_WorldRenderer.ReloadTextures();
+		m_EntityRenderer.ReloadTextures();
 	}
 
 	void Renderer::InitImGui()

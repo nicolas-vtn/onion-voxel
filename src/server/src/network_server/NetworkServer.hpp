@@ -47,7 +47,7 @@ namespace onion::voxel
 		{
 			ClientHandle Client{0};
 			std::string UUID;
-			std::string Username;
+			std::string PlayerName;
 			std::string IpAddress;
 		};
 

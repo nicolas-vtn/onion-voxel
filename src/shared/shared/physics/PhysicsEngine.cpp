@@ -158,7 +158,7 @@ namespace onion::voxel
 						if (!BlockState::IsSolid(block.ID))
 							continue;
 
-						float blockMinY = y;
+						float blockMinY = static_cast<float>(y);
 						float blockMaxY = y + 1.0f;
 
 						// Falling

@@ -71,6 +71,12 @@ add_executable(OnionVoxel
 
 	"src/renderer/key_binds/KeyBinds.cpp"
 
+	"src/renderer/entity_renderer/EntityRenderer.cpp"
+	"src/renderer/entity_renderer/Cuboid.cpp"
+	"src/renderer/entity_renderer/skeleton/SkeletonPlayer.cpp"
+	"src/renderer/entity_renderer/skeleton/Skeleton.cpp"
+	"src/renderer/entity_renderer/TextureTileMapper.cpp"
+
 )
 
 if (WIN32)

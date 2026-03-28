@@ -8,7 +8,8 @@ namespace onion::voxel
 {
 	Texture::Texture() {}
 
-	Texture::Texture(const std::filesystem::path& filePath) : m_FilePath(filePath)
+	Texture::Texture(const std::filesystem::path& filePath, bool flipVertically)
+		: m_FilePath(filePath), m_FlipVertically(flipVertically)
 	{
 		if (!std::filesystem::exists(filePath))
 		{
@@ -23,9 +24,13 @@ namespace onion::voxel
 		}
 	}
 
-	Texture::Texture(
-		const std::string& name, const std::vector<unsigned char>& data, int width, int height, int channels)
-		: m_Width(width), m_Height(height), m_NbrChannels(channels)
+	Texture::Texture(const std::string& name,
+					 const std::vector<unsigned char>& data,
+					 int width,
+					 int height,
+					 int channels,
+					 bool flipVertically)
+		: m_Width(width), m_Height(height), m_NbrChannels(channels), m_FlipVertically(flipVertically)
 	{
 		if (data.empty())
 		{
@@ -60,7 +65,8 @@ namespace onion::voxel
 		m_NbrChannels = channels;
 	}
 
-	Texture::Texture(const std::string& name, const std::vector<unsigned char>& data)
+	Texture::Texture(const std::string& name, const std::vector<unsigned char>& data, bool flipVertically)
+		: m_FlipVertically(flipVertically)
 	{
 		if (data.empty())
 		{
@@ -71,7 +77,7 @@ namespace onion::voxel
 
 		int width, height, channels;
 
-		stbi_set_flip_vertically_on_load(false);
+		stbi_set_flip_vertically_on_load(m_FlipVertically);
 
 		unsigned char* pixels =
 			stbi_load_from_memory(data.data(), static_cast<int>(data.size()), &width, &height, &channels, 0);
@@ -109,7 +115,7 @@ namespace onion::voxel
 	{
 		m_FilePath = filePath;
 		int width, height, nrChannels;
-		stbi_set_flip_vertically_on_load(false); // For OpenGL coordinate system
+		stbi_set_flip_vertically_on_load(m_FlipVertically); // For OpenGL coordinate system
 		unsigned char* data = stbi_load(m_FilePath.string().c_str(), &width, &height, &nrChannels, 0);
 
 		if (!data)
@@ -247,7 +253,7 @@ namespace onion::voxel
 		}
 
 		int width, height, nrChannels;
-		stbi_set_flip_vertically_on_load(false); // For OpenGL coordinate system
+		stbi_set_flip_vertically_on_load(m_FlipVertically); // For OpenGL coordinate system
 		unsigned char* data = stbi_load(m_FilePath.string().c_str(), &width, &height, &nrChannels, 0);
 		if (!data)
 		{
