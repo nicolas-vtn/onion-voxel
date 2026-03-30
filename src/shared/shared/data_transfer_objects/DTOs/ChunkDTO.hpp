@@ -5,19 +5,19 @@
 #include <sstream>
 #include <string>
 
-#include <shared/network_messages/GlmSerialization.hpp>
+#include <shared/data_transfer_objects/Serializer/GlmSerialization.hpp>
 
-#include "BlockStateSave.hpp"
-#include "SubChunkSave.hpp"
+#include "BlockStateDTO.hpp"
+#include "SubChunkDTO.hpp"
 
 namespace onion::voxel
 {
-	struct ChunkSave
+	struct ChunkDTO
 	{
 		glm::ivec2 Position{};
 
-		std::vector<SubChunkSave> SubChunks;
-		std::vector<BlockStateSave> Palette;
+		std::vector<SubChunkDTO> SubChunks;
+		std::vector<BlockStateDTO> Palette;
 
 		template <class Archive> void serialize(Archive& ar) { ar(Position, SubChunks, Palette); }
 	};

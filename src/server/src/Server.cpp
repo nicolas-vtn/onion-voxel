@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include <shared/network_messages/SerializerDTO.hpp>
+#include <shared/data_transfer_objects/Serializer/SerializerDTO.hpp>
 #include <shared/utils/Utils.hpp>
 
 #include <windows.h>
@@ -208,7 +208,9 @@ namespace onion::voxel
 			auto chunk = m_WorldManager->GetChunk(chunkPos);
 			if (chunk)
 			{
-				ChunkDataMsg chunkDataMsg = SerializerDTO::SerializeChunk(chunk);
+				ChunkDTO chunkDto = SerializerDTO::SerializeChunk(chunk);
+				ChunkDataMsg chunkDataMsg;
+				chunkDataMsg.Chunk = std::move(chunkDto);
 				m_NetworkServer.Send(args.Sender, chunkDataMsg);
 			}
 		}
@@ -270,7 +272,9 @@ namespace onion::voxel
 	void Server::Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk)
 	{
 		// Sends the new chunk to all connected clients
-		ChunkDataMsg chunkDataMsg = SerializerDTO::SerializeChunk(chunk);
+		ChunkDTO chunkDto = SerializerDTO::SerializeChunk(chunk);
+		ChunkDataMsg chunkDataMsg;
+		chunkDataMsg.Chunk = std::move(chunkDto);
 		m_NetworkServer.Broadcast(chunkDataMsg);
 	}
 

@@ -5,8 +5,7 @@
 #include <sstream>
 #include <string>
 
-#include <shared/network_messages/DTOs/DTOs.hpp>
-#include <shared/network_messages/GlmSerialization.hpp>
+#include <shared/data_transfer_objects/DTOs/DTOs.hpp>
 #include <shared/network_messages/MessageHeader.hpp>
 
 namespace onion::voxel
@@ -15,11 +14,8 @@ namespace onion::voxel
 	{
 		static constexpr MessageHeader::eType StaticType = MessageHeader::eType::ChunkData;
 
-		glm::ivec2 Position{};
+		ChunkDTO Chunk;
 
-		std::vector<SubChunkDTO> SubChunks;
-		std::vector<BlockStateDTO> Palette;
-
-		template <class Archive> void serialize(Archive& ar) { ar(Position, SubChunks, Palette); }
+		template <class Archive> void serialize(Archive& ar) { ar(Chunk); }
 	};
 } // namespace onion::voxel

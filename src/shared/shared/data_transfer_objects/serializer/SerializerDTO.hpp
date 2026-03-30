@@ -2,13 +2,11 @@
 
 #include <memory>
 
-#include "NetworkMessages.hpp"
-
 #include <shared/entities/entity/Entity.hpp>
 #include <shared/entities/entity/player/Player.hpp>
 #include <shared/world/chunk/Chunk.hpp>
 
-#include <shared/network_messages/DTOs/DTOs.hpp>
+#include <shared/data_transfer_objects/DTOs/DTOs.hpp>
 
 namespace onion::voxel
 {
@@ -16,8 +14,8 @@ namespace onion::voxel
 	{
 		// ----- CHUNK -----
 	  public:
-		static ChunkDataMsg SerializeChunk(std::shared_ptr<Chunk> chunk);
-		static std::shared_ptr<Chunk> DeserializeChunk(const ChunkDataMsg& msg);
+		static ChunkDTO SerializeChunk(std::shared_ptr<Chunk> chunk);
+		static std::shared_ptr<Chunk> DeserializeChunk(const ChunkDTO& dto);
 
 		// ----- SUB CHUNK -----
 	  public:

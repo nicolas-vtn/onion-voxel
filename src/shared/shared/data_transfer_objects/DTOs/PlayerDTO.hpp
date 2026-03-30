@@ -7,7 +7,7 @@
 #include <cereal/types/optional.hpp>
 #include <cereal/types/string.hpp>
 
-#include <shared/network_messages/GlmSerialization.hpp>
+#include <shared/data_transfer_objects/Serializer/GlmSerialization.hpp>
 
 #include "EntityDTO.hpp"
 

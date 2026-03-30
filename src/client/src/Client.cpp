@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include <shared/network_messages/SerializerDTO.hpp>
+#include <shared/data_transfer_objects/Serializer/SerializerDTO.hpp>
 #include <shared/utils/Utils.hpp>
 
 namespace onion::voxel
@@ -313,7 +313,7 @@ namespace onion::voxel
 
 	void Client::Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg)
 	{
-		std::shared_ptr<Chunk> chunk = SerializerDTO::DeserializeChunk(msg);
+		std::shared_ptr<Chunk> chunk = SerializerDTO::DeserializeChunk(msg.Chunk);
 
 		// Checks if the chunk is in the persistance distance
 		glm::ivec2 chunkPosition = chunk->GetPosition();

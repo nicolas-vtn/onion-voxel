@@ -3,7 +3,7 @@
 #include <cereal/archives/binary.hpp>
 #include <cereal/cereal.hpp>
 
-#include <shared/network_messages/GlmSerialization.hpp>
+#include <shared/data_transfer_objects/Serializer/GlmSerialization.hpp>
 
 namespace onion::voxel
 {

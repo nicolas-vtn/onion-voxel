@@ -6,6 +6,7 @@
 
 #include <onion/Timer.hpp>
 
+#include <shared/entities/entity/player/Player.hpp>
 #include <shared/world/chunk/Chunk.hpp>
 
 #include "WorldInfos.hpp"
@@ -30,6 +31,9 @@ namespace onion::voxel
 		void SaveChunkAsync(const std::shared_ptr<Chunk>& chunk);
 		std::shared_ptr<Chunk> LoadChunk(const glm::ivec2& chunkPosition);
 
+		void SavePlayersAsync(const std::unordered_map<std::string, std::shared_ptr<Player>>& players);
+		std::shared_ptr<Player> LoadPlayer(const std::string& playerName);
+
 		// ----- Private Members -----
 	  private:
 		const std::filesystem::path m_SaveDirectory;
@@ -45,9 +49,14 @@ namespace onion::voxel
 		mutable std::mutex m_MutexChunksToSave;
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> m_ChunksToSave;
 
-		Timer m_TimerSaveChunks;
-		int m_SaveChunksPeriodSeconds = 5;
-		void SaveChunksPeriodically();
+		mutable std::mutex m_MutexPlayersToSave;
+		std::unordered_map<std::string, std::shared_ptr<Player>> m_PlayersToSave;
+
+		Timer m_TimerSave;
+		int m_SavePeriodSeconds = 5;
+		void SavePeriodically();
+		void SaveChunks();
+		void SavePlayers();
 
 		// ----- Private Methods -----
 	  private:

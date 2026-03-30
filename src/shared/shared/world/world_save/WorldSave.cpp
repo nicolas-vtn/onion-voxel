@@ -8,7 +8,7 @@
 
 #include <shared/utils/Utils.hpp>
 
-#include "SaveFormats/SerializerSave.hpp"
+#include <shared/data_transfer_objects/serializer/SerializerDTO.hpp>
 
 namespace onion::voxel
 {
@@ -16,10 +16,10 @@ namespace onion::voxel
 	{
 		m_Infos = LoadInfos(saveDirectory);
 
-		// Start periodic task to save chunks every m_SaveChunksPeriodSeconds seconds
-		m_TimerSaveChunks.setTimeoutFunction([this]() { SaveChunksPeriodically(); });
-		m_TimerSaveChunks.setElapsedPeriod(std::chrono::seconds(m_SaveChunksPeriodSeconds));
-		m_TimerSaveChunks.Start();
+		// Start periodic task to save chunks every m_SavePeriodSeconds seconds
+		m_TimerSave.setTimeoutFunction([this]() { SavePeriodically(); });
+		m_TimerSave.setElapsedPeriod(std::chrono::seconds(m_SavePeriodSeconds));
+		m_TimerSave.Start();
 	}
 
 	WorldSave::~WorldSave() {}
@@ -106,14 +106,60 @@ namespace onion::voxel
 				}
 			}
 
-			std::shared_ptr<Chunk> chunk = SerializerSave::DeserializeChunk(chunkData);
+			if (chunkData.empty())
+				return nullptr;
+
+			// Create a stream from the raw buffer
+			std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
+			ss.write(reinterpret_cast<const char*>(chunkData.data()), chunkData.size());
+			ss.seekg(0); // reset read position
+
+			// Deserialize with cereal
+			cereal::BinaryInputArchive archive(ss);
+
+			ChunkDTO dto;
+			archive(dto);
+
+			std::shared_ptr<Chunk> chunk = SerializerDTO::DeserializeChunk(dto);
+
 			return chunk;
 		}
 	}
 
-	void WorldSave::SaveChunksPeriodically()
+	void WorldSave::SavePlayersAsync(const std::unordered_map<std::string, std::shared_ptr<Player>>& players)
 	{
+		std::lock_guard lock(m_MutexPlayersToSave);
+		for (const auto& [playerName, player] : players)
+		{
+			m_PlayersToSave[playerName] = player;
+		}
+	}
 
+	std::shared_ptr<Player> WorldSave::LoadPlayer(const std::string& playerName)
+	{
+		// First check if the player is in the players to save map.
+		{
+			std::lock_guard lock(m_MutexPlayersToSave);
+			auto it = m_PlayersToSave.find(playerName);
+			if (it != m_PlayersToSave.end())
+			{
+				auto player = it->second;
+				m_PlayersToSave.erase(it);
+				return player;
+			}
+		}
+
+		return nullptr; // Player loading not implemented yet
+	}
+
+	void WorldSave::SavePeriodically()
+	{
+		SaveChunks();
+		SavePlayers();
+	}
+
+	void WorldSave::SaveChunks()
+	{
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> chunksToSaveCopy;
 		{
 			std::lock_guard lock(m_MutexChunksToSave);
@@ -126,7 +172,14 @@ namespace onion::voxel
 		{
 			const std::string chunkFileName = GetChunkFileName(chunkPos);
 			std::filesystem::path chunkFilePath = GetChunkFilePath(m_SaveDirectory, chunkPos);
-			std::vector<uint8_t> chunkData = SerializerSave::SerializeChunk(chunk);
+
+			ChunkDTO chunkDto = SerializerDTO::SerializeChunk(chunk);
+			std::ostringstream stream(std::ios::binary);
+			cereal::BinaryOutputArchive archive(stream);
+			archive(chunkDto);
+			std::string chunkDataStr = stream.str();
+			std::vector<uint8_t> chunkData(chunkDataStr.begin(), chunkDataStr.end());
+
 			chunksDataToWrite.emplace_back(chunkFilePath, std::move(chunkData));
 		}
 
@@ -145,6 +198,8 @@ namespace onion::voxel
 			}
 		}
 	}
+
+	void WorldSave::SavePlayers() {}
 
 	void WorldSave::SaveInfos(const std::filesystem::path& saveDirectory, const WorldInfos& infos)
 	{

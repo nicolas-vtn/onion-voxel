@@ -99,49 +99,49 @@ namespace onion::voxel
 		return sc;
 	}
 
-	ChunkDataMsg SerializerDTO::SerializeChunk(std::shared_ptr<Chunk> chunk)
+	ChunkDTO SerializerDTO::SerializeChunk(std::shared_ptr<Chunk> chunk)
 	{
 		std::shared_lock lock(chunk->m_Mutex);
 
-		ChunkDataMsg msg;
-		msg.Position = chunk->GetPosition();
+		ChunkDTO dto;
+		dto.Position = chunk->GetPosition();
 
-		msg.Palette.reserve(chunk->m_BlocksPalette.size());
+		dto.Palette.reserve(chunk->m_BlocksPalette.size());
 
 		for (const BlockState& block : chunk->m_BlocksPalette)
 		{
-			msg.Palette.emplace_back(SerializeBlockState(block));
+			dto.Palette.emplace_back(SerializeBlockState(block));
 		}
 
-		msg.SubChunks.reserve(chunk->m_SubChunks.size());
+		dto.SubChunks.reserve(chunk->m_SubChunks.size());
 
 		for (const SubChunk& sc : chunk->m_SubChunks)
 		{
-			msg.SubChunks.emplace_back(SerializeSubChunk(sc));
+			dto.SubChunks.emplace_back(SerializeSubChunk(sc));
 		}
 
-		return msg;
+		return dto;
 	}
 
-	std::shared_ptr<Chunk> SerializerDTO::DeserializeChunk(const ChunkDataMsg& msg)
+	std::shared_ptr<Chunk> SerializerDTO::DeserializeChunk(const ChunkDTO& dto)
 	{
-		auto chunk = std::make_shared<Chunk>(msg.Position);
+		auto chunk = std::make_shared<Chunk>(dto.Position);
 
 		{
 			std::unique_lock lock(chunk->m_Mutex);
 
 			chunk->m_BlocksPalette.clear();
 
-			for (const BlockStateDTO& dto : msg.Palette)
+			for (const BlockStateDTO& blockStateDto : dto.Palette)
 			{
-				chunk->m_BlocksPalette.emplace_back(DeserializeBlockState(dto));
+				chunk->m_BlocksPalette.emplace_back(DeserializeBlockState(blockStateDto));
 			}
 
 			chunk->m_SubChunks.clear();
 
-			for (const SubChunkDTO& dto : msg.SubChunks)
+			for (const SubChunkDTO& subChunkDTO : dto.SubChunks)
 			{
-				chunk->m_SubChunks.emplace_back(DeserializeSubChunk(dto));
+				chunk->m_SubChunks.emplace_back(DeserializeSubChunk(subChunkDTO));
 			}
 		}
 

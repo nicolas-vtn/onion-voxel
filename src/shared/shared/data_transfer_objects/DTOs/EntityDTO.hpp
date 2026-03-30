@@ -6,7 +6,7 @@
 #include <cereal/cereal.hpp>
 #include <cereal/types/optional.hpp>
 
-#include <shared/network_messages/GlmSerialization.hpp>
+#include <shared/data_transfer_objects/Serializer/GlmSerialization.hpp>
 
 #include "PhysicsBodyDTO.hpp"
 #include "TransformDTO.hpp"
