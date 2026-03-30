@@ -35,14 +35,19 @@ namespace onion::voxel
 		void SavePlayerAsync(const std::shared_ptr<Player>& player);
 		std::shared_ptr<Player> LoadPlayer(const std::string& playerUUID);
 
+		void SaveOutOfBoundsBlocks(const std::unordered_map<glm::ivec2, std::vector<Block>>& outOfBoundsBlocks);
+		std::unordered_map<glm::ivec2, std::vector<Block>> LoadOutOfBoundsBlocks();
+
 		// ----- Private Members -----
 	  private:
 		const std::filesystem::path m_SaveDirectory;
 
 		static inline const std::string s_InfosFileName = "infos.json";
+		static inline const std::string s_OutOfBoundsBlocksFileName = "out_of_bounds_blocks";
 		static inline const std::string s_ChunksDirectoryName = "chunks";
 		static inline const std::string s_RegionDirectoryNamePrefix = "region_";
 		static inline const std::string s_PlayersDirectoryName = "players";
+		static inline const std::string s_OutOfBoundsBlocksDirectoryName = "out_of_bounds_blocks";
 		static inline const uint8_t s_RegionSizeInChunks = 32;
 		WorldInfos m_Infos;
 
@@ -70,5 +75,6 @@ namespace onion::voxel
 													  const glm::ivec2& chunkPosition);
 		static std::filesystem::path GetFilePathForPlayer(const std::filesystem::path& saveDirectory,
 														  const std::string& playerUUID);
+		static std::filesystem::path GetFilePathForOutOfBoundsBlocks(const std::filesystem::path& saveDirectory);
 	};
 } // namespace onion::voxel

@@ -32,6 +32,13 @@ namespace onion::voxel
 		static BlockDTO SerializeBlock(const Block& block);
 		static Block DeserializeBlock(const BlockDTO& dto);
 
+		// ----- OUT OF BOUNDS BLOCKS -----
+	  public:
+		static OutOfBoundsBlocksDTO
+		SerializeOutOfBoundsBlocks(const std::unordered_map<glm::ivec2, std::vector<Block>>& outOfBoundsBlocks);
+		static std::unordered_map<glm::ivec2, std::vector<Block>>
+		DeserializeOutOfBoundsBlocks(const OutOfBoundsBlocksDTO& dto);
+
 		// ----- Entity -----
 	  public:
 		static TransformDTO SerializeTransform(const Transform& transform);

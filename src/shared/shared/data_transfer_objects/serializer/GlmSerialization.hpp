@@ -5,6 +5,9 @@
 
 #include <glm/glm.hpp>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
+
 namespace cereal
 {
 	template <class Archive> void serialize(Archive& ar, glm::ivec2& v)

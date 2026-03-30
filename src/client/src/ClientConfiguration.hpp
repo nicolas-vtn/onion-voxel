@@ -65,13 +65,13 @@ namespace onion::voxel
 			clientData.RenderDistance = json.value("RenderDistance", static_cast<uint8_t>(8));
 
 			// ------- DEBUG ONLY : Regenerate UUID -------
-			std::random_device rd;
-			std::mt19937 gen(rd());
-			std::uniform_int_distribution<> dis(0, 15);
-			std::string uuid;
-			for (int i = 0; i < 32; i++)
-				uuid += "0123456789abcdef"[dis(gen)];
-			clientData.UUID = uuid;
+			//std::random_device rd;
+			//std::mt19937 gen(rd());
+			//std::uniform_int_distribution<> dis(0, 15);
+			//std::string uuid;
+			//for (int i = 0; i < 32; i++)
+			//	uuid += "0123456789abcdef"[dis(gen)];
+			//clientData.UUID = uuid;
 
 			// Save back to eventually add new fields
 			Save(filePath);

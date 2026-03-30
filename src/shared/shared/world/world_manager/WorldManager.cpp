@@ -16,6 +16,14 @@ namespace onion::voxel
 			m_WorldGenerator = std::make_unique<WorldGenerator>();
 			m_WorldGenerator->SetSeed(m_WorldSave->GetSeed());
 			m_WorldGenerator->SetWorldGenerationType(m_WorldSave->GetWorldGenerationType());
+
+			// Load out-of-bounds blocks from save
+			std::unordered_map<glm::ivec2, std::vector<Block>> outOfBoundsBlocksFromSave =
+				m_WorldSave->LoadOutOfBoundsBlocks();
+			{
+				std::unique_lock lock(m_MutexOutOfBoundsBlocks);
+				m_OutOfBoundsBlocks = std::move(outOfBoundsBlocksFromSave);
+			}
 		}
 
 		// Subscibe to it's own events
@@ -163,6 +171,10 @@ namespace onion::voxel
 
 		{
 			std::unique_lock lock(m_MutexOutOfBoundsBlocks);
+			if (m_WorldSave)
+			{
+				m_WorldSave->SaveOutOfBoundsBlocks(m_OutOfBoundsBlocks);
+			}
 			m_OutOfBoundsBlocks.clear();
 		}
 	}

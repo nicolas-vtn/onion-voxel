@@ -186,6 +186,40 @@ namespace onion::voxel
 		return block;
 	}
 
+	OutOfBoundsBlocksDTO SerializerDTO::SerializeOutOfBoundsBlocks(
+		const std::unordered_map<glm::ivec2, std::vector<Block>>& outOfBoundsBlocks)
+	{
+		OutOfBoundsBlocksDTO dto;
+		for (const auto& [chunkPos, blocks] : outOfBoundsBlocks)
+		{
+			std::vector<BlockDTO> blockDTOs;
+			blockDTOs.reserve(blocks.size());
+			for (const Block& block : blocks)
+			{
+				blockDTOs.emplace_back(SerializeBlock(block));
+			}
+			dto.OutOfBoundsBlocks[chunkPos] = std::move(blockDTOs);
+		}
+		return dto;
+	}
+
+	std::unordered_map<glm::ivec2, std::vector<Block>>
+	SerializerDTO::DeserializeOutOfBoundsBlocks(const OutOfBoundsBlocksDTO& dto)
+	{
+		std::unordered_map<glm::ivec2, std::vector<Block>> outOfBoundsBlocks;
+		for (const auto& [chunkPos, blockDTOs] : dto.OutOfBoundsBlocks)
+		{
+			std::vector<Block> blocks;
+			blocks.reserve(blockDTOs.size());
+			for (const BlockDTO& blockDTO : blockDTOs)
+			{
+				blocks.emplace_back(DeserializeBlock(blockDTO));
+			}
+			outOfBoundsBlocks[chunkPos] = std::move(blocks);
+		}
+		return outOfBoundsBlocks;
+	}
+
 	TransformDTO SerializerDTO::SerializeTransform(const Transform& transform)
 	{
 		TransformDTO dto;

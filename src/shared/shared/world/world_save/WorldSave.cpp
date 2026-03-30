@@ -199,6 +199,62 @@ namespace onion::voxel
 		return player;
 	}
 
+	void WorldSave::SaveOutOfBoundsBlocks(const std::unordered_map<glm::ivec2, std::vector<Block>>& outOfBoundsBlocks)
+	{
+		OutOfBoundsBlocksDTO dto = SerializerDTO::SerializeOutOfBoundsBlocks(outOfBoundsBlocks);
+		std::ostringstream stream(std::ios::binary);
+		cereal::BinaryOutputArchive archive(stream);
+		archive(dto);
+		std::string dataStr = stream.str();
+		std::vector<uint8_t> data(dataStr.begin(), dataStr.end());
+
+		std::filesystem::path filePath = GetFilePathForOutOfBoundsBlocks(m_SaveDirectory);
+		{
+			std::lock_guard lock(m_MutexDiskAccess);
+			std::filesystem::create_directories(filePath.parent_path());
+			std::ofstream file(filePath, std::ios::binary);
+			if (!file.is_open())
+			{
+				std::cerr << "Failed to open out of bounds blocks file for writing: " << filePath << "\n";
+				throw std::runtime_error("Failed to open out of bounds blocks file for writing: " + filePath.string());
+			}
+			file.write(reinterpret_cast<const char*>(data.data()), data.size());
+		}
+	}
+
+	std::unordered_map<glm::ivec2, std::vector<Block>> WorldSave::LoadOutOfBoundsBlocks()
+	{
+		std::vector<uint8_t> data;
+		std::filesystem::path filePath = GetFilePathForOutOfBoundsBlocks(m_SaveDirectory);
+		{
+			std::lock_guard lock(m_MutexDiskAccess);
+			if (std::filesystem::exists(filePath))
+			{
+				std::ifstream file(filePath, std::ios::binary);
+				if (!file.is_open())
+				{
+					std::cerr << "Failed to open out of bounds blocks file for reading: " << filePath << "\n";
+					throw std::runtime_error("Failed to open out of bounds blocks file for reading: " +
+											 filePath.string());
+				}
+				data = std::vector<uint8_t>(std::istreambuf_iterator<char>(file), {});
+			}
+			else
+			{
+				return {};
+			}
+		}
+		if (data.empty())
+			return {};
+		std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
+		ss.write(reinterpret_cast<const char*>(data.data()), data.size());
+		ss.seekg(0); // reset read position
+		cereal::BinaryInputArchive archive(ss);
+		OutOfBoundsBlocksDTO dto;
+		archive(dto);
+		return SerializerDTO::DeserializeOutOfBoundsBlocks(dto);
+	}
+
 	void WorldSave::SavePeriodically()
 	{
 		SaveChunks();
@@ -364,6 +420,12 @@ namespace onion::voxel
 	{
 		std::filesystem::path playersDirPath = saveDirectory / s_PlayersDirectoryName;
 		return playersDirPath / playerUUID;
+	}
+
+	std::filesystem::path WorldSave::GetFilePathForOutOfBoundsBlocks(const std::filesystem::path& saveDirectory)
+	{
+		std::filesystem::path outOfBoundsBlocksDirPath = saveDirectory / s_OutOfBoundsBlocksDirectoryName;
+		return outOfBoundsBlocksDirPath / s_OutOfBoundsBlocksFileName;
 	}
 
 } // namespace onion::voxel

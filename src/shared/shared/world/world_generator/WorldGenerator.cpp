@@ -324,7 +324,7 @@ namespace onion::voxel
 
 		constexpr bool GENERATE_GRASS = true;
 		constexpr bool GENERATE_FLOWERS = true;
-		constexpr bool GENERATE_TREES = false;
+		constexpr bool GENERATE_TREES = true;
 
 		int y = 0;
 
@@ -395,7 +395,7 @@ namespace onion::voxel
 				{
 					double val = m_SeededRandom.GetValue(worldPos + glm::ivec3(25, 2584, 88));
 
-					BlockId logId = (val < 0.025) ? BlockId::BirchLog : BlockId::OakLog; // 2.5% chance for birch
+					BlockId logId = (val < 0.1) ? BlockId::BirchLog : BlockId::OakLog; // 10% chance for birch
 					BlockId leavesId = (logId == BlockId::BirchLog) ? BlockId::BirchLeaves : BlockId::OakLeaves;
 
 					// Tree height between 2 and 6
