@@ -12,7 +12,7 @@
 
 namespace onion::voxel
 {
-	class Serializer
+	class SerializerDTO
 	{
 		// ----- CHUNK -----
 	  public:

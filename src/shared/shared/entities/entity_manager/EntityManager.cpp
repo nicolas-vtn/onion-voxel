@@ -148,16 +148,4 @@ namespace onion::voxel
 		return m_Players.find(uuid) != m_Players.end();
 	}
 
-	void EntityManager::SetLocalPlayer(const std::shared_ptr<Player>& player)
-	{
-		std::unique_lock lock(m_MutexLocalPlayer);
-		m_LocalPlayer = player;
-	}
-
-	std::shared_ptr<Player> EntityManager::GetLocalPlayer() const
-	{
-		std::shared_lock lock(m_MutexLocalPlayer);
-		return m_LocalPlayer;
-	}
-
 } // namespace onion::voxel

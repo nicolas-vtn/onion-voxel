@@ -22,19 +22,16 @@ namespace
 
 namespace onion::voxel
 {
-	PhysicsEngine::PhysicsEngine(WorldManager& worldManager)
-		: m_WorldManager(worldManager), m_EntityManager(*worldManager.Entities)
-	{
-	}
+	PhysicsEngine::PhysicsEngine(WorldManager& worldManager) : m_WorldManager(worldManager) {}
 
 	PhysicsEngine::~PhysicsEngine() {}
 
 	void PhysicsEngine::Update(float deltaTime)
 	{
-		// Gets all entities from the EntityManager
-		std::vector<std::shared_ptr<Entity>> entities = m_EntityManager.GetAllEntities();
+		// Gets all entities from the WorldManager
+		std::vector<std::shared_ptr<Entity>> entities = m_WorldManager.GetAllEntities();
 
-		std::unordered_map<std::string, std::shared_ptr<Player>> players = m_EntityManager.GetAllPlayers();
+		std::unordered_map<std::string, std::shared_ptr<Player>> players = m_WorldManager.GetAllPlayers();
 		for (const auto& [uuid, player] : players)
 		{
 			entities.push_back(player); // Add players to the list of entities to update physics for

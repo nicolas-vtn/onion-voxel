@@ -77,7 +77,7 @@ namespace onion::voxel
 			tex.Delete();
 		}
 
-		const auto entities = EngineContext::Get().World->Entities->GetAllPlayers();
+		const auto entities = EngineContext::Get().World->GetAllPlayers();
 
 		// Clear the vertices after rendering
 		m_VerticesEntities.clear();
@@ -737,7 +737,7 @@ namespace onion::voxel
 
 	void EntityRenderer::RenderPlayersBoundingBoxes()
 	{
-		const auto& players = EngineContext::Get().World->Entities->GetAllPlayers();
+		const auto& players = EngineContext::Get().World->GetAllPlayers();
 
 		for (const auto& [uuid, player] : players)
 		{

@@ -7,8 +7,6 @@ add_library(onion_voxel_server
     "src/Server.cpp"
 
 	"src/network_server/NetworkServer.cpp"
-	"src/world_generator/WorldGenerator.cpp"
-
 )
 
 target_link_libraries(onion_voxel_server
@@ -17,11 +15,9 @@ target_link_libraries(onion_voxel_server
 		winmm
 		ws2_32
 		nlohmann_json::nlohmann_json
-		FastNoiseLite
 
 		onion::event
 		onion::threadsafequeue
-		onion::threadpool
 		onion::logger
 		onion_voxel_shared
 )

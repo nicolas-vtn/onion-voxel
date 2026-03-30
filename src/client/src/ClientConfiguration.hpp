@@ -56,7 +56,7 @@ namespace onion::voxel
 				throw std::runtime_error("Failed to open configuration file: " + filePath.string());
 			}
 
-			nlohmann::json json;
+			nlohmann::ordered_json json;
 
 			file >> json;
 
@@ -76,7 +76,7 @@ namespace onion::voxel
 
 		void Save(const std::filesystem::path& filePath) const
 		{
-			nlohmann::json json;
+			nlohmann::ordered_json json;
 
 			json["PlayerName"] = clientData.PlayerName;
 			json["UUID"] = clientData.UUID;

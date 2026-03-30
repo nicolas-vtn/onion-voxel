@@ -11,11 +11,13 @@
 
 namespace onion::voxel
 {
-	class Serializer;
+	class SerializerDTO;
+	class SerializerSave;
 
 	class Chunk
 	{
-		friend class Serializer;
+		friend class SerializerDTO;
+		friend class SerializerSave;
 
 		// ----- Constructor / Destructor -----
 	  public:

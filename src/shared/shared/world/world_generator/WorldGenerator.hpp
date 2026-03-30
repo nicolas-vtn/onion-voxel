@@ -7,11 +7,13 @@
 #include <thread>
 #include <unordered_set>
 
+#include <onion/Event.hpp>
 #include <onion/ThreadPool.hpp>
 
 #include <shared/world/World.hpp>
+#include <shared/world/chunk/Chunk.hpp>
 #include <shared/world/schematic/Schematic.hpp>
-#include <shared/world/world_manager/WorldManager.hpp>
+//#include <shared/world/world_manager/WorldManager.hpp>
 
 #include "SeededRandom.hpp"
 
@@ -22,6 +24,17 @@ namespace onion::voxel
 {
 	class WorldGenerator
 	{
+		// ----- World Generation Settings -----
+	  public:
+		enum class eWorldGenerationType : uint8_t
+		{
+			DemoBlocks,
+			Superflat,
+			ClassicNoBiomes,
+			Classic,
+			BiomeVisualizer,
+		};
+
 		// ----- Structs -----
 	  public:
 		struct GenChunk
@@ -52,7 +65,7 @@ namespace onion::voxel
 
 		// ----- Constructor / Destructor -----
 	  public:
-		WorldGenerator(std::shared_ptr<WorldManager> worldManager);
+		WorldGenerator();
 		~WorldGenerator();
 
 		// ----- Public API -----
@@ -63,30 +76,19 @@ namespace onion::voxel
 		// ----- Getters / Setters -----
 	  public:
 		uint32_t GetSeed() const;
+		void SetSeed(uint32_t seed);
+
+		eWorldGenerationType GetWorldGenerationType() const;
+		void SetWorldGenerationType(eWorldGenerationType worldGenerationType);
+
+		// ----- Events -----
+	  public:
+		Event<const GenChunk&> EvtChunkGenerated;
 
 		// ----- Private Members -----
 	  private:
-		std::shared_ptr<WorldManager> m_WorldManager;
-
-		// ----- Events Handlers -----
-	  private:
-		void SubscribeToWorldManagerEvents();
-		std::vector<EventHandle> m_WorldManagerEventHandles;
-
-		void Handle_SeedChanged(const uint32_t& newSeed);
-
-		// ----- World Generation Settings -----
-	  private:
-		enum class eWorldGenerationType : uint8_t
-		{
-			DemoBlocks,
-			Superflat,
-			ClassicNoBiomes,
-			Classic,
-			BiomeVisualizer,
-		};
-
 		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::Superflat;
+		std::atomic_uint32_t m_Seed{1};
 
 		// ----- Chunk Generation Thread -----
 	  private:

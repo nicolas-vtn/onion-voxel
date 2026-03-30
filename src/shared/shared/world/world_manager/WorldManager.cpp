@@ -6,8 +6,18 @@
 
 namespace onion::voxel
 {
-	WorldManager::WorldManager()
+	WorldManager::WorldManager(const std::filesystem::path& worldDirectory, bool readonly)
 	{
+
+		if (!readonly)
+		{
+			m_WorldSave = std::make_unique<WorldSave>(worldDirectory);
+
+			m_WorldGenerator = std::make_unique<WorldGenerator>();
+			m_WorldGenerator->SetSeed(m_WorldSave->GetSeed());
+			m_WorldGenerator->SetWorldGenerationType(m_WorldSave->GetWorldGenerationType());
+		}
+
 		// Subscibe to it's own events
 		SubscribeToInternalEvents();
 
@@ -21,16 +31,6 @@ namespace onion::voxel
 	{
 		m_InternalEventHandles.clear();
 		m_TimerRequestMissingChunks.Stop();
-	}
-
-	void WorldManager::LoadWorld(const std::filesystem::path& worldPath)
-	{
-		m_CurrentWorldPath = worldPath;
-	}
-
-	void WorldManager::UnloadWorld()
-	{
-		m_CurrentWorldPath.clear();
 	}
 
 	std::shared_ptr<Chunk> WorldManager::GetChunk(const glm::ivec2& chunkPosition) const
@@ -51,6 +51,16 @@ namespace onion::voxel
 	{
 		std::shared_lock lock(m_MutexChunks);
 		return m_Chunks; // Return a copy of the chunks map
+	}
+
+	void WorldManager::AddPlayer(const std::shared_ptr<Player>& player)
+	{
+		m_EntityManager->AddPlayer(player);
+	}
+
+	void WorldManager::RemovePlayer(const std::string& playerUUID)
+	{
+		m_EntityManager->RemovePlayer(playerUUID);
 	}
 
 	void WorldManager::AddChunk(const std::shared_ptr<Chunk> chunk)
@@ -133,7 +143,7 @@ namespace onion::voxel
 	{
 		RemoveAllChunks();
 
-		Entities->ClearAllEntities();
+		m_EntityManager->ClearAllEntities();
 
 		{
 			std::unique_lock lock(m_MutexOutOfBoundsBlocks);
@@ -147,30 +157,24 @@ namespace onion::voxel
 		return m_Chunks.find(chunkPosition) != m_Chunks.end();
 	}
 
-	std::filesystem::path WorldManager::GetCurrentWorldPath() const
-	{
-		return m_CurrentWorldPath;
-	}
-
 	uint32_t WorldManager::GetSeed() const
 	{
-		return m_Seed;
+		return m_WorldGenerator->GetSeed();
 	}
 
 	void WorldManager::SetSeed(uint32_t seed)
 	{
-		m_Seed = seed;
-		SeedChanged.Trigger(seed);
+		m_WorldGenerator->SetSeed(seed);
 	}
 
 	std::unordered_map<std::string, glm::vec3> WorldManager::GetPlayersPosition() const
 	{
-		return Entities->GetAllPlayersPosition();
+		return m_EntityManager->GetAllPlayersPosition();
 	}
 
 	std::shared_ptr<Player> WorldManager::GetPlayer(const std::string& uuid) const
 	{
-		return Entities->GetPlayer(uuid);
+		return m_EntityManager->GetPlayer(uuid);
 	}
 
 	uint8_t WorldManager::GetChunkPersistanceDistance() const
@@ -206,6 +210,77 @@ namespace onion::voxel
 		}
 	}
 
+	void WorldManager::SetPlayerPosition(const std::string& playerUUID, const glm::vec3& position)
+	{
+		glm::ivec2 oldChunkPos = Utils::WorldToChunkPosition(m_EntityManager->GetPlayerPosition(playerUUID));
+		glm::ivec2 newChunkPos = Utils::WorldToChunkPosition(position);
+
+		m_EntityManager->SetPlayerPosition(playerUUID, position);
+
+		if (newChunkPos != oldChunkPos)
+		{
+			PlayerChangedChunkEventArgs args;
+			args.PlayerUUID = playerUUID;
+			args.OldChunkPosition = oldChunkPos;
+			args.NewChunkPosition = newChunkPos;
+			PlayerChangedChunk.Trigger(args);
+		}
+	}
+
+	void WorldManager::UpdatePlayer(const std::shared_ptr<Player>& updatedPlayer)
+	{
+		if (!updatedPlayer)
+		{
+			throw std::runtime_error("Player pointer is null.");
+		}
+
+		auto player = m_EntityManager->GetPlayer(updatedPlayer->UUID);
+		if (!player)
+		{
+			throw std::runtime_error("Player with UUID " + updatedPlayer->UUID + " does not exist in the world.");
+		}
+
+		glm::ivec2 oldChunkPos = Utils::WorldToChunkPosition(player->GetPosition());
+		glm::ivec2 newChunkPos = Utils::WorldToChunkPosition(updatedPlayer->GetPosition());
+
+		player->SetName(updatedPlayer->GetName());
+		player->SetState(updatedPlayer->GetState());
+
+		if (updatedPlayer->HasTransform())
+		{
+			player->SetTransform(updatedPlayer->GetTransform());
+		}
+
+		if (updatedPlayer->HasPhysicsBody())
+		{
+			player->SetPhysicsBody(updatedPlayer->GetPhysicsBody());
+		}
+
+		if (newChunkPos != oldChunkPos)
+		{
+			PlayerChangedChunkEventArgs args;
+			args.PlayerUUID = updatedPlayer->UUID;
+			args.OldChunkPosition = oldChunkPos;
+			args.NewChunkPosition = newChunkPos;
+			PlayerChangedChunk.Trigger(args);
+		}
+	}
+
+	void WorldManager::UpdateEntities(const std::vector<std::shared_ptr<Entity>>& entities)
+	{
+		m_EntityManager->UpdateEntities(entities);
+	}
+
+	std::vector<std::shared_ptr<Entity>> WorldManager::GetAllEntities() const
+	{
+		return m_EntityManager->GetAllEntities();
+	}
+
+	std::unordered_map<std::string, std::shared_ptr<Player>> WorldManager::GetAllPlayers() const
+	{
+		return m_EntityManager->GetAllPlayers();
+	}
+
 	void WorldManager::SubscribeToInternalEvents()
 	{
 		m_InternalEventHandles.push_back(PlayerChangedChunk.Subscribe([this](const PlayerChangedChunkEventArgs& args)
@@ -213,6 +288,18 @@ namespace onion::voxel
 
 		m_InternalEventHandles.push_back(
 			ChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkAdded(chunk); }));
+
+		if (m_WorldSave)
+		{
+			m_InternalEventHandles.push_back(
+				ChunkRemoved.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkRemoved(chunk); }));
+		}
+
+		if (m_WorldGenerator)
+		{
+			m_InternalEventHandles.push_back(m_WorldGenerator->EvtChunkGenerated.Subscribe(
+				[this](const WorldGenerator::GenChunk& genChunk) { Handle_ChunkGenerated(genChunk); }));
+		}
 	}
 
 	void WorldManager::Handle_PlayerChangedChunk(const PlayerChangedChunkEventArgs& args)
@@ -304,6 +391,53 @@ namespace onion::voxel
 		return numBlocksSet;
 	}
 
+	void WorldManager::RequestMissingChunksAsync(const std::vector<glm::ivec2>& chunkPositions)
+	{
+		// If in SinglePlayer : Trigger the event, and missing Chunks will be requested to Server.
+		if (!m_WorldGenerator || !m_WorldSave)
+		{
+			MissingChunksRequested.Trigger(chunkPositions);
+			return;
+		}
+
+		std::vector<std::shared_ptr<Chunk>> chunksToAdd;
+		std::vector<glm::ivec2> chunksToGenerate;
+
+		for (const auto& chunkPos : chunkPositions)
+		{
+			if (!IsChunkLoaded(chunkPos))
+			{
+				std::shared_ptr<Chunk> chunk = m_WorldSave->LoadChunk(chunkPos);
+
+				// If Chunk found
+				if (chunk)
+				{
+					chunksToAdd.push_back(chunk);
+				}
+				else
+				{
+					// Chunk not found in save, generate it
+					chunksToGenerate.push_back(chunkPos);
+				}
+			}
+		}
+
+		// Add loaded chunks to world
+		{
+			std::lock_guard lock(m_MutexChunks);
+			for (const auto& chunk : chunksToAdd)
+			{
+				m_Chunks[chunk->GetPosition()] = chunk;
+			}
+		}
+
+		// Request Async Generation of missing chunks
+		if (!chunksToGenerate.empty())
+		{
+			m_WorldGenerator->GenerateChunksAsync(chunksToGenerate);
+		}
+	}
+
 	void WorldManager::PlaceOutOfBoundsBlocks()
 	{
 		std::vector<std::pair<std::shared_ptr<Chunk>, std::vector<Block>>> work;
@@ -367,7 +501,20 @@ namespace onion::voxel
 		PlaceOutOfBoundsBlocks();
 	}
 
-	void WorldManager::RequestAllMissingChunks() const
+	void WorldManager::Handle_ChunkGenerated(const WorldGenerator::GenChunk& genChunk)
+	{
+		AddChunk(genChunk.chunk, genChunk.outOfBoundsBlocks);
+	}
+
+	void WorldManager::Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk)
+	{
+		if (m_WorldSave)
+		{
+			m_WorldSave->SaveChunkAsync(chunk);
+		}
+	}
+
+	void WorldManager::RequestAllMissingChunks()
 	{
 		// Request missing chunks around each player
 		std::vector<glm::ivec2> missingChunksCenters;
@@ -385,7 +532,7 @@ namespace onion::voxel
 		}
 	}
 
-	void WorldManager::RequestMissingChunksAround(const glm::ivec2& chunkPosition) const
+	void WorldManager::RequestMissingChunksAround(const glm::ivec2& chunkPosition)
 	{
 		std::vector<glm::ivec2> missingChunks;
 		auto playersPosition = GetPlayersPosition();
@@ -423,7 +570,7 @@ namespace onion::voxel
 		// Trigger event to request missing chunks to be loaded
 		if (!missingChunks.empty())
 		{
-			MissingChunksRequested.Trigger(missingChunks);
+			RequestMissingChunksAsync(missingChunks);
 		}
 	}
 

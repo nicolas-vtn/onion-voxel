@@ -80,16 +80,11 @@ namespace onion::voxel
 
 	// ----- Constructor / Destructor -----
 
-	WorldGenerator::WorldGenerator(std::shared_ptr<WorldManager> worldManager) : m_WorldManager(worldManager)
-	{
-		SubscribeToWorldManagerEvents();
-		Handle_SeedChanged(m_WorldManager->GetSeed());
-	}
+	WorldGenerator::WorldGenerator() {}
 
 	WorldGenerator::~WorldGenerator()
 	{
 		m_ThreadPool.Close();
-		m_WorldManagerEventHandles.clear();
 	}
 
 	void WorldGenerator::GenerateChunkAsync(const glm::ivec2& chunkPosition)
@@ -97,14 +92,8 @@ namespace onion::voxel
 		m_ThreadPool.Dispatch(
 			[this, chunkPosition]()
 			{
-				if (!m_WorldManager->IsChunkLoaded(chunkPosition))
-				{
-					GenChunk genChunk = GenerateChunk(chunkPosition);
-					if (genChunk.chunk)
-					{
-						m_WorldManager->AddChunk(genChunk.chunk, genChunk.outOfBoundsBlocks);
-					}
-				}
+				GenChunk genChunk = GenerateChunk(chunkPosition);
+				EvtChunkGenerated.Trigger(genChunk);
 			});
 	}
 
@@ -118,20 +107,22 @@ namespace onion::voxel
 
 	uint32_t WorldGenerator::GetSeed() const
 	{
-		return m_WorldManager->GetSeed();
+		return m_Seed;
 	}
 
-	void WorldGenerator::SubscribeToWorldManagerEvents()
+	void WorldGenerator::SetSeed(uint32_t seed)
 	{
-		m_WorldManagerEventHandles.push_back(
-			m_WorldManager->SeedChanged.Subscribe([this](const uint32_t& newSeed) { Handle_SeedChanged(newSeed); }));
+		m_Seed = seed;
 	}
 
-	void WorldGenerator::Handle_SeedChanged(const uint32_t& newSeed)
+	WorldGenerator::eWorldGenerationType WorldGenerator::GetWorldGenerationType() const
 	{
-		(void) newSeed; // Unused parameter
-		ConfigureNoiseGenerators();
-		m_SeededRandom.SetSeed(newSeed);
+		return m_WorldGenerationType;
+	}
+
+	void WorldGenerator::SetWorldGenerationType(eWorldGenerationType worldGenerationType)
+	{
+		m_WorldGenerationType = worldGenerationType;
 	}
 
 	WorldGenerator::GenChunk WorldGenerator::GenerateChunk(const glm::ivec2& chunkPosition)

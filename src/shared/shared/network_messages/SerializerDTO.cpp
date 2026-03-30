@@ -1,8 +1,8 @@
-#include "Serializer.hpp"
+#include "SerializerDTO.hpp"
 
 namespace onion::voxel
 {
-	SubChunkDTO Serializer::SerializeSubChunk(const SubChunk& sc)
+	SubChunkDTO SerializerDTO::SerializeSubChunk(const SubChunk& sc)
 	{
 		SubChunkDTO dto;
 
@@ -60,7 +60,7 @@ namespace onion::voxel
 		return dto;
 	}
 
-	SubChunk Serializer::DeserializeSubChunk(const SubChunkDTO& dto)
+	SubChunk SerializerDTO::DeserializeSubChunk(const SubChunkDTO& dto)
 	{
 		SubChunk sc;
 
@@ -99,7 +99,7 @@ namespace onion::voxel
 		return sc;
 	}
 
-	ChunkDataMsg Serializer::SerializeChunk(std::shared_ptr<Chunk> chunk)
+	ChunkDataMsg SerializerDTO::SerializeChunk(std::shared_ptr<Chunk> chunk)
 	{
 		std::shared_lock lock(chunk->m_Mutex);
 
@@ -123,7 +123,7 @@ namespace onion::voxel
 		return msg;
 	}
 
-	std::shared_ptr<Chunk> Serializer::DeserializeChunk(const ChunkDataMsg& msg)
+	std::shared_ptr<Chunk> SerializerDTO::DeserializeChunk(const ChunkDataMsg& msg)
 	{
 		auto chunk = std::make_shared<Chunk>(msg.Position);
 
@@ -148,7 +148,7 @@ namespace onion::voxel
 		return chunk;
 	};
 
-	BlockStateDTO Serializer::SerializeBlockState(const BlockState& block)
+	BlockStateDTO SerializerDTO::SerializeBlockState(const BlockState& block)
 	{
 		BlockStateDTO dto;
 		dto.id = (uint16_t) block.ID;
@@ -158,7 +158,7 @@ namespace onion::voxel
 		return dto;
 	}
 
-	BlockState Serializer::DeserializeBlockState(const BlockStateDTO& dto)
+	BlockState SerializerDTO::DeserializeBlockState(const BlockStateDTO& dto)
 	{
 		BlockState block;
 		block.ID = (BlockId) dto.id;
@@ -168,7 +168,7 @@ namespace onion::voxel
 		return block;
 	}
 
-	BlockDTO Serializer::SerializeBlock(const Block& block)
+	BlockDTO SerializerDTO::SerializeBlock(const Block& block)
 	{
 		BlockDTO dto;
 		dto.position = block.Position;
@@ -177,7 +177,7 @@ namespace onion::voxel
 		return dto;
 	}
 
-	Block Serializer::DeserializeBlock(const BlockDTO& dto)
+	Block SerializerDTO::DeserializeBlock(const BlockDTO& dto)
 	{
 		Block block;
 		block.Position = dto.position;
@@ -186,7 +186,7 @@ namespace onion::voxel
 		return block;
 	}
 
-	TransformDTO Serializer::SerializeTransform(const Transform& transform)
+	TransformDTO SerializerDTO::SerializeTransform(const Transform& transform)
 	{
 		TransformDTO dto;
 		dto.Position = transform.Position;
@@ -195,7 +195,7 @@ namespace onion::voxel
 		return dto;
 	}
 
-	Transform Serializer::DeserializeTransform(const TransformDTO& dto)
+	Transform SerializerDTO::DeserializeTransform(const TransformDTO& dto)
 	{
 		Transform transform;
 		transform.Position = dto.Position;
@@ -204,7 +204,7 @@ namespace onion::voxel
 		return transform;
 	}
 
-	PhysicsBodyDTO Serializer::SerializePhysicsBody(const PhysicsBody& physicsBody)
+	PhysicsBodyDTO SerializerDTO::SerializePhysicsBody(const PhysicsBody& physicsBody)
 	{
 		PhysicsBodyDTO dto;
 		dto.Velocity = physicsBody.Velocity;
@@ -215,7 +215,7 @@ namespace onion::voxel
 		return dto;
 	}
 
-	PhysicsBody Serializer::DeserializePhysicsBody(const PhysicsBodyDTO& dto)
+	PhysicsBody SerializerDTO::DeserializePhysicsBody(const PhysicsBodyDTO& dto)
 	{
 		PhysicsBody physicsBody;
 		physicsBody.Velocity = dto.Velocity;
@@ -226,7 +226,7 @@ namespace onion::voxel
 		return physicsBody;
 	}
 
-	void Serializer::ApplyEntityDTO(const EntityDTO& dto, std::shared_ptr<Entity> entity)
+	void SerializerDTO::ApplyEntityDTO(const EntityDTO& dto, std::shared_ptr<Entity> entity)
 	{
 		entity->SetState(static_cast<Entity::State>(dto.State));
 
@@ -241,7 +241,7 @@ namespace onion::voxel
 		}
 	}
 
-	EntityDTO Serializer::SerializeEntity(const Entity& entity)
+	EntityDTO SerializerDTO::SerializeEntity(const Entity& entity)
 	{
 		EntityDTO dto;
 		dto.Type = static_cast<int>(entity.Type);
@@ -254,7 +254,7 @@ namespace onion::voxel
 		return dto;
 	}
 
-	std::shared_ptr<Entity> Serializer::DeserializeEntity(const EntityDTO& dto)
+	std::shared_ptr<Entity> SerializerDTO::DeserializeEntity(const EntityDTO& dto)
 	{
 		auto entity = std::make_shared<Entity>(static_cast<EntityType>(dto.Type), dto.UUID);
 		entity->SetState(static_cast<Entity::State>(dto.State));
@@ -263,7 +263,7 @@ namespace onion::voxel
 		return entity;
 	}
 
-	PlayerDTO Serializer::SerializePlayer(const Player& player)
+	PlayerDTO SerializerDTO::SerializePlayer(const Player& player)
 	{
 		EntityDTO entityDTO = SerializeEntity(player);
 		PlayerDTO playerDto(entityDTO);
@@ -271,7 +271,7 @@ namespace onion::voxel
 		return playerDto;
 	}
 
-	std::shared_ptr<Player> Serializer::DeserializePlayer(const PlayerDTO& dto)
+	std::shared_ptr<Player> SerializerDTO::DeserializePlayer(const PlayerDTO& dto)
 	{
 		auto player = std::make_shared<Player>(dto.UUID);
 		ApplyEntityDTO(dto, player);
