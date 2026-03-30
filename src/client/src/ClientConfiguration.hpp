@@ -72,6 +72,9 @@ namespace onion::voxel
 			for (int i = 0; i < 32; i++)
 				uuid += "0123456789abcdef"[dis(gen)];
 			clientData.UUID = uuid;
+
+			// Save back to eventually add new fields
+			Save(filePath);
 		}
 
 		void Save(const std::filesystem::path& filePath) const

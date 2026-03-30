@@ -69,6 +69,9 @@ namespace onion::voxel
 			serverData.Seed = json.value("Seed", serverData.Seed);
 			serverData.SimulationDistance = json.value("SimulationDistance", serverData.SimulationDistance);
 			serverData.WorldGenerationType = json.value("WorldGenerationType", serverData.WorldGenerationType);
+
+			// Save the configuration to ensure that any missing fields are added to the file
+			Save(filePath);
 		}
 
 		void Save(const std::filesystem::path& filePath) const

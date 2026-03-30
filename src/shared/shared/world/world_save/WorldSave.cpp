@@ -6,6 +6,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include <shared/utils/Utils.hpp>
+
 #include "SaveFormats/SerializerSave.hpp"
 
 namespace onion::voxel
@@ -47,6 +49,20 @@ namespace onion::voxel
 		SaveInfos(saveDirectory, infos);
 	}
 
+	bool WorldSave::GetWorldInfos(const std::filesystem::path& saveDirectory, WorldInfos& outInfos)
+	{
+		try
+		{
+			outInfos = LoadInfos(saveDirectory);
+			return true;
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "Failed to load world infos: " << e.what() << "\n";
+			return false;
+		}
+	}
+
 	void WorldSave::SaveChunkAsync(const std::shared_ptr<Chunk>& chunk)
 	{
 		std::lock_guard lock(m_MutexChunksToSave);
@@ -72,7 +88,7 @@ namespace onion::voxel
 			{
 				std::lock_guard lock(m_MutexDiskAccess);
 				std::string chunkFileName = GetChunkFileName(chunkPosition);
-				std::filesystem::path chunkFilePath = m_SaveDirectory / s_ChunksDirectoryName / chunkFileName;
+				std::filesystem::path chunkFilePath = GetChunkFilePath(m_SaveDirectory, chunkPosition);
 
 				if (std::filesystem::exists(chunkFilePath))
 				{
@@ -86,7 +102,6 @@ namespace onion::voxel
 				}
 				else
 				{
-					std::cout << "Chunk file does not exist: " << chunkFilePath << "\n";
 					return nullptr;
 				}
 			}
@@ -110,7 +125,7 @@ namespace onion::voxel
 		for (const auto& [chunkPos, chunk] : chunksToSaveCopy)
 		{
 			const std::string chunkFileName = GetChunkFileName(chunkPos);
-			std::filesystem::path chunkFilePath = m_SaveDirectory / s_ChunksDirectoryName / chunkFileName;
+			std::filesystem::path chunkFilePath = GetChunkFilePath(m_SaveDirectory, chunkPos);
 			std::vector<uint8_t> chunkData = SerializerSave::SerializeChunk(chunk);
 			chunksDataToWrite.emplace_back(chunkFilePath, std::move(chunkData));
 		}
@@ -119,6 +134,7 @@ namespace onion::voxel
 			std::lock_guard lock(m_MutexDiskAccess);
 			for (const auto& [chunkFilePath, chunkData] : chunksDataToWrite)
 			{
+				std::filesystem::create_directories(chunkFilePath.parent_path());
 				std::ofstream file(chunkFilePath, std::ios::binary);
 				if (!file.is_open())
 				{
@@ -184,6 +200,23 @@ namespace onion::voxel
 	std::string WorldSave::GetChunkFileName(const glm::ivec2& chunkPosition)
 	{
 		return std::to_string(chunkPosition.x) + "_" + std::to_string(chunkPosition.y);
+	}
+
+	std::string WorldSave::GetRegionDirectoryName(const glm::ivec2& chunkPosition)
+	{
+		glm::ivec2 regionPos{Utils::FloorDiv(chunkPosition.x, s_RegionSizeInChunks),
+							 Utils::FloorDiv(chunkPosition.y, s_RegionSizeInChunks)};
+
+		return s_RegionDirectoryNamePrefix + std::to_string(regionPos.x) + "_" + std::to_string(regionPos.y);
+	}
+
+	std::filesystem::path WorldSave::GetChunkFilePath(const std::filesystem::path& saveDirectory,
+													  const glm::ivec2& chunkPosition)
+	{
+		std::string regionDirName = GetRegionDirectoryName(chunkPosition);
+		std::filesystem::path regionDirPath = saveDirectory / s_ChunksDirectoryName / regionDirName;
+		std::string chunkFileName = GetChunkFileName(chunkPosition);
+		return regionDirPath / chunkFileName;
 	}
 
 } // namespace onion::voxel

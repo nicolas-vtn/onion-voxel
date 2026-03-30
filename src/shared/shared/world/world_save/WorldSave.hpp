@@ -25,6 +25,7 @@ namespace onion::voxel
 		WorldGenerator::eWorldGenerationType GetWorldGenerationType() const;
 
 		static void CreateWorld(const std::filesystem::path& saveDirectory, const WorldInfos& infos);
+		static bool GetWorldInfos(const std::filesystem::path& saveDirectory, WorldInfos& outInfos);
 
 		void SaveChunkAsync(const std::shared_ptr<Chunk>& chunk);
 		std::shared_ptr<Chunk> LoadChunk(const glm::ivec2& chunkPosition);
@@ -35,6 +36,8 @@ namespace onion::voxel
 
 		static inline const std::string s_InfosFileName = "infos.json";
 		static inline const std::string s_ChunksDirectoryName = "chunks";
+		static inline const std::string s_RegionDirectoryNamePrefix = "region_";
+		static inline const uint8_t s_RegionSizeInChunks = 32;
 		WorldInfos m_Infos;
 
 		mutable std::mutex m_MutexDiskAccess;
@@ -51,5 +54,8 @@ namespace onion::voxel
 		static void SaveInfos(const std::filesystem::path& saveDirectory, const WorldInfos& infos);
 		static WorldInfos LoadInfos(const std::filesystem::path& saveDirectory);
 		static std::string GetChunkFileName(const glm::ivec2& chunkPosition);
+		static std::string GetRegionDirectoryName(const glm::ivec2& chunkPosition);
+		static std::filesystem::path GetChunkFilePath(const std::filesystem::path& saveDirectory,
+													  const glm::ivec2& chunkPosition);
 	};
 } // namespace onion::voxel
