@@ -379,6 +379,24 @@ namespace onion::voxel
 			entities.push_back(entity);
 		}
 
+		// Remove the players that are not present in the received snapshot
+		std::unordered_map<std::string, std::shared_ptr<Player>> currentPlayers = m_WorldManager->GetAllPlayers();
+		for (const auto& [uuid, player] : currentPlayers)
+		{
+			if (uuid == m_Config.clientData.UUID)
+			{
+				continue; // Skip the player itself
+			}
+			auto it = std::find_if(players.begin(),
+								   players.end(),
+								   [&uuid](const std::shared_ptr<Entity>& entity) { return entity->UUID == uuid; });
+			if (it == players.end())
+			{
+				std::cout << "Removing player with UUID " << uuid << " from EntityManager\n";
+				m_WorldManager->RemovePlayer(uuid);
+			}
+		}
+
 		m_WorldManager->UpdateEntities(players);
 		m_WorldManager->UpdateEntities(entities);
 	}
