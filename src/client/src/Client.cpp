@@ -91,9 +91,13 @@ namespace onion::voxel
 		m_Config.Save(m_ConfigFilePath);
 	}
 
-	void Client::Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath)
+	void Client::Handle_StartSingleplayerRequest(const std::filesystem::path& worldPath)
 	{
 		(void) worldPath; // Currently unused
+
+		m_NetworkClient.SetRemoteHost("127.0.0.1");
+		m_NetworkClient.SetRemotePort(7777);
+
 		// Starts a Server on Localhost
 		if (m_LocalhostServer == nullptr)
 		{
@@ -129,7 +133,7 @@ namespace onion::voxel
 		m_NetworkClient.Send(std::move(clientInfoMsg), true);
 	}
 
-	void Client::Handle_RequestStartMultiplayerGame(const Gui::MultiplayerGameStartInfo& multiplayerGameStartInfo)
+	void Client::Handle_StartMultiplayerRequest(const Gui::MultiplayerGameStartInfo& multiplayerGameStartInfo)
 	{
 		m_NetworkClient.SetRemoteHost(multiplayerGameStartInfo.ServerAddress);
 		m_NetworkClient.SetRemotePort(multiplayerGameStartInfo.ServerPort);
@@ -157,15 +161,18 @@ namespace onion::voxel
 		m_NetworkClient.Send(std::move(clientInfoMsg), true);
 	}
 
-	void Client::Handle_StopSingleplayerGameRequest(const std::filesystem::path& worldPath)
+	void Client::Handle_StopPlayingRequest(const std::filesystem::path& worldPath)
 	{
 		(void) worldPath; // Currently unused
+
+		// Stops Network Client
 		if (m_NetworkClient.IsRunning())
 		{
 			m_TimerSendPlayerInfos.Stop();
 			m_NetworkClient.Stop();
 		}
 
+		// Stops Localhost Server if it was started (Singleplayer)
 		if (m_LocalhostServer != nullptr)
 		{
 			m_LocalhostServer->Stop();
@@ -219,18 +226,18 @@ namespace onion::voxel
 	void Client::SubscribeToRendererEvents()
 	{
 		m_RendererEventHandles.push_back(m_Renderer.RequestStartSingleplayerGame.Subscribe(
-			[this](const std::filesystem::path& worldPath) { Handle_StartSingleplayerGameRequest(worldPath); }));
+			[this](const std::filesystem::path& worldPath) { Handle_StartSingleplayerRequest(worldPath); }));
 
 		m_RendererEventHandles.push_back(m_Renderer.RequestQuitToMainMenu.Subscribe(
 			[this](bool quit)
 			{
 				(void) quit;
-				Handle_StopSingleplayerGameRequest("");
+				Handle_StopPlayingRequest("");
 			}));
 
 		m_RendererEventHandles.push_back(m_Renderer.RequestStartMultiplayerGame.Subscribe(
 			[this](const Gui::MultiplayerGameStartInfo& multiplayerGameStartInfo)
-			{ Handle_RequestStartMultiplayerGame(multiplayerGameStartInfo); }));
+			{ Handle_StartMultiplayerRequest(multiplayerGameStartInfo); }));
 	}
 
 	void Client::SubscribeToNetworkClientEvents()

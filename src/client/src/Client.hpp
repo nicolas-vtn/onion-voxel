@@ -75,9 +75,9 @@ namespace onion::voxel
 
 		// ----- Event Handling -----
 	  private:
-		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
-		void Handle_RequestStartMultiplayerGame(const Gui::MultiplayerGameStartInfo& multiplayerGameStartInfo);
-		void Handle_StopSingleplayerGameRequest(const std::filesystem::path& worldPath);
+		void Handle_StartSingleplayerRequest(const std::filesystem::path& worldPath);
+		void Handle_StartMultiplayerRequest(const Gui::MultiplayerGameStartInfo& multiplayerGameStartInfo);
+		void Handle_StopPlayingRequest(const std::filesystem::path& worldPath);
 
 		// ----- World Manager -----
 	  private:
