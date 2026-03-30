@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <shared/utils/Utils.hpp>
+
 namespace
 {
 	using namespace onion::voxel;
@@ -40,8 +42,19 @@ namespace onion::voxel
 		// Update physics and resolve collisions for each entity
 		for (const auto& entity : entities)
 		{
-			UpdateEntityPhysics(entity, deltaTime);
-			ResolveTerrainCollisions(entity, deltaTime);
+			// Check if the entity is in a loaded chunk
+			bool inLoadedChunk = false;
+			if (entity->HasTransform())
+			{
+				glm::ivec2 chunkPos = Utils::WorldToChunkPosition(entity->GetTransform().Position);
+				inLoadedChunk = m_WorldManager.IsChunkLoaded(chunkPos);
+			}
+
+			if (inLoadedChunk)
+			{
+				UpdateEntityPhysics(entity, deltaTime);
+				ResolveTerrainCollisions(entity, deltaTime);
+			}
 		}
 	}
 

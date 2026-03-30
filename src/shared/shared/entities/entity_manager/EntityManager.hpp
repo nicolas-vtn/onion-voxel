@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <onion/Event.hpp>
+
 #include <shared/entities/entity/Entity.hpp>
 #include <shared/entities/entity/player/Player.hpp>
 
@@ -12,10 +14,13 @@ namespace onion::voxel
 {
 	class EntityManager
 	{
+		// ----- Constructor / Destructor -----
 	  public:
 		EntityManager();
 		~EntityManager();
 
+		// ----- Public API -----
+	  public:
 		std::shared_ptr<Player> GetPlayer(const std::string& uuid) const;
 		void AddPlayer(const std::shared_ptr<Player>& player);
 		bool RemovePlayer(const std::string& uuid);
@@ -27,12 +32,18 @@ namespace onion::voxel
 
 		void ClearAllEntities();
 
-		bool IsPlayerExists(const std::string& uuid) const;
+		bool PlayerExists(const std::string& uuid) const;
 
 		std::unordered_map<std::string, std::shared_ptr<Player>> GetAllPlayers() const;
 
 		std::vector<std::shared_ptr<Entity>> GetAllEntities() const;
 
+		// ----- Events -----
+	  public:
+		Event<const std::shared_ptr<Player>&> EvtPlayerAdded;
+		Event<const std::shared_ptr<Player>&> EvtPlayerRemoved;
+
+		// ----- Private Members -----
 	  private:
 		mutable std::shared_mutex m_MutexPlayers;
 		std::unordered_map<std::string, std::shared_ptr<Player>> m_Players;

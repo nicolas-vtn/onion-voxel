@@ -198,6 +198,8 @@ namespace onion::voxel
 		RequestChunksMsg requestChunksMsg;
 		requestChunksMsg.requestedChunks = chunkPositions;
 
+		//std::cout << "Requesting " << chunkPositions.size() << " missing chunks from server\n";
+
 		m_NetworkClient.Send(std::move(requestChunksMsg), false);
 	}
 
@@ -360,16 +362,6 @@ namespace onion::voxel
 				if (!hasPlayerBeenSet)
 				{
 					// If the player has not been set yet, add it to the EntityManager
-
-					// Enable Fly
-					PhysicsBody physicsBody = player->GetPhysicsBody();
-					physicsBody.IsFlying = true;
-					player->SetPhysicsBody(physicsBody);
-
-					// Place a block
-					Block block(player->GetPosition() + glm::vec3(2.f, 0.f, 2.f), BlockId::Cobblestone);
-					m_WorldManager->SetBlock(block, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
-
 					m_WorldManager->AddPlayer(player);
 				}
 

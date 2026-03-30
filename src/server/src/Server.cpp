@@ -247,9 +247,6 @@ namespace onion::voxel
 		// Add the new Player
 		AddPlayer(playerInfo);
 
-		// Arbitrary Set player position to 8 , 20, 8
-		m_WorldManager->SetPlayerPosition(args.UUID, glm::vec3(8.0f, 20.0f, 8.0f));
-
 		ServerInfoMsg srvInfoMsg;
 		srvInfoMsg.ServerName = m_Config.serverData.ServerName;
 		srvInfoMsg.ClientHandle = args.Client;
@@ -297,11 +294,20 @@ namespace onion::voxel
 
 	void Server::AddPlayer(const PlayerInfo& playerInfo)
 	{
+		std::shared_ptr<Player> loadedPlayer = m_WorldManager->LoadPlayer(playerInfo.UUID);
 
-		std::shared_ptr<Player> player = std::make_shared<Player>(playerInfo.UUID);
-		player->SetName(playerInfo.PlayerName);
-
-		m_WorldManager->AddPlayer(player);
+		// If the player already exists in the world manager, update the name in case it has changed since last connection
+		if (loadedPlayer)
+		{
+			loadedPlayer->SetName(playerInfo.PlayerName);
+		}
+		else // Create a new player and add it to the world manager
+		{
+			std::shared_ptr<Player> player = std::make_shared<Player>(playerInfo.UUID);
+			player->SetName(playerInfo.PlayerName);
+			player->SetPosition(glm::vec3(8.f, 20.f, 8.f)); // Spawn player at a default position
+			m_WorldManager->AddPlayer(player);
+		}
 
 		{
 			std::lock_guard lock(m_MutexPlayers);

@@ -32,7 +32,8 @@ namespace onion::voxel
 		std::shared_ptr<Chunk> LoadChunk(const glm::ivec2& chunkPosition);
 
 		void SavePlayersAsync(const std::unordered_map<std::string, std::shared_ptr<Player>>& players);
-		std::shared_ptr<Player> LoadPlayer(const std::string& playerName);
+		void SavePlayerAsync(const std::shared_ptr<Player>& player);
+		std::shared_ptr<Player> LoadPlayer(const std::string& playerUUID);
 
 		// ----- Private Members -----
 	  private:
@@ -41,6 +42,7 @@ namespace onion::voxel
 		static inline const std::string s_InfosFileName = "infos.json";
 		static inline const std::string s_ChunksDirectoryName = "chunks";
 		static inline const std::string s_RegionDirectoryNamePrefix = "region_";
+		static inline const std::string s_PlayersDirectoryName = "players";
 		static inline const uint8_t s_RegionSizeInChunks = 32;
 		WorldInfos m_Infos;
 
@@ -66,5 +68,7 @@ namespace onion::voxel
 		static std::string GetRegionDirectoryName(const glm::ivec2& chunkPosition);
 		static std::filesystem::path GetChunkFilePath(const std::filesystem::path& saveDirectory,
 													  const glm::ivec2& chunkPosition);
+		static std::filesystem::path GetFilePathForPlayer(const std::filesystem::path& saveDirectory,
+														  const std::string& playerUUID);
 	};
 } // namespace onion::voxel

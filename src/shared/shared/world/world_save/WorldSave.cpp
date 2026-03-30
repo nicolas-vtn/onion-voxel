@@ -22,7 +22,11 @@ namespace onion::voxel
 		m_TimerSave.Start();
 	}
 
-	WorldSave::~WorldSave() {}
+	WorldSave::~WorldSave()
+	{
+		m_TimerSave.Stop();
+		SavePeriodically(); // Save one last time before destruction to minimize data loss
+	}
 
 	uint32_t WorldSave::GetSeed() const
 	{
@@ -83,47 +87,45 @@ namespace onion::voxel
 			}
 		}
 
+		std::vector<uint8_t> chunkData;
 		{
-			std::vector<uint8_t> chunkData;
+			std::lock_guard lock(m_MutexDiskAccess);
+			std::string chunkFileName = GetChunkFileName(chunkPosition);
+			std::filesystem::path chunkFilePath = GetChunkFilePath(m_SaveDirectory, chunkPosition);
+
+			if (std::filesystem::exists(chunkFilePath))
 			{
-				std::lock_guard lock(m_MutexDiskAccess);
-				std::string chunkFileName = GetChunkFileName(chunkPosition);
-				std::filesystem::path chunkFilePath = GetChunkFilePath(m_SaveDirectory, chunkPosition);
-
-				if (std::filesystem::exists(chunkFilePath))
+				std::ifstream file(chunkFilePath, std::ios::binary);
+				if (!file.is_open())
 				{
-					std::ifstream file(chunkFilePath, std::ios::binary);
-					if (!file.is_open())
-					{
-						std::cerr << "Failed to open chunk file for reading: " << chunkFilePath << "\n";
-						throw std::runtime_error("Failed to open chunk file for reading: " + chunkFilePath.string());
-					}
-					chunkData = std::vector<uint8_t>(std::istreambuf_iterator<char>(file), {});
+					std::cerr << "Failed to open chunk file for reading: " << chunkFilePath << "\n";
+					throw std::runtime_error("Failed to open chunk file for reading: " + chunkFilePath.string());
 				}
-				else
-				{
-					return nullptr;
-				}
+				chunkData = std::vector<uint8_t>(std::istreambuf_iterator<char>(file), {});
 			}
-
-			if (chunkData.empty())
+			else
+			{
 				return nullptr;
-
-			// Create a stream from the raw buffer
-			std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
-			ss.write(reinterpret_cast<const char*>(chunkData.data()), chunkData.size());
-			ss.seekg(0); // reset read position
-
-			// Deserialize with cereal
-			cereal::BinaryInputArchive archive(ss);
-
-			ChunkDTO dto;
-			archive(dto);
-
-			std::shared_ptr<Chunk> chunk = SerializerDTO::DeserializeChunk(dto);
-
-			return chunk;
+			}
 		}
+
+		if (chunkData.empty())
+			return nullptr;
+
+		// Create a stream from the raw buffer
+		std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
+		ss.write(reinterpret_cast<const char*>(chunkData.data()), chunkData.size());
+		ss.seekg(0); // reset read position
+
+		// Deserialize with cereal
+		cereal::BinaryInputArchive archive(ss);
+
+		ChunkDTO dto;
+		archive(dto);
+
+		std::shared_ptr<Chunk> chunk = SerializerDTO::DeserializeChunk(dto);
+
+		return chunk;
 	}
 
 	void WorldSave::SavePlayersAsync(const std::unordered_map<std::string, std::shared_ptr<Player>>& players)
@@ -135,12 +137,18 @@ namespace onion::voxel
 		}
 	}
 
-	std::shared_ptr<Player> WorldSave::LoadPlayer(const std::string& playerName)
+	void WorldSave::SavePlayerAsync(const std::shared_ptr<Player>& player)
+	{
+		std::lock_guard lock(m_MutexPlayersToSave);
+		m_PlayersToSave[player->UUID] = player;
+	}
+
+	std::shared_ptr<Player> WorldSave::LoadPlayer(const std::string& playerUUID)
 	{
 		// First check if the player is in the players to save map.
 		{
 			std::lock_guard lock(m_MutexPlayersToSave);
-			auto it = m_PlayersToSave.find(playerName);
+			auto it = m_PlayersToSave.find(playerUUID);
 			if (it != m_PlayersToSave.end())
 			{
 				auto player = it->second;
@@ -149,7 +157,46 @@ namespace onion::voxel
 			}
 		}
 
-		return nullptr; // Player loading not implemented yet
+		// If not, load from disk
+		std::vector<uint8_t> playerData;
+		{
+			std::lock_guard lock(m_MutexDiskAccess);
+			std::filesystem::path playerFilePath = GetFilePathForPlayer(m_SaveDirectory, playerUUID);
+
+			if (std::filesystem::exists(playerFilePath))
+			{
+				std::ifstream file(playerFilePath, std::ios::binary);
+				if (!file.is_open())
+				{
+					std::cerr << "Failed to open player file for reading: " << playerFilePath << "\n";
+					throw std::runtime_error("Failed to open player file for reading: " + playerFilePath.string());
+				}
+				playerData = std::vector<uint8_t>(std::istreambuf_iterator<char>(file), {});
+			}
+			else
+			{
+				// No player file found, return nullptr to indicate player doesn't exist
+				return nullptr;
+			}
+		}
+
+		if (playerData.empty())
+			return nullptr;
+
+		// Create a stream from the raw buffer
+		std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
+		ss.write(reinterpret_cast<const char*>(playerData.data()), playerData.size());
+		ss.seekg(0); // reset read position
+
+		// Deserialize with cereal
+		cereal::BinaryInputArchive archive(ss);
+
+		PlayerDTO dto;
+		archive(dto);
+
+		std::shared_ptr<Player> player = SerializerDTO::DeserializePlayer(dto);
+
+		return player;
 	}
 
 	void WorldSave::SavePeriodically()
@@ -199,7 +246,45 @@ namespace onion::voxel
 		}
 	}
 
-	void WorldSave::SavePlayers() {}
+	void WorldSave::SavePlayers()
+	{
+		std::unordered_map<std::string, std::shared_ptr<Player>> playersToSaveCopy;
+		{
+			std::lock_guard lock(m_MutexPlayersToSave);
+			playersToSaveCopy = m_PlayersToSave;
+			m_PlayersToSave.clear();
+		}
+
+		std::vector<std::pair<std::filesystem::path, std::vector<uint8_t>>> playersDataToWrite;
+		for (const auto& [playerUUID, player] : playersToSaveCopy)
+		{
+			std::filesystem::path playerFilePath = GetFilePathForPlayer(m_SaveDirectory, playerUUID);
+
+			PlayerDTO playerDto = SerializerDTO::SerializePlayer(*player);
+			std::ostringstream stream(std::ios::binary);
+			cereal::BinaryOutputArchive archive(stream);
+			archive(playerDto);
+			std::string playerDataStr = stream.str();
+			std::vector<uint8_t> playerData(playerDataStr.begin(), playerDataStr.end());
+
+			playersDataToWrite.emplace_back(playerFilePath, std::move(playerData));
+		}
+
+		{
+			std::lock_guard lock(m_MutexDiskAccess);
+			for (const auto& [playerFilePath, playerData] : playersDataToWrite)
+			{
+				std::filesystem::create_directories(playerFilePath.parent_path());
+				std::ofstream file(playerFilePath, std::ios::binary);
+				if (!file.is_open())
+				{
+					std::cerr << "Failed to open player file for writing: " << playerFilePath << "\n";
+					throw std::runtime_error("Failed to open player file for writing: " + playerFilePath.string());
+				}
+				file.write(reinterpret_cast<const char*>(playerData.data()), playerData.size());
+			}
+		}
+	}
 
 	void WorldSave::SaveInfos(const std::filesystem::path& saveDirectory, const WorldInfos& infos)
 	{
@@ -272,6 +357,13 @@ namespace onion::voxel
 		std::filesystem::path regionDirPath = saveDirectory / s_ChunksDirectoryName / regionDirName;
 		std::string chunkFileName = GetChunkFileName(chunkPosition);
 		return regionDirPath / chunkFileName;
+	}
+
+	std::filesystem::path WorldSave::GetFilePathForPlayer(const std::filesystem::path& saveDirectory,
+														  const std::string& playerUUID)
+	{
+		std::filesystem::path playersDirPath = saveDirectory / s_PlayersDirectoryName;
+		return playersDirPath / playerUUID;
 	}
 
 } // namespace onion::voxel

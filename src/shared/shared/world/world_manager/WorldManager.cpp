@@ -58,6 +58,22 @@ namespace onion::voxel
 		m_EntityManager->AddPlayer(player);
 	}
 
+	std::shared_ptr<Player> WorldManager::LoadPlayer(const std::string& playerUUID)
+	{
+		std::shared_ptr<Player> player = m_EntityManager->GetPlayer(playerUUID);
+
+		if (!player && m_WorldSave)
+		{
+			player = m_WorldSave->LoadPlayer(playerUUID);
+			if (player)
+			{
+				m_EntityManager->AddPlayer(player);
+			}
+		}
+
+		return player;
+	}
+
 	void WorldManager::RemovePlayer(const std::string& playerUUID)
 	{
 		m_EntityManager->RemovePlayer(playerUUID);
@@ -293,6 +309,12 @@ namespace onion::voxel
 		{
 			m_InternalEventHandles.push_back(
 				ChunkRemoved.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkRemoved(chunk); }));
+
+			m_InternalEventHandles.push_back(m_EntityManager->EvtPlayerAdded.Subscribe(
+				[this](const std::shared_ptr<Player>& player) { Handle_PlayerAdded(player); }));
+
+			m_InternalEventHandles.push_back(m_EntityManager->EvtPlayerRemoved.Subscribe(
+				[this](const std::shared_ptr<Player>& player) { Handle_PlayerRemoved(player); }));
 		}
 
 		if (m_WorldGenerator)
@@ -304,12 +326,18 @@ namespace onion::voxel
 
 	void WorldManager::Handle_PlayerChangedChunk(const PlayerChangedChunkEventArgs& args)
 	{
-		std::cout << "Player " << args.PlayerUUID << " changed chunk from " << args.OldChunkPosition.x << ", "
-				  << args.OldChunkPosition.y << " to " << args.NewChunkPosition.x << ", " << args.NewChunkPosition.y
-				  << std::endl;
+		//std::cout << "Player " << args.PlayerUUID << " changed chunk from " << args.OldChunkPosition.x << ", "
+		//		  << args.OldChunkPosition.y << " to " << args.NewChunkPosition.x << ", " << args.NewChunkPosition.y
+		//		  << std::endl;
 
 		RemoveDistantChunks();
 		RequestMissingChunksAround(args.NewChunkPosition);
+
+		// Save Players to the world save (if it exists)
+		if (m_WorldSave)
+		{
+			m_WorldSave->SavePlayersAsync(m_EntityManager->GetAllPlayers());
+		}
 	}
 
 	BlockState WorldManager::GetBlock(const glm::ivec3& worldPosition) const
@@ -511,6 +539,22 @@ namespace onion::voxel
 		if (m_WorldSave)
 		{
 			m_WorldSave->SaveChunkAsync(chunk);
+		}
+	}
+
+	void WorldManager::Handle_PlayerAdded(const std::shared_ptr<Player>& player)
+	{
+		if (m_WorldSave)
+		{
+			m_WorldSave->SavePlayerAsync(player);
+		}
+	}
+
+	void WorldManager::Handle_PlayerRemoved(const std::shared_ptr<Player>& player)
+	{
+		if (m_WorldSave)
+		{
+			m_WorldSave->SavePlayerAsync(player);
 		}
 	}
 

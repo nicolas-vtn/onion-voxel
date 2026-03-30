@@ -70,6 +70,7 @@ namespace onion::voxel
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> GetAllChunks() const;
 
 		void AddPlayer(const std::shared_ptr<Player>& player);
+		std::shared_ptr<Player> LoadPlayer(const std::string& playerUUID);
 		void RemovePlayer(const std::string& playerUUID);
 
 		// ----- Getters / Setters -----
@@ -113,6 +114,9 @@ namespace onion::voxel
 		void Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk);
 		void Handle_ChunkGenerated(const WorldGenerator::GenChunk& genChunk);
 		void Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk);
+
+		void Handle_PlayerAdded(const std::shared_ptr<Player>& player);
+		void Handle_PlayerRemoved(const std::shared_ptr<Player>& player);
 
 		// ----- Members -----
 	  private:
