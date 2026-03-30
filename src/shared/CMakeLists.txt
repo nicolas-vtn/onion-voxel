@@ -9,9 +9,12 @@ add_library(onion_voxel_shared
  "shared/world/chunk/SubChunk.cpp"
  "shared/world/block/Block.cpp"
  "shared/world/block/BlockState.cpp"
- "shared/world/world_manager/WorldManager.cpp"
 
- "shared/network_messages/Serializer.cpp"
+ "shared/world/world_manager/WorldManager.cpp"
+ "shared/world/world_generator/WorldGenerator.cpp"
+ "shared/world/world_save/WorldSave.cpp"
+
+ "shared/data_transfer_objects/serializer/SerializerDTO.cpp"
 
  "shared/zip_archive/ZipArchive.cpp"
 
@@ -27,10 +30,14 @@ target_link_libraries(onion_voxel_shared
 		cereal::cereal
 		glm
 		miniz
+		FastNoiseLite
+		nlohmann_json::nlohmann_json
 
 		onion::threadsafequeue
+		onion::threadpool
 		onion::event
 		onion::timer
+		onion::datetime
 )
 
 target_include_directories(onion_voxel_shared

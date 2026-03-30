@@ -2,14 +2,51 @@
 
 #include <iostream>
 
-#include <shared/network_messages/Serializer.hpp>
+#include <shared/data_transfer_objects/Serializer/SerializerDTO.hpp>
 #include <shared/utils/Utils.hpp>
+
+#include <windows.h>
+namespace
+{
+	inline std::filesystem::path GetExecutableDirectory()
+	{
+		wchar_t buffer[MAX_PATH];
+		DWORD length = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+
+		if (length == 0 || length == MAX_PATH)
+		{
+			throw std::runtime_error("Failed to get executable path");
+		}
+
+		std::filesystem::path exePath(buffer);
+		return exePath.parent_path();
+	}
+} // namespace
 
 namespace onion::voxel
 {
-	Server::Server() : m_WorldManager(std::make_shared<WorldManager>()), m_WorldGenerator(m_WorldManager)
+	Server::Server()
 	{
 		LoadConfiguration();
+
+		std::filesystem::path worldDirectory = GetExecutableDirectory() / "world";
+
+		if (!std::filesystem::exists(worldDirectory))
+		{
+			WorldInfos infos;
+			infos.Seed = m_Config.serverData.Seed;
+			infos.Name = m_Config.serverData.ServerName;
+			infos.CreationDate = DateTime::UtcNow();
+			infos.WorldGenerationType =
+				static_cast<WorldGenerator::eWorldGenerationType>(m_Config.serverData.WorldGenerationType);
+			WorldSave::CreateWorld(worldDirectory, infos);
+		}
+
+		m_WorldManager = std::make_shared<WorldManager>(worldDirectory, false);
+
+		// Apply Configuration
+		m_WorldManager->SetChunkPersistanceDistance(m_Config.serverData.SimulationDistance);
+		m_WorldManager->SetServerSimulationDistance(m_Config.serverData.SimulationDistance);
 
 		SubscribeToNetworkServerEvents();
 		SubscribeToWorldManagerEvents();
@@ -55,8 +92,6 @@ namespace onion::voxel
 
 		// Apply configuration to the network server
 		m_NetworkServer.SetServerPort(m_Config.serverData.Port);
-		m_WorldManager->SetChunkPersistanceDistance(m_Config.serverData.SimulationDistance);
-		m_WorldManager->SetServerSimulationDistance(m_Config.serverData.SimulationDistance);
 	}
 
 	void Server::SaveConfiguration()
@@ -131,32 +166,14 @@ namespace onion::voxel
 		//		  << msg.Position.z << "\n";
 
 		// Update player
-
-		std::shared_ptr<Player> player = m_WorldManager->GetPlayer(msg.player.UUID);
-
-		std::shared_ptr<Player> deserializedPlayer = Serializer::DeserializePlayer(msg.player);
-
-		if (player && deserializedPlayer)
-		{
-			player->SetName(deserializedPlayer->GetName());
-			player->SetState(deserializedPlayer->GetState());
-
-			if (deserializedPlayer->HasTransform())
-			{
-				player->SetTransform(deserializedPlayer->GetTransform());
-			}
-
-			if (deserializedPlayer->HasPhysicsBody())
-			{
-				player->SetPhysicsBody(deserializedPlayer->GetPhysicsBody());
-			}
-		}
+		std::shared_ptr<Player> deserializedPlayer = SerializerDTO::DeserializePlayer(msg.player);
+		m_WorldManager->UpdatePlayer(deserializedPlayer);
 	}
 
 	void Server::Handle_TimerSendEvents()
 	{
 		// Sends Entity Snapshot to all clients
-		std::unordered_map<std::string, std::shared_ptr<Player>> players = m_WorldManager->Entities->GetAllPlayers();
+		std::unordered_map<std::string, std::shared_ptr<Player>> players = m_WorldManager->GetAllPlayers();
 
 		if (players.empty())
 		{
@@ -166,14 +183,14 @@ namespace onion::voxel
 		EntitySnapshotMsg entitySnapshotMsg;
 		for (const auto& [clientHandle, player] : players)
 		{
-			PlayerDTO playerDTO = Serializer::SerializePlayer(*player);
+			PlayerDTO playerDTO = SerializerDTO::SerializePlayer(*player);
 			entitySnapshotMsg.Players.push_back(std::move(playerDTO));
 		}
 
-		auto entities = m_WorldManager->Entities->GetAllEntities();
+		auto entities = m_WorldManager->GetAllEntities();
 		for (const auto& entity : entities)
 		{
-			EntityDTO entityDTO = Serializer::SerializeEntity(*entity);
+			EntityDTO entityDTO = SerializerDTO::SerializeEntity(*entity);
 			entitySnapshotMsg.Entities.push_back(std::move(entityDTO));
 		}
 
@@ -191,7 +208,9 @@ namespace onion::voxel
 			auto chunk = m_WorldManager->GetChunk(chunkPos);
 			if (chunk)
 			{
-				ChunkDataMsg chunkDataMsg = Serializer::SerializeChunk(chunk);
+				ChunkDTO chunkDto = SerializerDTO::SerializeChunk(chunk);
+				ChunkDataMsg chunkDataMsg;
+				chunkDataMsg.Chunk = std::move(chunkDto);
 				m_NetworkServer.Send(args.Sender, chunkDataMsg);
 			}
 		}
@@ -209,7 +228,7 @@ namespace onion::voxel
 		std::vector<Block> changedBlocks;
 		for (const auto& blockDTO : msg.ChangedBlocks)
 		{
-			changedBlocks.emplace_back(Serializer::DeserializeBlock(blockDTO));
+			changedBlocks.emplace_back(SerializerDTO::DeserializeBlock(blockDTO));
 		}
 
 		m_WorldManager->SetBlocks(changedBlocks, WorldManager::BlocksChangedEventArgs::eOrigin::ClientRequest, true);
@@ -227,9 +246,6 @@ namespace onion::voxel
 
 		// Add the new Player
 		AddPlayer(playerInfo);
-
-		// Arbitrary Set player position to 8 , 20, 8
-		m_WorldManager->Entities->SetPlayerPosition(args.UUID, glm::vec3(8.0f, 20.0f, 8.0f));
 
 		ServerInfoMsg srvInfoMsg;
 		srvInfoMsg.ServerName = m_Config.serverData.ServerName;
@@ -253,7 +269,9 @@ namespace onion::voxel
 	void Server::Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk)
 	{
 		// Sends the new chunk to all connected clients
-		ChunkDataMsg chunkDataMsg = Serializer::SerializeChunk(chunk);
+		ChunkDTO chunkDto = SerializerDTO::SerializeChunk(chunk);
+		ChunkDataMsg chunkDataMsg;
+		chunkDataMsg.Chunk = std::move(chunkDto);
 		m_NetworkServer.Broadcast(chunkDataMsg);
 	}
 
@@ -268,27 +286,28 @@ namespace onion::voxel
 		BlocksChangedMsg blocksChangedMsg;
 		for (const auto& block : args.ChangedBlocks)
 		{
-			blocksChangedMsg.ChangedBlocks.emplace_back(Serializer::SerializeBlock(block));
+			blocksChangedMsg.ChangedBlocks.emplace_back(SerializerDTO::SerializeBlock(block));
 		}
 
 		m_NetworkServer.Broadcast(blocksChangedMsg);
 	}
 
-	void Server::Handle_MissingChunksRequested(const std::vector<glm::ivec2>& missingChunkPositions)
-	{
-		for (const auto& chunkPos : missingChunkPositions)
-		{
-			m_WorldGenerator.GenerateChunkAsync(chunkPos);
-		}
-	}
-
 	void Server::AddPlayer(const PlayerInfo& playerInfo)
 	{
+		std::shared_ptr<Player> loadedPlayer = m_WorldManager->LoadPlayer(playerInfo.UUID);
 
-		std::shared_ptr<Player> player = std::make_shared<Player>(playerInfo.UUID);
-		player->SetName(playerInfo.PlayerName);
-
-		m_WorldManager->Entities->AddPlayer(player);
+		// If the player already exists in the world manager, update the name in case it has changed since last connection
+		if (loadedPlayer)
+		{
+			loadedPlayer->SetName(playerInfo.PlayerName);
+		}
+		else // Create a new player and add it to the world manager
+		{
+			std::shared_ptr<Player> player = std::make_shared<Player>(playerInfo.UUID);
+			player->SetName(playerInfo.PlayerName);
+			player->SetPosition(glm::vec3(8.f, 20.f, 8.f)); // Spawn player at a default position
+			m_WorldManager->AddPlayer(player);
+		}
 
 		{
 			std::lock_guard lock(m_MutexPlayers);
@@ -299,7 +318,7 @@ namespace onion::voxel
 
 	void Server::RemovePlayer(const std::string& uuid)
 	{
-		m_WorldManager->Entities->RemovePlayer(uuid);
+		m_WorldManager->RemovePlayer(uuid);
 		{
 			std::lock_guard lock(m_MutexPlayers);
 			auto it = m_UUIDToPlayerInfo.find(uuid);
@@ -322,10 +341,6 @@ namespace onion::voxel
 
 		m_WorldManagerEventHandles.push_back(m_WorldManager->BlocksChanged.Subscribe(
 			[this](const WorldManager::BlocksChangedEventArgs& args) { Handle_BlocksChanged(args); }));
-
-		m_WorldManagerEventHandles.push_back(m_WorldManager->MissingChunksRequested.Subscribe(
-			[this](const std::vector<glm::ivec2>& missingChunkPositions)
-			{ Handle_MissingChunksRequested(missingChunkPositions); }));
 	}
 
 } // namespace onion::voxel

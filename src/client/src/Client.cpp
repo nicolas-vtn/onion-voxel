@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include <shared/network_messages/Serializer.hpp>
+#include <shared/data_transfer_objects/Serializer/SerializerDTO.hpp>
 #include <shared/utils/Utils.hpp>
 
 namespace onion::voxel
@@ -198,6 +198,8 @@ namespace onion::voxel
 		RequestChunksMsg requestChunksMsg;
 		requestChunksMsg.requestedChunks = chunkPositions;
 
+		//std::cout << "Requesting " << chunkPositions.size() << " missing chunks from server\n";
+
 		m_NetworkClient.Send(std::move(requestChunksMsg), false);
 	}
 
@@ -214,7 +216,7 @@ namespace onion::voxel
 		std::vector<BlockDTO> changedBlocksDTO;
 		for (const auto& block : args.ChangedBlocks)
 		{
-			changedBlocksDTO.emplace_back(Serializer::SerializeBlock(block));
+			changedBlocksDTO.emplace_back(SerializerDTO::SerializeBlock(block));
 		}
 
 		BlocksChangedMsg blocksChangedMsg;
@@ -313,7 +315,7 @@ namespace onion::voxel
 
 	void Client::Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg)
 	{
-		std::shared_ptr<Chunk> chunk = Serializer::DeserializeChunk(msg);
+		std::shared_ptr<Chunk> chunk = SerializerDTO::DeserializeChunk(msg.Chunk);
 
 		// Checks if the chunk is in the persistance distance
 		glm::ivec2 chunkPosition = chunk->GetPosition();
@@ -335,7 +337,7 @@ namespace onion::voxel
 		std::vector<Block> changedBlocks;
 		for (const auto& blockDTO : msg.ChangedBlocks)
 		{
-			changedBlocks.emplace_back(Serializer::DeserializeBlock(blockDTO));
+			changedBlocks.emplace_back(SerializerDTO::DeserializeBlock(blockDTO));
 		}
 
 		//std::cout << "Received BlocksChangedMsg: " << changedBlocks.size() << " changed blocks\n";
@@ -351,7 +353,7 @@ namespace onion::voxel
 		for (const auto& playerDTO : msg.Players)
 		{
 			// Deserialize the player and add it to the list of players to update in the EntityManager
-			std::shared_ptr<Player> player = Serializer::DeserializePlayer(playerDTO);
+			std::shared_ptr<Player> player = SerializerDTO::DeserializePlayer(playerDTO);
 
 			// If the entity is the player itself, update only if player not present in entities manager
 			if (player->UUID == m_Config.clientData.UUID)
@@ -360,18 +362,7 @@ namespace onion::voxel
 				if (!hasPlayerBeenSet)
 				{
 					// If the player has not been set yet, add it to the EntityManager
-
-					// Enable Fly
-					PhysicsBody physicsBody = player->GetPhysicsBody();
-					physicsBody.IsFlying = true;
-					player->SetPhysicsBody(physicsBody);
-
-					// Place a block
-					Block block(player->GetPosition() + glm::vec3(2.f, 0.f, 2.f), BlockId::Cobblestone);
-					m_WorldManager->SetBlock(block, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
-
-					players.push_back(player);
-					m_WorldManager->Entities->SetLocalPlayer(player);
+					m_WorldManager->AddPlayer(player);
 				}
 
 				continue;
@@ -384,12 +375,30 @@ namespace onion::voxel
 		for (const auto& entityDTO : msg.Entities)
 		{
 			// Deserialize the entity and add it to the list of entities to update in the EntityManager
-			std::shared_ptr<Entity> entity = Serializer::DeserializeEntity(entityDTO);
+			std::shared_ptr<Entity> entity = SerializerDTO::DeserializeEntity(entityDTO);
 			entities.push_back(entity);
 		}
 
-		m_WorldManager->Entities->UpdateEntities(players);
-		m_WorldManager->Entities->UpdateEntities(entities);
+		// Remove the players that are not present in the received snapshot
+		std::unordered_map<std::string, std::shared_ptr<Player>> currentPlayers = m_WorldManager->GetAllPlayers();
+		for (const auto& [uuid, player] : currentPlayers)
+		{
+			if (uuid == m_Config.clientData.UUID)
+			{
+				continue; // Skip the player itself
+			}
+			auto it = std::find_if(players.begin(),
+								   players.end(),
+								   [&uuid](const std::shared_ptr<Entity>& entity) { return entity->UUID == uuid; });
+			if (it == players.end())
+			{
+				std::cout << "Removing player with UUID " << uuid << " from EntityManager\n";
+				m_WorldManager->RemovePlayer(uuid);
+			}
+		}
+
+		m_WorldManager->UpdateEntities(players);
+		m_WorldManager->UpdateEntities(entities);
 	}
 
 	void Client::SendPlayerInfosToServer()
@@ -402,7 +411,7 @@ namespace onion::voxel
 		}
 
 		PlayerInfoMsg playerInfoMsg;
-		playerInfoMsg.player = Serializer::SerializePlayer(*player);
+		playerInfoMsg.player = SerializerDTO::SerializePlayer(*player);
 
 		m_NetworkClient.Send(std::move(playerInfoMsg), false);
 	}

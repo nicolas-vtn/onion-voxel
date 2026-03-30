@@ -16,6 +16,8 @@ namespace onion::voxel
 		std::string UUID;
 		uint16_t Port = 7777;
 		uint8_t SimulationDistance = 8;
+		uint32_t Seed = 1;
+		uint8_t WorldGenerationType = 1;
 	};
 
 	struct ServerConfiguration
@@ -57,24 +59,31 @@ namespace onion::voxel
 				throw std::runtime_error("Failed to open configuration file: " + filePath.string());
 			}
 
-			nlohmann::json json;
+			nlohmann::ordered_json json;
 
 			file >> json;
 
 			serverData.ServerName = json.value("ServerName", serverData.ServerName);
 			serverData.UUID = json.value("UUID", serverData.UUID);
 			serverData.Port = json.value("Port", serverData.Port);
+			serverData.Seed = json.value("Seed", serverData.Seed);
 			serverData.SimulationDistance = json.value("SimulationDistance", serverData.SimulationDistance);
+			serverData.WorldGenerationType = json.value("WorldGenerationType", serverData.WorldGenerationType);
+
+			// Save the configuration to ensure that any missing fields are added to the file
+			Save(filePath);
 		}
 
 		void Save(const std::filesystem::path& filePath) const
 		{
-			nlohmann::json json;
+			nlohmann::ordered_json json;
 
 			json["ServerName"] = serverData.ServerName;
 			json["UUID"] = serverData.UUID;
 			json["Port"] = serverData.Port;
+			json["Seed"] = serverData.Seed;
 			json["SimulationDistance"] = serverData.SimulationDistance;
+			json["WorldGenerationType"] = serverData.WorldGenerationType;
 
 			std::ofstream file(filePath);
 			if (!file.is_open())

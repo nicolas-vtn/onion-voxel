@@ -11,7 +11,6 @@
 #include "ServerConfiguration.hpp"
 #include "network_server/NetworkServer.hpp"
 
-#include "world_generator/WorldGenerator.hpp"
 #include <shared/world/world_manager/WorldManager.hpp>
 
 namespace onion::voxel
@@ -70,9 +69,6 @@ namespace onion::voxel
 		void Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk);
 		void Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk);
 		void Handle_BlocksChanged(const WorldManager::BlocksChangedEventArgs& args);
-		void Handle_MissingChunksRequested(const std::vector<glm::ivec2>& missingChunkPositions);
-
-		WorldGenerator m_WorldGenerator;
 
 		// ----- Timer Send Events -----
 	  private:

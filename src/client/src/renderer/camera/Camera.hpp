@@ -28,7 +28,7 @@ namespace onion::voxel
 	  private:
 		float m_FovY = 75.0f;				// Field of view in degrees
 		float m_AspectRatio = 16.0f / 9.0f; // Aspect ratio
-		float m_NearPlane = 0.0001f;		// Near clipping plane
+		float m_NearPlane = 0.1f;			// Near clipping plane
 		float m_FarPlane = 2000.f;			// Far clipping plane
 
 		// ----- Internal Methods -----

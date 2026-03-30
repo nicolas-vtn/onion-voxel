@@ -2,22 +2,20 @@
 
 #include <memory>
 
-#include "NetworkMessages.hpp"
-
 #include <shared/entities/entity/Entity.hpp>
 #include <shared/entities/entity/player/Player.hpp>
 #include <shared/world/chunk/Chunk.hpp>
 
-#include <shared/network_messages/DTOs/DTOs.hpp>
+#include <shared/data_transfer_objects/DTOs/DTOs.hpp>
 
 namespace onion::voxel
 {
-	class Serializer
+	class SerializerDTO
 	{
 		// ----- CHUNK -----
 	  public:
-		static ChunkDataMsg SerializeChunk(std::shared_ptr<Chunk> chunk);
-		static std::shared_ptr<Chunk> DeserializeChunk(const ChunkDataMsg& msg);
+		static ChunkDTO SerializeChunk(std::shared_ptr<Chunk> chunk);
+		static std::shared_ptr<Chunk> DeserializeChunk(const ChunkDTO& dto);
 
 		// ----- SUB CHUNK -----
 	  public:
@@ -33,6 +31,13 @@ namespace onion::voxel
 	  public:
 		static BlockDTO SerializeBlock(const Block& block);
 		static Block DeserializeBlock(const BlockDTO& dto);
+
+		// ----- OUT OF BOUNDS BLOCKS -----
+	  public:
+		static OutOfBoundsBlocksDTO
+		SerializeOutOfBoundsBlocks(const std::unordered_map<glm::ivec2, std::vector<Block>>& outOfBoundsBlocks);
+		static std::unordered_map<glm::ivec2, std::vector<Block>>
+		DeserializeOutOfBoundsBlocks(const OutOfBoundsBlocksDTO& dto);
 
 		// ----- Entity -----
 	  public:

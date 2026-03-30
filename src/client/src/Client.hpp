@@ -81,7 +81,7 @@ namespace onion::voxel
 
 		// ----- World Manager -----
 	  private:
-		std::shared_ptr<WorldManager> m_WorldManager = std::make_shared<WorldManager>();
+		std::shared_ptr<WorldManager> m_WorldManager = std::make_shared<WorldManager>("", true);
 		std::vector<EventHandle> m_WorldManagerEventHandles;
 		void SubscribeToWorldManagerEvents();
 

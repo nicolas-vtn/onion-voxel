@@ -1,5 +1,7 @@
 #pragma once
 
+#include <variant>
+
 #include "MessageHeader.hpp"
 
 #include "blocks_changed_msg/BlocksChangedMsg.hpp"
@@ -10,11 +12,7 @@
 #include "request_chunks_msg/RequestChunksMsg.hpp"
 #include "server_info_msg/ServerInfoMsg.hpp"
 
-#include "DTOs/BlockDTO.hpp"
-#include "DTOs/BlockStateDTO.hpp"
-#include "DTOs/SubChunkDTO.hpp"
-
-#include <variant>
+#include <shared/data_transfer_objects/DTOs/DTOs.hpp>
 
 namespace onion::voxel
 {

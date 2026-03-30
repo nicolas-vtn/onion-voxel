@@ -457,7 +457,7 @@ namespace onion::voxel
 			return nullptr;
 		}
 
-		return m_WorldManager->Entities->GetPlayer(m_PlayerUUID);
+		return m_WorldManager->GetPlayer(m_PlayerUUID);
 	}
 
 	glm::vec3 Renderer::GetPlayerPosition() const

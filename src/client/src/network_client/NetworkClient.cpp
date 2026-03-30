@@ -231,6 +231,7 @@ namespace onion::voxel
 			}
 		}
 	}
+
 	std::vector<uint8_t> NetworkClient::SerializeNetworkMessage(const NetworkMessage& message)
 	{
 		std::ostringstream stream(std::ios::binary);

@@ -23,14 +23,18 @@ namespace onion::voxel
 
 	void EntityManager::AddPlayer(const std::shared_ptr<Player>& player)
 	{
-		std::unique_lock lock(m_MutexPlayers);
-		// Throw an exception if a player with the same UUID already exists
-		if (m_Players.find(player->UUID) != m_Players.end())
 		{
-			throw std::runtime_error("Player with UUID " + player->UUID + " already exists.");
+			std::unique_lock lock(m_MutexPlayers);
+			// Throw an exception if a player with the same UUID already exists
+			if (m_Players.find(player->UUID) != m_Players.end())
+			{
+				throw std::runtime_error("Player with UUID " + player->UUID + " already exists.");
+			}
+
+			m_Players[player->UUID] = player;
 		}
 
-		m_Players[player->UUID] = player;
+		EvtPlayerAdded.Trigger(player);
 	}
 
 	bool EntityManager::RemovePlayer(const std::string& uuid)
@@ -39,8 +43,10 @@ namespace onion::voxel
 		auto it = m_Players.find(uuid);
 		if (it != m_Players.end())
 		{
-			// Remove the player from the entities list
+			auto player = it->second; // Store player before erasing to trigger event after unlocking
 			m_Players.erase(it);
+			lock.unlock(); // Unlock before triggering event to avoid potential deadlocks
+			EvtPlayerRemoved.Trigger(player);
 			return true;
 		}
 		return false;
@@ -136,28 +142,26 @@ namespace onion::voxel
 
 	void EntityManager::ClearAllEntities()
 	{
-		std::unique_lock lockPlayers(m_MutexPlayers);
-		std::unique_lock lockEntities(m_MutexEntities);
-		m_Players.clear();
-		m_Entities.clear();
+		// Backups entities before clearing so they can be used to trigger events after unlocking
+		auto playersRemoved = GetAllPlayers();
+		auto entitiesRemoved = GetAllEntities();
+		{
+			std::unique_lock lock(m_MutexEntities);
+			std::unique_lock lockPlayers(m_MutexPlayers);
+			m_Players.clear();
+			m_Entities.clear();
+		}
+
+		for (const auto& [uuid, player] : playersRemoved)
+		{
+			EvtPlayerRemoved.Trigger(player);
+		}
 	}
 
-	bool EntityManager::IsPlayerExists(const std::string& uuid) const
+	bool EntityManager::PlayerExists(const std::string& uuid) const
 	{
 		std::shared_lock lock(m_MutexPlayers);
 		return m_Players.find(uuid) != m_Players.end();
-	}
-
-	void EntityManager::SetLocalPlayer(const std::shared_ptr<Player>& player)
-	{
-		std::unique_lock lock(m_MutexLocalPlayer);
-		m_LocalPlayer = player;
-	}
-
-	std::shared_ptr<Player> EntityManager::GetLocalPlayer() const
-	{
-		std::shared_lock lock(m_MutexLocalPlayer);
-		return m_LocalPlayer;
 	}
 
 } // namespace onion::voxel

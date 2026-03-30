@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <shared/utils/Utils.hpp>
+
 namespace
 {
 	using namespace onion::voxel;
@@ -22,19 +24,16 @@ namespace
 
 namespace onion::voxel
 {
-	PhysicsEngine::PhysicsEngine(WorldManager& worldManager)
-		: m_WorldManager(worldManager), m_EntityManager(*worldManager.Entities)
-	{
-	}
+	PhysicsEngine::PhysicsEngine(WorldManager& worldManager) : m_WorldManager(worldManager) {}
 
 	PhysicsEngine::~PhysicsEngine() {}
 
 	void PhysicsEngine::Update(float deltaTime)
 	{
-		// Gets all entities from the EntityManager
-		std::vector<std::shared_ptr<Entity>> entities = m_EntityManager.GetAllEntities();
+		// Gets all entities from the WorldManager
+		std::vector<std::shared_ptr<Entity>> entities = m_WorldManager.GetAllEntities();
 
-		std::unordered_map<std::string, std::shared_ptr<Player>> players = m_EntityManager.GetAllPlayers();
+		std::unordered_map<std::string, std::shared_ptr<Player>> players = m_WorldManager.GetAllPlayers();
 		for (const auto& [uuid, player] : players)
 		{
 			entities.push_back(player); // Add players to the list of entities to update physics for
@@ -43,8 +42,19 @@ namespace onion::voxel
 		// Update physics and resolve collisions for each entity
 		for (const auto& entity : entities)
 		{
-			UpdateEntityPhysics(entity, deltaTime);
-			ResolveTerrainCollisions(entity, deltaTime);
+			// Check if the entity is in a loaded chunk
+			bool inLoadedChunk = false;
+			if (entity->HasTransform())
+			{
+				glm::ivec2 chunkPos = Utils::WorldToChunkPosition(entity->GetTransform().Position);
+				inLoadedChunk = m_WorldManager.IsChunkLoaded(chunkPos);
+			}
+
+			if (inLoadedChunk)
+			{
+				UpdateEntityPhysics(entity, deltaTime);
+				ResolveTerrainCollisions(entity, deltaTime);
+			}
 		}
 	}
 
