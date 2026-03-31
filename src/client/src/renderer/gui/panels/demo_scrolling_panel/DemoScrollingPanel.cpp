@@ -88,7 +88,7 @@ namespace onion::voxel
 		glm::ivec2 scrollerBottomRightCorner{scrollCenter.x + scrollerSize.x / 2, scrollCenter.y + scrollerSize.y / 2};
 
 		// Calculate the height of the scroll area based on the number of dynamic buttons and their spacing
-		int firstsHeight = (0.7 - 0.2) * s_ScreenHeight;
+		int firstsHeight = static_cast<int>((0.7f - 0.2f) * s_ScreenHeight);
 		float totalSspacingYButtonsRatio = m_DynamicButtons.size() * dynamicButtonsSpacingYRatio;
 		int scrollAreaHeight = static_cast<int>(s_ScreenHeight * totalSspacingYButtonsRatio) + firstsHeight;
 

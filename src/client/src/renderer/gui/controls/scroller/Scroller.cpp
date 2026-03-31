@@ -74,8 +74,8 @@ namespace onion::voxel
 			}
 		}
 
-		const bool shouldScrollerBeVisible =
-			m_ScrollAreaHeight > 0 && (m_BottomRightCorner.y - m_TopLeftCorner.y) < m_ScrollAreaHeight;
+		const bool shouldScrollerBeVisible = m_ScrollAreaHeight > 0 &&
+			(m_BottomRightCorner.y - m_TopLeftCorner.y) < static_cast<int>(m_ScrollAreaHeight);
 
 		if (shouldScrollerBeVisible)
 		{

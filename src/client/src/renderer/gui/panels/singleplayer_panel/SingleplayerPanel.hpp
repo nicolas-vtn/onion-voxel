@@ -2,11 +2,8 @@
 
 #include <renderer/gui/GuiElement.hpp>
 #include <renderer/gui/controls/button/Button.hpp>
-#include <renderer/gui/controls/checkbox/Checkbox.hpp>
 #include <renderer/gui/controls/label/Label.hpp>
 #include <renderer/gui/controls/scroller/Scroller.hpp>
-#include <renderer/gui/controls/slider/Slider.hpp>
-#include <renderer/gui/controls/sprite/Sprite.hpp>
 #include <renderer/gui/controls/text_field/TextField.hpp>
 
 namespace onion::voxel
@@ -37,10 +34,12 @@ namespace onion::voxel
 		TextField m_TextFieldFilter;
 		Scroller m_Scroller;
 
-		Button m_ButtonBack;
+		Button m_ButtonPlaySelectedWorld;
 		Button m_ButtonCreateNewWorld;
-		Button m_PlaySelectedWorld;
-		Button m_DeleteSelectedWorld;
+		Button m_ButtonEdit;
+		Button m_ButtonDeleteSelectedWorld;
+		Button m_ButtonReCreateSelectedWorld;
+		Button m_ButtonBack;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:
@@ -52,5 +51,7 @@ namespace onion::voxel
 		void Handle_ButtonCreateNewWorldClick(const Button& button);
 		void Handle_PlaySelectedWorldClick(const Button& button);
 		void Handle_ButtonDeleteSelectedWorldClick(const Button& button);
+		void Handle_ButtonEditClick(const Button& button);
+		void Handle_ButtonReCreateSelectedWorldClick(const Button& button);
 	};
 } // namespace onion::voxel

@@ -28,24 +28,25 @@ namespace onion::voxel
 							  (m_TableSize.y - totalVerticalSpacing) / Rows);
 		}
 
+		glm::vec2 GetCellSize_Float() const
+		{
+			int totalHorizontalSpacing = (Columns - 1) * m_HorizontalSpacing;
+			int totalVerticalSpacing = (Rows - 1) * m_VerticalSpacing;
+			return glm::vec2((m_TableSize.x - totalHorizontalSpacing) / (float) Columns,
+							 (m_TableSize.y - totalVerticalSpacing) / (float) Rows);
+		}
+
 		/// @brief Get the Center Position of the cell at the given row and column index (0-based)
 		/// @param row Row index (0-based)
 		/// @param column Column index (0-based)
 		glm::ivec2 GetElementPosition(int row, int column) const
 		{
-			bool isFirstRow = row == 0;
-			bool isFirstColumn = column == 0;
+			glm::vec2 cellSize = GetCellSize_Float();
 
-			float columnWidth = m_TableSize.x / (float) Columns;
-			float rowHeight = m_TableSize.y / (float) Rows;
+			float x = column * (cellSize.x + m_HorizontalSpacing) + cellSize.x * 0.5f;
+			float y = row * (cellSize.y + m_VerticalSpacing) + cellSize.y * 0.5f;
 
-			int topLeftX =
-				isFirstColumn ? 0 : (int) std::lround(((columnWidth * column) + (0.5f * m_HorizontalSpacing)));
-			int topLeftY = isFirstRow ? 0 : (int) std::lround(((rowHeight * row) + (0.5f * m_VerticalSpacing)));
-
-			const glm::ivec2 cellSize = GetCellSize();
-
-			return glm::ivec2(topLeftX + (cellSize.x / 2), topLeftY + (cellSize.y / 2));
+			return glm::ivec2((int) std::lround(x), (int) std::lround(y));
 		}
 
 	  private:
