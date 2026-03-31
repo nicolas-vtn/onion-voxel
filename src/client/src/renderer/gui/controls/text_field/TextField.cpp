@@ -97,6 +97,8 @@ namespace onion::voxel
 
 			m_Label.SetText(m_PlaceholderText);
 			m_Label.SetTextColor(s_PlaceholderTextColor);
+			m_Label.SetPosition(textPos);
+			m_Label.Render();
 		}
 		else
 		{

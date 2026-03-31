@@ -74,12 +74,18 @@ namespace onion::voxel
 			}
 		}
 
-		// Handle Mouse Scroll Inputs
-		HandleMouseScrollY();
+		const bool shouldScrollerBeVisible =
+			m_ScrollAreaHeight > 0 && (m_BottomRightCorner.y - m_TopLeftCorner.y) < m_ScrollAreaHeight;
 
-		// ---- Pull Events ---
-		m_NineSliceSprite_Scroller.PullEvents();
-		m_NineSliceSprite_ScrollerBackground.PullEvents();
+		if (shouldScrollerBeVisible)
+		{
+			// Handle Mouse Scroll Inputs
+			HandleMouseScrollY();
+
+			// ---- Pull Events ---
+			m_NineSliceSprite_Scroller.PullEvents();
+			m_NineSliceSprite_ScrollerBackground.PullEvents();
+		}
 
 		// ---- Calculations ----
 		glm::ivec2 centerPos = (m_TopLeftCorner + m_BottomRightCorner) / 2;
@@ -119,15 +125,18 @@ namespace onion::voxel
 		m_SpriteFooter.SetSize(footerSize);
 		m_SpriteFooter.Render();
 
-		// ---- Render Scroll Background ----
-		m_NineSliceSprite_ScrollerBackground.SetPosition(scrollerBackgroundPosition);
-		m_NineSliceSprite_ScrollerBackground.SetSize(scrollBackgroundSize);
-		m_NineSliceSprite_ScrollerBackground.Render();
+		if (shouldScrollerBeVisible)
+		{
+			// ---- Render Scroll Background ----
+			m_NineSliceSprite_ScrollerBackground.SetPosition(scrollerBackgroundPosition);
+			m_NineSliceSprite_ScrollerBackground.SetSize(scrollBackgroundSize);
+			m_NineSliceSprite_ScrollerBackground.Render();
 
-		// ---- Render Scroller ----
-		m_NineSliceSprite_Scroller.SetPosition(scrollPosition);
-		m_NineSliceSprite_Scroller.SetSize(scrollSize);
-		m_NineSliceSprite_Scroller.Render();
+			// ---- Render Scroller ----
+			m_NineSliceSprite_Scroller.SetPosition(scrollPosition);
+			m_NineSliceSprite_Scroller.SetSize(scrollSize);
+			m_NineSliceSprite_Scroller.Render();
+		}
 
 		if (wasCissoring)
 		{
@@ -227,7 +236,8 @@ namespace onion::voxel
 
 	uint32_t Scroller::GetContentYOffset() const
 	{
-		return static_cast<uint32_t>(m_ScrollRatio * m_ScrollAreaHeight);
+		return static_cast<uint32_t>(m_ScrollRatio *
+									 (m_ScrollAreaHeight - (m_BottomRightCorner.y - m_TopLeftCorner.y)));
 	}
 
 	glm::ivec2 Scroller::ProjectContentPosition(const glm::ivec2& contentPosition) const
