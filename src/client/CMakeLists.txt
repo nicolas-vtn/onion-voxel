@@ -106,6 +106,10 @@ target_link_libraries(OnionVoxel
 		onion_voxel_shared
 )
 
+target_compile_options(OnionVoxel PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>
+)
+
 target_compile_features(OnionVoxel PRIVATE cxx_std_20)
 
 target_compile_options(OnionVoxel
