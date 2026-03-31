@@ -1,5 +1,7 @@
 #pragma once
 
+#include <shared/world/world_save/WorldInfos.hpp>
+
 #include <renderer/gui/GuiElement.hpp>
 #include <renderer/gui/controls/label/Label.hpp>
 #include <renderer/gui/controls/sprite/Sprite.hpp>
@@ -16,7 +18,7 @@ namespace onion::voxel
 	{
 		// ----- Constructor / Destructor -----
 	  public:
-		WorldTile(const std::string& name, Texture texture = Texture());
+		WorldTile(const std::string& name, const WorldInfos& worldInfos, Texture texture = Texture());
 		~WorldTile();
 
 		// ----- Public API -----
@@ -29,6 +31,7 @@ namespace onion::voxel
 		// ----- Public Events -----
 	  public:
 		Event<const WorldTile&> EvtTileSelected;
+		Event<const WorldTile&> EvtTileDoubleClicked;
 
 		// ----- Getters / Setters -----
 	  public:
@@ -38,17 +41,11 @@ namespace onion::voxel
 		void SetPosition(const glm::vec2& pos);
 		glm::vec2 GetPosition() const;
 
+		void SetWorldInfos(const WorldInfos& worldInfos);
+		const WorldInfos GetWorldInfos() const;
+
 		void SetSelected(bool selected);
 		bool IsSelected() const;
-
-		void SetWorldName(const std::string& name);
-		std::string GetWorldName() const;
-
-		void SetWorldDescription(const std::string& description);
-		std::string GetWorldDescription() const;
-
-		void SetWorldLastPlayed(const DateTime& lastPlayed);
-		DateTime GetWorldLastPlayed() const;
 
 		void SetThumbnailTexture(Texture& texture);
 
@@ -59,15 +56,19 @@ namespace onion::voxel
 
 		bool m_IsSelected = false;
 
-		std::string m_WorldName;
-		std::string m_WorldDescription;
-		DateTime m_WorldLastPlayed;
+		WorldInfos m_WorldInfos;
 
 		bool m_HasBeenInitialized = false;
+
+		bool m_WasMouseHovering = false;
+		bool m_WasMouseDown = false;
+		float m_LastClickTime = 0.f;
 
 		// ----- Private Helpers -----
 	  private:
 		bool IsMouseHovering() const;
+		std::string FormatDescription() const;
+		std::string FormatDetails() const;
 
 		// ----- Events Subscription and Handlers -----
 	  private:
@@ -78,7 +79,7 @@ namespace onion::voxel
 	  private:
 		Label m_LabelTitle;
 		Label m_LabelDescription;
-		Label m_LabelLastPlayed;
+		Label m_LabelDetails;
 		Sprite m_SpriteThumbnail;
 	};
 }; // namespace onion::voxel

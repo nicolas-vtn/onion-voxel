@@ -257,6 +257,7 @@ namespace onion::voxel
 
 	void WorldSave::SavePeriodically()
 	{
+		SaveGeneralData();
 		SaveChunks();
 		SavePlayers();
 	}
@@ -342,15 +343,23 @@ namespace onion::voxel
 		}
 	}
 
+	void WorldSave::SaveGeneralData()
+	{
+		m_Infos.LastPlayedDate = DateTime::UtcNow();
+		SaveInfos(m_SaveDirectory, m_Infos);
+	}
+
 	void WorldSave::SaveInfos(const std::filesystem::path& saveDirectory, const WorldInfos& infos)
 	{
 		std::filesystem::path infosFilePath = saveDirectory / s_InfosFileName;
 
 		nlohmann::ordered_json json;
+		json["Version"] = s_CurrentVersion;
 		json["Name"] = infos.Name;
 		json["Seed"] = infos.Seed;
 		json["CreationDate"] = infos.CreationDate.toUnixTimestamp();
-		json["WorldGenerationType"] = static_cast<uint8_t>(infos.WorldGenerationType);
+		json["LastPlayedDate"] = infos.LastPlayedDate.toUnixTimestamp();
+		json["WorldGenerationType"] = WorldGenerator::WorldGenerationTypeToString(infos.WorldGenerationType);
 
 		std::ofstream file(infosFilePath);
 		if (!file.is_open())
@@ -384,11 +393,15 @@ namespace onion::voxel
 		file >> json;
 
 		WorldInfos infos;
+		infos.Version = json["Version"].get<std::string>();
 		infos.Name = json["Name"].get<std::string>();
 		infos.Seed = json["Seed"].get<uint32_t>();
 		infos.CreationDate = DateTime::FromUnixTimestamp(json["CreationDate"].get<uint32_t>());
-		infos.WorldGenerationType =
-			static_cast<WorldGenerator::eWorldGenerationType>(json["WorldGenerationType"].get<uint8_t>());
+		infos.LastPlayedDate = DateTime::FromUnixTimestamp(json["LastPlayedDate"].get<uint32_t>());
+		std::string worldGenTypeStr = json["WorldGenerationType"].get<std::string>();
+		infos.WorldGenerationType = WorldGenerator::StringToWorldGenerationType(worldGenTypeStr);
+
+		infos.SaveDirectory = saveDirectory;
 
 		return infos;
 	}

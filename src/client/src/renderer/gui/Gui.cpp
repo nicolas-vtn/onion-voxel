@@ -75,8 +75,11 @@ namespace onion::voxel
 		m_EventHandles.push_back(m_DemoScrollingPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																					  { Handle_BackRequest(sender); }));
 
-		m_EventHandles.push_back(m_SingleplayerPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
-																					 { Handle_BackRequest(sender); }));
+		m_EventHandles.push_back(m_SingleplayerPanel.EvtRequestBackNavigation.Subscribe(
+			[this](const GuiElement* sender) { Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_SingleplayerPanel.EvtPlayWorld.Subscribe(
+			[this](const WorldInfos& worldInfos) { RequestStartSingleplayerGame.Trigger(worldInfos); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -85,12 +88,6 @@ namespace onion::voxel
 
 		SetActiveMenu(menu);
 
-		// WIP : Temporary trigger
-		//if (menu == eMenu::Singleplayer)
-		//{
-		//	RequestStartSingleplayerGame.Trigger(GetAssetsPath() / "worlds" / "demo_map");
-		//}
-		//else
 		if (menu == eMenu::Multiplayer)
 		{
 			std::string serverAddress = "127.0.0.1";

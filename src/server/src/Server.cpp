@@ -25,13 +25,17 @@ namespace
 
 namespace onion::voxel
 {
-	Server::Server()
+	Server::Server(const std::filesystem::path& worldDirectory)
 	{
 		LoadConfiguration();
 
-		std::filesystem::path worldDirectory = GetExecutableDirectory() / "world";
+		std::filesystem::path worldDir = worldDirectory;
+		if (worldDir.empty())
+		{
+			worldDir = GetExecutableDirectory() / "world";
+		}
 
-		if (!std::filesystem::exists(worldDirectory))
+		if (!std::filesystem::exists(worldDir))
 		{
 			WorldInfos infos;
 			infos.Seed = m_Config.serverData.Seed;
@@ -39,10 +43,10 @@ namespace onion::voxel
 			infos.CreationDate = DateTime::UtcNow();
 			infos.WorldGenerationType =
 				static_cast<WorldGenerator::eWorldGenerationType>(m_Config.serverData.WorldGenerationType);
-			WorldSave::CreateWorld(worldDirectory, infos);
+			WorldSave::CreateWorld(worldDir, infos);
 		}
 
-		m_WorldManager = std::make_shared<WorldManager>(worldDirectory, false);
+		m_WorldManager = std::make_shared<WorldManager>(worldDir, false);
 
 		// Apply Configuration
 		m_WorldManager->SetChunkPersistanceDistance(m_Config.serverData.SimulationDistance);

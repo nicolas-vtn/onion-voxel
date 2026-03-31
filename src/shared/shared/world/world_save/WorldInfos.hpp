@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <string>
 
 #include <onion/DateTime.hpp>
@@ -10,9 +11,13 @@ namespace onion::voxel
 {
 	struct WorldInfos
 	{
-		uint32_t Seed{0};
+		std::string Version;
 		std::string Name;
+		uint32_t Seed{0};
 		DateTime CreationDate;
+		DateTime LastPlayedDate;
 		WorldGenerator::eWorldGenerationType WorldGenerationType = WorldGenerator::eWorldGenerationType::Superflat;
+
+		std::filesystem::path SaveDirectory;
 	};
 } // namespace onion::voxel

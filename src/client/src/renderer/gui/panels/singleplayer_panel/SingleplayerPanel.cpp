@@ -1,5 +1,7 @@
 #include "SingleplayerPanel.hpp"
 
+#include <shared/utils/Utils.hpp>
+
 #include <renderer/gui/LayoutHelper.hpp>
 
 namespace onion::voxel
@@ -44,7 +46,7 @@ namespace onion::voxel
 	{
 		if (s_IsBackPressed)
 		{
-			EvtRequestBackNavigation.Trigger(this);
+			Handle_ButtonBackClick(m_ButtonBack);
 			return;
 		}
 
@@ -78,10 +80,11 @@ namespace onion::voxel
 		glm::ivec2 scrollerBottomRightCorner{scrollCenter.x + scrollerSize.x / 2, scrollCenter.y + scrollerSize.y / 2};
 
 		// Create a Layout for the World Tiles
-		int rows = 1;
-		int verticalSpacing = static_cast<int>(0.1f * s_ScreenHeight);
-		int worldTileHeight = static_cast<int>(0.1f * s_ScreenHeight);
-		int totalHeight = rows * worldTileHeight + (rows - 1) * verticalSpacing;
+		const int rows = m_WorldTiles.size();
+		const int worldTileHeight = static_cast<int>(round(144.f / 1009.f * s_ScreenHeight));
+		const int worldTileWidth = static_cast<int>(round(1080.f / 1920.f * s_ScreenWidth));
+		const glm::ivec2 worldTileSize{worldTileWidth, worldTileHeight};
+		const int totalHeight = rows * worldTileHeight;
 
 		m_Scroller.SetScrollAreaHeight(totalHeight);
 		m_Scroller.SetTopLeftCorner(scrollerTopLeftCorner);
@@ -93,7 +96,16 @@ namespace onion::voxel
 		m_Scroller.StartCissoring();
 
 		// ---- Render World Tiles ----
-		// TODO : ...
+		const glm::ivec2 firstTilePos{scrollCenter.x,
+									  scrollerTopLeftCorner.y + (worldTileSize.y / 2) + (worldTileSize.y / 10) -
+										  m_Scroller.GetContentYOffset()};
+
+		for (size_t i = 0; i < m_WorldTiles.size(); i++)
+		{
+			m_WorldTiles[i]->SetPosition(firstTilePos + glm::ivec2{0, static_cast<int>(i * worldTileSize.y)});
+			m_WorldTiles[i]->SetSize(worldTileSize);
+			m_WorldTiles[i]->Render();
+		}
 
 		// ---- Stop Cissoring for Scroller ----
 		m_Scroller.StopCissoring();
@@ -113,6 +125,8 @@ namespace onion::voxel
 		// ---- Render Play Selected World Button ----
 		glm::ivec2 buttonPos = layoutButtonsTop_TopLeftCorner + layoutButtonsTop.GetElementPosition(0, 0);
 		glm::ivec2 buttonSize = layoutButtonsTop.GetCellSize();
+		bool isPlayButtonEnabled = m_SelectedWorldIndex != -1;
+		m_ButtonPlaySelectedWorld.SetEnabled(isPlayButtonEnabled);
 		m_ButtonPlaySelectedWorld.SetPosition(buttonPos);
 		m_ButtonPlaySelectedWorld.SetSize(buttonSize);
 		m_ButtonPlaySelectedWorld.Render();
@@ -165,6 +179,30 @@ namespace onion::voxel
 		m_ButtonEdit.Initialize();
 		m_ButtonReCreateSelectedWorld.Initialize();
 
+		// TESTS
+		auto worldsInfos = GetWorldsInfos();
+
+		for (const auto& worldInfos : worldsInfos)
+		{
+			std::filesystem::path thumbnailPath =
+				EngineContext::Get().Assets->GetAssetsDirectory() / "textures" / "default_pack.png";
+			Texture thumbnailTexture(thumbnailPath);
+
+			std::unique_ptr<WorldTile> worldTile =
+				std::make_unique<WorldTile>(worldInfos.Name, worldInfos, std::move(thumbnailTexture));
+
+			worldTile->SetWorldInfos(worldInfos);
+			worldTile->Initialize();
+
+			m_EventHandles.push_back(worldTile->EvtTileSelected.Subscribe([this](const WorldTile& tile)
+																		  { Handle_WorldTileSelected(tile); }));
+
+			m_EventHandles.push_back(worldTile->EvtTileDoubleClicked.Subscribe(
+				[this](const WorldTile& tile) { Handle_WorldTileDoubleClicked(tile); }));
+
+			m_WorldTiles.push_back(std::move(worldTile));
+		}
+
 		SetInitState(true);
 	}
 
@@ -180,6 +218,12 @@ namespace onion::voxel
 		m_ButtonEdit.Delete();
 		m_ButtonReCreateSelectedWorld.Delete();
 
+		for (auto& worldTile : m_WorldTiles)
+		{
+			worldTile->Delete();
+		}
+		m_WorldTiles.clear();
+
 		SetDeletedState(true);
 	}
 
@@ -194,6 +238,41 @@ namespace onion::voxel
 		m_ButtonDeleteSelectedWorld.ReloadTextures();
 		m_ButtonEdit.ReloadTextures();
 		m_ButtonReCreateSelectedWorld.ReloadTextures();
+	}
+
+	std::filesystem::path SingleplayerPanel::GetSavesDirectoryPath() const
+	{
+		return Utils::GetExecutableDirectory() / s_SavesDirectory;
+	}
+
+	std::vector<WorldInfos> SingleplayerPanel::GetWorldsInfos() const
+	{
+
+		std::vector<WorldInfos> worldsInfos;
+		std::filesystem::path savesDirectoryPath = GetSavesDirectoryPath();
+
+		if (!std::filesystem::exists(savesDirectoryPath) || !std::filesystem::is_directory(savesDirectoryPath))
+		{
+			return worldsInfos;
+		}
+
+		WorldInfos worldInfos;
+		for (const auto& entry : std::filesystem::directory_iterator(savesDirectoryPath))
+		{
+			if (entry.is_directory())
+			{
+				std::filesystem::path worldSavePath = entry.path();
+
+				bool success = WorldSave::GetWorldInfos(worldSavePath, worldInfos);
+
+				if (success)
+				{
+					worldsInfos.push_back(std::move(worldInfos));
+				}
+			}
+		}
+
+		return worldsInfos;
 	}
 
 	void SingleplayerPanel::SubscribeToControlEvents()
@@ -220,6 +299,7 @@ namespace onion::voxel
 	void SingleplayerPanel::Handle_ButtonBackClick(const Button& button)
 	{
 		(void) button;
+		m_SelectedWorldIndex = -1;
 		EvtRequestBackNavigation.Trigger(this);
 	}
 
@@ -232,7 +312,13 @@ namespace onion::voxel
 	void SingleplayerPanel::Handle_PlaySelectedWorldClick(const Button& button)
 	{
 		(void) button;
-		assert(false && "Not implemented yet");
+
+		WorldInfos worldInfos = m_WorldTiles[m_SelectedWorldIndex]->GetWorldInfos();
+
+		std::cout << "Play world: '" << worldInfos.Name << "', Directory: '" << worldInfos.SaveDirectory << "'"
+				  << std::endl;
+
+		EvtPlayWorld.Trigger(worldInfos);
 	}
 
 	void SingleplayerPanel::Handle_ButtonDeleteSelectedWorldClick(const Button& button)
@@ -251,6 +337,28 @@ namespace onion::voxel
 	{
 		(void) button;
 		assert(false && "Not implemented yet");
+	}
+
+	void SingleplayerPanel::Handle_WorldTileSelected(const WorldTile& worldTile)
+	{
+		// Deselect all other tiles
+		for (int i = 0; i < m_WorldTiles.size(); i++)
+		{
+			if (m_WorldTiles[i].get() != &worldTile)
+			{
+				m_WorldTiles[i]->SetSelected(false);
+			}
+			else
+			{
+				m_SelectedWorldIndex = i;
+			}
+		}
+	}
+
+	void SingleplayerPanel::Handle_WorldTileDoubleClicked(const WorldTile& worldTile)
+	{
+		Handle_WorldTileSelected(worldTile);
+		Handle_PlaySelectedWorldClick(m_ButtonPlaySelectedWorld);
 	}
 
 } // namespace onion::voxel

@@ -23,6 +23,8 @@ add_library(onion_voxel_shared
 
  "shared/physics/PhysicsEngine.cpp"
 
+ "shared/utils/Utils.cpp"
+
 )
 
 target_link_libraries(onion_voxel_shared

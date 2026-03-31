@@ -40,6 +40,8 @@ namespace onion::voxel
 
 		// ----- Private Members -----
 	  private:
+		static inline const std::string s_CurrentVersion = "1.0";
+
 		const std::filesystem::path m_SaveDirectory;
 
 		static inline const std::string s_InfosFileName = "infos.json";
@@ -64,6 +66,7 @@ namespace onion::voxel
 		void SavePeriodically();
 		void SaveChunks();
 		void SavePlayers();
+		void SaveGeneralData();
 
 		// ----- Private Methods -----
 	  private:

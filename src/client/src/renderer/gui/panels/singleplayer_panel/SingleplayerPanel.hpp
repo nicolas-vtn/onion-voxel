@@ -1,5 +1,7 @@
 #pragma once
 
+#include <shared/world/world_save/WorldSave.hpp>
+
 #include <renderer/gui/GuiElement.hpp>
 #include <renderer/gui/controls/button/Button.hpp>
 #include <renderer/gui/controls/label/Label.hpp>
@@ -27,9 +29,14 @@ namespace onion::voxel
 		// ----- Public Events -----
 	  public:
 		Event<const GuiElement*> EvtRequestBackNavigation;
+		Event<const WorldInfos&> EvtPlayWorld;
 
 		// ----- Properties -----
 	  private:
+		static inline const std::string s_SavesDirectory = "saves";
+
+		int m_SelectedWorldIndex = -1;
+
 		// ----- Controls -----
 	  private:
 		Label m_LabelTitle;
@@ -43,7 +50,12 @@ namespace onion::voxel
 		Button m_ButtonReCreateSelectedWorld;
 		Button m_ButtonBack;
 
-		std::vector<WorldTile> m_WorldTiles;
+		std::vector<std::unique_ptr<WorldTile>> m_WorldTiles;
+
+		// ----- Internal Methods -----
+	  private:
+		std::filesystem::path GetSavesDirectoryPath() const;
+		std::vector<WorldInfos> GetWorldsInfos() const;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:
@@ -57,5 +69,8 @@ namespace onion::voxel
 		void Handle_ButtonDeleteSelectedWorldClick(const Button& button);
 		void Handle_ButtonEditClick(const Button& button);
 		void Handle_ButtonReCreateSelectedWorldClick(const Button& button);
+
+		void Handle_WorldTileSelected(const WorldTile& worldTile);
+		void Handle_WorldTileDoubleClicked(const WorldTile& worldTile);
 	};
 } // namespace onion::voxel

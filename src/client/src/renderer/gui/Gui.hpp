@@ -51,7 +51,7 @@ namespace onion::voxel
 		// ----- Events -----
 	  public:
 		Event<const CursorStyle&> RequestCursorStyleChange;
-		Event<const std::filesystem::path&> RequestStartSingleplayerGame;
+		Event<const WorldInfos&> RequestStartSingleplayerGame;
 		Event<const MultiplayerGameStartInfo&> RequestStartMultiplayerGame;
 		Event<bool> RequestQuitToMainMenu;
 		Event<bool> RequestBackToGame;

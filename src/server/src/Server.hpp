@@ -19,7 +19,7 @@ namespace onion::voxel
 	{
 		// ----- Constructor / Destructor -----
 	  public:
-		Server();
+		Server(const std::filesystem::path& worldDirectory = "");
 		~Server();
 
 		// ----- Public API -----

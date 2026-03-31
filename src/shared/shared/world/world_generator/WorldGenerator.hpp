@@ -81,6 +81,15 @@ namespace onion::voxel
 		eWorldGenerationType GetWorldGenerationType() const;
 		void SetWorldGenerationType(eWorldGenerationType worldGenerationType);
 
+		// ----- Helpers -----
+	  private:
+		static const std::unordered_map<std::string, eWorldGenerationType> s_StringToWorldGenerationType;
+		static const std::unordered_map<eWorldGenerationType, std::string> s_WorldGenerationTypeToString;
+
+	  public:
+		static std::string WorldGenerationTypeToString(eWorldGenerationType type);
+		static eWorldGenerationType StringToWorldGenerationType(const std::string& str);
+
 		// ----- Events -----
 	  public:
 		Event<const GenChunk&> EvtChunkGenerated;
