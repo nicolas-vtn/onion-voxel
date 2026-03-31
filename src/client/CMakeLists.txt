@@ -52,6 +52,7 @@ add_executable(OnionVoxel
 	"src/renderer/gui/panels/resource_packs_panel/ResourcePacksPanel.cpp"
 	"src/renderer/gui/panels/resource_packs_panel/ResourcePackTile.cpp"
 	"src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.cpp"
+	"src/renderer/gui/panels/singleplayer_panel/WorldTile.cpp"
 
 	"src/renderer/world_renderer/WorldRenderer.cpp"
 	"src/renderer/camera/Camera.cpp"

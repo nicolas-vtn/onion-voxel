@@ -6,6 +6,8 @@
 #include <renderer/gui/controls/scroller/Scroller.hpp>
 #include <renderer/gui/controls/text_field/TextField.hpp>
 
+#include "WorldTile.hpp"
+
 namespace onion::voxel
 {
 	class SingleplayerPanel : public GuiElement
@@ -40,6 +42,8 @@ namespace onion::voxel
 		Button m_ButtonDeleteSelectedWorld;
 		Button m_ButtonReCreateSelectedWorld;
 		Button m_ButtonBack;
+
+		std::vector<WorldTile> m_WorldTiles;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:
