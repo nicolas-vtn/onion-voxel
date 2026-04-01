@@ -300,6 +300,13 @@ namespace onion::voxel
 	{
 		(void) button;
 		m_SelectedWorldIndex = -1;
+
+		// Unselect all world tiles
+		for (const auto& worldTile : m_WorldTiles)
+		{
+			worldTile->SetSelected(false);
+		}
+
 		EvtRequestBackNavigation.Trigger(this);
 	}
 

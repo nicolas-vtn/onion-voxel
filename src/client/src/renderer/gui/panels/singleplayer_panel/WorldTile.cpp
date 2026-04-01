@@ -58,13 +58,11 @@ namespace onion::voxel
 			if (currentTime - m_LastClickTime < 0.25f)
 			{
 				EvtTileDoubleClicked.Trigger(*this);
-				std::cout << "Tile double-clicked: " << m_WorldInfos.Name << std::endl;
 			}
 			else
 			{
 				m_IsSelected = true;
 				EvtTileSelected.Trigger(*this);
-				std::cout << "Tile selected: " << m_WorldInfos.Name << std::endl;
 			}
 
 			m_LastClickTime = currentTime;
@@ -87,13 +85,24 @@ namespace onion::voxel
 		// ---- Render Border ----
 		if (m_IsSelected)
 		{
-			// TODO : Render a white rectangle
+			ColoredBackground::Options bgOptions;
+			bgOptions.Position = m_Position;
+			bgOptions.Size = m_Size;
+			bgOptions.Color = glm::vec4(1.f, 1.f, 1.f, 1.f);
+			bgOptions.ZOffset = -0.5f;
+			ColoredBackground::Render(bgOptions);
 		}
 
 		// ---- Render Background ----
 		if (m_IsSelected)
 		{
-			// TODO : Render a black rectangle
+			ColoredBackground::Options bgOptions;
+			bgOptions.Position = m_Position;
+			glm::vec2 sizeFloat = m_Size - glm::vec2(2 * borderThickness);
+			bgOptions.Size = {static_cast<int>(round(sizeFloat.x)), static_cast<int>(round(sizeFloat.y))};
+			bgOptions.Color = glm::vec4(0.f, 0.f, 0.f, 1.f);
+			bgOptions.ZOffset = -0.4f;
+			ColoredBackground::Render(bgOptions);
 		}
 
 		// ---- Render Thumbnail ----
