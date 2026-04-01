@@ -76,8 +76,8 @@ namespace onion::voxel
 
 		const int borderThickness = static_cast<int>(round(4.f / 1009.f * s_ScreenHeight));
 		const glm::ivec2 thumbnailSize{static_cast<int>(round(m_Size.y - (4 * borderThickness)))};
-		const int posBorderLeft = m_Position.x - (m_Size.x / 2);
-		const int posBorderTop = m_Position.y - (m_Size.y / 2);
+		const int posBorderLeft = static_cast<int>(round(m_Position.x - (m_Size.x / 2)));
+		const int posBorderTop = static_cast<int>(round(m_Position.y - (m_Size.y / 2)));
 		const glm::ivec2 thumbnailPos{
 			posBorderLeft + (2 * borderThickness) + static_cast<int>(round(thumbnailSize.x / 2)), m_Position.y};
 
@@ -100,7 +100,7 @@ namespace onion::voxel
 		{
 			ColoredBackground::Options bgOptions;
 			bgOptions.Position = m_Position;
-			glm::vec2 sizeFloat = m_Size - glm::vec2(2 * borderThickness);
+			glm::vec2 sizeFloat = m_Size - glm::vec2(static_cast<float>(2 * borderThickness));
 			bgOptions.Size = {static_cast<int>(round(sizeFloat.x)), static_cast<int>(round(sizeFloat.y))};
 			bgOptions.Color = glm::vec4(0.f, 0.f, 0.f, 1.f);
 			bgOptions.ZOffset = -0.4f;

@@ -129,7 +129,7 @@ namespace onion::voxel
 
 		// ---- Render Pink Rotating Background ----
 		float rotationSpeed = 20.f; // degrees per second
-		float rotationAngle = fmod(glfwGetTime() * rotationSpeed, 360.f);
+		float rotationAngle = static_cast<float>(fmod(glfwGetTime() * rotationSpeed, 360.f));
 		glm::ivec2 bgPosition = {s_ScreenWidth / 1.2f, s_ScreenHeight / 1.2f};
 		glm::ivec2 bgSize = {s_ScreenWidth / 10.f, s_ScreenHeight / 10.f};
 		glm::vec4 bgColor = glm::vec4(1.f, 0.4f, 0.8f, 0.5f);
