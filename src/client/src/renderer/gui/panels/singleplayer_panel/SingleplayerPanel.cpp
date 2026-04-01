@@ -12,7 +12,13 @@ namespace onion::voxel
 		  m_ButtonPlaySelectedWorld("Play Selected World"), m_ButtonDeleteSelectedWorld("Delete Selected World"),
 		  m_ButtonEdit("Edit"), m_ButtonRefreshWorldTiles("Re-Create Selected World"),
 		  m_LabelDeleteWarning("Delete Warning"), m_LabelDeleteDetails("Delete Details"),
-		  m_ButtonDeleteConfirm("Delete Confirm"), m_ButtonDeleteCancel("Delete Cancel")
+		  m_ButtonDeleteConfirm("Delete Confirm"), m_ButtonDeleteCancel("Delete Cancel"),
+		  m_LabelCreateNewWorldTitle("Create New World Title"), m_LabelCreateNewWorldName("Create New World Name"),
+		  m_TextFieldCreateNewWorldName("Create New World Name"),
+		  m_ButtonCreateNewWorldSelectType("Create New World Select Type"),
+		  m_LabelCreateNewWorldSeed("Create New World Seed"), m_TextFieldCreateNewWorldSeed("Create New World Seed"),
+		  m_ButtonCreateNewWorldConfirm("Create New World Confirm"),
+		  m_ButtonCreateNewWorldCancel("Create New World Cancel"), m_ScrollerCreateNewWorld("Create New World Scroller")
 	{
 		SubscribeToControlEvents();
 
@@ -27,7 +33,6 @@ namespace onion::voxel
 			m_ButtonPlaySelectedWorld.SetEnabled(false);
 
 			m_ButtonCreateNewWorld.SetText("Create New World");
-			m_ButtonCreateNewWorld.SetEnabled(false);
 
 			m_ButtonEdit.SetText("Edit");
 			m_ButtonEdit.SetEnabled(false);
@@ -47,6 +52,19 @@ namespace onion::voxel
 
 			m_ButtonDeleteConfirm.SetText("Delete");
 			m_ButtonDeleteCancel.SetText("Cancel");
+		}
+
+		// ---- Initialize Controls Create New World -----
+		{
+			m_LabelCreateNewWorldTitle.SetText("Create New World");
+			m_LabelCreateNewWorldTitle.SetTextAlignment(Font::eTextAlignment::Center);
+			m_LabelCreateNewWorldName.SetText("World Name:");
+			m_TextFieldCreateNewWorldName.SetPlaceholderText("Enter world name...");
+			m_LabelCreateNewWorldSeed.SetText("Seed:");
+			m_LabelCreateNewWorldSeed.SetTextAlignment(Font::eTextAlignment::Left);
+			m_TextFieldCreateNewWorldSeed.SetPlaceholderText("Enter seed...");
+			m_ButtonCreateNewWorldConfirm.SetText("Create");
+			m_ButtonCreateNewWorldCancel.SetText("Cancel");
 		}
 	}
 
@@ -93,6 +111,16 @@ namespace onion::voxel
 		m_ButtonDeleteConfirm.Initialize();
 		m_ButtonDeleteCancel.Initialize();
 
+		m_LabelCreateNewWorldTitle.Initialize();
+		m_LabelCreateNewWorldName.Initialize();
+		m_TextFieldCreateNewWorldName.Initialize();
+		m_ButtonCreateNewWorldSelectType.Initialize();
+		m_LabelCreateNewWorldSeed.Initialize();
+		m_TextFieldCreateNewWorldSeed.Initialize();
+		m_ButtonCreateNewWorldConfirm.Initialize();
+		m_ButtonCreateNewWorldCancel.Initialize();
+		m_ScrollerCreateNewWorld.Initialize();
+
 		SetInitState(true);
 	}
 
@@ -113,6 +141,16 @@ namespace onion::voxel
 		m_LabelDeleteDetails.Delete();
 		m_ButtonDeleteConfirm.Delete();
 		m_ButtonDeleteCancel.Delete();
+
+		m_LabelCreateNewWorldTitle.Delete();
+		m_LabelCreateNewWorldName.Delete();
+		m_TextFieldCreateNewWorldName.Delete();
+		m_ButtonCreateNewWorldSelectType.Delete();
+		m_LabelCreateNewWorldSeed.Delete();
+		m_TextFieldCreateNewWorldSeed.Delete();
+		m_ButtonCreateNewWorldConfirm.Delete();
+		m_ButtonCreateNewWorldCancel.Delete();
+		m_ScrollerCreateNewWorld.Delete();
 
 		SetDeletedState(true);
 	}
@@ -137,6 +175,16 @@ namespace onion::voxel
 		m_LabelDeleteDetails.ReloadTextures();
 		m_ButtonDeleteConfirm.ReloadTextures();
 		m_ButtonDeleteCancel.ReloadTextures();
+
+		m_LabelCreateNewWorldTitle.ReloadTextures();
+		m_LabelCreateNewWorldName.ReloadTextures();
+		m_TextFieldCreateNewWorldName.ReloadTextures();
+		m_ButtonCreateNewWorldSelectType.ReloadTextures();
+		m_LabelCreateNewWorldSeed.ReloadTextures();
+		m_TextFieldCreateNewWorldSeed.ReloadTextures();
+		m_ButtonCreateNewWorldConfirm.ReloadTextures();
+		m_ButtonCreateNewWorldCancel.ReloadTextures();
+		m_ScrollerCreateNewWorld.ReloadTextures();
 	}
 
 	void SingleplayerPanel::RefreshWorldTiles()
@@ -378,7 +426,108 @@ namespace onion::voxel
 
 	void SingleplayerPanel::RenderEditWorld() {}
 
-	void SingleplayerPanel::RenderCreateNewWorld() {}
+	void SingleplayerPanel::RenderCreateNewWorld()
+	{
+		if (s_IsBackPressed)
+		{
+			m_CurrentRenderModule = eRenderModule::WorldTiles;
+			return;
+		}
+
+		// Constants
+		int centerX = static_cast<int>(std::round(s_ScreenWidth / 2.0));
+		float controlsWidthRatio = 840.f / 1920.f;
+		float controlsHeightRatio = 80.f / 1009.f;
+		glm::ivec2 controlsSize{static_cast<int>(std::round(s_ScreenWidth * controlsWidthRatio)),
+								static_cast<int>(std::round(s_ScreenHeight * controlsHeightRatio))};
+		int textStartX = centerX - static_cast<int>(controlsSize.x / 2) + static_cast<int>(controlsSize.x * 0.05f);
+		float normalTextHeight = std::round(s_ScreenHeight * 28.f / 1009.f);
+
+		// ---- Render Title ----
+		float titleYOffsetRatio = (120.f - 23.f) / 1009.f;
+		float titleTextHeight = std::round(s_ScreenHeight * 38.f / 1009.f);
+		glm::ivec2 titlePos{centerX, static_cast<int>(s_ScreenHeight * titleYOffsetRatio)};
+		m_LabelCreateNewWorldTitle.SetPosition(titlePos);
+		m_LabelCreateNewWorldTitle.SetTextHeight(titleTextHeight);
+		m_LabelCreateNewWorldTitle.Render();
+
+		// ---- Render Scroller ----
+		float scrollerWidthRatio = 1.f;
+		float scrollerHeightRatio = 580.f / 1009.f;
+		glm::ivec2 scrollerSize{static_cast<int>(s_ScreenWidth * scrollerWidthRatio),
+								static_cast<int>(s_ScreenHeight * scrollerHeightRatio)};
+		float scrollCenterYratio = (503.f - 23.f) / 1009.f;
+		glm::ivec2 scrollCenter{centerX, static_cast<int>(s_ScreenHeight * scrollCenterYratio)};
+
+		glm::ivec2 scrollerTopLeftCorner{scrollCenter.x - scrollerSize.x / 2, scrollCenter.y - scrollerSize.y / 2};
+		glm::ivec2 scrollerBottomRightCorner{scrollCenter.x + scrollerSize.x / 2, scrollCenter.y + scrollerSize.y / 2};
+
+		m_ScrollerCreateNewWorld.SetTopLeftCorner(scrollerTopLeftCorner);
+		m_ScrollerCreateNewWorld.SetBottomRightCorner(scrollerBottomRightCorner);
+
+		m_ScrollerCreateNewWorld.Render();
+
+		// ---- Render Label Create New World Name ----
+		float nameLabelYOffsetRatio = (300.f - 23.f) / 1009.f;
+		glm::ivec2 nameLabelPos{textStartX, static_cast<int>(s_ScreenHeight * nameLabelYOffsetRatio)};
+		m_LabelCreateNewWorldName.SetPosition(nameLabelPos);
+		m_LabelCreateNewWorldName.SetTextHeight(normalTextHeight);
+		m_LabelCreateNewWorldName.Render();
+
+		// ---- Render Text Field Create New World Name ----
+		float nameTextFieldYOffsetRatio = nameLabelYOffsetRatio + (controlsHeightRatio / 1.3f);
+		glm::ivec2 nameTextFieldPos{centerX, static_cast<int>(s_ScreenHeight * nameTextFieldYOffsetRatio)};
+		m_TextFieldCreateNewWorldName.SetPosition(nameTextFieldPos);
+		m_TextFieldCreateNewWorldName.SetSize(controlsSize);
+		m_TextFieldCreateNewWorldName.Render();
+
+		// ---- Render Button Create New World Select Type ----
+		float selectTypeButtonYOffsetRatio = nameTextFieldYOffsetRatio + (controlsHeightRatio * 1.2f);
+		glm::ivec2 selectTypeButtonPos{centerX, static_cast<int>(s_ScreenHeight * selectTypeButtonYOffsetRatio)};
+		std::string text =
+			"Type: " + WorldGenerator::WorldGenerationTypeToString(m_WorldInfosToCreate.WorldGenerationType);
+		m_ButtonCreateNewWorldSelectType.SetText(text);
+		m_ButtonCreateNewWorldSelectType.SetPosition(selectTypeButtonPos);
+		m_ButtonCreateNewWorldSelectType.SetSize(controlsSize);
+		m_ButtonCreateNewWorldSelectType.Render();
+
+		// ---- Render Label Create New World Seed ----
+		float seedLabelYOffsetRatio = selectTypeButtonYOffsetRatio + (controlsHeightRatio * 1.2f);
+		glm::ivec2 seedLabelPos{textStartX, static_cast<int>(s_ScreenHeight * seedLabelYOffsetRatio)};
+		m_LabelCreateNewWorldSeed.SetPosition(seedLabelPos);
+		m_LabelCreateNewWorldSeed.SetTextHeight(normalTextHeight);
+		m_LabelCreateNewWorldSeed.Render();
+
+		// ---- Render Text Field Create New World Seed ----
+		float seedTextFieldYOffsetRatio = seedLabelYOffsetRatio + (controlsHeightRatio / 1.3f);
+		glm::ivec2 seedTextFieldPos{centerX, static_cast<int>(s_ScreenHeight * seedTextFieldYOffsetRatio)};
+		m_TextFieldCreateNewWorldSeed.SetPosition(seedTextFieldPos);
+		m_TextFieldCreateNewWorldSeed.SetSize(controlsSize);
+		m_TextFieldCreateNewWorldSeed.Render();
+
+		// Create Layout for buttons
+		float tableWidthRatio = 1230.f / 1920.f;
+		float tableHeightRatio = 80.f / 1009.f;
+		int horizontalSpacing = static_cast<int>(std::round(30.f / 1920.f * s_ScreenWidth));
+		glm::ivec2 tableSize{static_cast<int>(s_ScreenWidth * tableWidthRatio),
+							 static_cast<int>(s_ScreenHeight * tableHeightRatio)};
+		TableLayout layoutButtons = LayoutHelper::CreateTableLayout(1, 2, tableSize, horizontalSpacing, 0);
+		float tableYOffsetRatio = (915.f - 23.f) / 1009.f;
+		glm::ivec2 tableTopLeftCorner{centerX - (tableSize.x / 2),
+									  static_cast<int>(s_ScreenHeight * tableYOffsetRatio) - (tableSize.y / 2)};
+
+		// ---- Render Button Create New World Confirm ----
+		glm::ivec2 buttonPos = tableTopLeftCorner + layoutButtons.GetElementPosition(0, 0);
+		m_ButtonCreateNewWorldConfirm.SetPosition(buttonPos);
+		m_ButtonCreateNewWorldConfirm.SetSize(layoutButtons.GetCellSize());
+		m_ButtonCreateNewWorldConfirm.Render();
+
+		// ---- Render Button Create New World Cancel ----
+		buttonPos = tableTopLeftCorner + layoutButtons.GetElementPosition(0, 1);
+		m_ButtonCreateNewWorldCancel.SetPosition(buttonPos);
+		m_ButtonCreateNewWorldCancel.SetSize(layoutButtons.GetCellSize());
+		m_ButtonCreateNewWorldCancel.Render();
+	}
 
 	void SingleplayerPanel::ClearWorldTiles()
 	{
@@ -452,6 +601,15 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(
 			m_ButtonDeleteCancel.OnClick.Subscribe([this](const Button& button) { Handle_DeleteCancelClick(button); }));
+
+		m_EventHandles.push_back(m_ButtonCreateNewWorldSelectType.OnClick.Subscribe(
+			[this](const Button& button) { Handle_CreateNewWorldSelectTypeClick(button); }));
+
+		m_EventHandles.push_back(m_ButtonCreateNewWorldConfirm.OnClick.Subscribe(
+			[this](const Button& button) { Handle_CreateNewWorldConfirmClick(button); }));
+
+		m_EventHandles.push_back(m_ButtonCreateNewWorldCancel.OnClick.Subscribe(
+			[this](const Button& button) { Handle_CreateNewWorldCancelClick(button); }));
 	}
 
 	void SingleplayerPanel::Handle_ButtonBackClick(const Button& button)
@@ -471,7 +629,11 @@ namespace onion::voxel
 	void SingleplayerPanel::Handle_ButtonCreateNewWorldClick(const Button& button)
 	{
 		(void) button;
-		assert(false && "Not implemented yet");
+
+		m_WorldInfosToCreate = WorldInfos();
+		m_TextFieldCreateNewWorldName.SetText("");
+		m_TextFieldCreateNewWorldSeed.SetText("");
+		m_CurrentRenderModule = eRenderModule::CreateNewWorld;
 	}
 
 	void SingleplayerPanel::Handle_PlaySelectedWorldClick(const Button& button)
@@ -550,6 +712,86 @@ namespace onion::voxel
 	{
 		(void) button;
 
+		m_CurrentRenderModule = eRenderModule::WorldTiles;
+	}
+
+	void SingleplayerPanel::Handle_CreateNewWorldSelectTypeClick(const Button& button)
+	{
+		(void) button;
+
+		// Round Robin through the world generation types
+
+		WorldGenerator::eWorldGenerationType currentType = m_WorldInfosToCreate.WorldGenerationType;
+
+		currentType = static_cast<WorldGenerator::eWorldGenerationType>(
+			(static_cast<uint8_t>(currentType) + 1) %
+			static_cast<uint8_t>(WorldGenerator::eWorldGenerationType::Count));
+
+		m_WorldInfosToCreate.WorldGenerationType = currentType;
+	}
+
+	void SingleplayerPanel::Handle_CreateNewWorldConfirmClick(const Button& button)
+	{
+		(void) button;
+
+		// Validate world name
+		std::string worldName = m_TextFieldCreateNewWorldName.GetText();
+		m_WorldInfosToCreate.Name = worldName;
+		if (m_WorldInfosToCreate.Name.empty())
+		{
+			m_WorldInfosToCreate.Name = "New World";
+		}
+
+		// Validate Seed
+		std::string seedText = m_TextFieldCreateNewWorldSeed.GetText();
+		if (!seedText.empty())
+		{
+			try
+			{
+				m_WorldInfosToCreate.Seed = static_cast<uint32_t>(std::stoul(seedText));
+			}
+			catch (const std::exception&)
+			{
+				m_WorldInfosToCreate.Seed = 0;
+			}
+		}
+		else
+		{
+			m_WorldInfosToCreate.Seed = 0;
+		}
+
+		std::string saveDirectoryName = Utils::SanitizeFileName(worldName);
+
+		auto saveDirectory = GetSavesDirectoryPath() / saveDirectoryName;
+		WorldSave::CreateWorld(saveDirectory, m_WorldInfosToCreate);
+
+		RefreshWorldTiles();
+
+		// Retreve the created WorldInfos with the correct SaveDirectory
+		WorldInfos worldInfos;
+		if (WorldSave::GetWorldInfos(saveDirectory, worldInfos))
+		{
+			std::cout << "Created new world: '" << worldInfos.Name << "', Directory: '" << worldInfos.SaveDirectory
+					  << "'" << std::endl;
+
+			// Start Playing the newly created world
+			EvtPlayWorld.Trigger(worldInfos);
+		}
+		else
+		{
+			std::cerr << "Error: Failed to retrieve WorldInfos for the newly created world at '" << saveDirectory << "'"
+					  << std::endl;
+
+			Handle_CreateNewWorldCancelClick(m_ButtonCreateNewWorldCancel);
+		}
+	}
+
+	void SingleplayerPanel::Handle_CreateNewWorldCancelClick(const Button& button)
+	{
+		(void) button;
+		m_WorldInfosToCreate = WorldInfos();
+		m_TextFieldCreateNewWorldName.SetText("");
+		m_TextFieldCreateNewWorldSeed.SetText("");
 		m_CurrentRenderModule = eRenderModule::WorldTiles;
 	}
 

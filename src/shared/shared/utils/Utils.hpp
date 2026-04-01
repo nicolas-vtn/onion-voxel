@@ -44,4 +44,6 @@ namespace onion::voxel::Utils
 
 	std::filesystem::path GetExecutableDirectory();
 
+	std::string SanitizeFileName(const std::string& name);
+
 }; // namespace onion::voxel::Utils

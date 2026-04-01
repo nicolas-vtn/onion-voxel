@@ -40,17 +40,18 @@ namespace onion::voxel
 
 	void WorldSave::CreateWorld(const std::filesystem::path& saveDirectory, const WorldInfos& infos)
 	{
-
-		if (std::filesystem::exists(saveDirectory))
+		std::filesystem::path validatedSaveDirectory = saveDirectory;
+		while (std::filesystem::exists(validatedSaveDirectory))
 		{
-			std::cerr << "Save directory already exists: " << saveDirectory << "\n";
-			throw std::runtime_error("Save directory already exists: " + saveDirectory.string());
+			// Append underscore to the directory name until we find a name that doesn't exist
+			std::string newDirectoryName = validatedSaveDirectory.filename().string() + "_";
+			validatedSaveDirectory = validatedSaveDirectory.parent_path() / newDirectoryName;
 		}
 
-		std::filesystem::create_directories(saveDirectory);
-		std::filesystem::create_directories(saveDirectory / s_ChunksDirectoryName);
+		std::filesystem::create_directories(validatedSaveDirectory);
+		std::filesystem::create_directories(validatedSaveDirectory / s_ChunksDirectoryName);
 
-		SaveInfos(saveDirectory, infos);
+		SaveInfos(validatedSaveDirectory, infos);
 	}
 
 	bool WorldSave::GetWorldInfos(const std::filesystem::path& saveDirectory, WorldInfos& outInfos)

@@ -28,11 +28,13 @@ namespace onion::voxel
 	  public:
 		enum class eWorldGenerationType : uint8_t
 		{
-			DemoBlocks,
+			DemoBlocks = 0,
 			Superflat,
 			ClassicNoBiomes,
 			Classic,
 			BiomeVisualizer,
+
+			Count,
 		};
 
 		// ----- Structs -----

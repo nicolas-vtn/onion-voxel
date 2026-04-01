@@ -51,6 +51,8 @@ namespace onion::voxel
 
 		int m_SelectedWorldIndex = -1;
 
+		WorldInfos m_WorldInfosToCreate;
+
 		// ----- Controls World Tiles -----
 	  private:
 		Label m_LabelTitle;
@@ -73,6 +75,18 @@ namespace onion::voxel
 
 		Button m_ButtonDeleteConfirm;
 		Button m_ButtonDeleteCancel;
+
+		// ---- Controls Create New World -----
+	  private:
+		Label m_LabelCreateNewWorldTitle;
+		Label m_LabelCreateNewWorldName;
+		TextField m_TextFieldCreateNewWorldName;
+		Button m_ButtonCreateNewWorldSelectType;
+		Label m_LabelCreateNewWorldSeed;
+		TextField m_TextFieldCreateNewWorldSeed;
+		Button m_ButtonCreateNewWorldConfirm;
+		Button m_ButtonCreateNewWorldCancel;
+		Scroller m_ScrollerCreateNewWorld;
 
 		// ----- Internal Methods -----
 	  private:
@@ -104,5 +118,9 @@ namespace onion::voxel
 
 		void Handle_DeleteConfirmClick(const Button& button);
 		void Handle_DeleteCancelClick(const Button& button);
+
+		void Handle_CreateNewWorldSelectTypeClick(const Button& button);
+		void Handle_CreateNewWorldConfirmClick(const Button& button);
+		void Handle_CreateNewWorldCancelClick(const Button& button);
 	};
 } // namespace onion::voxel
