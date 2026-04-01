@@ -64,6 +64,12 @@ namespace onion::voxel
 		bool m_WasMouseDown = false;
 		float m_LastClickTime = 0.f;
 
+		static inline std::filesystem::path s_SpriteJoinPathFromRessourcePack =
+			GuiElement::s_BasePathGuiAssets / "sprites" / "world_list" / "join.png";
+
+		static inline std::filesystem::path s_SpriteJoinHighlightedPathFromRessourcePack =
+			GuiElement::s_BasePathGuiAssets / "sprites" / "world_list" / "join_highlighted.png";
+
 		// ----- Private Helpers -----
 	  private:
 		bool IsMouseHovering() const;
@@ -81,5 +87,7 @@ namespace onion::voxel
 		Label m_LabelDescription;
 		Label m_LabelDetails;
 		Sprite m_SpriteThumbnail;
+		Sprite m_SpriteJoin;
+		Sprite m_SpriteJoinHighlighted;
 	};
 }; // namespace onion::voxel

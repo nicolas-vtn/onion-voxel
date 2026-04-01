@@ -237,6 +237,12 @@ namespace onion::voxel
 
 			m_WorldTiles.push_back(std::move(worldTile));
 		}
+
+		// Sort World Tiles by last played date (most recent first)
+		std::sort(m_WorldTiles.begin(),
+				  m_WorldTiles.end(),
+				  [](const std::unique_ptr<WorldTile>& a, const std::unique_ptr<WorldTile>& b)
+				  { return a->GetWorldInfos().LastPlayedDate > b->GetWorldInfos().LastPlayedDate; });
 	}
 
 	void SingleplayerPanel::ClearWorldTiles()

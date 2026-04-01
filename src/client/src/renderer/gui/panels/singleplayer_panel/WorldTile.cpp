@@ -5,7 +5,11 @@ namespace onion::voxel
 	WorldTile::WorldTile(const std::string& name, const WorldInfos& worldInfos, Texture texture)
 		: GuiElement(name), m_WorldInfos(worldInfos), m_LabelTitle(name + "_LabelTitle"),
 		  m_LabelDescription(name + "_LabelDescription"), m_LabelDetails(name + "_LabelLastPlayed"),
-		  m_SpriteThumbnail(name + "_Sprite", std::move(texture))
+		  m_SpriteThumbnail(name + "_Sprite", std::move(texture)),
+		  m_SpriteJoin(name + "_SpriteJoin", s_SpriteJoinPathFromRessourcePack, Sprite::eOrigin::ResourcePack),
+		  m_SpriteJoinHighlighted(name + "_SpriteJoinHighlighted",
+								  s_SpriteJoinHighlightedPathFromRessourcePack,
+								  Sprite::eOrigin::ResourcePack)
 	{
 		SubscribeToControlEvents();
 
@@ -30,6 +34,8 @@ namespace onion::voxel
 		m_LabelDescription.Initialize();
 		m_LabelDetails.Initialize();
 		m_SpriteThumbnail.Initialize();
+		m_SpriteJoin.Initialize();
+		m_SpriteJoinHighlighted.Initialize();
 
 		SetInitState(true);
 	}
@@ -68,10 +74,6 @@ namespace onion::voxel
 			m_LastClickTime = currentTime;
 		}
 
-		// Update previous state
-		m_WasMouseDown = isMouseDown;
-		m_WasMouseHovering = isHovered;
-
 		const int borderThickness = static_cast<int>(round(4.f / 1009.f * s_ScreenHeight));
 		const glm::ivec2 thumbnailSize{static_cast<int>(round(m_Size.y - (4 * borderThickness)))};
 		const int posBorderLeft = m_Position.x - (m_Size.x / 2);
@@ -106,9 +108,41 @@ namespace onion::voxel
 		}
 
 		// ---- Render Thumbnail ----
+		float zOffset = 0.1f;
 		m_SpriteThumbnail.SetPosition(thumbnailPos);
 		m_SpriteThumbnail.SetSize(thumbnailSize);
+		m_SpriteThumbnail.SetZOffset(zOffset);
 		m_SpriteThumbnail.Render();
+
+		// ---- Render Join Sprite if Hovered ----
+		if (isHovered)
+		{
+			// ---- Render Background ----
+			glm::vec4 bgColor = glm::vec4(0.5f, 0.5f, 0.5f, 0.5f);
+			zOffset += 0.05f;
+			ColoredBackground::Options bgOptions;
+			bgOptions.Position = thumbnailPos;
+			bgOptions.Size = thumbnailSize;
+			bgOptions.Color = bgColor;
+			bgOptions.ZOffset = zOffset;
+			ColoredBackground::Render(bgOptions);
+
+			// ---- Render Join Sprite ----
+			bool isThumbnailHovered = m_SpriteThumbnail.IsHovered();
+			zOffset += 0.05f;
+			Sprite& spriteToRender = isThumbnailHovered ? m_SpriteJoinHighlighted : m_SpriteJoin;
+			spriteToRender.SetPosition(thumbnailPos);
+			spriteToRender.SetSize(thumbnailSize);
+			spriteToRender.SetZOffset(zOffset);
+			spriteToRender.Render();
+
+			// Detect Click on Join Sprite
+
+			if (isThumbnailHovered && isMouseDown && !m_WasMouseDown)
+			{
+				EvtTileDoubleClicked.Trigger(*this);
+			}
+		}
 
 		// ---- Render Title ----
 		float textHeight = s_ScreenHeight * (31.f / 1009.f);
@@ -131,6 +165,10 @@ namespace onion::voxel
 		m_LabelDetails.SetTextHeight(textHeight);
 		m_LabelDetails.SetText(FormatDetails());
 		m_LabelDetails.Render();
+
+		// ---- Update previous state ----
+		m_WasMouseDown = isMouseDown;
+		m_WasMouseHovering = isHovered;
 	}
 
 	void WorldTile::Delete()
@@ -139,6 +177,8 @@ namespace onion::voxel
 		m_LabelDescription.Delete();
 		m_LabelDetails.Delete();
 		m_SpriteThumbnail.Delete();
+		m_SpriteJoin.Delete();
+		m_SpriteJoinHighlighted.Delete();
 
 		SetInitState(false);
 	}
@@ -148,6 +188,8 @@ namespace onion::voxel
 		m_LabelTitle.ReloadTextures();
 		m_LabelDescription.ReloadTextures();
 		m_LabelDetails.ReloadTextures();
+		m_SpriteJoin.ReloadTextures();
+		m_SpriteJoinHighlighted.ReloadTextures();
 	}
 
 	void WorldTile::SetSize(const glm::vec2& size)
