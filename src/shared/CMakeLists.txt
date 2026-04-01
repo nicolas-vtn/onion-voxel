@@ -23,6 +23,8 @@ add_library(onion_voxel_shared
 
  "shared/physics/PhysicsEngine.cpp"
 
+ "shared/utils/Utils.cpp"
+
 )
 
 target_link_libraries(onion_voxel_shared
@@ -38,6 +40,10 @@ target_link_libraries(onion_voxel_shared
 		onion::event
 		onion::timer
 		onion::datetime
+)
+
+target_compile_options(onion_voxel_shared PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>
 )
 
 target_include_directories(onion_voxel_shared

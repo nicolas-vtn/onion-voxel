@@ -51,6 +51,8 @@ add_executable(OnionVoxel
 	"src/renderer/gui/panels/options_panel/OptionsPanel.cpp"
 	"src/renderer/gui/panels/resource_packs_panel/ResourcePacksPanel.cpp"
 	"src/renderer/gui/panels/resource_packs_panel/ResourcePackTile.cpp"
+	"src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.cpp"
+	"src/renderer/gui/panels/singleplayer_panel/WorldTile.cpp"
 
 	"src/renderer/world_renderer/WorldRenderer.cpp"
 	"src/renderer/camera/Camera.cpp"
@@ -77,7 +79,7 @@ add_executable(OnionVoxel
 	"src/renderer/entity_renderer/skeleton/Skeleton.cpp"
 	"src/renderer/entity_renderer/TextureTileMapper.cpp"
 
-)
+ "src/renderer/gui/colored_background/ColoredBackground.cpp")
 
 if (WIN32)
     target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)
@@ -103,6 +105,10 @@ target_link_libraries(OnionVoxel
 
         onion_voxel_server
 		onion_voxel_shared
+)
+
+target_compile_options(OnionVoxel PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>
 )
 
 target_compile_features(OnionVoxel PRIVATE cxx_std_20)

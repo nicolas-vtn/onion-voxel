@@ -27,7 +27,7 @@ namespace onion::voxel
 	Gui::Gui()
 		: m_DemoPanel("DemoPanel"), m_MainMenuPanel("MainMenuPanel"), m_PausePanel("PausePanel"),
 		  m_OptionsPanel("OptionsPanel"), m_ResourcePacksPanel("ResourcePacksPanel"),
-		  m_DemoScrollingPanel("DemoScrollingPanel")
+		  m_DemoScrollingPanel("DemoScrollingPanel"), m_SingleplayerPanel("SingleplayerPanel")
 	{
 		SubscribeToPannelsEvents();
 	}
@@ -74,6 +74,12 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_DemoScrollingPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																					  { Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_SingleplayerPanel.EvtRequestBackNavigation.Subscribe(
+			[this](const GuiElement* sender) { Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_SingleplayerPanel.EvtPlayWorld.Subscribe(
+			[this](const WorldInfos& worldInfos) { RequestStartSingleplayerGame.Trigger(worldInfos); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -82,12 +88,7 @@ namespace onion::voxel
 
 		SetActiveMenu(menu);
 
-		// WIP : Temporary trigger
-		if (menu == eMenu::Singleplayer)
-		{
-			RequestStartSingleplayerGame.Trigger(GetAssetsPath() / "worlds" / "demo_map");
-		}
-		else if (menu == eMenu::Multiplayer)
+		if (menu == eMenu::Multiplayer)
 		{
 			std::string serverAddress = "127.0.0.1";
 			uint16_t serverPort = 25565;
@@ -203,6 +204,11 @@ namespace onion::voxel
 			std::string selectedResourcePackName = EngineContext::Get().Assets->GetCurrentResourcePack();
 			m_ResourcePacksPanel.SetCurrentlySelectedResourcePack(selectedResourcePackName);
 		}
+
+		if (m_ActiveMenu == eMenu::Singleplayer)
+		{
+			m_SingleplayerPanel.RefreshWorldTiles();
+		}
 	}
 
 	void Gui::GoBackToPreviousMenu()
@@ -250,6 +256,7 @@ namespace onion::voxel
 		m_PausePanel.Initialize();
 		m_OptionsPanel.Initialize();
 		m_ResourcePacksPanel.Initialize();
+		m_SingleplayerPanel.Initialize();
 	}
 
 	void Gui::Render()
@@ -286,6 +293,9 @@ namespace onion::voxel
 			case eMenu::ResourcePacks:
 				m_ResourcePacksPanel.Render();
 				break;
+			case eMenu::Singleplayer:
+				m_SingleplayerPanel.Render();
+				break;
 			default:
 				break;
 		}
@@ -302,6 +312,7 @@ namespace onion::voxel
 		m_PausePanel.Delete();
 		m_OptionsPanel.Delete();
 		m_ResourcePacksPanel.Delete();
+		m_SingleplayerPanel.Delete();
 	}
 
 	void Gui::ReloadTextures()
@@ -312,6 +323,7 @@ namespace onion::voxel
 		m_PausePanel.ReloadTextures();
 		m_OptionsPanel.ReloadTextures();
 		m_ResourcePacksPanel.ReloadTextures();
+		m_SingleplayerPanel.ReloadTextures();
 	}
 
 } // namespace onion::voxel

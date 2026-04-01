@@ -102,6 +102,7 @@ namespace onion::voxel
 			glm::ortho(0.0f, static_cast<float>(screenWidth), static_cast<float>(screenHeight), 0.0f, -1.0f, 1.0f);
 
 		Font::SetProjectionMatrix(s_ProjectionMatrix);
+		ColoredBackground::SetProjectionMatrix(s_ProjectionMatrix);
 
 		s_ShaderSprites.Use();
 		s_ShaderSprites.setMat4("uProjection", s_ProjectionMatrix);
@@ -130,6 +131,7 @@ namespace onion::voxel
 		s_ShaderNineSliceSprites.Delete();
 
 		Font::StaticShutdown();
+		ColoredBackground::StaticShutdown();
 	}
 
 	// -------- Protected --------

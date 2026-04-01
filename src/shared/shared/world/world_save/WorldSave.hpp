@@ -27,6 +27,7 @@ namespace onion::voxel
 
 		static void CreateWorld(const std::filesystem::path& saveDirectory, const WorldInfos& infos);
 		static bool GetWorldInfos(const std::filesystem::path& saveDirectory, WorldInfos& outInfos);
+		static bool DeleteWorld(const WorldInfos& infos);
 
 		void SaveChunkAsync(const std::shared_ptr<Chunk>& chunk);
 		std::shared_ptr<Chunk> LoadChunk(const glm::ivec2& chunkPosition);
@@ -40,6 +41,8 @@ namespace onion::voxel
 
 		// ----- Private Members -----
 	  private:
+		static inline const std::string s_CurrentVersion = "1.0";
+
 		const std::filesystem::path m_SaveDirectory;
 
 		static inline const std::string s_InfosFileName = "infos.json";
@@ -64,6 +67,7 @@ namespace onion::voxel
 		void SavePeriodically();
 		void SaveChunks();
 		void SavePlayers();
+		void SaveGeneralData();
 
 		// ----- Private Methods -----
 	  private:

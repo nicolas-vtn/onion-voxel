@@ -1,0 +1,126 @@
+#pragma once
+
+#include <shared/world/world_save/WorldSave.hpp>
+
+#include <renderer/gui/GuiElement.hpp>
+#include <renderer/gui/controls/button/Button.hpp>
+#include <renderer/gui/controls/label/Label.hpp>
+#include <renderer/gui/controls/scroller/Scroller.hpp>
+#include <renderer/gui/controls/text_field/TextField.hpp>
+
+#include "WorldTile.hpp"
+
+namespace onion::voxel
+{
+	class SingleplayerPanel : public GuiElement
+	{
+		// ----- Constructor / Destructor -----
+	  public:
+		SingleplayerPanel(const std::string& name);
+		~SingleplayerPanel() override;
+
+		// ----- Public API -----
+	  public:
+		void RefreshWorldTiles();
+
+		void Render() override;
+		void Initialize() override;
+		void Delete() override;
+		void ReloadTextures() override;
+
+		// ----- Public Events -----
+	  public:
+		Event<const GuiElement*> EvtRequestBackNavigation;
+		Event<const WorldInfos&> EvtPlayWorld;
+
+		// ---- Private Enums ----
+	  private:
+		enum class eRenderModule
+		{
+			WorldTiles,
+			DeleteConfirmation,
+			EditWorld,
+			CreateNewWorld,
+		};
+
+		// ----- Properties -----
+	  private:
+		static inline const std::string s_SavesDirectory = "saves";
+
+		eRenderModule m_CurrentRenderModule = eRenderModule::WorldTiles;
+
+		int m_SelectedWorldIndex = -1;
+
+		WorldInfos m_WorldInfosToCreate;
+
+		// ----- Controls World Tiles -----
+	  private:
+		Label m_LabelTitle;
+		TextField m_TextFieldFilter;
+		Scroller m_Scroller;
+
+		Button m_ButtonPlaySelectedWorld;
+		Button m_ButtonCreateNewWorld;
+		Button m_ButtonEdit;
+		Button m_ButtonDeleteSelectedWorld;
+		Button m_ButtonRefreshWorldTiles;
+		Button m_ButtonBack;
+
+		std::vector<std::unique_ptr<WorldTile>> m_WorldTiles;
+
+		// ---- Controls Delete Confirmation -----
+	  private:
+		Label m_LabelDeleteWarning;
+		Label m_LabelDeleteDetails;
+
+		Button m_ButtonDeleteConfirm;
+		Button m_ButtonDeleteCancel;
+
+		// ---- Controls Create New World -----
+	  private:
+		Label m_LabelCreateNewWorldTitle;
+		Label m_LabelCreateNewWorldName;
+		TextField m_TextFieldCreateNewWorldName;
+		Button m_ButtonCreateNewWorldSelectType;
+		Label m_LabelCreateNewWorldSeed;
+		TextField m_TextFieldCreateNewWorldSeed;
+		Button m_ButtonCreateNewWorldConfirm;
+		Button m_ButtonCreateNewWorldCancel;
+		Scroller m_ScrollerCreateNewWorld;
+
+		// ----- Internal Methods -----
+	  private:
+		void RenderWorldTiles();
+		void RenderDeleteConfirmation();
+		void RenderEditWorld();
+		void RenderCreateNewWorld();
+
+		void ClearWorldTiles();
+
+		std::filesystem::path GetSavesDirectoryPath() const;
+		std::vector<WorldInfos> GetWorldsInfos() const;
+
+		// ----- Internal Event Subscription and Handlers -----
+	  private:
+		void SubscribeToControlEvents();
+
+		std::vector<EventHandle> m_EventHandles;
+
+		void Handle_ButtonBackClick(const Button& button);
+		void Handle_ButtonCreateNewWorldClick(const Button& button);
+		void Handle_PlaySelectedWorldClick(const Button& button);
+		void Handle_ButtonDeleteSelectedWorldClick(const Button& button);
+		void Handle_ButtonEditClick(const Button& button);
+		void Handle_ButtonRefreshWorldTilesClick(const Button& button);
+
+		void Handle_WorldTileSelected(const WorldTile& worldTile);
+		void Handle_WorldTileDoubleClicked(const WorldTile& worldTile);
+
+		void Handle_DeleteConfirmClick(const Button& button);
+		void Handle_DeleteCancelClick(const Button& button);
+
+		void Handle_CreateNewWorldSelectTypeClick(const Button& button);
+		void Handle_CreateNewWorldConfirmClick(const Button& button);
+		void Handle_CreateNewWorldCancelClick(const Button& button);
+	};
+} // namespace onion::voxel

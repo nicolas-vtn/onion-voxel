@@ -40,17 +40,18 @@ namespace onion::voxel
 
 	void WorldSave::CreateWorld(const std::filesystem::path& saveDirectory, const WorldInfos& infos)
 	{
-
-		if (std::filesystem::exists(saveDirectory))
+		std::filesystem::path validatedSaveDirectory = saveDirectory;
+		while (std::filesystem::exists(validatedSaveDirectory))
 		{
-			std::cerr << "Save directory already exists: " << saveDirectory << "\n";
-			throw std::runtime_error("Save directory already exists: " + saveDirectory.string());
+			// Append underscore to the directory name until we find a name that doesn't exist
+			std::string newDirectoryName = validatedSaveDirectory.filename().string() + "_";
+			validatedSaveDirectory = validatedSaveDirectory.parent_path() / newDirectoryName;
 		}
 
-		std::filesystem::create_directories(saveDirectory);
-		std::filesystem::create_directories(saveDirectory / s_ChunksDirectoryName);
+		std::filesystem::create_directories(validatedSaveDirectory);
+		std::filesystem::create_directories(validatedSaveDirectory / s_ChunksDirectoryName);
 
-		SaveInfos(saveDirectory, infos);
+		SaveInfos(validatedSaveDirectory, infos);
 	}
 
 	bool WorldSave::GetWorldInfos(const std::filesystem::path& saveDirectory, WorldInfos& outInfos)
@@ -63,6 +64,20 @@ namespace onion::voxel
 		catch (const std::exception& e)
 		{
 			std::cerr << "Failed to load world infos: " << e.what() << "\n";
+			return false;
+		}
+	}
+
+	bool WorldSave::DeleteWorld(const WorldInfos& infos)
+	{
+		try
+		{
+			std::filesystem::remove_all(infos.SaveDirectory);
+			return true;
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "Failed to delete world: " << e.what() << "\n";
 			return false;
 		}
 	}
@@ -257,6 +272,7 @@ namespace onion::voxel
 
 	void WorldSave::SavePeriodically()
 	{
+		SaveGeneralData();
 		SaveChunks();
 		SavePlayers();
 	}
@@ -342,15 +358,23 @@ namespace onion::voxel
 		}
 	}
 
+	void WorldSave::SaveGeneralData()
+	{
+		m_Infos.LastPlayedDate = DateTime::UtcNow();
+		SaveInfos(m_SaveDirectory, m_Infos);
+	}
+
 	void WorldSave::SaveInfos(const std::filesystem::path& saveDirectory, const WorldInfos& infos)
 	{
 		std::filesystem::path infosFilePath = saveDirectory / s_InfosFileName;
 
 		nlohmann::ordered_json json;
+		json["Version"] = s_CurrentVersion;
 		json["Name"] = infos.Name;
 		json["Seed"] = infos.Seed;
 		json["CreationDate"] = infos.CreationDate.toUnixTimestamp();
-		json["WorldGenerationType"] = static_cast<uint8_t>(infos.WorldGenerationType);
+		json["LastPlayedDate"] = infos.LastPlayedDate.toUnixTimestamp();
+		json["WorldGenerationType"] = WorldGenerator::WorldGenerationTypeToString(infos.WorldGenerationType);
 
 		std::ofstream file(infosFilePath);
 		if (!file.is_open())
@@ -384,11 +408,15 @@ namespace onion::voxel
 		file >> json;
 
 		WorldInfos infos;
+		infos.Version = json["Version"].get<std::string>();
 		infos.Name = json["Name"].get<std::string>();
 		infos.Seed = json["Seed"].get<uint32_t>();
 		infos.CreationDate = DateTime::FromUnixTimestamp(json["CreationDate"].get<uint32_t>());
-		infos.WorldGenerationType =
-			static_cast<WorldGenerator::eWorldGenerationType>(json["WorldGenerationType"].get<uint8_t>());
+		infos.LastPlayedDate = DateTime::FromUnixTimestamp(json["LastPlayedDate"].get<uint32_t>());
+		std::string worldGenTypeStr = json["WorldGenerationType"].get<std::string>();
+		infos.WorldGenerationType = WorldGenerator::StringToWorldGenerationType(worldGenTypeStr);
+
+		infos.SaveDirectory = saveDirectory;
 
 		return infos;
 	}

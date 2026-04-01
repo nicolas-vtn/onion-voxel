@@ -37,6 +37,26 @@ namespace onion::voxel
 {
 	// ----- Static Members Initialization -----
 
+	const std::unordered_map<std::string, WorldGenerator::eWorldGenerationType>
+		WorldGenerator::s_StringToWorldGenerationType = {
+			{"Demo Blocks", eWorldGenerationType::DemoBlocks},
+			{"Superflat", eWorldGenerationType::Superflat},
+			{"Classic No Biomes", eWorldGenerationType::ClassicNoBiomes},
+			{"Classic", eWorldGenerationType::Classic},
+			{"BiomeVisualizer", eWorldGenerationType::BiomeVisualizer},
+	};
+
+	const std::unordered_map<WorldGenerator::eWorldGenerationType, std::string>
+		WorldGenerator::s_WorldGenerationTypeToString = []()
+	{
+		std::unordered_map<eWorldGenerationType, std::string> m;
+		for (const auto& pair : s_StringToWorldGenerationType)
+		{
+			m[pair.second] = pair.first;
+		}
+		return m;
+	}();
+
 	std::vector<float> WorldGenerator::s_BiomeHeightsLookup = []()
 	{
 		std::vector<float> lookup(static_cast<size_t>(Biome::Count));
@@ -123,6 +143,32 @@ namespace onion::voxel
 	void WorldGenerator::SetWorldGenerationType(eWorldGenerationType worldGenerationType)
 	{
 		m_WorldGenerationType = worldGenerationType;
+	}
+
+	std::string WorldGenerator::WorldGenerationTypeToString(eWorldGenerationType type)
+	{
+		auto it = s_WorldGenerationTypeToString.find(type);
+		if (it != s_WorldGenerationTypeToString.end())
+		{
+			return it->second;
+		}
+		else
+		{
+			return "Unknown";
+		}
+	}
+
+	WorldGenerator::eWorldGenerationType WorldGenerator::StringToWorldGenerationType(const std::string& str)
+	{
+		auto it = s_StringToWorldGenerationType.find(str);
+		if (it != s_StringToWorldGenerationType.end())
+		{
+			return it->second;
+		}
+		else
+		{
+			throw std::runtime_error("Invalid world generation type string: " + str);
+		}
 	}
 
 	WorldGenerator::GenChunk WorldGenerator::GenerateChunk(const glm::ivec2& chunkPosition)

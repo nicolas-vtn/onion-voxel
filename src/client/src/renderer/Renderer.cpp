@@ -829,7 +829,7 @@ namespace onion::voxel
 																		  { Handle_CursorStyleChangeRequest(style); }));
 
 		m_EventHandles.push_back(m_Gui.RequestStartSingleplayerGame.Subscribe(
-			[this](const std::filesystem::path& worldPath) { Handle_StartSingleplayerGameRequest(worldPath); }));
+			[this](const WorldInfos& worldInfos) { Handle_StartSingleplayerGameRequest(worldInfos); }));
 
 		m_EventHandles.push_back(m_Gui.RequestStartMultiplayerGame.Subscribe(
 			[this](const Gui::MultiplayerGameStartInfo& startInfo) { Handle_StartMultiplayerGameRequest(startInfo); }));
@@ -848,9 +848,9 @@ namespace onion::voxel
 		m_InputsManager.SetCursorStyle(style);
 	}
 
-	void Renderer::Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath)
+	void Renderer::Handle_StartSingleplayerGameRequest(const WorldInfos& worldInfos)
 	{
-		RequestStartSingleplayerGame.Trigger(worldPath);
+		RequestStartSingleplayerGame.Trigger(worldInfos);
 
 		// Enable mouse capture for gameplay
 		m_InputsManager.SetMouseCaptureEnabled(true);

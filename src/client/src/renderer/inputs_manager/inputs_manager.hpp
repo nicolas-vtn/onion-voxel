@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 #include <shared_mutex>
 #include <unordered_map>
 
@@ -142,6 +144,9 @@ namespace onion::voxel
 
 		/// @brief Unregisters an input by its ID, removing it from the manager's tracking system. After an input is unregistered, its state will no longer be available in the InputsSnapshot, and any references to its ID should be removed to avoid errors.
 		void UnregisterInput(int inputId);
+
+		/// @brief Retrieves the current position of the mouse cursor in screen coordinates.
+		glm::ivec2 GetMousePosition() const;
 
 		/// @brief Sets the cursor style for the application.
 		void SetCursorStyle(const CursorStyle& style);

@@ -314,6 +314,11 @@ void InputsManager::UnregisterInput(int inputId)
 	m_RegisteredInputs.erase(inputId);
 }
 
+glm::ivec2 onion::voxel::InputsManager::GetMousePosition() const
+{
+	return glm::ivec2(static_cast<int>(lround(m_MouseState.Xpos)), static_cast<int>(lround(m_MouseState.Ypos)));
+}
+
 void InputsManager::SetCursorStyle(const CursorStyle& style)
 {
 	std::lock_guard<std::mutex> lock(m_MutexCursors);

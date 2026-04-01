@@ -69,7 +69,7 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<const std::filesystem::path&> RequestStartSingleplayerGame;
+		Event<const WorldInfos&> RequestStartSingleplayerGame;
 		Event<const Gui::MultiplayerGameStartInfo&> RequestStartMultiplayerGame;
 		Event<bool> RequestQuitToMainMenu;
 
@@ -162,7 +162,7 @@ namespace onion::voxel
 		std::vector<EventHandle> m_EventHandles;
 
 		void Handle_CursorStyleChangeRequest(const CursorStyle& style);
-		void Handle_StartSingleplayerGameRequest(const std::filesystem::path& worldPath);
+		void Handle_StartSingleplayerGameRequest(const WorldInfos& worldInfos);
 		void Handle_StartMultiplayerGameRequest(const Gui::MultiplayerGameStartInfo& startInfo);
 		void Handle_BackToGameRequest();
 		void Handle_QuitToMainMenuRequest(bool quit);

@@ -6,6 +6,7 @@
 #include "panels/options_panel/OptionsPanel.hpp"
 #include "panels/pause_panel/PausePanel.hpp"
 #include "panels/resource_packs_panel/ResourcePacksPanel.hpp"
+#include "panels/singleplayer_panel/SingleplayerPanel.hpp"
 
 #include <memory>
 #include <mutex>
@@ -50,7 +51,7 @@ namespace onion::voxel
 		// ----- Events -----
 	  public:
 		Event<const CursorStyle&> RequestCursorStyleChange;
-		Event<const std::filesystem::path&> RequestStartSingleplayerGame;
+		Event<const WorldInfos&> RequestStartSingleplayerGame;
 		Event<const MultiplayerGameStartInfo&> RequestStartMultiplayerGame;
 		Event<bool> RequestQuitToMainMenu;
 		Event<bool> RequestBackToGame;
@@ -65,6 +66,7 @@ namespace onion::voxel
 		PausePanel m_PausePanel;
 		OptionsPanel m_OptionsPanel;
 		ResourcePacksPanel m_ResourcePacksPanel;
+		SingleplayerPanel m_SingleplayerPanel;
 
 		// ----- Panel Events Handling -----
 	  private:

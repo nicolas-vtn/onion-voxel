@@ -1,5 +1,7 @@
 #pragma once
 
+#include <filesystem>
+
 #include <glm/glm.hpp>
 
 #include <shared/world/WorldConstants.hpp>
@@ -39,4 +41,9 @@ namespace onion::voxel::Utils
 						  localPosition.y,
 						  chunkPosition.y * WorldConstants::CHUNK_SIZE + localPosition.z);
 	}
+
+	std::filesystem::path GetExecutableDirectory();
+
+	std::string SanitizeFileName(const std::string& name);
+
 }; // namespace onion::voxel::Utils

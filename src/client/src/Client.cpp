@@ -91,17 +91,15 @@ namespace onion::voxel
 		m_Config.Save(m_ConfigFilePath);
 	}
 
-	void Client::Handle_StartSingleplayerRequest(const std::filesystem::path& worldPath)
+	void Client::Handle_StartSingleplayerRequest(const WorldInfos& worldInfos)
 	{
-		(void) worldPath; // Currently unused
-
 		m_NetworkClient.SetRemoteHost("127.0.0.1");
 		m_NetworkClient.SetRemotePort(7777);
 
 		// Starts a Server on Localhost
 		if (m_LocalhostServer == nullptr)
 		{
-			m_LocalhostServer = std::make_unique<Server>();
+			m_LocalhostServer = std::make_unique<Server>(worldInfos.SaveDirectory);
 			m_LocalhostServer->Start();
 		}
 		else
@@ -228,7 +226,7 @@ namespace onion::voxel
 	void Client::SubscribeToRendererEvents()
 	{
 		m_RendererEventHandles.push_back(m_Renderer.RequestStartSingleplayerGame.Subscribe(
-			[this](const std::filesystem::path& worldPath) { Handle_StartSingleplayerRequest(worldPath); }));
+			[this](const WorldInfos& worldInfos) { Handle_StartSingleplayerRequest(worldInfos); }));
 
 		m_RendererEventHandles.push_back(m_Renderer.RequestQuitToMainMenu.Subscribe(
 			[this](bool quit)

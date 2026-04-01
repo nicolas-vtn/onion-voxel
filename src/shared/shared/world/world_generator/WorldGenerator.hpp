@@ -28,11 +28,13 @@ namespace onion::voxel
 	  public:
 		enum class eWorldGenerationType : uint8_t
 		{
-			DemoBlocks,
+			DemoBlocks = 0,
 			Superflat,
 			ClassicNoBiomes,
 			Classic,
 			BiomeVisualizer,
+
+			Count,
 		};
 
 		// ----- Structs -----
@@ -80,6 +82,15 @@ namespace onion::voxel
 
 		eWorldGenerationType GetWorldGenerationType() const;
 		void SetWorldGenerationType(eWorldGenerationType worldGenerationType);
+
+		// ----- Helpers -----
+	  private:
+		static const std::unordered_map<std::string, eWorldGenerationType> s_StringToWorldGenerationType;
+		static const std::unordered_map<eWorldGenerationType, std::string> s_WorldGenerationTypeToString;
+
+	  public:
+		static std::string WorldGenerationTypeToString(eWorldGenerationType type);
+		static eWorldGenerationType StringToWorldGenerationType(const std::string& str);
 
 		// ----- Events -----
 	  public:
