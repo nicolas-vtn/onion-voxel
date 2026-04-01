@@ -27,6 +27,7 @@ namespace onion::voxel
 
 		static void CreateWorld(const std::filesystem::path& saveDirectory, const WorldInfos& infos);
 		static bool GetWorldInfos(const std::filesystem::path& saveDirectory, WorldInfos& outInfos);
+		static bool DeleteWorld(const WorldInfos& infos);
 
 		void SaveChunkAsync(const std::shared_ptr<Chunk>& chunk);
 		std::shared_ptr<Chunk> LoadChunk(const glm::ivec2& chunkPosition);

@@ -67,6 +67,20 @@ namespace onion::voxel
 		}
 	}
 
+	bool WorldSave::DeleteWorld(const WorldInfos& infos)
+	{
+		try
+		{
+			std::filesystem::remove_all(infos.SaveDirectory);
+			return true;
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "Failed to delete world: " << e.what() << "\n";
+			return false;
+		}
+	}
+
 	void WorldSave::SaveChunkAsync(const std::shared_ptr<Chunk>& chunk)
 	{
 		std::lock_guard lock(m_MutexChunksToSave);

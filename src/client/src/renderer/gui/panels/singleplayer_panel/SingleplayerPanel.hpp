@@ -33,13 +33,25 @@ namespace onion::voxel
 		Event<const GuiElement*> EvtRequestBackNavigation;
 		Event<const WorldInfos&> EvtPlayWorld;
 
+		// ---- Private Enums ----
+	  private:
+		enum class eRenderModule
+		{
+			WorldTiles,
+			DeleteConfirmation,
+			EditWorld,
+			CreateNewWorld,
+		};
+
 		// ----- Properties -----
 	  private:
 		static inline const std::string s_SavesDirectory = "saves";
 
+		eRenderModule m_CurrentRenderModule = eRenderModule::WorldTiles;
+
 		int m_SelectedWorldIndex = -1;
 
-		// ----- Controls -----
+		// ----- Controls World Tiles -----
 	  private:
 		Label m_LabelTitle;
 		TextField m_TextFieldFilter;
@@ -54,8 +66,21 @@ namespace onion::voxel
 
 		std::vector<std::unique_ptr<WorldTile>> m_WorldTiles;
 
+		// ---- Controls Delete Confirmation -----
+	  private:
+		Label m_LabelDeleteWarning;
+		Label m_LabelDeleteDetails;
+
+		Button m_ButtonDeleteConfirm;
+		Button m_ButtonDeleteCancel;
+
 		// ----- Internal Methods -----
 	  private:
+		void RenderWorldTiles();
+		void RenderDeleteConfirmation();
+		void RenderEditWorld();
+		void RenderCreateNewWorld();
+
 		void ClearWorldTiles();
 
 		std::filesystem::path GetSavesDirectoryPath() const;
@@ -76,5 +101,8 @@ namespace onion::voxel
 
 		void Handle_WorldTileSelected(const WorldTile& worldTile);
 		void Handle_WorldTileDoubleClicked(const WorldTile& worldTile);
+
+		void Handle_DeleteConfirmClick(const Button& button);
+		void Handle_DeleteCancelClick(const Button& button);
 	};
 } // namespace onion::voxel

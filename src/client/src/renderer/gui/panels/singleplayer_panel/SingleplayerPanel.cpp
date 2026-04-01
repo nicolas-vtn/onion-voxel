@@ -10,30 +10,44 @@ namespace onion::voxel
 		: GuiElement(name), m_LabelTitle("Title"), m_TextFieldFilter("Filter"), m_Scroller("Scroller"),
 		  m_ButtonBack("Back"), m_ButtonCreateNewWorld("Create New World"),
 		  m_ButtonPlaySelectedWorld("Play Selected World"), m_ButtonDeleteSelectedWorld("Delete Selected World"),
-		  m_ButtonEdit("Edit"), m_ButtonRefreshWorldTiles("Re-Create Selected World")
+		  m_ButtonEdit("Edit"), m_ButtonRefreshWorldTiles("Re-Create Selected World"),
+		  m_LabelDeleteWarning("Delete Warning"), m_LabelDeleteDetails("Delete Details"),
+		  m_ButtonDeleteConfirm("Delete Confirm"), m_ButtonDeleteCancel("Delete Cancel")
 	{
 		SubscribeToControlEvents();
 
-		m_LabelTitle.SetText("Singleplayer");
-		m_LabelTitle.SetTextAlignment(Font::eTextAlignment::Center);
+		// ---- Initialize Controls World Tiles ----
+		{
+			m_LabelTitle.SetText("Singleplayer");
+			m_LabelTitle.SetTextAlignment(Font::eTextAlignment::Center);
 
-		m_TextFieldFilter.SetPlaceholderText("Filter...");
+			m_TextFieldFilter.SetPlaceholderText("Filter...");
 
-		m_ButtonPlaySelectedWorld.SetText("Play Selected World");
-		m_ButtonPlaySelectedWorld.SetEnabled(false);
+			m_ButtonPlaySelectedWorld.SetText("Play Selected World");
+			m_ButtonPlaySelectedWorld.SetEnabled(false);
 
-		m_ButtonCreateNewWorld.SetText("Create New World");
-		m_ButtonCreateNewWorld.SetEnabled(false);
+			m_ButtonCreateNewWorld.SetText("Create New World");
+			m_ButtonCreateNewWorld.SetEnabled(false);
 
-		m_ButtonEdit.SetText("Edit");
-		m_ButtonEdit.SetEnabled(false);
+			m_ButtonEdit.SetText("Edit");
+			m_ButtonEdit.SetEnabled(false);
 
-		m_ButtonDeleteSelectedWorld.SetText("Delete");
-		m_ButtonDeleteSelectedWorld.SetEnabled(false);
+			m_ButtonDeleteSelectedWorld.SetText("Delete");
+			m_ButtonDeleteSelectedWorld.SetEnabled(false);
 
-		m_ButtonRefreshWorldTiles.SetText("Refresh");
+			m_ButtonRefreshWorldTiles.SetText("Refresh");
 
-		m_ButtonBack.SetText("Back");
+			m_ButtonBack.SetText("Back");
+		}
+
+		// ---- Initialize Controls Delete Confirmation -----
+		{
+			m_LabelDeleteWarning.SetTextAlignment(Font::eTextAlignment::Center);
+			m_LabelDeleteDetails.SetTextAlignment(Font::eTextAlignment::Center);
+
+			m_ButtonDeleteConfirm.SetText("Delete");
+			m_ButtonDeleteCancel.SetText("Cancel");
+		}
 	}
 
 	SingleplayerPanel::~SingleplayerPanel()
@@ -42,6 +56,124 @@ namespace onion::voxel
 	}
 
 	void SingleplayerPanel::Render()
+	{
+		switch (m_CurrentRenderModule)
+		{
+			case eRenderModule::WorldTiles:
+				RenderWorldTiles();
+				break;
+			case eRenderModule::DeleteConfirmation:
+				RenderDeleteConfirmation();
+				break;
+			case eRenderModule::EditWorld:
+				RenderEditWorld();
+				break;
+			case eRenderModule::CreateNewWorld:
+				RenderCreateNewWorld();
+				break;
+			default:
+				break;
+		}
+	}
+
+	void SingleplayerPanel::Initialize()
+	{
+		m_LabelTitle.Initialize();
+		m_TextFieldFilter.Initialize();
+		m_Scroller.Initialize();
+		m_ButtonBack.Initialize();
+		m_ButtonCreateNewWorld.Initialize();
+		m_ButtonPlaySelectedWorld.Initialize();
+		m_ButtonDeleteSelectedWorld.Initialize();
+		m_ButtonEdit.Initialize();
+		m_ButtonRefreshWorldTiles.Initialize();
+
+		m_LabelDeleteWarning.Initialize();
+		m_LabelDeleteDetails.Initialize();
+		m_ButtonDeleteConfirm.Initialize();
+		m_ButtonDeleteCancel.Initialize();
+
+		SetInitState(true);
+	}
+
+	void SingleplayerPanel::Delete()
+	{
+		m_LabelTitle.Delete();
+		m_TextFieldFilter.Delete();
+		m_Scroller.Delete();
+		m_ButtonBack.Delete();
+		m_ButtonCreateNewWorld.Delete();
+		m_ButtonPlaySelectedWorld.Delete();
+		m_ButtonDeleteSelectedWorld.Delete();
+		m_ButtonEdit.Delete();
+		m_ButtonRefreshWorldTiles.Delete();
+		ClearWorldTiles();
+
+		m_LabelDeleteWarning.Delete();
+		m_LabelDeleteDetails.Delete();
+		m_ButtonDeleteConfirm.Delete();
+		m_ButtonDeleteCancel.Delete();
+
+		SetDeletedState(true);
+	}
+
+	void SingleplayerPanel::ReloadTextures()
+	{
+		m_LabelTitle.ReloadTextures();
+		m_TextFieldFilter.ReloadTextures();
+		m_Scroller.ReloadTextures();
+		m_ButtonBack.ReloadTextures();
+		m_ButtonCreateNewWorld.ReloadTextures();
+		m_ButtonPlaySelectedWorld.ReloadTextures();
+		m_ButtonDeleteSelectedWorld.ReloadTextures();
+		m_ButtonEdit.ReloadTextures();
+		m_ButtonRefreshWorldTiles.ReloadTextures();
+		for (const auto& worldTile : m_WorldTiles)
+		{
+			worldTile->ReloadTextures();
+		}
+
+		m_LabelDeleteWarning.ReloadTextures();
+		m_LabelDeleteDetails.ReloadTextures();
+		m_ButtonDeleteConfirm.ReloadTextures();
+		m_ButtonDeleteCancel.ReloadTextures();
+	}
+
+	void SingleplayerPanel::RefreshWorldTiles()
+	{
+		ClearWorldTiles();
+
+		std::vector<WorldInfos> worldsInfos = GetWorldsInfos();
+
+		for (const auto& worldInfos : worldsInfos)
+		{
+			std::filesystem::path thumbnailPath =
+				EngineContext::Get().Assets->GetAssetsDirectory() / "textures" / "default_pack.png";
+			Texture thumbnailTexture(thumbnailPath);
+
+			std::unique_ptr<WorldTile> worldTile =
+				std::make_unique<WorldTile>(worldInfos.Name, worldInfos, std::move(thumbnailTexture));
+
+			worldTile->SetWorldInfos(worldInfos);
+			worldTile->Initialize();
+
+			m_EventHandles.push_back(worldTile->EvtTileSelected.Subscribe([this](const WorldTile& tile)
+																		  { Handle_WorldTileSelected(tile); }));
+
+			m_EventHandles.push_back(worldTile->EvtTileDoubleClicked.Subscribe(
+				[this](const WorldTile& tile) { Handle_WorldTileDoubleClicked(tile); }));
+
+			m_WorldTiles.push_back(std::move(worldTile));
+		}
+
+		// Sort World Tiles by last played date (most recent first)
+		std::sort(m_WorldTiles.begin(),
+				  m_WorldTiles.end(),
+				  [](const std::unique_ptr<WorldTile>& a, const std::unique_ptr<WorldTile>& b)
+				  { return a->GetWorldInfos().LastPlayedDate > b->GetWorldInfos().LastPlayedDate; });
+	}
+
+	void SingleplayerPanel::RenderWorldTiles()
 	{
 		if (s_IsBackPressed)
 		{
@@ -79,7 +211,7 @@ namespace onion::voxel
 		glm::ivec2 scrollerBottomRightCorner{scrollCenter.x + scrollerSize.x / 2, scrollCenter.y + scrollerSize.y / 2};
 
 		// Create a Layout for the World Tiles
-		const int rows = m_WorldTiles.size();
+		const int rows = static_cast<int>(m_WorldTiles.size());
 		const int worldTileHeight = static_cast<int>(round(144.f / 1009.f * s_ScreenHeight));
 		const int worldTileWidth = static_cast<int>(round(1080.f / 1920.f * s_ScreenWidth));
 		const glm::ivec2 worldTileSize{worldTileWidth, worldTileHeight};
@@ -143,8 +275,8 @@ namespace onion::voxel
 		// ---- Render Play Selected World Button ----
 		glm::ivec2 buttonPos = layoutButtonsTop_TopLeftCorner + layoutButtonsTop.GetElementPosition(0, 0);
 		glm::ivec2 buttonSize = layoutButtonsTop.GetCellSize();
-		bool isPlayButtonEnabled = m_SelectedWorldIndex != -1;
-		m_ButtonPlaySelectedWorld.SetEnabled(isPlayButtonEnabled);
+		bool isAnyWorldTileSelected = m_SelectedWorldIndex != -1;
+		m_ButtonPlaySelectedWorld.SetEnabled(isAnyWorldTileSelected);
 		m_ButtonPlaySelectedWorld.SetPosition(buttonPos);
 		m_ButtonPlaySelectedWorld.SetSize(buttonSize);
 		m_ButtonPlaySelectedWorld.Render();
@@ -166,6 +298,7 @@ namespace onion::voxel
 		// ---- Render Delete Selected World Button ----
 		buttonPos = layoutButtonsBottom_TopLeftCorner + layoutButtonsBottom.GetElementPosition(0, 1);
 		buttonSize = layoutButtonsBottom.GetCellSize();
+		m_ButtonDeleteSelectedWorld.SetEnabled(isAnyWorldTileSelected);
 		m_ButtonDeleteSelectedWorld.SetPosition(buttonPos);
 		m_ButtonDeleteSelectedWorld.SetSize(buttonSize);
 		m_ButtonDeleteSelectedWorld.Render();
@@ -185,84 +318,67 @@ namespace onion::voxel
 		m_ButtonBack.Render();
 	}
 
-	void SingleplayerPanel::Initialize()
+	void SingleplayerPanel::RenderDeleteConfirmation()
 	{
-		m_LabelTitle.Initialize();
-		m_TextFieldFilter.Initialize();
-		m_Scroller.Initialize();
-		m_ButtonBack.Initialize();
-		m_ButtonCreateNewWorld.Initialize();
-		m_ButtonPlaySelectedWorld.Initialize();
-		m_ButtonDeleteSelectedWorld.Initialize();
-		m_ButtonEdit.Initialize();
-		m_ButtonRefreshWorldTiles.Initialize();
-
-		SetInitState(true);
-	}
-
-	void SingleplayerPanel::Delete()
-	{
-		m_LabelTitle.Delete();
-		m_TextFieldFilter.Delete();
-		m_Scroller.Delete();
-		m_ButtonBack.Delete();
-		m_ButtonCreateNewWorld.Delete();
-		m_ButtonPlaySelectedWorld.Delete();
-		m_ButtonDeleteSelectedWorld.Delete();
-		m_ButtonEdit.Delete();
-		m_ButtonRefreshWorldTiles.Delete();
-
-		ClearWorldTiles();
-
-		SetDeletedState(true);
-	}
-
-	void SingleplayerPanel::ReloadTextures()
-	{
-		m_LabelTitle.ReloadTextures();
-		m_TextFieldFilter.ReloadTextures();
-		m_Scroller.ReloadTextures();
-		m_ButtonBack.ReloadTextures();
-		m_ButtonCreateNewWorld.ReloadTextures();
-		m_ButtonPlaySelectedWorld.ReloadTextures();
-		m_ButtonDeleteSelectedWorld.ReloadTextures();
-		m_ButtonEdit.ReloadTextures();
-		m_ButtonRefreshWorldTiles.ReloadTextures();
-	}
-
-	void SingleplayerPanel::RefreshWorldTiles()
-	{
-		ClearWorldTiles();
-
-		std::vector<WorldInfos> worldsInfos = GetWorldsInfos();
-
-		for (const auto& worldInfos : worldsInfos)
+		if (s_IsBackPressed || m_SelectedWorldIndex == -1)
 		{
-			std::filesystem::path thumbnailPath =
-				EngineContext::Get().Assets->GetAssetsDirectory() / "textures" / "default_pack.png";
-			Texture thumbnailTexture(thumbnailPath);
-
-			std::unique_ptr<WorldTile> worldTile =
-				std::make_unique<WorldTile>(worldInfos.Name, worldInfos, std::move(thumbnailTexture));
-
-			worldTile->SetWorldInfos(worldInfos);
-			worldTile->Initialize();
-
-			m_EventHandles.push_back(worldTile->EvtTileSelected.Subscribe([this](const WorldTile& tile)
-																		  { Handle_WorldTileSelected(tile); }));
-
-			m_EventHandles.push_back(worldTile->EvtTileDoubleClicked.Subscribe(
-				[this](const WorldTile& tile) { Handle_WorldTileDoubleClicked(tile); }));
-
-			m_WorldTiles.push_back(std::move(worldTile));
+			m_CurrentRenderModule = eRenderModule::WorldTiles;
+			return;
 		}
 
-		// Sort World Tiles by last played date (most recent first)
-		std::sort(m_WorldTiles.begin(),
-				  m_WorldTiles.end(),
-				  [](const std::unique_ptr<WorldTile>& a, const std::unique_ptr<WorldTile>& b)
-				  { return a->GetWorldInfos().LastPlayedDate > b->GetWorldInfos().LastPlayedDate; });
+		WorldInfos selectedWorldInfos = m_WorldTiles[m_SelectedWorldIndex]->GetWorldInfos();
+		int centerX = s_ScreenWidth / 2;
+		float textHeight = s_ScreenHeight * (28.f / 1009.f);
+
+		// ---- Render Warning Text ----
+		const std::string warningText = "Are you sure you want to delete this world?";
+		float warningTextYOffsetRatio = (400.f - 23.f) / 1009.f;
+		glm::ivec2 warningTextPos{centerX, static_cast<int>(s_ScreenHeight * warningTextYOffsetRatio)};
+		m_LabelDeleteWarning.SetPosition(warningTextPos);
+		m_LabelDeleteWarning.SetText(warningText);
+		m_LabelDeleteWarning.SetTextHeight(textHeight);
+		m_LabelDeleteWarning.Render();
+
+		// ---- Render Details Text ----
+		const std::string detailsText = "'" + selectedWorldInfos.Name + "' will be lost forever! (A long time!)";
+		float detailsTextYOffsetRatio = (475.f - 23.f) / 1009.f;
+		glm::ivec2 detailsTextPos{centerX, static_cast<int>(s_ScreenHeight * detailsTextYOffsetRatio)};
+		m_LabelDeleteDetails.SetPosition(detailsTextPos);
+		m_LabelDeleteDetails.SetText(detailsText);
+		m_LabelDeleteDetails.SetTextHeight(textHeight);
+		m_LabelDeleteDetails.Render();
+
+		// Create Layout for buttons
+		float tableWidthRatio = 1216.f / 1920.f;
+		float tableHeightRatio = 82.f / 1009.f;
+		float horizontalSpacingRatio = 20.f / 1920.f;
+		int horizontalSpacing = static_cast<int>(std::round(horizontalSpacingRatio * s_ScreenWidth));
+		glm::ivec2 tableSize{static_cast<int>(s_ScreenWidth * tableWidthRatio),
+							 static_cast<int>(s_ScreenHeight * tableHeightRatio)};
+		TableLayout layoutButtons = LayoutHelper::CreateTableLayout(1, 2, tableSize, horizontalSpacing, 0);
+
+		float tableYOffsetRatio = 625.f / 1009.f;
+		int tableY = static_cast<int>(s_ScreenHeight * tableYOffsetRatio);
+		glm::ivec2 tableTopLeftCorner{centerX - (tableSize.x / 2), tableY - (tableSize.y / 2)};
+
+		// ---- Render Delete Confirm Button ----
+		glm::ivec2 buttonPos = tableTopLeftCorner + layoutButtons.GetElementPosition(0, 0);
+		glm::ivec2 buttonSize = layoutButtons.GetCellSize();
+		m_ButtonDeleteConfirm.SetPosition(buttonPos);
+		m_ButtonDeleteConfirm.SetSize(buttonSize);
+		m_ButtonDeleteConfirm.Render();
+
+		// ---- Render Delete Cancel Button ----
+		buttonPos = tableTopLeftCorner + layoutButtons.GetElementPosition(0, 1);
+		buttonSize = layoutButtons.GetCellSize();
+		m_ButtonDeleteCancel.SetPosition(buttonPos);
+		m_ButtonDeleteCancel.SetSize(buttonSize);
+		m_ButtonDeleteCancel.Render();
 	}
+
+	void SingleplayerPanel::RenderEditWorld() {}
+
+	void SingleplayerPanel::RenderCreateNewWorld() {}
 
 	void SingleplayerPanel::ClearWorldTiles()
 	{
@@ -330,6 +446,12 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_ButtonRefreshWorldTiles.OnClick.Subscribe(
 			[this](const Button& button) { Handle_ButtonRefreshWorldTilesClick(button); }));
+
+		m_EventHandles.push_back(m_ButtonDeleteConfirm.OnClick.Subscribe([this](const Button& button)
+																		 { Handle_DeleteConfirmClick(button); }));
+
+		m_EventHandles.push_back(
+			m_ButtonDeleteCancel.OnClick.Subscribe([this](const Button& button) { Handle_DeleteCancelClick(button); }));
 	}
 
 	void SingleplayerPanel::Handle_ButtonBackClick(const Button& button)
@@ -367,7 +489,8 @@ namespace onion::voxel
 	void SingleplayerPanel::Handle_ButtonDeleteSelectedWorldClick(const Button& button)
 	{
 		(void) button;
-		assert(false && "Not implemented yet");
+
+		m_CurrentRenderModule = eRenderModule::DeleteConfirmation;
 	}
 
 	void SingleplayerPanel::Handle_ButtonEditClick(const Button& button)
@@ -403,6 +526,31 @@ namespace onion::voxel
 	{
 		Handle_WorldTileSelected(worldTile);
 		Handle_PlaySelectedWorldClick(m_ButtonPlaySelectedWorld);
+	}
+
+	void SingleplayerPanel::Handle_DeleteConfirmClick(const Button& button)
+	{
+		(void) button;
+
+		if (m_SelectedWorldIndex == -1)
+		{
+			return;
+		}
+
+		WorldInfos worldInfos = m_WorldTiles[m_SelectedWorldIndex]->GetWorldInfos();
+
+		WorldSave::DeleteWorld(worldInfos);
+
+		RefreshWorldTiles();
+
+		m_CurrentRenderModule = eRenderModule::WorldTiles;
+	}
+
+	void SingleplayerPanel::Handle_DeleteCancelClick(const Button& button)
+	{
+		(void) button;
+
+		m_CurrentRenderModule = eRenderModule::WorldTiles;
 	}
 
 } // namespace onion::voxel
