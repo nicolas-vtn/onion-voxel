@@ -204,6 +204,11 @@ namespace onion::voxel
 			std::string selectedResourcePackName = EngineContext::Get().Assets->GetCurrentResourcePack();
 			m_ResourcePacksPanel.SetCurrentlySelectedResourcePack(selectedResourcePackName);
 		}
+
+		if (m_ActiveMenu == eMenu::Singleplayer)
+		{
+			m_SingleplayerPanel.RefreshWorldTiles();
+		}
 	}
 
 	void Gui::GoBackToPreviousMenu()

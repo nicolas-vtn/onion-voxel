@@ -68,6 +68,8 @@ namespace onion::voxel
 
 		m_VAO_Background = 0;
 		m_VBO_Background = 0;
+
+		s_Shader.Delete();
 	}
 
 	void ColoredBackground::SetProjectionMatrix(const glm::mat4& projection)

@@ -21,6 +21,8 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
+		void RefreshWorldTiles();
+
 		void Render() override;
 		void Initialize() override;
 		void Delete() override;
@@ -47,13 +49,15 @@ namespace onion::voxel
 		Button m_ButtonCreateNewWorld;
 		Button m_ButtonEdit;
 		Button m_ButtonDeleteSelectedWorld;
-		Button m_ButtonReCreateSelectedWorld;
+		Button m_ButtonRefreshWorldTiles;
 		Button m_ButtonBack;
 
 		std::vector<std::unique_ptr<WorldTile>> m_WorldTiles;
 
 		// ----- Internal Methods -----
 	  private:
+		void ClearWorldTiles();
+
 		std::filesystem::path GetSavesDirectoryPath() const;
 		std::vector<WorldInfos> GetWorldsInfos() const;
 
@@ -68,7 +72,7 @@ namespace onion::voxel
 		void Handle_PlaySelectedWorldClick(const Button& button);
 		void Handle_ButtonDeleteSelectedWorldClick(const Button& button);
 		void Handle_ButtonEditClick(const Button& button);
-		void Handle_ButtonReCreateSelectedWorldClick(const Button& button);
+		void Handle_ButtonRefreshWorldTilesClick(const Button& button);
 
 		void Handle_WorldTileSelected(const WorldTile& worldTile);
 		void Handle_WorldTileDoubleClicked(const WorldTile& worldTile);

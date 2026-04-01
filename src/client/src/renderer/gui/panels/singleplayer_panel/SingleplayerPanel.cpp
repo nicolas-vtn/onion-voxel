@@ -10,7 +10,7 @@ namespace onion::voxel
 		: GuiElement(name), m_LabelTitle("Title"), m_TextFieldFilter("Filter"), m_Scroller("Scroller"),
 		  m_ButtonBack("Back"), m_ButtonCreateNewWorld("Create New World"),
 		  m_ButtonPlaySelectedWorld("Play Selected World"), m_ButtonDeleteSelectedWorld("Delete Selected World"),
-		  m_ButtonEdit("Edit"), m_ButtonReCreateSelectedWorld("Re-Create Selected World")
+		  m_ButtonEdit("Edit"), m_ButtonRefreshWorldTiles("Re-Create Selected World")
 	{
 		SubscribeToControlEvents();
 
@@ -31,8 +31,7 @@ namespace onion::voxel
 		m_ButtonDeleteSelectedWorld.SetText("Delete");
 		m_ButtonDeleteSelectedWorld.SetEnabled(false);
 
-		m_ButtonReCreateSelectedWorld.SetText("Re-Create");
-		m_ButtonReCreateSelectedWorld.SetEnabled(false);
+		m_ButtonRefreshWorldTiles.SetText("Refresh");
 
 		m_ButtonBack.SetText("Back");
 	}
@@ -152,12 +151,12 @@ namespace onion::voxel
 		m_ButtonDeleteSelectedWorld.SetSize(buttonSize);
 		m_ButtonDeleteSelectedWorld.Render();
 
-		// ---- Render Re-Create Selected World Button ----
+		// ---- Render Refresh World Tiles Button ----
 		buttonPos = layoutButtonsBottom_TopLeftCorner + layoutButtonsBottom.GetElementPosition(0, 2);
 		buttonSize = layoutButtonsBottom.GetCellSize();
-		m_ButtonReCreateSelectedWorld.SetPosition(buttonPos);
-		m_ButtonReCreateSelectedWorld.SetSize(buttonSize);
-		m_ButtonReCreateSelectedWorld.Render();
+		m_ButtonRefreshWorldTiles.SetPosition(buttonPos);
+		m_ButtonRefreshWorldTiles.SetSize(buttonSize);
+		m_ButtonRefreshWorldTiles.Render();
 
 		// ---- Render Back Button ----
 		buttonPos = layoutButtonsBottom_TopLeftCorner + layoutButtonsBottom.GetElementPosition(0, 3);
@@ -177,10 +176,46 @@ namespace onion::voxel
 		m_ButtonPlaySelectedWorld.Initialize();
 		m_ButtonDeleteSelectedWorld.Initialize();
 		m_ButtonEdit.Initialize();
-		m_ButtonReCreateSelectedWorld.Initialize();
+		m_ButtonRefreshWorldTiles.Initialize();
 
-		// TESTS
-		auto worldsInfos = GetWorldsInfos();
+		SetInitState(true);
+	}
+
+	void SingleplayerPanel::Delete()
+	{
+		m_LabelTitle.Delete();
+		m_TextFieldFilter.Delete();
+		m_Scroller.Delete();
+		m_ButtonBack.Delete();
+		m_ButtonCreateNewWorld.Delete();
+		m_ButtonPlaySelectedWorld.Delete();
+		m_ButtonDeleteSelectedWorld.Delete();
+		m_ButtonEdit.Delete();
+		m_ButtonRefreshWorldTiles.Delete();
+
+		ClearWorldTiles();
+
+		SetDeletedState(true);
+	}
+
+	void SingleplayerPanel::ReloadTextures()
+	{
+		m_LabelTitle.ReloadTextures();
+		m_TextFieldFilter.ReloadTextures();
+		m_Scroller.ReloadTextures();
+		m_ButtonBack.ReloadTextures();
+		m_ButtonCreateNewWorld.ReloadTextures();
+		m_ButtonPlaySelectedWorld.ReloadTextures();
+		m_ButtonDeleteSelectedWorld.ReloadTextures();
+		m_ButtonEdit.ReloadTextures();
+		m_ButtonRefreshWorldTiles.ReloadTextures();
+	}
+
+	void SingleplayerPanel::RefreshWorldTiles()
+	{
+		ClearWorldTiles();
+
+		std::vector<WorldInfos> worldsInfos = GetWorldsInfos();
 
 		for (const auto& worldInfos : worldsInfos)
 		{
@@ -202,42 +237,18 @@ namespace onion::voxel
 
 			m_WorldTiles.push_back(std::move(worldTile));
 		}
-
-		SetInitState(true);
 	}
 
-	void SingleplayerPanel::Delete()
+	void SingleplayerPanel::ClearWorldTiles()
 	{
-		m_LabelTitle.Delete();
-		m_TextFieldFilter.Delete();
-		m_Scroller.Delete();
-		m_ButtonBack.Delete();
-		m_ButtonCreateNewWorld.Delete();
-		m_ButtonPlaySelectedWorld.Delete();
-		m_ButtonDeleteSelectedWorld.Delete();
-		m_ButtonEdit.Delete();
-		m_ButtonReCreateSelectedWorld.Delete();
-
 		for (auto& worldTile : m_WorldTiles)
 		{
 			worldTile->Delete();
 		}
+
 		m_WorldTiles.clear();
 
-		SetDeletedState(true);
-	}
-
-	void SingleplayerPanel::ReloadTextures()
-	{
-		m_LabelTitle.ReloadTextures();
-		m_TextFieldFilter.ReloadTextures();
-		m_Scroller.ReloadTextures();
-		m_ButtonBack.ReloadTextures();
-		m_ButtonCreateNewWorld.ReloadTextures();
-		m_ButtonPlaySelectedWorld.ReloadTextures();
-		m_ButtonDeleteSelectedWorld.ReloadTextures();
-		m_ButtonEdit.ReloadTextures();
-		m_ButtonReCreateSelectedWorld.ReloadTextures();
+		m_SelectedWorldIndex = -1;
 	}
 
 	std::filesystem::path SingleplayerPanel::GetSavesDirectoryPath() const
@@ -292,8 +303,8 @@ namespace onion::voxel
 		m_EventHandles.push_back(
 			m_ButtonEdit.OnClick.Subscribe([this](const Button& button) { Handle_ButtonEditClick(button); }));
 
-		m_EventHandles.push_back(m_ButtonReCreateSelectedWorld.OnClick.Subscribe(
-			[this](const Button& button) { Handle_ButtonReCreateSelectedWorldClick(button); }));
+		m_EventHandles.push_back(m_ButtonRefreshWorldTiles.OnClick.Subscribe(
+			[this](const Button& button) { Handle_ButtonRefreshWorldTilesClick(button); }));
 	}
 
 	void SingleplayerPanel::Handle_ButtonBackClick(const Button& button)
@@ -340,10 +351,11 @@ namespace onion::voxel
 		assert(false && "Not implemented yet");
 	}
 
-	void SingleplayerPanel::Handle_ButtonReCreateSelectedWorldClick(const Button& button)
+	void SingleplayerPanel::Handle_ButtonRefreshWorldTilesClick(const Button& button)
 	{
 		(void) button;
-		assert(false && "Not implemented yet");
+
+		RefreshWorldTiles();
 	}
 
 	void SingleplayerPanel::Handle_WorldTileSelected(const WorldTile& worldTile)
