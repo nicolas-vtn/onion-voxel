@@ -298,8 +298,12 @@ namespace onion::voxel
 				continue;
 			}
 
-			worldTile.SetPosition(firstTilePos + glm::ivec2{0, static_cast<int>(drawnTileIndex * worldTileSize.y)});
+			glm::ivec2 tilePosition = firstTilePos + glm::ivec2{0, static_cast<int>(drawnTileIndex * worldTileSize.y)};
+			Visibility visibility = m_Scroller.GetControlVisibleArea(tilePosition, worldTileSize);
+
+			worldTile.SetPosition(tilePosition);
 			worldTile.SetSize(worldTileSize);
+			worldTile.SetVisibility(visibility);
 			worldTile.Render();
 
 			drawnTileIndex++;
