@@ -1,5 +1,7 @@
 #include <GLFW/glfw3.h>
 
+#include <unordered_map>
+
 namespace onion::voxel
 {
 	enum class Key : int
@@ -157,4 +159,181 @@ namespace onion::voxel
 		HResize = GLFW_HRESIZE_CURSOR,
 		VResize = GLFW_VRESIZE_CURSOR
 	};
+
+	inline std::unordered_map<Key, std::string> KeyToStringMap = {
+		{Key::Unknown, "Unknown"},
+
+		// Mouse
+		{Key::MouseButtonLeft, "Mouse Left"},
+		{Key::MouseButtonRight, "Mouse Right"},
+		{Key::MouseButtonMiddle, "Mouse Middle"},
+		{Key::MouseButton4, "Mouse Button 4"},
+		{Key::MouseButton5, "Mouse Button 5"},
+		{Key::MouseButton6, "Mouse Button 6"},
+		{Key::MouseButton7, "Mouse Button 7"},
+		{Key::MouseButton8, "Mouse Button 8"},
+
+		// Printable
+		{Key::Space, "Space"},
+		{Key::Apostrophe, "'"},
+		{Key::Comma, ","},
+		{Key::Minus, "-"},
+		{Key::Period, "."},
+		{Key::Slash, "/"},
+		{Key::Num0, "0"},
+		{Key::Num1, "1"},
+		{Key::Num2, "2"},
+		{Key::Num3, "3"},
+		{Key::Num4, "4"},
+		{Key::Num5, "5"},
+		{Key::Num6, "6"},
+		{Key::Num7, "7"},
+		{Key::Num8, "8"},
+		{Key::Num9, "9"},
+		{Key::Semicolon, ";"},
+		{Key::Equal, "="},
+
+		{Key::A, "A"},
+		{Key::B, "B"},
+		{Key::C, "C"},
+		{Key::D, "D"},
+		{Key::E, "E"},
+		{Key::F, "F"},
+		{Key::G, "G"},
+		{Key::H, "H"},
+		{Key::I, "I"},
+		{Key::J, "J"},
+		{Key::K, "K"},
+		{Key::L, "L"},
+		{Key::M, "M"},
+		{Key::N, "N"},
+		{Key::O, "O"},
+		{Key::P, "P"},
+		{Key::Q, "Q"},
+		{Key::R, "R"},
+		{Key::S, "S"},
+		{Key::T, "T"},
+		{Key::U, "U"},
+		{Key::V, "V"},
+		{Key::W, "W"},
+		{Key::X, "X"},
+		{Key::Y, "Y"},
+		{Key::Z, "Z"},
+
+		{Key::LeftBracket, "["},
+		{Key::Backslash, "\\"},
+		{Key::RightBracket, "]"},
+		{Key::GraveAccent, "`"},
+		{Key::World1, "World 1"},
+		{Key::World2, "World 2"},
+
+		// Function / control
+		{Key::Escape, "Escape"},
+		{Key::Enter, "Enter"},
+		{Key::Tab, "Tab"},
+		{Key::Backspace, "Backspace"},
+		{Key::Insert, "Insert"},
+		{Key::Delete, "Delete"},
+
+		{Key::Right, "Right Arrow"},
+		{Key::Left, "Left Arrow"},
+		{Key::Down, "Down Arrow"},
+		{Key::Up, "Up Arrow"},
+
+		{Key::PageUp, "Page Up"},
+		{Key::PageDown, "Page Down"},
+		{Key::Home, "Home"},
+		{Key::End, "End"},
+
+		{Key::CapsLock, "Caps Lock"},
+		{Key::ScrollLock, "Scroll Lock"},
+		{Key::NumLock, "Num Lock"},
+		{Key::PrintScreen, "Print Screen"},
+		{Key::Pause, "Pause"},
+
+		{Key::F1, "F1"},
+		{Key::F2, "F2"},
+		{Key::F3, "F3"},
+		{Key::F4, "F4"},
+		{Key::F5, "F5"},
+		{Key::F6, "F6"},
+		{Key::F7, "F7"},
+		{Key::F8, "F8"},
+		{Key::F9, "F9"},
+		{Key::F10, "F10"},
+		{Key::F11, "F11"},
+		{Key::F12, "F12"},
+		{Key::F13, "F13"},
+		{Key::F14, "F14"},
+		{Key::F15, "F15"},
+		{Key::F16, "F16"},
+		{Key::F17, "F17"},
+		{Key::F18, "F18"},
+		{Key::F19, "F19"},
+		{Key::F20, "F20"},
+		{Key::F21, "F21"},
+		{Key::F22, "F22"},
+		{Key::F23, "F23"},
+		{Key::F24, "F24"},
+		{Key::F25, "F25"},
+
+		// Keypad
+		{Key::KP0, "Keypad 0"},
+		{Key::KP1, "Keypad 1"},
+		{Key::KP2, "Keypad 2"},
+		{Key::KP3, "Keypad 3"},
+		{Key::KP4, "Keypad 4"},
+		{Key::KP5, "Keypad 5"},
+		{Key::KP6, "Keypad 6"},
+		{Key::KP7, "Keypad 7"},
+		{Key::KP8, "Keypad 8"},
+		{Key::KP9, "Keypad 9"},
+		{Key::KPDecimal, "Keypad ."},
+		{Key::KPDivide, "Keypad /"},
+		{Key::KPMultiply, "Keypad *"},
+		{Key::KPSubtract, "Keypad -"},
+		{Key::KPAdd, "Keypad +"},
+		{Key::KPEnter, "Keypad Enter"},
+		{Key::KPEqual, "Keypad ="},
+
+		// Modifiers
+		{Key::LeftShift, "Left Shift"},
+		{Key::LeftControl, "Left Control"},
+		{Key::LeftAlt, "Left Alt"},
+		{Key::LeftSuper, "Left Super"},
+		{Key::RightShift, "Right Shift"},
+		{Key::RightControl, "Right Control"},
+		{Key::RightAlt, "Right Alt"},
+		{Key::RightSuper, "Right Super"},
+		{Key::Menu, "Menu"},
+	};
+
+	inline std::unordered_map<std::string, Key> StringToKeyMap = []()
+	{
+		std::unordered_map<std::string, Key> map;
+		for (const auto& [key, str] : KeyToStringMap)
+		{
+			map[str] = key;
+		}
+		return map;
+	}();
+
+	inline std::string KeyToString(Key key)
+	{
+		auto it = KeyToStringMap.find(key);
+		if (it != KeyToStringMap.end())
+			return it->second;
+
+		throw std::runtime_error("Invalid key enum value");
+	}
+
+	inline Key StringToKey(const std::string& str)
+	{
+		auto it = StringToKeyMap.find(str);
+		if (it != StringToKeyMap.end())
+			return it->second;
+
+		throw std::runtime_error("Invalid key string: " + str);
+	}
+
 } // namespace onion::voxel

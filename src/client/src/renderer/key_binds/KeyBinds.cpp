@@ -49,15 +49,25 @@ namespace onion::voxel
 		return snapshot->GetKeyState(inputId);
 	}
 
-	float KeyBinds::GetMouseSensitivity() const
+	std::string ActionToString(eAction action)
 	{
-		std::lock_guard lock(m_Mutex);
-		return m_MouseSensitivity;
+		auto it = ActionToStringMap.find(action);
+		if (it != ActionToStringMap.end())
+		{
+			return it->second;
+		}
+
+		throw std::runtime_error("Invalid action enum value");
 	}
 
-	void KeyBinds::SetMouseSensitivity(float sensitivity)
+	eAction StringToAction(const std::string& str)
 	{
-		std::lock_guard lock(m_Mutex);
-		m_MouseSensitivity = sensitivity;
+		auto it = StringToActionMap.find(str);
+		if (it != StringToActionMap.end())
+		{
+			return it->second;
+		}
+
+		throw std::runtime_error("Invalid action string: " + str);
 	}
 } // namespace onion::voxel

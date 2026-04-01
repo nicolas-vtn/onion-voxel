@@ -24,8 +24,21 @@ namespace onion::voxel
 		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager),
 		  m_EntityRenderer(m_Camera)
 	{
+		// Load User Settings
+		std::filesystem::path userSettingsPath = GetUserSettingsPath();
+		UserSettings settings = UserSettings::Load(userSettingsPath);
+
+		if (!std::filesystem::exists(userSettingsPath))
+		{
+			std::cerr << "UserSettings file not found at " << userSettingsPath
+					  << ". A new file will be created with default settings.\n";
+			UserSettings::Save(settings, userSettingsPath);
+		}
+
 		// Sets the Engine Context
-		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager);
+		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager, settings);
+
+		ApplyUserSettings();
 	}
 
 	Renderer::~Renderer()
@@ -284,6 +297,22 @@ namespace onion::voxel
 		stbi_image_free(pixels);
 	}
 
+	std::filesystem::path Renderer::GetUserSettingsPath() const
+	{
+		return Utils::GetExecutableDirectory() / "user_settings.json";
+	}
+
+	void Renderer::ApplyUserSettings()
+	{
+		const auto settings = EngineContext::Get().Settings();
+
+		// ----- Apply Controls Settings -----
+		const auto& controls = settings.Controls;
+		m_InputsManager.SetMouseSensitivity(controls.mouseSettings.Sensitivity);
+		m_InputsManager.SetMouseScrollSensitivity(controls.mouseSettings.ScrollSensitivity);
+		RegisterInputs();
+	}
+
 	void Renderer::SubscribeToInputsManagerEvents()
 	{
 		m_InputsManagerEventHandles.push_back(m_InputsManager.EventFramebufferResized.Subscribe(
@@ -308,27 +337,28 @@ namespace onion::voxel
 
 	void Renderer::RegisterInputs()
 	{
-		// Eventually Loads from Config File or something like that, but for now it's hardcoded
+		const UserSettings settings = EngineContext::Get().Settings();
+		const auto actionToKey = settings.Controls.keyBindsSettings.ActionToKey;
 
 		InputConfig everyFrame(false, 0, 0, 0);
 		InputConfig noRepeat(true, 9999999, 0, 0);
 		InputConfig repeatWithDelay(true, 0.6f, 0.4f, 0.5f);
 
-		m_KeyBinds.RemapAction(eAction::MoveForward, Key::W, everyFrame);
-		m_KeyBinds.RemapAction(eAction::MoveBackward, Key::S, everyFrame);
-		m_KeyBinds.RemapAction(eAction::MoveLeft, Key::A, everyFrame);
-		m_KeyBinds.RemapAction(eAction::MoveRight, Key::D, everyFrame);
-		m_KeyBinds.RemapAction(eAction::Jump, Key::Space, everyFrame);
-		m_KeyBinds.RemapAction(eAction::Crouch, Key::LeftShift, everyFrame);
-		m_KeyBinds.RemapAction(eAction::Sprint, Key::LeftControl, everyFrame);
+		m_KeyBinds.RemapAction(eAction::WalkForward, actionToKey.at(eAction::WalkForward), everyFrame);
+		m_KeyBinds.RemapAction(eAction::WalkBackward, actionToKey.at(eAction::WalkBackward), everyFrame);
+		m_KeyBinds.RemapAction(eAction::StrafeLeft, actionToKey.at(eAction::StrafeLeft), everyFrame);
+		m_KeyBinds.RemapAction(eAction::StrafeRight, actionToKey.at(eAction::StrafeRight), everyFrame);
+		m_KeyBinds.RemapAction(eAction::Jump, actionToKey.at(eAction::Jump), everyFrame);
+		m_KeyBinds.RemapAction(eAction::Sneak, actionToKey.at(eAction::Sneak), everyFrame);
+		m_KeyBinds.RemapAction(eAction::Sprint, actionToKey.at(eAction::Sprint), everyFrame);
 
-		m_KeyBinds.RemapAction(eAction::ToggleMouseCapture, Key::KP7, noRepeat);
-		m_KeyBinds.RemapAction(eAction::Pause, Key::Escape, noRepeat);
-		m_KeyBinds.RemapAction(eAction::CloseMenu, Key::Escape, noRepeat);
+		m_KeyBinds.RemapAction(eAction::ToggleMouseCapture, actionToKey.at(eAction::ToggleMouseCapture), noRepeat);
+		m_KeyBinds.RemapAction(eAction::Pause, actionToKey.at(eAction::Pause), noRepeat);
+		m_KeyBinds.RemapAction(eAction::CloseMenu, actionToKey.at(eAction::CloseMenu), noRepeat);
 
-		m_KeyBinds.RemapAction(eAction::Attack, Key::MouseButtonLeft, repeatWithDelay);
-		m_KeyBinds.RemapAction(eAction::Interact, Key::MouseButtonRight, repeatWithDelay);
-		m_KeyBinds.RemapAction(eAction::ToggleFlyMode, m_KeyBinds.GetKeyForAction(eAction::Jump), repeatWithDelay);
+		m_KeyBinds.RemapAction(eAction::Attack, actionToKey.at(eAction::Attack), repeatWithDelay);
+		m_KeyBinds.RemapAction(eAction::Interact, actionToKey.at(eAction::Interact), repeatWithDelay);
+		m_KeyBinds.RemapAction(eAction::ToggleFlyMode, actionToKey.at(eAction::ToggleFlyMode), repeatWithDelay);
 	}
 
 	void Renderer::ProcessInputs()
@@ -524,20 +554,19 @@ namespace onion::voxel
 
 		// ----- KEY STATES -----
 		KeyState speedUpKeyState = m_KeyBinds.GetKeyState(eAction::Sprint);
-		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveForward);
-		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveBackward);
-		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::MoveLeft);
-		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::MoveRight);
+		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::WalkForward);
+		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::WalkBackward);
+		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::StrafeLeft);
+		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::StrafeRight);
 		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
-		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Crouch);
+		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Sneak);
 		KeyState toggleFlyModeKeyState = m_KeyBinds.GetKeyState(eAction::ToggleFlyMode);
 
 		// ----- PLAYER ORIENTATION -----
 		if (inputs->Mouse.MovementOffsetChanged)
 		{
-			const float sensitivity = m_KeyBinds.GetMouseSensitivity();
-			const float xoffset = static_cast<float>(inputs->Mouse.Xoffset) * sensitivity;
-			const float yoffset = static_cast<float>(inputs->Mouse.Yoffset) * sensitivity;
+			const float xoffset = static_cast<float>(inputs->Mouse.Xoffset);
+			const float yoffset = static_cast<float>(inputs->Mouse.Yoffset);
 
 			// Extract yaw/pitch from current direction vector
 			float yaw = glm::degrees(std::atan2(playerFront.z, playerFront.x));
@@ -756,9 +785,8 @@ namespace onion::voxel
 		// Camera's Orientation
 		if (inputs->Mouse.MovementOffsetChanged)
 		{
-			const double sensitivity = m_KeyBinds.GetMouseSensitivity();
-			const double xoffset = inputs->Mouse.Xoffset * sensitivity;
-			const double yoffset = inputs->Mouse.Yoffset * sensitivity;
+			const double xoffset = inputs->Mouse.Xoffset;
+			const double yoffset = inputs->Mouse.Yoffset;
 
 			m_Camera->SetYaw(m_Camera->GetYaw() + (float) xoffset);
 			m_Camera->SetPitch(m_Camera->GetPitch() + (float) yoffset);
@@ -802,12 +830,12 @@ namespace onion::voxel
 		glm::vec3 frontXZ = glm::normalize(glm::vec3(CamFront.x, 0.0f, CamFront.z));
 		const glm::vec3 Up(0.0f, 1.0f, 0.0f); // Up vector
 
-		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveForward);
-		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveBackward);
-		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::MoveLeft);
-		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::MoveRight);
+		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::WalkForward);
+		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::WalkBackward);
+		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::StrafeLeft);
+		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::StrafeRight);
 		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
-		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Crouch);
+		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Sneak);
 
 		if (moveForwardKeyState.IsPressed)
 			m_Camera->SetPosition(m_Camera->GetPosition() + frontXZ * velocity);

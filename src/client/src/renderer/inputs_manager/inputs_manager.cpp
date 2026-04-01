@@ -133,8 +133,8 @@ void InputsManager::PoolMouseMovement()
 		double yoffset = m_MouseLastY - ypos; // reversed since y-coordinates range bottom to top
 
 		m_MouseState.MovementOffsetChanged = true;
-		m_MouseState.Xoffset = xoffset;
-		m_MouseState.Yoffset = yoffset;
+		m_MouseState.Xoffset = xoffset * m_MouseSensitivity;
+		m_MouseState.Yoffset = yoffset * m_MouseSensitivity;
 	}
 
 	m_MouseLastX = xpos;
@@ -251,8 +251,8 @@ void InputsManager::MouseScrollCallback(double xoffset, double yoffset)
 {
 	std::lock_guard lock(m_MutexMouse);
 	m_MouseState.ScrollOffsetChanged = true;
-	m_MouseState.ScrollXoffset = xoffset;
-	m_MouseState.ScrollYoffset = yoffset;
+	m_MouseState.ScrollXoffset = xoffset * m_MouseScrollSensitivity;
+	m_MouseState.ScrollYoffset = yoffset * m_MouseScrollSensitivity;
 }
 
 void onion::voxel::InputsManager::CharCallback(unsigned int codepoint)
@@ -351,6 +351,30 @@ std::string InputsManager::GetClipboardText()
 void InputsManager::SetClipboardText(const std::string& text)
 {
 	glfwSetClipboardString(m_Window, text.c_str());
+}
+
+void onion::voxel::InputsManager::SetMouseSensitivity(double sensitivity)
+{
+	std::lock_guard lock(m_MutexMouse);
+	m_MouseSensitivity = sensitivity;
+}
+
+double onion::voxel::InputsManager::GetMouseSensitivity() const
+{
+	std::lock_guard lock(m_MutexMouse);
+	return m_MouseSensitivity;
+}
+
+void onion::voxel::InputsManager::SetMouseScrollSensitivity(double sensitivity)
+{
+	std::lock_guard lock(m_MutexMouse);
+	m_MouseScrollSensitivity = sensitivity;
+}
+
+double onion::voxel::InputsManager::GetMouseScrollSensitivity() const
+{
+	std::lock_guard lock(m_MutexMouse);
+	return m_MouseScrollSensitivity;
 }
 
 void InputsManager::UpdateInputsSnapshot()

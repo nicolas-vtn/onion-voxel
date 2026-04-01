@@ -1,0 +1,27 @@
+#pragma once
+
+#include <nlohmann/json.hpp>
+
+namespace onion::voxel
+{
+	struct VideoSettings
+	{
+		uint32_t MaxFPS = 60;
+		bool VSyncEnabled = true;
+	};
+
+	template <typename BasicJsonType> inline void to_json(BasicJsonType& j, const VideoSettings& s)
+	{
+		j = BasicJsonType{{"MaxFPS", s.MaxFPS}, {"VSyncEnabled", s.VSyncEnabled}};
+	}
+
+	template <typename BasicJsonType> inline void from_json(const BasicJsonType& j, VideoSettings& s)
+	{
+		if (j.contains("MaxFPS"))
+			j.at("MaxFPS").get_to(s.MaxFPS);
+
+		if (j.contains("VSyncEnabled"))
+			j.at("VSyncEnabled").get_to(s.VSyncEnabled);
+	}
+
+} // namespace onion::voxel

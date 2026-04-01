@@ -104,10 +104,14 @@ namespace onion::voxel
 		double m_DeltaTime = 0.0f;
 		double m_LastFrame = 0.0f;
 
+		// ----- Configurations -----
+	  private:
+		std::filesystem::path GetUserSettingsPath() const;
+		void ApplyUserSettings();
+
 		// ----- Inputs -----
 	  private:
 		InputsManager m_InputsManager;
-		//std::shared_ptr<InputsSnapshot> m_InputsSnapshot;
 		std::vector<EventHandle> m_InputsManagerEventHandles;
 		void SubscribeToInputsManagerEvents();
 
