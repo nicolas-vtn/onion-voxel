@@ -42,6 +42,10 @@ target_link_libraries(onion_voxel_shared
 		onion::datetime
 )
 
+target_compile_options(onion_voxel_shared PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>
+)
+
 target_include_directories(onion_voxel_shared
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}

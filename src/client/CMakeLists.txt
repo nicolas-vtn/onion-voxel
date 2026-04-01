@@ -79,7 +79,7 @@ add_executable(OnionVoxel
 	"src/renderer/entity_renderer/skeleton/Skeleton.cpp"
 	"src/renderer/entity_renderer/TextureTileMapper.cpp"
 
-)
+ "src/renderer/gui/colored_background/ColoredBackground.cpp")
 
 if (WIN32)
     target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)

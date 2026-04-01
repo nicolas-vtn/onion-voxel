@@ -127,6 +127,20 @@ namespace onion::voxel
 		m_ButtonScrollingPanel.SetSize(buttonSize);
 		m_ButtonScrollingPanel.Render();
 
+		// ---- Render Pink Rotating Background ----
+		float rotationSpeed = 20.f; // degrees per second
+		float rotationAngle = fmod(glfwGetTime() * rotationSpeed, 360.f);
+		glm::ivec2 bgPosition = {s_ScreenWidth / 1.2f, s_ScreenHeight / 1.2f};
+		glm::ivec2 bgSize = {s_ScreenWidth / 10.f, s_ScreenHeight / 10.f};
+		glm::vec4 bgColor = glm::vec4(1.f, 0.4f, 0.8f, 0.5f);
+		ColoredBackground::Options bgOptions;
+		bgOptions.Position = bgPosition;
+		bgOptions.Size = bgSize;
+		bgOptions.Color = bgColor;
+		bgOptions.RotationDegrees = rotationAngle;
+		bgOptions.ZOffset = 0.1f;
+		ColoredBackground::Render(bgOptions);
+
 		// ---- Render Main Menu Button ----
 		float buttonMainMenuXPosRatio = 0.5f;
 		float buttonMainMenuYPosRatio = 0.9f;

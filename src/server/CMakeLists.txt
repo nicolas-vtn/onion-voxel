@@ -22,6 +22,10 @@ target_link_libraries(onion_voxel_server
 		onion_voxel_shared
 )
 
+target_compile_options(onion_voxel_server PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>
+)
+
 target_include_directories(onion_voxel_server
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src

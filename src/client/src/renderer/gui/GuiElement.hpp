@@ -10,6 +10,7 @@
 
 #include <renderer/EngineContext.hpp>
 #include <renderer/Variables.hpp>
+#include <renderer/gui/colored_background/ColoredBackground.hpp>
 #include <renderer/gui/font/Font.hpp>
 #include <renderer/inputs_manager/inputs_manager.hpp>
 #include <renderer/shader/shader.hpp>
