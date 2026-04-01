@@ -28,6 +28,9 @@ namespace onion::voxel
 		void Delete() override;
 		void ReloadTextures() override;
 
+		std::string FormatDescription() const;
+		std::string FormatDetails() const;
+
 		// ----- Public Events -----
 	  public:
 		Event<const WorldTile&> EvtTileSelected;
@@ -73,8 +76,6 @@ namespace onion::voxel
 		// ----- Private Helpers -----
 	  private:
 		bool IsMouseHovering() const;
-		std::string FormatDescription() const;
-		std::string FormatDetails() const;
 
 		// ----- Events Subscription and Handlers -----
 	  private:

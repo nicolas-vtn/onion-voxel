@@ -99,11 +99,30 @@ namespace onion::voxel
 									  scrollerTopLeftCorner.y + (worldTileSize.y / 2) + (worldTileSize.y / 10) -
 										  m_Scroller.GetContentYOffset()};
 
+		int drawnTileIndex = 0;
+		std::string filterText = m_TextFieldFilter.GetText();
 		for (size_t i = 0; i < m_WorldTiles.size(); i++)
 		{
-			m_WorldTiles[i]->SetPosition(firstTilePos + glm::ivec2{0, static_cast<int>(i * worldTileSize.y)});
-			m_WorldTiles[i]->SetSize(worldTileSize);
-			m_WorldTiles[i]->Render();
+			WorldTile& worldTile = *m_WorldTiles[i];
+
+			// Checks if the world tile should be rendered based on the filter text
+			const WorldInfos worldInfos = worldTile.GetWorldInfos();
+			const std::string name = worldInfos.Name;
+			const std::string description = worldTile.FormatDescription();
+			const std::string details = worldTile.FormatDetails();
+			bool matchesFilter = name.find(filterText) != std::string::npos ||
+				description.find(filterText) != std::string::npos || details.find(filterText) != std::string::npos;
+
+			if (!filterText.empty() && !matchesFilter)
+			{
+				continue;
+			}
+
+			worldTile.SetPosition(firstTilePos + glm::ivec2{0, static_cast<int>(drawnTileIndex * worldTileSize.y)});
+			worldTile.SetSize(worldTileSize);
+			worldTile.Render();
+
+			drawnTileIndex++;
 		}
 
 		// ---- Stop Cissoring for Scroller ----
