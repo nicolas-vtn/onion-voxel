@@ -9,7 +9,9 @@
 #include "panels/controls_panel/ControlsPanel.hpp"
 #include "panels/demo_panel/DemoPanel.hpp"
 #include "panels/demo_scrolling_panel/DemoScrollingPanel.hpp"
+#include "panels/key_binds_panel/KeyBindsPanel.hpp"
 #include "panels/main_menu_panel/MainMenuPanel.hpp"
+#include "panels/mouse_settings_panel/MouseSettingsPanel.hpp"
 #include "panels/options_panel/OptionsPanel.hpp"
 #include "panels/pause_panel/PausePanel.hpp"
 #include "panels/resource_packs_panel/ResourcePacksPanel.hpp"
@@ -74,6 +76,8 @@ namespace onion::voxel
 		ResourcePacksPanel m_ResourcePacksPanel;
 		SingleplayerPanel m_SingleplayerPanel;
 		ControlsPanel m_ControlsPanel;
+		MouseSettingsPanel m_MouseSettingsPanel;
+		KeyBindsPanel m_KeyBindsPanel;
 
 		// ----- Panel Events Handling -----
 	  private:
