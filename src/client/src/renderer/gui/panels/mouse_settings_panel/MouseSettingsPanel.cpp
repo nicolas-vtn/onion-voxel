@@ -1,5 +1,7 @@
 #include "MouseSettingsPanel.hpp"
 
+#include <format>
+
 #include <renderer/gui/LayoutHelper.hpp>
 
 namespace onion::voxel
@@ -18,7 +20,7 @@ namespace onion::voxel
 		m_Title_Label.SetText("Mouse Settings");
 		m_Title_Label.SetTextAlignment(Font::eTextAlignment::Center);
 
-		m_MouseSensitivity_Slider.SetMaxValue(100);
+		m_MouseSensitivity_Slider.SetMaxValue(200);
 
 		m_TouchscreenMode_Button.SetText("Touchscreen Mode: OFF");
 		m_TouchscreenMode_Button.SetEnabled(false);
@@ -109,9 +111,19 @@ namespace onion::voxel
 		// ----- Render Mouse Sensitivity Slider -----
 		const glm::ivec2 mouseSensitivitySliderSize = tableLayout.GetCellSize();
 		const glm::ivec2 mouseSensitivitySliderPosition = tableLayout.GetElementPosition(0, 0) + tableTopLeftCorner;
-		const uint32_t mouseSensitivitySliderValue = userSettings.Controls.mouseSettings.Sensitivity * 100.f;
-		const std::string mouseSensitivitySliderText =
-			"Sensitivity: " + std::to_string(mouseSensitivitySliderValue) + "%";
+		const uint32_t mouseSensitivityPercent =
+			(userSettings.Controls.mouseSettings.Sensitivity / s_MouseSensitivityReferenceValue) * 100.f;
+		const uint32_t sliderValue = m_MouseSensitivity_Slider.GetValue();
+		std::string nbrStr = std::to_string(mouseSensitivityPercent) + "%";
+		if (sliderValue == 0)
+		{
+			nbrStr = "*yawn*";
+		}
+		else if (sliderValue == m_MouseSensitivity_Slider.GetMaxValue())
+		{
+			nbrStr = "HYPERSPEED!!!";
+		}
+		std::string mouseSensitivitySliderText = "Sensitivity: " + nbrStr;
 		m_MouseSensitivity_Slider.SetText(mouseSensitivitySliderText);
 		m_MouseSensitivity_Slider.SetSize(mouseSensitivitySliderSize);
 		m_MouseSensitivity_Slider.SetPosition(mouseSensitivitySliderPosition + scrollerOffset);
@@ -132,9 +144,9 @@ namespace onion::voxel
 		const glm::ivec2 mouseScrollSensitivitySliderSize = tableLayout.GetCellSize();
 		const glm::ivec2 mouseScrollSensitivitySliderPosition =
 			tableLayout.GetElementPosition(1, 0) + tableTopLeftCorner;
-		const float mouseScrollSensitivitySliderValue = userSettings.Controls.mouseSettings.ScrollSensitivity * 100.f;
+		const float mouseScrollSensitivitySliderValue = userSettings.Controls.mouseSettings.ScrollSensitivity;
 		const std::string mouseScrollSensitivitySliderText =
-			"Scroll Sensitivity: " + std::to_string(mouseScrollSensitivitySliderValue);
+			std::format("Scroll Sensitivity: {:.2f}", mouseScrollSensitivitySliderValue);
 		m_MouseScrollSensitivity_Slider.SetText(mouseScrollSensitivitySliderText);
 		m_MouseScrollSensitivity_Slider.SetSize(mouseScrollSensitivitySliderSize);
 		m_MouseScrollSensitivity_Slider.SetPosition(mouseScrollSensitivitySliderPosition + scrollerOffset);
@@ -225,6 +237,13 @@ namespace onion::voxel
 
 		UserSettings settings = EngineContext::Get().Settings();
 		// Initialize Values
+		const uint32_t mouseSensitivityPercent = static_cast<uint32_t>(
+			round(settings.Controls.mouseSettings.Sensitivity / s_MouseSensitivityReferenceValue) * 100.f);
+		m_MouseSensitivity_Slider.SetValue(mouseSensitivityPercent);
+
+		const float mouseScrollSensitivity = settings.Controls.mouseSettings.ScrollSensitivity;
+		const uint32_t mouseScrollSensitivityPercent = static_cast<uint32_t>(round(mouseScrollSensitivity * 100.f));
+		m_MouseScrollSensitivity_Slider.SetValue(mouseScrollSensitivityPercent);
 
 		SetInitState(true);
 	}
@@ -265,6 +284,43 @@ namespace onion::voxel
 	{
 		m_EventHandles.push_back(
 			m_Done_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
+
+		m_EventHandles.push_back(m_MouseSensitivity_Slider.OnValueChanged.Subscribe(
+			[this](const Slider& sender) { Handle_MouseSensitivity_Changed(sender); }));
+
+		m_EventHandles.push_back(m_MouseScrollSensitivity_Slider.OnValueChanged.Subscribe(
+			[this](const Slider& sender) { Handle_MouseScrollSensitivity_Changed(sender); }));
+	}
+
+	void MouseSettingsPanel::Handle_MouseSensitivity_Changed(const Slider& sender)
+	{
+		UserSettings userSettings = EngineContext::Get().Settings();
+
+		uint32_t sliderValue = sender.GetValue();
+		const float ratio = static_cast<float>(sliderValue) / 100.f;
+
+		float newSensitivity = ratio * s_MouseSensitivityReferenceValue;
+
+		UserSettingsChangedEventArgs args(userSettings);
+		args.NewSettings.Controls.mouseSettings.Sensitivity = newSensitivity;
+		args.MouseSensitivity_Changed = true;
+
+		EvtUserSettingsChanged.Trigger(args);
+	}
+
+	void MouseSettingsPanel::Handle_MouseScrollSensitivity_Changed(const Slider& sender)
+	{
+		UserSettings userSettings = EngineContext::Get().Settings();
+
+		uint32_t sliderValue = sender.GetValue();
+
+		const float newScrollSensitivity = static_cast<float>(sliderValue) / 100.f;
+
+		UserSettingsChangedEventArgs args(userSettings);
+		args.NewSettings.Controls.mouseSettings.ScrollSensitivity = newScrollSensitivity;
+		args.MouseScrollSensitivity_Changed = true;
+
+		EvtUserSettingsChanged.Trigger(args);
 	}
 
 	void MouseSettingsPanel::Handle_Done_Click(const Button& sender)

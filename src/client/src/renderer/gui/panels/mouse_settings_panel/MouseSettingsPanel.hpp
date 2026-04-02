@@ -45,6 +45,8 @@ namespace onion::voxel
 
 		// ----- Settings -----
 	  private:
+		static inline const float s_MouseSensitivityReferenceValue = 0.1f; // This is the value that corresponds to 100%
+
 		static inline const float s_MouseScrollSensitivity_MinValue = 0.01f;
 		static inline const float s_MouseScrollSensitivity_MaxValue = 3.f;
 
@@ -54,6 +56,9 @@ namespace onion::voxel
 	  private:
 		std::vector<EventHandle> m_EventHandles;
 		void SubscribeToControlEvents();
+
+		void Handle_MouseSensitivity_Changed(const Slider& sender);
+		void Handle_MouseScrollSensitivity_Changed(const Slider& sender);
 
 		void Handle_Done_Click(const Button& sender);
 	};
