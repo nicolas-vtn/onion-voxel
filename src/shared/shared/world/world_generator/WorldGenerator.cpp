@@ -104,6 +104,7 @@ namespace onion::voxel
 
 	WorldGenerator::~WorldGenerator()
 	{
+		std::cout << "~WorldGenerator" << std::endl;
 		m_ThreadPool.Close();
 	}
 

@@ -86,6 +86,11 @@ namespace onion::voxel
 			m_NineSliceSprite_Scroller.PullEvents();
 			m_NineSliceSprite_ScrollerBackground.PullEvents();
 		}
+		else
+		{
+			// If the scroller is not visible, we reset the scroll ratio to 0 to avoid being in an invalid state
+			m_ScrollRatio = 0.f;
+		}
 
 		// ---- Calculations ----
 		glm::ivec2 centerPos = (m_TopLeftCorner + m_BottomRightCorner) / 2;

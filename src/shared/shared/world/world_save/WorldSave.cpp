@@ -24,8 +24,10 @@ namespace onion::voxel
 
 	WorldSave::~WorldSave()
 	{
+		std::cout << "~WorldSave" << std::endl;
 		m_TimerSave.Stop();
 		SavePeriodically(); // Save one last time before destruction to minimize data loss
+		std::cout << "WorldSave Saved" << std::endl;
 	}
 
 	uint32_t WorldSave::GetSeed() const

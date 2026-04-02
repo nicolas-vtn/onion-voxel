@@ -111,8 +111,8 @@ namespace onion::voxel
 		// ----- Render Mouse Sensitivity Slider -----
 		const glm::ivec2 mouseSensitivitySliderSize = tableLayout.GetCellSize();
 		const glm::ivec2 mouseSensitivitySliderPosition = tableLayout.GetElementPosition(0, 0) + tableTopLeftCorner;
-		const uint32_t mouseSensitivityPercent =
-			(userSettings.Controls.mouseSettings.Sensitivity / s_MouseSensitivityReferenceValue) * 100.f;
+		const uint32_t mouseSensitivityPercent = static_cast<uint32_t>(
+			round((userSettings.Controls.mouseSettings.Sensitivity / s_MouseSensitivityReferenceValue) * 100.f));
 		const uint32_t sliderValue = m_MouseSensitivity_Slider.GetValue();
 		std::string nbrStr = std::to_string(mouseSensitivityPercent) + "%";
 		if (sliderValue == 0)

@@ -83,6 +83,7 @@ namespace onion::voxel
 
 		// Apply configuration to the client
 		m_Renderer.SetPlayerUUID(m_Config.clientData.UUID);
+		m_WorldManager->SetSingleplayerPlayerUUID(m_Config.clientData.UUID);
 	}
 
 	void Client::SaveConfiguration()
@@ -380,6 +381,7 @@ namespace onion::voxel
 				{
 					// If the player has not been set yet, add it to the EntityManager
 					m_WorldManager->AddPlayer(player);
+					m_WorldManager->RequestAllMissingChunks();
 				}
 
 				continue;

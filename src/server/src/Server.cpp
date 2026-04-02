@@ -53,10 +53,12 @@ namespace onion::voxel
 
 	Server::~Server()
 	{
-		m_WorldManager->ClearWorld();
-
 		m_NetworkServerEventHandles.clear();
 		m_WorldManagerEventHandles.clear();
+
+		m_NetworkServer.Stop();
+
+		m_WorldManager->ClearWorld();
 
 		Stop();
 	}
@@ -240,6 +242,7 @@ namespace onion::voxel
 				ChunkDTO chunkDto = SerializerDTO::SerializeChunk(chunk);
 				ChunkDataMsg chunkDataMsg;
 				chunkDataMsg.Chunk = std::move(chunkDto);
+				//std::cout << "(" << chunkPos.x << ", " << chunkPos.y << ")" << std::endl;
 				m_NetworkServer.Send(args.Sender, chunkDataMsg);
 			}
 		}
@@ -275,6 +278,7 @@ namespace onion::voxel
 
 		// Add the new Player
 		AddPlayer(playerInfo);
+		m_WorldManager->RequestAllMissingChunks();
 
 		ServerInfoMsg srvInfoMsg;
 		srvInfoMsg.ServerName = m_Config.serverData.ServerName;
@@ -297,11 +301,49 @@ namespace onion::voxel
 
 	void Server::Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk)
 	{
-		// Sends the new chunk to all connected clients
-		ChunkDTO chunkDto = SerializerDTO::SerializeChunk(chunk);
-		ChunkDataMsg chunkDataMsg;
-		chunkDataMsg.Chunk = std::move(chunkDto);
-		m_NetworkServer.Broadcast(chunkDataMsg);
+		// Send the chunk to all nearby players.
+		uint8_t chunkLoadingDistance = m_Config.serverData.SimulationDistance;
+		glm::ivec2 chunkPosition = chunk->GetPosition();
+		std::unordered_map<std::string, glm::vec3> playersPosition = m_WorldManager->GetPlayersPosition();
+
+		std::vector<std::string> nearbyPlayers;
+		for (const auto& [playerUUID, playerPosition] : playersPosition)
+		{
+			glm::ivec2 playerChunkPos = Utils::WorldToChunkPosition(playerPosition);
+			if (std::abs(playerChunkPos.x - chunkPosition.x) <= chunkLoadingDistance &&
+				std::abs(playerChunkPos.y - chunkPosition.y) <= chunkLoadingDistance)
+			{
+				nearbyPlayers.push_back(playerUUID);
+			}
+		}
+
+		if (!nearbyPlayers.empty())
+		{
+			ChunkDTO chunkDto = SerializerDTO::SerializeChunk(chunk);
+			ChunkDataMsg chunkDataMsg;
+			chunkDataMsg.Chunk = std::move(chunkDto);
+
+			//std::cout << "Sending chunk at position: (" << chunkPosition.x << ", " << chunkPosition.y << ") to "
+			//		  << nearbyPlayers.size() << " nearby players\n";
+
+			for (const auto& playerUUID : nearbyPlayers)
+			{
+				uint32_t clientHandle;
+				{
+					std::shared_lock lock(m_MutexPlayers);
+					auto it = m_UUIDToPlayerInfo.find(playerUUID);
+					if (it != m_UUIDToPlayerInfo.end())
+					{
+						clientHandle = it->second.ClientHandle;
+					}
+					else
+					{
+						continue; // Player not found, skip sending chunk
+					}
+				}
+				m_NetworkServer.Send(clientHandle, chunkDataMsg);
+			}
+		}
 	}
 
 	void Server::Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk)

@@ -26,8 +26,8 @@ namespace onion::voxel
 		struct PlayerChangedChunkEventArgs
 		{
 			std::string PlayerUUID;
-			glm::ivec2 OldChunkPosition;
-			glm::ivec2 NewChunkPosition;
+			glm::ivec2 OldChunkPosition{};
+			glm::ivec2 NewChunkPosition{};
 		};
 
 		struct BlocksChangedEventArgs
@@ -73,6 +73,8 @@ namespace onion::voxel
 		std::shared_ptr<Player> LoadPlayer(const std::string& playerUUID);
 		void RemovePlayer(const std::string& playerUUID);
 
+		void RequestAllMissingChunks();
+
 		// ----- Getters / Setters -----
 	  public:
 		uint32_t GetSeed() const;
@@ -96,6 +98,9 @@ namespace onion::voxel
 
 		std::vector<std::shared_ptr<Entity>> GetAllEntities() const;
 		std::unordered_map<std::string, std::shared_ptr<Player>> GetAllPlayers() const;
+
+		void SetSingleplayerPlayerUUID(const std::string& playerUUID);
+		std::string GetSingleplayerPlayerUUID() const;
 
 		// ----- Events -----
 	  public:
@@ -135,6 +140,9 @@ namespace onion::voxel
 		mutable std::shared_mutex m_MutexChunks;
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> m_Chunks;
 
+		mutable std::shared_mutex m_MutexSingleplayer;
+		std::string m_SingleplayerPlayerUUID;
+
 		// ----- Private Methods -----
 	  private:
 		void RequestMissingChunksAsync(const std::vector<glm::ivec2>& chunkPositions);
@@ -144,7 +152,5 @@ namespace onion::voxel
 		void PlaceOutOfBoundsBlocks();
 
 		Timer m_TimerRequestMissingChunks;
-		void RequestAllMissingChunks();
-		void RequestMissingChunksAround(const glm::ivec2& chunkPosition);
 	};
 } // namespace onion::voxel

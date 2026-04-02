@@ -37,6 +37,7 @@ namespace onion::voxel
 
 	WorldManager::~WorldManager()
 	{
+		std::cout << "WorldManagerDtor" << std::endl;
 		m_InternalEventHandles.clear();
 		m_TimerRequestMissingChunks.Stop();
 	}
@@ -309,6 +310,18 @@ namespace onion::voxel
 		return m_EntityManager->GetAllPlayers();
 	}
 
+	void WorldManager::SetSingleplayerPlayerUUID(const std::string& playerUUID)
+	{
+		std::unique_lock lock(m_MutexSingleplayer);
+		m_SingleplayerPlayerUUID = playerUUID;
+	}
+
+	std::string WorldManager::GetSingleplayerPlayerUUID() const
+	{
+		std::shared_lock lock(m_MutexSingleplayer);
+		return m_SingleplayerPlayerUUID;
+	}
+
 	void WorldManager::SubscribeToInternalEvents()
 	{
 		m_InternalEventHandles.push_back(PlayerChangedChunk.Subscribe([this](const PlayerChangedChunkEventArgs& args)
@@ -343,7 +356,8 @@ namespace onion::voxel
 		//		  << std::endl;
 
 		RemoveDistantChunks();
-		RequestMissingChunksAround(args.NewChunkPosition);
+		//RequestMissingChunksAround(args.NewChunkPosition);
+		RequestAllMissingChunks();
 
 		// Save Players to the world save (if it exists)
 		if (m_WorldSave)
@@ -572,27 +586,24 @@ namespace onion::voxel
 
 	void WorldManager::RequestAllMissingChunks()
 	{
-		// Request missing chunks around each player
-		std::vector<glm::ivec2> missingChunksCenters;
-
-		auto playersPosition = GetPlayersPosition();
-		for (const auto& [clientHandle, playerPos] : playersPosition)
-		{
-			glm::ivec2 playerChunkPos = Utils::WorldToChunkPosition(playerPos);
-			missingChunksCenters.push_back(playerChunkPos);
-		}
-
-		for (const auto& center : missingChunksCenters)
-		{
-			RequestMissingChunksAround(center);
-		}
-	}
-
-	void WorldManager::RequestMissingChunksAround(const glm::ivec2& chunkPosition)
-	{
 		std::vector<glm::ivec2> missingChunks;
-		auto playersPosition = GetPlayersPosition();
+		std::unordered_map<std::string, glm::vec3> playersPosition;
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> chunks = GetAllChunks();
+
+		if (!m_SingleplayerPlayerUUID.empty())
+		{
+			// In SinglePlayer : Only consider the single player for determining missing chunks.
+			auto player = GetPlayer(m_SingleplayerPlayerUUID);
+			if (player)
+			{
+				playersPosition[player->UUID] = player->GetPosition();
+			}
+		}
+		else
+		{
+			// In Multiplayer, consider all players for determining missing chunks.
+			playersPosition = GetPlayersPosition();
+		}
 
 		// For each player, check the chunks within the persistance distance and mark them as missing if they are not loaded
 		int persistanceDistance = std::min(GetChunkPersistanceDistance(), m_ChunkLoadingDistance.load());
@@ -615,13 +626,13 @@ namespace onion::voxel
 		}
 
 		// Sorts missing chunks from closest to farthest from the given chunk position
-		std::sort(missingChunks.begin(),
-				  missingChunks.end(),
-				  [&chunkPosition](const glm::ivec2& a, const glm::ivec2& b)
-				  {
-					  return glm::distance(glm::vec2(a), glm::vec2(chunkPosition)) <
-						  glm::distance(glm::vec2(b), glm::vec2(chunkPosition));
-				  });
+		//std::sort(missingChunks.begin(),
+		//		  missingChunks.end(),
+		//		  [&chunkPosition](const glm::ivec2& a, const glm::ivec2& b)
+		//		  {
+		//			  return glm::distance(glm::vec2(a), glm::vec2(chunkPosition)) <
+		//				  glm::distance(glm::vec2(b), glm::vec2(chunkPosition));
+		//		  });
 
 		// Trigger event to request missing chunks to be loaded
 		if (!missingChunks.empty())

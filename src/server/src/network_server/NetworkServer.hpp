@@ -32,15 +32,15 @@ namespace onion::voxel
 	  public:
 		struct IncommingMessage
 		{
-			ClientHandle Sender;
-			NetworkMessage Message;
+			ClientHandle Sender{0};
+			NetworkMessage Message{};
 		};
 
 		struct OutgoingMessage
 		{
 			std::vector<ClientHandle> Targets;
-			NetworkMessage Message;
-			bool Reliable;
+			NetworkMessage Message{};
+			bool Reliable{true};
 		};
 
 		struct ClientConnectedEventArgs
@@ -60,8 +60,8 @@ namespace onion::voxel
 
 		struct MessageReceivedEventArgs
 		{
-			ClientHandle Sender;
-			NetworkMessage Message;
+			ClientHandle Sender{0};
+			NetworkMessage Message{};
 		};
 
 		// ----- Constructor / Destructor -----
