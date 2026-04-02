@@ -778,6 +778,9 @@ namespace onion::voxel
 			std::cout << "Created new world: '" << worldInfos.Name << "', Directory: '" << worldInfos.SaveDirectory
 					  << "'" << std::endl;
 
+			// Go back to world tiles render module for next navigation of SingleplayerPanel.
+			m_CurrentRenderModule = eRenderModule::WorldTiles;
+
 			// Start Playing the newly created world
 			EvtPlayWorld.Trigger(worldInfos);
 		}

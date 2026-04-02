@@ -1,8 +1,11 @@
 #pragma once
 
+#include <shared_mutex>
+
 #include <renderer/assets_manager/AssetsManager.hpp>
 #include <renderer/inputs_manager/inputs_manager.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
+#include <user_settings/UserSettings.hpp>
 
 namespace onion::voxel
 {
@@ -15,14 +18,33 @@ namespace onion::voxel
 		AssetsManager* Assets;
 		InputsManager* Inputs;
 
+		UserSettings Settings() const
+		{
+			std::shared_lock lock(m_MutexSettings);
+			return m_Settings;
+		}
+
+		void UpdateSettings(const UserSettings& newSettings)
+		{
+			std::unique_lock lock(m_MutexSettings);
+			m_Settings = newSettings;
+		}
+
+		void SaveSettings(const std::filesystem::path& path) const
+		{
+			std::shared_lock lock(m_MutexSettings);
+			UserSettings::Save(m_Settings, path);
+		}
+
 		// ----- Public Static API -----
 	  public:
-		static void Initialize(WorldManager* world, AssetsManager* assets, InputsManager* inputs)
+		static void
+		Initialize(WorldManager* world, AssetsManager* assets, InputsManager* inputs, const UserSettings& settings)
 		{
 			if (s_Instance)
 				throw std::runtime_error("EngineContext already initialized");
 
-			s_Instance = new EngineContext(world, assets, inputs);
+			s_Instance = new EngineContext(world, assets, inputs, settings);
 		}
 
 		static EngineContext& Get()
@@ -39,10 +61,15 @@ namespace onion::voxel
 
 		// ----- Constructor / Destructor -----
 	  private:
-		EngineContext(WorldManager* world, AssetsManager* assets, InputsManager* inputs)
-			: World(world), Assets(assets), Inputs(inputs)
+		EngineContext(WorldManager* world, AssetsManager* assets, InputsManager* inputs, const UserSettings& settings)
+			: World(world), Assets(assets), Inputs(inputs), m_Settings(settings)
 		{
 		}
+
+		// ----- Private Members -----
+	  private:
+		mutable std::shared_mutex m_MutexSettings;
+		UserSettings m_Settings;
 
 		// ----- Private Static Members -----
 	  private:

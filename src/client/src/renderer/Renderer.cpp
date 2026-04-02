@@ -24,8 +24,27 @@ namespace onion::voxel
 		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager),
 		  m_EntityRenderer(m_Camera)
 	{
+		// Setup Timer Save UserSettings
+		m_TimerDelayedSaveUserSettings.setTimeoutFunction([this]() { SaveUserSettings(); });
+		m_TimerDelayedSaveUserSettings.setElapsedPeriod(std::chrono::milliseconds(1000));
+		m_TimerDelayedSaveUserSettings.setRepeat(false);
+
+		// Load User Settings
+		std::filesystem::path userSettingsPath = GetUserSettingsPath();
+		UserSettings settings = UserSettings::Load(userSettingsPath);
+
+		if (!std::filesystem::exists(userSettingsPath))
+		{
+			std::cerr << "UserSettings file not found at " << userSettingsPath
+					  << ". A new file will be created with default settings.\n";
+			UserSettings::Save(settings, userSettingsPath);
+		}
+
 		// Sets the Engine Context
-		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager);
+		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager, settings);
+
+		UserSettingsChangedEventArgs args(settings, true);
+		ApplyUserSettings(args);
 	}
 
 	Renderer::~Renderer()
@@ -86,6 +105,11 @@ namespace onion::voxel
 	std::shared_ptr<ServerInfo> Renderer::GetServerInfo() const
 	{
 		return m_ServerInfo;
+	}
+
+	uint8_t Renderer::GetRenderDistance() const
+	{
+		return m_WorldManager->GetChunkPersistanceDistance();
 	}
 
 	void Renderer::SetPlayerUUID(const std::string& uuid)
@@ -236,6 +260,13 @@ namespace onion::voxel
 			// Swap buffers and poll events
 			glfwSwapBuffers(m_Window);
 			glfwPollEvents();
+
+			// Cap FPS if needed
+			if (!m_IsVsyncEnabled && m_MaxFps > 0)
+			{
+				double targetFrameTime = 1.0 / static_cast<double>(m_MaxFps);
+				CapFPS(targetFrameTime);
+			}
 		}
 
 		// Cleanup
@@ -284,6 +315,100 @@ namespace onion::voxel
 		stbi_image_free(pixels);
 	}
 
+	void Renderer::CapFPS(double targetFrameTime)
+	{
+		using clock = std::chrono::high_resolution_clock;
+
+		static auto lastTime = clock::now();
+
+		auto now = clock::now();
+		double elapsed = std::chrono::duration<double>(now - lastTime).count();
+
+		double remaining = targetFrameTime - elapsed;
+
+		if (remaining > 0.0)
+		{
+			// Sleep most of it (leave a small margin)
+			if (remaining > 0.002) // 2 ms safety margin
+			{
+				std::this_thread::sleep_for(std::chrono::duration<double>(remaining - 0.001));
+			}
+
+			// Busy wait for precision
+			while (std::chrono::duration<double>(clock::now() - lastTime).count() < targetFrameTime)
+			{
+				// spin
+			}
+		}
+
+		lastTime = clock::now();
+	}
+
+	std::filesystem::path Renderer::GetUserSettingsPath() const
+	{
+		return Utils::GetExecutableDirectory() / "user_settings.json";
+	}
+
+	void Renderer::ApplyUserSettings(const UserSettingsChangedEventArgs& args)
+	{
+		EngineContext::Get().UpdateSettings(args.NewSettings);
+
+		const auto& settings = args.NewSettings;
+
+		// ----- Apply Controls Settings -----
+		const auto& controls = settings.Controls;
+		if (args.FOV_Changed)
+		{
+			m_Camera->SetFovY(controls.FOV);
+		}
+
+		if (args.MouseSensitivity_Changed)
+		{
+			m_InputsManager.SetMouseSensitivity(controls.mouseSettings.Sensitivity);
+		}
+
+		if (args.MouseScrollSensitivity_Changed)
+		{
+			m_InputsManager.SetMouseScrollSensitivity(controls.mouseSettings.ScrollSensitivity);
+		}
+
+		if (args.VSyncEnabled_Changed)
+		{
+			m_IsVsyncEnabled = settings.Video.VSyncEnabled;
+			glfwSwapInterval(m_IsVsyncEnabled ? 1 : 0);
+		}
+
+		if (args.MaxFPS_Changed)
+		{
+			m_MaxFps = settings.Video.MaxFPS;
+		}
+
+		if (args.RenderDistance_Changed)
+		{
+			m_WorldManager->SetChunkPersistanceDistance(settings.Video.RenderDistance);
+			EvtRenderDistanceChanged.Trigger(settings.Video.RenderDistance);
+		}
+
+		if (args.SimulationDistance_Changed)
+		{
+			//m_WorldManager->SetSimulationDistance(settings.Video.SimulationDistance);
+		}
+
+		if (args.KeyBinds_Changed)
+		{
+			RegisterInputs();
+		}
+
+		// Restart the Save timer : Will be saved in 1s if no other setting is changed
+		m_TimerDelayedSaveUserSettings.Restart();
+	}
+
+	void Renderer::SaveUserSettings()
+	{
+		std::filesystem::path userSettingsPath = GetUserSettingsPath();
+		EngineContext::Get().SaveSettings(userSettingsPath);
+	}
+
 	void Renderer::SubscribeToInputsManagerEvents()
 	{
 		m_InputsManagerEventHandles.push_back(m_InputsManager.EventFramebufferResized.Subscribe(
@@ -308,27 +433,28 @@ namespace onion::voxel
 
 	void Renderer::RegisterInputs()
 	{
-		// Eventually Loads from Config File or something like that, but for now it's hardcoded
+		const UserSettings settings = EngineContext::Get().Settings();
+		const auto actionToKey = settings.Controls.keyBindsSettings.ActionToKey;
 
 		InputConfig everyFrame(false, 0, 0, 0);
 		InputConfig noRepeat(true, 9999999, 0, 0);
 		InputConfig repeatWithDelay(true, 0.6f, 0.4f, 0.5f);
 
-		m_KeyBinds.RemapAction(eAction::MoveForward, Key::W, everyFrame);
-		m_KeyBinds.RemapAction(eAction::MoveBackward, Key::S, everyFrame);
-		m_KeyBinds.RemapAction(eAction::MoveLeft, Key::A, everyFrame);
-		m_KeyBinds.RemapAction(eAction::MoveRight, Key::D, everyFrame);
-		m_KeyBinds.RemapAction(eAction::Jump, Key::Space, everyFrame);
-		m_KeyBinds.RemapAction(eAction::Crouch, Key::LeftShift, everyFrame);
-		m_KeyBinds.RemapAction(eAction::Sprint, Key::LeftControl, everyFrame);
+		m_KeyBinds.RemapAction(eAction::WalkForward, actionToKey.at(eAction::WalkForward), everyFrame);
+		m_KeyBinds.RemapAction(eAction::WalkBackward, actionToKey.at(eAction::WalkBackward), everyFrame);
+		m_KeyBinds.RemapAction(eAction::StrafeLeft, actionToKey.at(eAction::StrafeLeft), everyFrame);
+		m_KeyBinds.RemapAction(eAction::StrafeRight, actionToKey.at(eAction::StrafeRight), everyFrame);
+		m_KeyBinds.RemapAction(eAction::Jump, actionToKey.at(eAction::Jump), everyFrame);
+		m_KeyBinds.RemapAction(eAction::Sneak, actionToKey.at(eAction::Sneak), everyFrame);
+		m_KeyBinds.RemapAction(eAction::Sprint, actionToKey.at(eAction::Sprint), everyFrame);
 
-		m_KeyBinds.RemapAction(eAction::ToggleMouseCapture, Key::KP7, noRepeat);
-		m_KeyBinds.RemapAction(eAction::Pause, Key::Escape, noRepeat);
-		m_KeyBinds.RemapAction(eAction::CloseMenu, Key::Escape, noRepeat);
+		m_KeyBinds.RemapAction(eAction::ToggleMouseCapture, actionToKey.at(eAction::ToggleMouseCapture), noRepeat);
+		m_KeyBinds.RemapAction(eAction::Pause, actionToKey.at(eAction::Pause), noRepeat);
+		m_KeyBinds.RemapAction(eAction::CloseMenu, actionToKey.at(eAction::CloseMenu), noRepeat);
 
-		m_KeyBinds.RemapAction(eAction::Attack, Key::MouseButtonLeft, repeatWithDelay);
-		m_KeyBinds.RemapAction(eAction::Interact, Key::MouseButtonRight, repeatWithDelay);
-		m_KeyBinds.RemapAction(eAction::ToggleFlyMode, m_KeyBinds.GetKeyForAction(eAction::Jump), repeatWithDelay);
+		m_KeyBinds.RemapAction(eAction::Attack, actionToKey.at(eAction::Attack), repeatWithDelay);
+		m_KeyBinds.RemapAction(eAction::Interact, actionToKey.at(eAction::Interact), repeatWithDelay);
+		m_KeyBinds.RemapAction(eAction::ToggleFlyMode, actionToKey.at(eAction::ToggleFlyMode), repeatWithDelay);
 	}
 
 	void Renderer::ProcessInputs()
@@ -524,20 +650,19 @@ namespace onion::voxel
 
 		// ----- KEY STATES -----
 		KeyState speedUpKeyState = m_KeyBinds.GetKeyState(eAction::Sprint);
-		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveForward);
-		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveBackward);
-		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::MoveLeft);
-		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::MoveRight);
+		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::WalkForward);
+		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::WalkBackward);
+		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::StrafeLeft);
+		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::StrafeRight);
 		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
-		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Crouch);
+		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Sneak);
 		KeyState toggleFlyModeKeyState = m_KeyBinds.GetKeyState(eAction::ToggleFlyMode);
 
 		// ----- PLAYER ORIENTATION -----
 		if (inputs->Mouse.MovementOffsetChanged)
 		{
-			const float sensitivity = m_KeyBinds.GetMouseSensitivity();
-			const float xoffset = static_cast<float>(inputs->Mouse.Xoffset) * sensitivity;
-			const float yoffset = static_cast<float>(inputs->Mouse.Yoffset) * sensitivity;
+			const float xoffset = static_cast<float>(inputs->Mouse.Xoffset);
+			const float yoffset = static_cast<float>(inputs->Mouse.Yoffset);
 
 			// Extract yaw/pitch from current direction vector
 			float yaw = glm::degrees(std::atan2(playerFront.z, playerFront.x));
@@ -756,9 +881,8 @@ namespace onion::voxel
 		// Camera's Orientation
 		if (inputs->Mouse.MovementOffsetChanged)
 		{
-			const double sensitivity = m_KeyBinds.GetMouseSensitivity();
-			const double xoffset = inputs->Mouse.Xoffset * sensitivity;
-			const double yoffset = inputs->Mouse.Yoffset * sensitivity;
+			const double xoffset = inputs->Mouse.Xoffset;
+			const double yoffset = inputs->Mouse.Yoffset;
 
 			m_Camera->SetYaw(m_Camera->GetYaw() + (float) xoffset);
 			m_Camera->SetPitch(m_Camera->GetPitch() + (float) yoffset);
@@ -802,12 +926,12 @@ namespace onion::voxel
 		glm::vec3 frontXZ = glm::normalize(glm::vec3(CamFront.x, 0.0f, CamFront.z));
 		const glm::vec3 Up(0.0f, 1.0f, 0.0f); // Up vector
 
-		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveForward);
-		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::MoveBackward);
-		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::MoveLeft);
-		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::MoveRight);
+		KeyState moveForwardKeyState = m_KeyBinds.GetKeyState(eAction::WalkForward);
+		KeyState moveBackwardKeyState = m_KeyBinds.GetKeyState(eAction::WalkBackward);
+		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::StrafeLeft);
+		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::StrafeRight);
 		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
-		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Crouch);
+		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Sneak);
 
 		if (moveForwardKeyState.IsPressed)
 			m_Camera->SetPosition(m_Camera->GetPosition() + frontXZ * velocity);
@@ -841,6 +965,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_Gui.RequestResourcePackChange.Subscribe(
 			[this](const std::string& resourcePackName) { Handle_ResourcePackChangeRequest(resourcePackName); }));
+
+		m_EventHandles.push_back(m_Gui.UserSettingsChanged.Subscribe([this](const UserSettingsChangedEventArgs& args)
+																	 { Handle_UserSettingsChanged(args); }));
 	}
 
 	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)
@@ -895,6 +1022,12 @@ namespace onion::voxel
 		m_Gui.ReloadTextures();
 		m_WorldRenderer.ReloadTextures();
 		m_EntityRenderer.ReloadTextures();
+	}
+
+	void Renderer::Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& args)
+	{
+		//std::cout << "User settings changed. Applying new settings...\n";
+		ApplyUserSettings(args);
 	}
 
 	void Renderer::InitImGui()

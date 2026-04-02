@@ -66,7 +66,7 @@ namespace onion::voxel
 				m_PrevValue = m_Value;
 				OnValueChanged.Trigger(*this);
 
-				std::cout << "Slider Value Changed: " << m_Value << std::endl;
+				//std::cout << "Slider Value Changed: " << m_Value << std::endl;
 			}
 		}
 

@@ -9,13 +9,13 @@ namespace onion::voxel
 {
 	enum class eAction
 	{
-		MoveForward,
-		MoveBackward,
-		MoveLeft,
-		MoveRight,
+		WalkForward,
+		WalkBackward,
+		StrafeLeft,
+		StrafeRight,
 		Jump,
 		Sprint,
-		Crouch,
+		Sneak,
 		ToggleMouseCapture,
 		ToggleFlyMode,
 		Pause,
@@ -36,9 +36,6 @@ namespace onion::voxel
 		Key GetKeyForAction(eAction action) const;
 		KeyState GetKeyState(eAction action) const;
 
-		float GetMouseSensitivity() const;
-		void SetMouseSensitivity(float sensitivity);
-
 		// ----- Private Members -----
 	  private:
 		InputsManager& m_InputsManager;
@@ -46,6 +43,36 @@ namespace onion::voxel
 		mutable std::mutex m_Mutex;
 		std::unordered_map<eAction, Key> m_ActionToKey;
 		std::unordered_map<eAction, int> m_ActionToInputId;
-		float m_MouseSensitivity = 0.1f;
 	};
+
+	static std::unordered_map<eAction, std::string> ActionToStringMap = {
+		{eAction::WalkForward, "Walk Forward"},
+		{eAction::WalkBackward, "Walk Backward"},
+		{eAction::StrafeLeft, "Strafe Left"},
+		{eAction::StrafeRight, "Strafe Right"},
+		{eAction::Jump, "Jump"},
+		{eAction::Sprint, "Sprint"},
+		{eAction::Sneak, "Sneak"},
+		{eAction::ToggleMouseCapture, "Toggle Mouse Capture"},
+		{eAction::ToggleFlyMode, "Toggle Fly Mode"},
+		{eAction::Pause, "Pause"},
+		{eAction::Attack, "Attack"},
+		{eAction::Interact, "Interact"},
+		{eAction::CloseMenu, "Close Menu"},
+	};
+
+	static std::unordered_map<std::string, eAction> StringToActionMap = []()
+	{
+		std::unordered_map<std::string, eAction> map;
+		for (const auto& [key, name] : ActionToStringMap)
+		{
+			map[name] = key;
+		}
+		return map;
+	}();
+
+	std::string ActionToString(eAction action);
+
+	eAction StringToAction(const std::string& str);
+
 } // namespace onion::voxel

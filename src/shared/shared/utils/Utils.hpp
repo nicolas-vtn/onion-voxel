@@ -46,4 +46,6 @@ namespace onion::voxel::Utils
 
 	std::string SanitizeFileName(const std::string& name);
 
+	std::string GenerateUUID();
+
 }; // namespace onion::voxel::Utils

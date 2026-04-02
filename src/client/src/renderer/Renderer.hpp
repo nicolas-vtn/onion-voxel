@@ -12,6 +12,8 @@
 #include <string>
 #include <thread>
 
+#include <onion/Timer.hpp>
+
 #include <shared/physics/PhysicsEngine.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
@@ -65,12 +67,15 @@ namespace onion::voxel
 		void SetServerInfo(std::shared_ptr<ServerInfo> serverInfo);
 		std::shared_ptr<ServerInfo> GetServerInfo() const;
 
+		uint8_t GetRenderDistance() const;
+
 		void SetPlayerUUID(const std::string& uuid);
 
 		// ----- Events -----
 	  public:
 		Event<const WorldInfos&> RequestStartSingleplayerGame;
 		Event<const Gui::MultiplayerGameStartInfo&> RequestStartMultiplayerGame;
+		Event<uint8_t> EvtRenderDistanceChanged;
 		Event<bool> RequestQuitToMainMenu;
 
 		// ----- Internal Methods -----
@@ -103,11 +108,20 @@ namespace onion::voxel
 
 		double m_DeltaTime = 0.0f;
 		double m_LastFrame = 0.0f;
+		bool m_IsVsyncEnabled = true;
+		uint32_t m_MaxFps = 60;
+		void CapFPS(double targetFrameTime);
+
+		// ----- Configurations -----
+	  private:
+		std::filesystem::path GetUserSettingsPath() const;
+		void ApplyUserSettings(const UserSettingsChangedEventArgs& args);
+		Timer m_TimerDelayedSaveUserSettings;
+		void SaveUserSettings();
 
 		// ----- Inputs -----
 	  private:
 		InputsManager m_InputsManager;
-		//std::shared_ptr<InputsSnapshot> m_InputsSnapshot;
 		std::vector<EventHandle> m_InputsManagerEventHandles;
 		void SubscribeToInputsManagerEvents();
 
@@ -167,6 +181,7 @@ namespace onion::voxel
 		void Handle_BackToGameRequest();
 		void Handle_QuitToMainMenuRequest(bool quit);
 		void Handle_ResourcePackChangeRequest(const std::string& resourcePackName);
+		void Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& args);
 
 		// ----- ImGui -----
 	  private:

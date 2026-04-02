@@ -5,7 +5,7 @@
 namespace onion::voxel
 {
 	OptionsPanel::OptionsPanel(const std::string& name)
-		: GuiElement(name), m_Title_Label("OptionsTitle_Label"), m_FOV_Button("FOV_Button"),
+		: GuiElement(name), m_Title_Label("OptionsTitle_Label"), m_Fov_Slider("FOV_Slider"),
 		  m_Online_Button("Online_Button"), m_SkinCustomization_Button("SkinCustomization_Button"),
 		  m_MusicAndSounds_Button("MusicAndSounds_Button"), m_VideoSettings_Button("VideoSettings_Button"),
 		  m_Controls_Button("Controls_Button"), m_Language_Button("Language_Button"),
@@ -18,8 +18,7 @@ namespace onion::voxel
 		m_Title_Label.SetText("Options");
 		m_Title_Label.SetTextAlignment(Font::eTextAlignment::Center);
 
-		m_FOV_Button.SetText("FOV...");
-		m_FOV_Button.SetEnabled(false);
+		m_Fov_Slider.SetMaxValue(s_FovMaxValue - s_FovMinValue);
 
 		m_Online_Button.SetText("Online...");
 		m_Online_Button.SetEnabled(false);
@@ -31,10 +30,8 @@ namespace onion::voxel
 		m_MusicAndSounds_Button.SetEnabled(false);
 
 		m_VideoSettings_Button.SetText("Video Settings...");
-		m_VideoSettings_Button.SetEnabled(false);
 
 		m_Controls_Button.SetText("Controls...");
-		m_Controls_Button.SetEnabled(false);
 
 		m_Language_Button.SetText("Language...");
 		m_Language_Button.SetEnabled(false);
@@ -102,11 +99,15 @@ namespace onion::voxel
 
 		const glm::ivec2 cellSize1 = tableLayout1.GetCellSize();
 
-		// ---- Render FOV Button ----
+		// ---- Render FOV Slider ----
+		UserSettings settings = EngineContext::Get().Settings();
+		const float fov = settings.Controls.FOV;
+		std::string fovText = "FOV: " + std::to_string((int) (round(fov)));
 		glm::ivec2 relativeButtonPos1 = tableLayout1.GetElementPosition(0, 0);
-		m_FOV_Button.SetPosition(topLeftOfTable1 + relativeButtonPos1);
-		m_FOV_Button.SetSize(cellSize1);
-		m_FOV_Button.Render();
+		m_Fov_Slider.SetPosition(topLeftOfTable1 + relativeButtonPos1);
+		m_Fov_Slider.SetText(fovText);
+		m_Fov_Slider.SetSize(cellSize1);
+		m_Fov_Slider.Render();
 
 		// ---- Render Online Button ----
 		relativeButtonPos1 = tableLayout1.GetElementPosition(0, 1);
@@ -195,7 +196,7 @@ namespace onion::voxel
 	void OptionsPanel::Initialize()
 	{
 		m_Title_Label.Initialize();
-		m_FOV_Button.Initialize();
+		m_Fov_Slider.Initialize();
 		m_Online_Button.Initialize();
 		m_SkinCustomization_Button.Initialize();
 		m_MusicAndSounds_Button.Initialize();
@@ -209,13 +210,18 @@ namespace onion::voxel
 		m_Credits_Button.Initialize();
 		m_Done_Button.Initialize();
 
+		UserSettings settings = EngineContext::Get().Settings();
+		// Set FOV slider value based on current settings
+		float fovValue = settings.Controls.FOV - s_FovMinValue;
+		m_Fov_Slider.SetValue((uint32_t) round(fovValue));
+
 		SetInitState(true);
 	}
 
 	void OptionsPanel::Delete()
 	{
 		m_Title_Label.Delete();
-		m_FOV_Button.Delete();
+		m_Fov_Slider.Delete();
 		m_Online_Button.Delete();
 		m_SkinCustomization_Button.Delete();
 		m_MusicAndSounds_Button.Delete();
@@ -235,7 +241,7 @@ namespace onion::voxel
 	void OptionsPanel::ReloadTextures()
 	{
 		m_Title_Label.ReloadTextures();
-		m_FOV_Button.ReloadTextures();
+		m_Fov_Slider.ReloadTextures();
 		m_Online_Button.ReloadTextures();
 		m_SkinCustomization_Button.ReloadTextures();
 		m_MusicAndSounds_Button.ReloadTextures();
@@ -263,6 +269,12 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(
 			m_Done_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
+
+		m_EventHandles.push_back(m_Fov_Slider.OnValueChanged.Subscribe([this](const Slider& sender)
+																	   { Handle_Fov_Slider_ValueChanged(sender); }));
+
+		m_EventHandles.push_back(m_VideoSettings_Button.OnClick.Subscribe([this](const Button& sender)
+																		  { Handle_VideoSettings_Click(sender); }));
 	}
 
 	void OptionsPanel::Handle_MusicAndSounds_Click(const Button& sender)
@@ -287,6 +299,25 @@ namespace onion::voxel
 	{
 		(void) sender; // Unused
 		RequestBackNavigation.Trigger(this);
+	}
+
+	void OptionsPanel::Handle_Fov_Slider_ValueChanged(const Slider& sender)
+	{
+		UserSettings settings = EngineContext::Get().Settings();
+
+		float sliderValue = (float) sender.GetValue();
+
+		settings.Controls.FOV = s_FovMinValue + sliderValue;
+		UserSettingsChangedEventArgs eventArgs(settings);
+		eventArgs.FOV_Changed = true;
+
+		EvtUserSettingsChanged.Trigger(eventArgs);
+	}
+
+	void OptionsPanel::Handle_VideoSettings_Click(const Button& sender)
+	{
+		(void) sender; // Unused
+		RequestMenuNavigation.Trigger({this, eMenu::VideoSettings});
 	}
 
 } // namespace onion::voxel

@@ -97,6 +97,8 @@ namespace onion::voxel
 
 		bool m_MeshDirty = true;
 
+		bool m_MouseDownStartedInside = false;
+
 		NineSliceMetadata m_NineSliceMetadata;
 
 		// ----- Event State -----

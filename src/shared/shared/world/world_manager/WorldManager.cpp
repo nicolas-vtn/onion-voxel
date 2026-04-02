@@ -216,9 +216,9 @@ namespace onion::voxel
 		RemoveDistantChunks();
 	}
 
-	void WorldManager::SetServerSimulationDistance(uint8_t distance)
+	void WorldManager::SetChunkLoadingDistance(uint8_t distance)
 	{
-		m_ServerSimulationDistance = distance;
+		m_ChunkLoadingDistance = distance;
 	}
 
 	bool WorldManager::IsTriggeringEventMissingChunks() const
@@ -595,7 +595,7 @@ namespace onion::voxel
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> chunks = GetAllChunks();
 
 		// For each player, check the chunks within the persistance distance and mark them as missing if they are not loaded
-		int persistanceDistance = std::min(GetChunkPersistanceDistance(), m_ServerSimulationDistance.load());
+		int persistanceDistance = std::min(GetChunkPersistanceDistance(), m_ChunkLoadingDistance.load());
 
 		for (const auto& [clientHandle, playerPos] : playersPosition)
 		{

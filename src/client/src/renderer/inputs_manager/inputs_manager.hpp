@@ -158,6 +158,18 @@ namespace onion::voxel
 		/// @brief Sets the text in the clipboard to the specified string.
 		void SetClipboardText(const std::string& text);
 
+		/// @brief Sets the sensitivity for mouse movement inputs. This sensitivity will be applied to the movement offsets in the MouseState of the InputsSnapshot, allowing for scaling of mouse movement input values for use in the application (e.g., for camera control).
+		void SetMouseSensitivity(double sensitivity);
+		/// @brief Retrieves the current sensitivity for mouse movement inputs.
+		double GetMouseSensitivity() const;
+
+		/// @brief Sets the sensitivity for mouse scroll inputs. This sensitivity will be applied to the scroll offsets in the MouseState of the InputsSnapshot, allowing for scaling of scroll input values for use in the application (e.g., for zooming).
+		/// @param sensitivity The sensitivity value to set for mouse scroll inputs.
+		void SetMouseScrollSensitivity(double sensitivity);
+		/// @brief Retrieves the current sensitivity for mouse scroll inputs.
+		/// @return The current sensitivity value for mouse scroll inputs.
+		double GetMouseScrollSensitivity() const;
+
 		// ------------ Events ------------
 	  public:
 		/// @brief Event triggered when the framebuffer is resized. Triggered functions will be called on Render Thread.
@@ -194,8 +206,8 @@ namespace onion::voxel
 		bool m_FirstMouse = true;
 		double m_MouseLastX = 0.f;
 		double m_MouseLastY = 0.f;
-		double m_MouseXoffset = 0.f;
-		double m_MouseYoffset = 0.f;
+		double m_MouseSensitivity = 0.1f;
+		double m_MouseScrollSensitivity = 1.f;
 
 		mutable std::mutex m_MutexFramebuffer;
 		FramebufferState m_FramebufferState;

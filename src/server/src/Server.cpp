@@ -25,16 +25,13 @@ namespace
 
 namespace onion::voxel
 {
-	Server::Server(const std::filesystem::path& worldDirectory)
+	Server::Server()
 	{
 		LoadConfiguration();
 
-		std::filesystem::path worldDir = worldDirectory;
-		if (worldDir.empty())
-		{
-			worldDir = GetExecutableDirectory() / "world";
-		}
-
+		// Create world if it doesn't exist
+		m_Config.serverData.WorldDirectory = GetExecutableDirectory() / "world";
+		const std::filesystem::path& worldDir = m_Config.serverData.WorldDirectory;
 		if (!std::filesystem::exists(worldDir))
 		{
 			WorldInfos infos;
@@ -46,19 +43,12 @@ namespace onion::voxel
 			WorldSave::CreateWorld(worldDir, infos);
 		}
 
-		m_WorldManager = std::make_shared<WorldManager>(worldDir, false);
+		Initialize();
+	}
 
-		// Apply Configuration
-		m_WorldManager->SetChunkPersistanceDistance(m_Config.serverData.SimulationDistance);
-		m_WorldManager->SetServerSimulationDistance(m_Config.serverData.SimulationDistance);
-
-		SubscribeToNetworkServerEvents();
-		SubscribeToWorldManagerEvents();
-
-		// Setup Timer
-		m_TimerSendEvents.setTimeoutFunction([this]() { Handle_TimerSendEvents(); });
-		std::chrono::milliseconds defaultElapsedPeriod(100);
-		m_TimerSendEvents.setElapsedPeriod(defaultElapsedPeriod);
+	Server::Server(const ServerConfiguration& config) : m_Config(config)
+	{
+		Initialize();
 	}
 
 	Server::~Server()
@@ -88,6 +78,41 @@ namespace onion::voxel
 	bool Server::IsRunning() const noexcept
 	{
 		return m_IsRunning.load();
+	}
+
+	void Server::SetChunkLoadingDistance(uint8_t distance)
+	{
+		m_Config.serverData.SimulationDistance = distance;
+
+		m_WorldManager->SetChunkLoadingDistance(distance);
+		m_WorldManager->SetChunkPersistanceDistance(distance);
+
+		// Broadcast new simulation distance to all clients
+		ServerInfoMsg srvInfoMsg;
+		srvInfoMsg.ServerName = m_Config.serverData.ServerName;
+		srvInfoMsg.SimulationDistance = m_Config.serverData.SimulationDistance;
+
+		// Sends the ServerInfoMsg to the newly connected client
+		m_NetworkServer.Broadcast(srvInfoMsg);
+	}
+
+	void Server::Initialize()
+	{
+		m_NetworkServer.SetServerPort(m_Config.serverData.Port);
+
+		m_WorldManager = std::make_shared<WorldManager>(m_Config.serverData.WorldDirectory, false);
+
+		// Apply Configuration
+		m_WorldManager->SetChunkPersistanceDistance(m_Config.serverData.SimulationDistance);
+		m_WorldManager->SetChunkLoadingDistance(m_Config.serverData.SimulationDistance);
+
+		SubscribeToNetworkServerEvents();
+		SubscribeToWorldManagerEvents();
+
+		// Setup Timer
+		m_TimerSendEvents.setTimeoutFunction([this]() { Handle_TimerSendEvents(); });
+		std::chrono::milliseconds defaultElapsedPeriod(100);
+		m_TimerSendEvents.setElapsedPeriod(defaultElapsedPeriod);
 	}
 
 	void Server::LoadConfiguration()
@@ -204,8 +229,8 @@ namespace onion::voxel
 	void Server::Handle_PlayerRequestChunksMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
 													   const RequestChunksMsg& msg)
 	{
-		//std::cout << "Received RequestChunksMsg from client " << args.Sender << ": Requested "
-		//		  << msg.requestedChunks.size() << " chunks\n";
+		std::cout << "Received RequestChunksMsg from client " << args.Sender << ": Requested "
+				  << msg.requestedChunks.size() << " chunks\n";
 
 		for (const auto& chunkPos : msg.requestedChunks)
 		{

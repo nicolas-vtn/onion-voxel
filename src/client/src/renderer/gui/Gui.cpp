@@ -27,9 +27,11 @@ namespace onion::voxel
 	Gui::Gui()
 		: m_DemoPanel("DemoPanel"), m_MainMenuPanel("MainMenuPanel"), m_PausePanel("PausePanel"),
 		  m_OptionsPanel("OptionsPanel"), m_ResourcePacksPanel("ResourcePacksPanel"),
-		  m_DemoScrollingPanel("DemoScrollingPanel"), m_SingleplayerPanel("SingleplayerPanel")
+		  m_DemoScrollingPanel("DemoScrollingPanel"), m_SingleplayerPanel("SingleplayerPanel"),
+		  m_VideoSettingsPanel("VideoSettingsPanel"), m_ControlsPanel("ControlsPanel"),
+		  m_MouseSettingsPanel("MouseSettingsPanel"), m_KeyBindsPanel("KeyBindsPanel")
 	{
-		SubscribeToPannelsEvents();
+		SubscribeToPanelsEvents();
 	}
 
 	Gui::~Gui()
@@ -37,7 +39,7 @@ namespace onion::voxel
 		m_EventHandles.clear();
 	}
 
-	void Gui::SubscribeToPannelsEvents()
+	void Gui::SubscribeToPanelsEvents()
 	{
 		m_EventHandles.push_back(GuiElement::RequestCursorStyleChange.Subscribe(
 			[this](const CursorStyle& style) { Handle_CursorStyleChangeRequest(style); }));
@@ -66,6 +68,9 @@ namespace onion::voxel
 		m_EventHandles.push_back(m_OptionsPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																				{ Handle_BackRequest(sender); }));
 
+		m_EventHandles.push_back(m_OptionsPanel.EvtUserSettingsChanged.Subscribe(
+			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
+
 		m_EventHandles.push_back(m_ResourcePacksPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																					  { Handle_BackRequest(sender); }));
 
@@ -80,6 +85,33 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_SingleplayerPanel.EvtPlayWorld.Subscribe(
 			[this](const WorldInfos& worldInfos) { RequestStartSingleplayerGame.Trigger(worldInfos); }));
+
+		m_EventHandles.push_back(m_VideoSettingsPanel.EvtRequestBackNavigation.Subscribe(
+			[this](const GuiElement* sender) { Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_VideoSettingsPanel.EvtUserSettingsChanged.Subscribe(
+			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
+
+		m_EventHandles.push_back(m_ControlsPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
+																					{ Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_ControlsPanel.EvtUserSettingsChanged.Subscribe(
+			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
+
+		m_EventHandles.push_back(m_ControlsPanel.EvtRequestMenuNavigation.Subscribe(
+			[this](const std::pair<const GuiElement*, eMenu>& request) { Handle_MenuNavigationRequest(request); }));
+
+		m_EventHandles.push_back(m_MouseSettingsPanel.EvtRequestBackNavigation.Subscribe(
+			[this](const GuiElement* sender) { Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_MouseSettingsPanel.EvtUserSettingsChanged.Subscribe(
+			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
+
+		m_EventHandles.push_back(m_KeyBindsPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
+																					{ Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_KeyBindsPanel.EvtUserSettingsChanged.Subscribe(
+			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -130,6 +162,11 @@ namespace onion::voxel
 		std::cout << "Selected Resource Pack: " << resourcePackName << std::endl;
 
 		RequestResourcePackChange.Trigger(resourcePackName);
+	}
+
+	void Gui::Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& eventArgs)
+	{
+		UserSettingsChanged.Trigger(eventArgs);
 	}
 
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)
@@ -257,6 +294,10 @@ namespace onion::voxel
 		m_OptionsPanel.Initialize();
 		m_ResourcePacksPanel.Initialize();
 		m_SingleplayerPanel.Initialize();
+		m_VideoSettingsPanel.Initialize();
+		m_ControlsPanel.Initialize();
+		m_MouseSettingsPanel.Initialize();
+		m_KeyBindsPanel.Initialize();
 	}
 
 	void Gui::Render()
@@ -290,12 +331,23 @@ namespace onion::voxel
 			case eMenu::Options:
 				m_OptionsPanel.Render();
 				break;
+			case eMenu::VideoSettings:
+				m_VideoSettingsPanel.Render();
+				break;
 			case eMenu::ResourcePacks:
 				m_ResourcePacksPanel.Render();
 				break;
 			case eMenu::Singleplayer:
 				m_SingleplayerPanel.Render();
 				break;
+			case eMenu::Controls:
+				m_ControlsPanel.Render();
+				break;
+			case eMenu::MouseSettings:
+				m_MouseSettingsPanel.Render();
+				break;
+			case eMenu::KeyBinds:
+				m_KeyBindsPanel.Render();
 			default:
 				break;
 		}
@@ -313,6 +365,10 @@ namespace onion::voxel
 		m_OptionsPanel.Delete();
 		m_ResourcePacksPanel.Delete();
 		m_SingleplayerPanel.Delete();
+		m_VideoSettingsPanel.Delete();
+		m_ControlsPanel.Delete();
+		m_MouseSettingsPanel.Delete();
+		m_KeyBindsPanel.Delete();
 	}
 
 	void Gui::ReloadTextures()
@@ -324,6 +380,10 @@ namespace onion::voxel
 		m_OptionsPanel.ReloadTextures();
 		m_ResourcePacksPanel.ReloadTextures();
 		m_SingleplayerPanel.ReloadTextures();
+		m_VideoSettingsPanel.ReloadTextures();
+		m_ControlsPanel.ReloadTextures();
+		m_MouseSettingsPanel.ReloadTextures();
+		m_KeyBindsPanel.ReloadTextures();
 	}
 
 } // namespace onion::voxel

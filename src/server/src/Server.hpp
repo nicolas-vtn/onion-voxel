@@ -19,7 +19,8 @@ namespace onion::voxel
 	{
 		// ----- Constructor / Destructor -----
 	  public:
-		Server(const std::filesystem::path& worldDirectory = "");
+		Server();
+		Server(const ServerConfiguration& config);
 		~Server();
 
 		// ----- Public API -----
@@ -29,11 +30,16 @@ namespace onion::voxel
 
 		bool IsRunning() const noexcept;
 
+		// ----- Getters / Setters -----
+	  public:
+		void SetChunkLoadingDistance(uint8_t distance);
+
 		// ----- Configuration (Server) -----
 	  private:
 		static inline const std::string SERVER_VERSION = "0.1.0";
 		std::filesystem::path m_ConfigFilePath = "config_server.json";
 		ServerConfiguration m_Config;
+		void Initialize();
 		void LoadConfiguration();
 		void SaveConfiguration();
 

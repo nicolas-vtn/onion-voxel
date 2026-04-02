@@ -14,7 +14,6 @@ namespace onion::voxel
 	{
 		std::string PlayerName = "Default";
 		std::string UUID;
-		uint8_t RenderDistance = 8;
 	};
 
 	struct ClientConfiguration
@@ -62,7 +61,6 @@ namespace onion::voxel
 
 			clientData.PlayerName = json.value("PlayerName", "");
 			clientData.UUID = json.value("UUID", "");
-			clientData.RenderDistance = json.value("RenderDistance", static_cast<uint8_t>(8));
 
 			// ------- DEBUG ONLY : Regenerate UUID -------
 			//std::random_device rd;
@@ -83,7 +81,6 @@ namespace onion::voxel
 
 			json["PlayerName"] = clientData.PlayerName;
 			json["UUID"] = clientData.UUID;
-			json["RenderDistance"] = clientData.RenderDistance;
 
 			std::ofstream file(filePath);
 			if (!file.is_open())

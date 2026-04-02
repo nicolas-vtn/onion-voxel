@@ -35,6 +35,7 @@ add_executable(OnionVoxel
 
 	"src/renderer/gui/nine_slice_sprite/NineSliceSprite.cpp"
 	"src/renderer/gui/font/Font.cpp"
+	"src/renderer/gui/colored_background/ColoredBackground.cpp"
 
 	"src/renderer/gui/controls/button/Button.cpp"
 	"src/renderer/gui/controls/sprite/Sprite.cpp"
@@ -53,6 +54,10 @@ add_executable(OnionVoxel
 	"src/renderer/gui/panels/resource_packs_panel/ResourcePackTile.cpp"
 	"src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.cpp"
 	"src/renderer/gui/panels/singleplayer_panel/WorldTile.cpp"
+	"src/renderer/gui/panels/video_settings_panel/VideoSettingsPanel.cpp"
+	"src/renderer/gui/panels/controls_panel/ControlsPanel.cpp"
+	"src/renderer/gui/panels/mouse_settings_panel/MouseSettingsPanel.cpp"
+    "src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.cpp"
 
 	"src/renderer/world_renderer/WorldRenderer.cpp"
 	"src/renderer/camera/Camera.cpp"
@@ -79,7 +84,9 @@ add_executable(OnionVoxel
 	"src/renderer/entity_renderer/skeleton/Skeleton.cpp"
 	"src/renderer/entity_renderer/TextureTileMapper.cpp"
 
- "src/renderer/gui/colored_background/ColoredBackground.cpp")
+	"src/user_settings/UserSettings.cpp"
+
+)
 
 if (WIN32)
     target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)
