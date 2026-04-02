@@ -28,7 +28,7 @@ namespace onion::voxel
 		: m_DemoPanel("DemoPanel"), m_MainMenuPanel("MainMenuPanel"), m_PausePanel("PausePanel"),
 		  m_OptionsPanel("OptionsPanel"), m_ResourcePacksPanel("ResourcePacksPanel"),
 		  m_DemoScrollingPanel("DemoScrollingPanel"), m_SingleplayerPanel("SingleplayerPanel"),
-		  m_VideoSettingsPanel("VideoSettingsPanel")
+		  m_VideoSettingsPanel("VideoSettingsPanel"), m_ControlsPanel("ControlsPanel")
 	{
 		SubscribeToPanelsEvents();
 	}
@@ -90,6 +90,15 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_VideoSettingsPanel.EvtUserSettingsChanged.Subscribe(
 			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
+
+		m_EventHandles.push_back(m_ControlsPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
+																					{ Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_ControlsPanel.EvtUserSettingsChanged.Subscribe(
+			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
+
+		m_EventHandles.push_back(m_ControlsPanel.EvtRequestMenuNavigation.Subscribe(
+			[this](const std::pair<const GuiElement*, eMenu>& request) { Handle_MenuNavigationRequest(request); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -273,6 +282,7 @@ namespace onion::voxel
 		m_ResourcePacksPanel.Initialize();
 		m_SingleplayerPanel.Initialize();
 		m_VideoSettingsPanel.Initialize();
+		m_ControlsPanel.Initialize();
 	}
 
 	void Gui::Render()
@@ -315,6 +325,9 @@ namespace onion::voxel
 			case eMenu::Singleplayer:
 				m_SingleplayerPanel.Render();
 				break;
+			case eMenu::Controls:
+				m_ControlsPanel.Render();
+				break;
 			default:
 				break;
 		}
@@ -333,6 +346,7 @@ namespace onion::voxel
 		m_ResourcePacksPanel.Delete();
 		m_SingleplayerPanel.Delete();
 		m_VideoSettingsPanel.Delete();
+		m_ControlsPanel.Delete();
 	}
 
 	void Gui::ReloadTextures()
@@ -345,6 +359,7 @@ namespace onion::voxel
 		m_ResourcePacksPanel.ReloadTextures();
 		m_SingleplayerPanel.ReloadTextures();
 		m_VideoSettingsPanel.ReloadTextures();
+		m_ControlsPanel.ReloadTextures();
 	}
 
 } // namespace onion::voxel

@@ -32,7 +32,6 @@ namespace onion::voxel
 		m_VideoSettings_Button.SetText("Video Settings...");
 
 		m_Controls_Button.SetText("Controls...");
-		m_Controls_Button.SetEnabled(false);
 
 		m_Language_Button.SetText("Language...");
 		m_Language_Button.SetEnabled(false);

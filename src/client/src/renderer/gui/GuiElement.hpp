@@ -29,11 +29,13 @@ namespace onion::voxel
 		Multiplayer,
 		Options,
 		VideoSettings,
+		Controls,
+		MouseSettings,
+		KeyBinds,
 		Gameplay,
 		Pause,
 		MusicAndSounds,
 		ResourcePacks,
-		Controls,
 	};
 
 	std::string GetMenuName(eMenu menu);

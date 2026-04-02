@@ -176,7 +176,7 @@ namespace onion::voxel
 		// ----- Update Scrolling Area Height -----
 		const int contentHeight =
 			simulationDistanceSliderPosition.y + (simulationDistanceSliderSize.y / 2) - topLeftCorner.y;
-		m_Scroller.SetScrollAreaHeight(contentHeight * 4);
+		m_Scroller.SetScrollAreaHeight(contentHeight);
 
 		// ----- Render Done Button -----
 		const float doneButtonYRatio = (972.f - 23.f) / 1009.f;

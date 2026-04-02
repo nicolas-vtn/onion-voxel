@@ -6,6 +6,7 @@
 
 #include <user_settings/UserSettings.hpp>
 
+#include "panels/controls_panel/ControlsPanel.hpp"
 #include "panels/demo_panel/DemoPanel.hpp"
 #include "panels/demo_scrolling_panel/DemoScrollingPanel.hpp"
 #include "panels/main_menu_panel/MainMenuPanel.hpp"
@@ -72,6 +73,7 @@ namespace onion::voxel
 		VideoSettingsPanel m_VideoSettingsPanel;
 		ResourcePacksPanel m_ResourcePacksPanel;
 		SingleplayerPanel m_SingleplayerPanel;
+		ControlsPanel m_ControlsPanel;
 
 		// ----- Panel Events Handling -----
 	  private:
