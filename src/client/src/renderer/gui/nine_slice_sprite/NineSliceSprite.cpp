@@ -277,9 +277,10 @@ namespace onion::voxel
 
 	void NineSliceSprite::PullEvents()
 	{
+		bool hovered = IsHovered();
+		bool mouseDown = s_InputsSnapshot->Mouse.LeftButtonPressed;
 
 		// ------------------- Hover Events ------------------
-		bool hovered = IsHovered();
 		if (hovered && !m_WasHovered)
 		{
 			OnHoverEnter.Trigger(*this);
@@ -289,21 +290,34 @@ namespace onion::voxel
 			OnHoverLeave.Trigger(*this);
 		}
 
-		// ------------------- Click Events ------------------
-		if (hovered && s_InputsSnapshot->Mouse.LeftButtonPressed && !m_WasMouseDown)
+		// ------------------- Mouse Down ------------------
+		if (mouseDown && !m_WasMouseDown)
 		{
-			OnMouseDown.Trigger(*this);
+			if (hovered)
+			{
+				m_MouseDownStartedInside = true;
+				OnMouseDown.Trigger(*this);
+			}
+			else
+			{
+				m_MouseDownStartedInside = false;
+			}
+
 			m_WasMouseDown = true;
 		}
-		else if (!s_InputsSnapshot->Mouse.LeftButtonPressed && m_WasMouseDown)
+
+		// ------------------- Mouse Up ------------------
+		if (!mouseDown && m_WasMouseDown)
 		{
 			OnMouseUp.Trigger(*this);
-			m_WasMouseDown = false;
 
-			if (hovered)
+			if (m_MouseDownStartedInside && hovered)
 			{
 				OnClick.Trigger(*this);
 			}
+
+			m_WasMouseDown = false;
+			m_MouseDownStartedInside = false;
 		}
 
 		m_WasHovered = hovered;
