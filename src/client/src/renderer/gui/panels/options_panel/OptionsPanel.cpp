@@ -18,7 +18,7 @@ namespace onion::voxel
 		m_Title_Label.SetText("Options");
 		m_Title_Label.SetTextAlignment(Font::eTextAlignment::Center);
 
-		m_Fov_Slider.SetMaxValue(100);
+		m_Fov_Slider.SetMaxValue(s_FovMaxValue - s_FovMinValue);
 
 		m_Online_Button.SetText("Online...");
 		m_Online_Button.SetEnabled(false);
@@ -106,7 +106,6 @@ namespace onion::voxel
 		std::string fovText = "FOV: " + std::to_string((int) (round(fov)));
 		glm::ivec2 relativeButtonPos1 = tableLayout1.GetElementPosition(0, 0);
 		m_Fov_Slider.SetPosition(topLeftOfTable1 + relativeButtonPos1);
-		m_Fov_Slider.SetMaxValue(s_FovMaxValue - s_FovMinValue);
 		m_Fov_Slider.SetText(fovText);
 		m_Fov_Slider.SetSize(cellSize1);
 		m_Fov_Slider.Render();
@@ -211,6 +210,11 @@ namespace onion::voxel
 		m_Telemetry_Button.Initialize();
 		m_Credits_Button.Initialize();
 		m_Done_Button.Initialize();
+
+		UserSettings settings = EngineContext::Get().Settings();
+		// Set FOV slider value based on current settings
+		float fovValue = settings.Controls.FOV - s_FovMinValue;
+		m_Fov_Slider.SetValue((uint32_t) round(fovValue));
 
 		SetInitState(true);
 	}

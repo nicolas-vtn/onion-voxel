@@ -45,7 +45,7 @@ namespace onion::voxel
 		// ----- Settings -----
 	  private:
 		static const uint32_t s_MaxFps_MinValue = 30;
-		static const uint32_t s_MaxFps_MaxValue = 200;
+		static const uint32_t s_MaxFps_MaxValue = 250;
 
 		static const uint32_t s_RenderDistance_MinValue = 1;
 		static const uint32_t s_RenderDistance_MaxValue = 32;
