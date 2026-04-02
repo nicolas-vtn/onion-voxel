@@ -6,12 +6,39 @@ namespace onion::voxel
 {
 	MouseSettingsPanel::MouseSettingsPanel(const std::string& name)
 		: GuiElement(name), m_Title_Label(name + "_Title_Label"), m_Scroller(name + "_Scroller"),
-		  m_Done_Button(name + "_Done_Button")
+		  m_Done_Button(name + "_Done_Button"), m_MouseSensitivity_Slider(name + "_MouseSensitivity_Slider"),
+		  m_TouchscreenMode_Button(name + "_TouchscreenMode_Button"),
+		  m_MouseScrollSensitivity_Slider(name + "_MouseScrollSensitivity_Slider"),
+		  m_DiscreteScroll_Button(name + "_DiscreteScroll_Button"),
+		  m_InvertMouseX_Button(name + "_InvertMouseX_Button"), m_InvertMouseY_Button(name + "_InvertMouseY_Button"),
+		  m_AllowCursorChanges_Button(name + "_AllowCursorChanges_Button"), m_RawInput_Button(name + "_RawInput_Button")
 	{
 		SubscribeToControlEvents();
 
 		m_Title_Label.SetText("Mouse Settings");
 		m_Title_Label.SetTextAlignment(Font::eTextAlignment::Center);
+
+		m_MouseSensitivity_Slider.SetMaxValue(100);
+
+		m_TouchscreenMode_Button.SetText("Touchscreen Mode: OFF");
+		m_TouchscreenMode_Button.SetEnabled(false);
+
+		m_MouseScrollSensitivity_Slider.SetMaxValue(300);
+
+		m_DiscreteScroll_Button.SetText("Discrete Scrolling: OFF");
+		m_DiscreteScroll_Button.SetEnabled(false);
+
+		m_InvertMouseX_Button.SetText("Invert Mouse X: OFF");
+		m_InvertMouseX_Button.SetEnabled(false);
+
+		m_InvertMouseY_Button.SetText("Invert Mouse Y: OFF");
+		m_InvertMouseY_Button.SetEnabled(false);
+
+		m_AllowCursorChanges_Button.SetText("Allow Cursor Changes: OFF");
+		m_AllowCursorChanges_Button.SetEnabled(false);
+
+		m_RawInput_Button.SetText("Raw Input: ON");
+		m_RawInput_Button.SetEnabled(false);
 
 		m_Done_Button.SetText("Done");
 	}
@@ -79,6 +106,87 @@ namespace onion::voxel
 		const int yOffsetScroller = m_Scroller.GetContentYOffset();
 		const glm::ivec2 scrollerOffset(0, -yOffsetScroller);
 
+		// ----- Render Mouse Sensitivity Slider -----
+		const glm::ivec2 mouseSensitivitySliderSize = tableLayout.GetCellSize();
+		const glm::ivec2 mouseSensitivitySliderPosition = tableLayout.GetElementPosition(0, 0) + tableTopLeftCorner;
+		const uint32_t mouseSensitivitySliderValue = userSettings.Controls.mouseSettings.Sensitivity * 100.f;
+		const std::string mouseSensitivitySliderText =
+			"Sensitivity: " + std::to_string(mouseSensitivitySliderValue) + "%";
+		m_MouseSensitivity_Slider.SetText(mouseSensitivitySliderText);
+		m_MouseSensitivity_Slider.SetSize(mouseSensitivitySliderSize);
+		m_MouseSensitivity_Slider.SetPosition(mouseSensitivitySliderPosition + scrollerOffset);
+		m_MouseSensitivity_Slider.SetVisibility(
+			m_Scroller.GetControlVisibleArea(m_MouseSensitivity_Slider.GetPosition(), mouseSensitivitySliderSize));
+		m_MouseSensitivity_Slider.Render();
+
+		// ----- Render Touchscreen Mode Button -----
+		const glm::ivec2 touchscreenModeButtonSize = tableLayout.GetCellSize();
+		const glm::ivec2 touchscreenModeButtonPosition = tableLayout.GetElementPosition(0, 1) + tableTopLeftCorner;
+		m_TouchscreenMode_Button.SetSize(touchscreenModeButtonSize);
+		m_TouchscreenMode_Button.SetPosition(touchscreenModeButtonPosition + scrollerOffset);
+		m_TouchscreenMode_Button.SetVisibility(
+			m_Scroller.GetControlVisibleArea(m_TouchscreenMode_Button.GetPosition(), touchscreenModeButtonSize));
+		m_TouchscreenMode_Button.Render();
+
+		// ----- Render Mouse Scroll Sensitivity Slider -----
+		const glm::ivec2 mouseScrollSensitivitySliderSize = tableLayout.GetCellSize();
+		const glm::ivec2 mouseScrollSensitivitySliderPosition =
+			tableLayout.GetElementPosition(1, 0) + tableTopLeftCorner;
+		const float mouseScrollSensitivitySliderValue = userSettings.Controls.mouseSettings.ScrollSensitivity * 100.f;
+		const std::string mouseScrollSensitivitySliderText =
+			"Scroll Sensitivity: " + std::to_string(mouseScrollSensitivitySliderValue);
+		m_MouseScrollSensitivity_Slider.SetText(mouseScrollSensitivitySliderText);
+		m_MouseScrollSensitivity_Slider.SetSize(mouseScrollSensitivitySliderSize);
+		m_MouseScrollSensitivity_Slider.SetPosition(mouseScrollSensitivitySliderPosition + scrollerOffset);
+		m_MouseScrollSensitivity_Slider.SetVisibility(m_Scroller.GetControlVisibleArea(
+			m_MouseScrollSensitivity_Slider.GetPosition(), mouseScrollSensitivitySliderSize));
+		m_MouseScrollSensitivity_Slider.Render();
+
+		// ----- Render Discrete Scroll Button -----
+		const glm::ivec2 discreteScrollButtonSize = tableLayout.GetCellSize();
+		const glm::ivec2 discreteScrollButtonPosition = tableLayout.GetElementPosition(1, 1) + tableTopLeftCorner;
+		m_DiscreteScroll_Button.SetSize(discreteScrollButtonSize);
+		m_DiscreteScroll_Button.SetPosition(discreteScrollButtonPosition + scrollerOffset);
+		m_DiscreteScroll_Button.SetVisibility(
+			m_Scroller.GetControlVisibleArea(m_DiscreteScroll_Button.GetPosition(), discreteScrollButtonSize));
+		m_DiscreteScroll_Button.Render();
+
+		/// ----- Render Invert Mouse X Button -----
+		const glm::ivec2 invertMouseXButtonSize = tableLayout.GetCellSize();
+		const glm::ivec2 invertMouseXButtonPosition = tableLayout.GetElementPosition(2, 0) + tableTopLeftCorner;
+		m_InvertMouseX_Button.SetSize(invertMouseXButtonSize);
+		m_InvertMouseX_Button.SetPosition(invertMouseXButtonPosition + scrollerOffset);
+		m_InvertMouseX_Button.SetVisibility(
+			m_Scroller.GetControlVisibleArea(m_InvertMouseX_Button.GetPosition(), invertMouseXButtonSize));
+		m_InvertMouseX_Button.Render();
+
+		// ----- Render Invert Mouse Y Button -----
+		const glm::ivec2 invertMouseYButtonSize = tableLayout.GetCellSize();
+		const glm::ivec2 invertMouseYButtonPosition = tableLayout.GetElementPosition(2, 1) + tableTopLeftCorner;
+		m_InvertMouseY_Button.SetSize(invertMouseYButtonSize);
+		m_InvertMouseY_Button.SetPosition(invertMouseYButtonPosition + scrollerOffset);
+		m_InvertMouseY_Button.SetVisibility(
+			m_Scroller.GetControlVisibleArea(m_InvertMouseY_Button.GetPosition(), invertMouseYButtonSize));
+		m_InvertMouseY_Button.Render();
+
+		// ----- Render Allow Cursor Changes Button -----
+		const glm::ivec2 allowCursorChangesButtonSize = tableLayout.GetCellSize();
+		const glm::ivec2 allowCursorChangesButtonPosition = tableLayout.GetElementPosition(3, 0) + tableTopLeftCorner;
+		m_AllowCursorChanges_Button.SetSize(allowCursorChangesButtonSize);
+		m_AllowCursorChanges_Button.SetPosition(allowCursorChangesButtonPosition + scrollerOffset);
+		m_AllowCursorChanges_Button.SetVisibility(
+			m_Scroller.GetControlVisibleArea(m_AllowCursorChanges_Button.GetPosition(), allowCursorChangesButtonSize));
+		m_AllowCursorChanges_Button.Render();
+
+		// ----- Render Raw Input Button -----
+		const glm::ivec2 rawInputButtonSize = tableLayout.GetCellSize();
+		const glm::ivec2 rawInputButtonPosition = tableLayout.GetElementPosition(3, 1) + tableTopLeftCorner;
+		m_RawInput_Button.SetSize(rawInputButtonSize);
+		m_RawInput_Button.SetPosition(rawInputButtonPosition + scrollerOffset);
+		m_RawInput_Button.SetVisibility(
+			m_Scroller.GetControlVisibleArea(m_RawInput_Button.GetPosition(), rawInputButtonSize));
+		m_RawInput_Button.Render();
+
 		//// ----- Render Mouse Settings Button -----
 		//const glm::ivec2 mouseSettingsButtonSize = tableLayout.GetCellSize();
 		//const glm::ivec2 mouseSettingsButtonPosition = tableLayout.GetElementPosition(0, 0) + tableTopLeftCorner;
@@ -105,6 +213,14 @@ namespace onion::voxel
 	{
 		m_Title_Label.Initialize();
 		m_Scroller.Initialize();
+		m_MouseSensitivity_Slider.Initialize();
+		m_TouchscreenMode_Button.Initialize();
+		m_MouseScrollSensitivity_Slider.Initialize();
+		m_DiscreteScroll_Button.Initialize();
+		m_InvertMouseX_Button.Initialize();
+		m_InvertMouseY_Button.Initialize();
+		m_AllowCursorChanges_Button.Initialize();
+		m_RawInput_Button.Initialize();
 		m_Done_Button.Initialize();
 
 		UserSettings settings = EngineContext::Get().Settings();
@@ -117,6 +233,14 @@ namespace onion::voxel
 	{
 		m_Title_Label.Delete();
 		m_Scroller.Delete();
+		m_MouseSensitivity_Slider.Delete();
+		m_TouchscreenMode_Button.Delete();
+		m_MouseScrollSensitivity_Slider.Delete();
+		m_DiscreteScroll_Button.Delete();
+		m_InvertMouseX_Button.Delete();
+		m_InvertMouseY_Button.Delete();
+		m_AllowCursorChanges_Button.Delete();
+		m_RawInput_Button.Delete();
 		m_Done_Button.Delete();
 
 		SetDeletedState(true);
@@ -126,6 +250,14 @@ namespace onion::voxel
 	{
 		m_Title_Label.ReloadTextures();
 		m_Scroller.ReloadTextures();
+		m_MouseSensitivity_Slider.ReloadTextures();
+		m_TouchscreenMode_Button.ReloadTextures();
+		m_MouseScrollSensitivity_Slider.ReloadTextures();
+		m_DiscreteScroll_Button.ReloadTextures();
+		m_InvertMouseX_Button.ReloadTextures();
+		m_InvertMouseY_Button.ReloadTextures();
+		m_AllowCursorChanges_Button.ReloadTextures();
+		m_RawInput_Button.ReloadTextures();
 		m_Done_Button.ReloadTextures();
 	}
 

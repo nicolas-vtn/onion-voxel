@@ -32,7 +32,21 @@ namespace onion::voxel
 		Label m_Title_Label;
 		Scroller m_Scroller;
 
+		Slider m_MouseSensitivity_Slider;
+		Button m_TouchscreenMode_Button;
+		Slider m_MouseScrollSensitivity_Slider;
+		Button m_DiscreteScroll_Button;
+		Button m_InvertMouseX_Button;
+		Button m_InvertMouseY_Button;
+		Button m_AllowCursorChanges_Button;
+		Button m_RawInput_Button;
+
 		Button m_Done_Button;
+
+		// ----- Settings -----
+	  private:
+		static inline const float s_MouseScrollSensitivity_MinValue = 0.01f;
+		static inline const float s_MouseScrollSensitivity_MaxValue = 3.f;
 
 		// ----- States -----
 	  private:
