@@ -100,7 +100,10 @@ namespace onion::voxel
 
 	// ----- Constructor / Destructor -----
 
-	WorldGenerator::WorldGenerator() {}
+	WorldGenerator::WorldGenerator()
+	{
+		ConfigureNoiseGenerators();
+	}
 
 	WorldGenerator::~WorldGenerator()
 	{
@@ -134,6 +137,7 @@ namespace onion::voxel
 	void WorldGenerator::SetSeed(uint32_t seed)
 	{
 		m_Seed = seed;
+		ConfigureNoiseGenerators();
 	}
 
 	WorldGenerator::eWorldGenerationType WorldGenerator::GetWorldGenerationType() const
