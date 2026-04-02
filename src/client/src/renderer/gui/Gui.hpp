@@ -13,6 +13,7 @@
 #include "panels/pause_panel/PausePanel.hpp"
 #include "panels/resource_packs_panel/ResourcePacksPanel.hpp"
 #include "panels/singleplayer_panel/SingleplayerPanel.hpp"
+#include "panels/video_settings_panel/VideoSettingsPanel.hpp"
 
 namespace onion::voxel
 {
@@ -68,6 +69,7 @@ namespace onion::voxel
 		MainMenuPanel m_MainMenuPanel;
 		PausePanel m_PausePanel;
 		OptionsPanel m_OptionsPanel;
+		VideoSettingsPanel m_VideoSettingsPanel;
 		ResourcePacksPanel m_ResourcePacksPanel;
 		SingleplayerPanel m_SingleplayerPanel;
 

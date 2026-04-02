@@ -30,7 +30,6 @@ namespace onion::voxel
 		m_MusicAndSounds_Button.SetEnabled(false);
 
 		m_VideoSettings_Button.SetText("Video Settings...");
-		m_VideoSettings_Button.SetEnabled(false);
 
 		m_Controls_Button.SetText("Controls...");
 		m_Controls_Button.SetEnabled(false);
@@ -270,6 +269,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_Fov_Slider.OnValueChanged.Subscribe([this](const Slider& sender)
 																	   { Handle_Fov_Slider_ValueChanged(sender); }));
+
+		m_EventHandles.push_back(m_VideoSettings_Button.OnClick.Subscribe([this](const Button& sender)
+																		  { Handle_VideoSettings_Click(sender); }));
 	}
 
 	void OptionsPanel::Handle_MusicAndSounds_Click(const Button& sender)
@@ -307,6 +309,12 @@ namespace onion::voxel
 		eventArgs.FOV_Changed = true;
 
 		EvtUserSettingsChanged.Trigger(eventArgs);
+	}
+
+	void OptionsPanel::Handle_VideoSettings_Click(const Button& sender)
+	{
+		(void) sender; // Unused
+		RequestMenuNavigation.Trigger({this, eMenu::VideoSettings});
 	}
 
 } // namespace onion::voxel

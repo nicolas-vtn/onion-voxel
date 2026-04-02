@@ -28,6 +28,7 @@ namespace onion::voxel
 		Singleplayer,
 		Multiplayer,
 		Options,
+		VideoSettings,
 		Gameplay,
 		Pause,
 		MusicAndSounds,

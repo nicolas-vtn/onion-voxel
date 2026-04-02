@@ -27,7 +27,8 @@ namespace onion::voxel
 	Gui::Gui()
 		: m_DemoPanel("DemoPanel"), m_MainMenuPanel("MainMenuPanel"), m_PausePanel("PausePanel"),
 		  m_OptionsPanel("OptionsPanel"), m_ResourcePacksPanel("ResourcePacksPanel"),
-		  m_DemoScrollingPanel("DemoScrollingPanel"), m_SingleplayerPanel("SingleplayerPanel")
+		  m_DemoScrollingPanel("DemoScrollingPanel"), m_SingleplayerPanel("SingleplayerPanel"),
+		  m_VideoSettingsPanel("VideoSettingsPanel")
 	{
 		SubscribeToPanelsEvents();
 	}
@@ -83,6 +84,12 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_SingleplayerPanel.EvtPlayWorld.Subscribe(
 			[this](const WorldInfos& worldInfos) { RequestStartSingleplayerGame.Trigger(worldInfos); }));
+
+		m_EventHandles.push_back(m_VideoSettingsPanel.EvtRequestBackNavigation.Subscribe(
+			[this](const GuiElement* sender) { Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_VideoSettingsPanel.EvtUserSettingsChanged.Subscribe(
+			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -265,6 +272,7 @@ namespace onion::voxel
 		m_OptionsPanel.Initialize();
 		m_ResourcePacksPanel.Initialize();
 		m_SingleplayerPanel.Initialize();
+		m_VideoSettingsPanel.Initialize();
 	}
 
 	void Gui::Render()
@@ -298,6 +306,9 @@ namespace onion::voxel
 			case eMenu::Options:
 				m_OptionsPanel.Render();
 				break;
+			case eMenu::VideoSettings:
+				m_VideoSettingsPanel.Render();
+				break;
 			case eMenu::ResourcePacks:
 				m_ResourcePacksPanel.Render();
 				break;
@@ -321,6 +332,7 @@ namespace onion::voxel
 		m_OptionsPanel.Delete();
 		m_ResourcePacksPanel.Delete();
 		m_SingleplayerPanel.Delete();
+		m_VideoSettingsPanel.Delete();
 	}
 
 	void Gui::ReloadTextures()
@@ -332,6 +344,7 @@ namespace onion::voxel
 		m_OptionsPanel.ReloadTextures();
 		m_ResourcePacksPanel.ReloadTextures();
 		m_SingleplayerPanel.ReloadTextures();
+		m_VideoSettingsPanel.ReloadTextures();
 	}
 
 } // namespace onion::voxel

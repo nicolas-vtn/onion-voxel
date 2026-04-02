@@ -59,5 +59,6 @@ namespace onion::voxel
 		void Handle_ResourcePacks_Click(const Button& sender);
 		void Handle_Done_Click(const Button& sender);
 		void Handle_Fov_Slider_ValueChanged(const Slider& sender);
+		void Handle_VideoSettings_Click(const Button& sender);
 	};
 } // namespace onion::voxel

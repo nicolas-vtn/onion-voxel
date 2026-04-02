@@ -3,7 +3,6 @@
 #include <filesystem>
 
 #include "controls/ControlsSettings.hpp"
-#include "quality_and_perf_settings/QualityAndPerfSettings.hpp"
 #include "video_settings/VideoSettings.hpp"
 
 namespace onion::voxel
@@ -18,9 +17,8 @@ namespace onion::voxel
 		// ----- Public Members -----
 	  public:
 		std::string Version = "1.0";
-		ControlsSettings Controls{};
-		QualityAndPerfSettings QualityAndPerf{};
 		VideoSettings Video{};
+		ControlsSettings Controls{};
 
 		// ----- Load / Save -----
 	  public:
@@ -30,8 +28,7 @@ namespace onion::voxel
 
 	template <typename BasicJsonType> inline void to_json(BasicJsonType& j, const UserSettings& s)
 	{
-		j = BasicJsonType{
-			{"Version", s.Version}, {"QualityAndPerf", s.QualityAndPerf}, {"Video", s.Video}, {"Controls", s.Controls}};
+		j = BasicJsonType{{"Version", s.Version}, {"Video", s.Video}, {"Controls", s.Controls}};
 	}
 
 	template <typename BasicJsonType> inline void from_json(const BasicJsonType& j, UserSettings& s)
@@ -41,9 +38,6 @@ namespace onion::voxel
 
 		if (j.contains("Controls"))
 			j.at("Controls").get_to(s.Controls);
-
-		if (j.contains("QualityAndPerf"))
-			j.at("QualityAndPerf").get_to(s.QualityAndPerf);
 
 		if (j.contains("Video"))
 			j.at("Video").get_to(s.Video);
