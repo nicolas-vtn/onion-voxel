@@ -94,6 +94,8 @@ namespace onion::voxel
 		std::vector<EventHandle> m_RendererEventHandles;
 		void SubscribeToRendererEvents();
 
+		void Handle_RenderDistanceChanged(uint8_t renderDistance);
+
 		// ----- Logger -----
 	  private:
 		eLogLevel m_LogLevel = eLogLevel::All;

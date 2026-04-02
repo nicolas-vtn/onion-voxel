@@ -85,7 +85,7 @@ namespace onion::voxel
 		uint8_t GetChunkPersistanceDistance() const;
 		void SetChunkPersistanceDistance(uint8_t distance);
 
-		void SetServerSimulationDistance(uint8_t distance);
+		void SetChunkLoadingDistance(uint8_t distance);
 
 		bool IsTriggeringEventMissingChunks() const;
 		void SetTriggeringEventMissingChunks(bool trigger);
@@ -121,7 +121,7 @@ namespace onion::voxel
 		// ----- Members -----
 	  private:
 		std::atomic_uint8_t m_ChunkPersistanceDistance{5};
-		std::atomic_uint8_t m_ServerSimulationDistance{5};
+		std::atomic_uint8_t m_ChunkLoadingDistance{5};
 
 		std::unique_ptr<WorldGenerator> m_WorldGenerator;
 		std::unique_ptr<WorldSave> m_WorldSave;

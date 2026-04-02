@@ -67,12 +67,15 @@ namespace onion::voxel
 		void SetServerInfo(std::shared_ptr<ServerInfo> serverInfo);
 		std::shared_ptr<ServerInfo> GetServerInfo() const;
 
+		uint8_t GetRenderDistance() const;
+
 		void SetPlayerUUID(const std::string& uuid);
 
 		// ----- Events -----
 	  public:
 		Event<const WorldInfos&> RequestStartSingleplayerGame;
 		Event<const Gui::MultiplayerGameStartInfo&> RequestStartMultiplayerGame;
+		Event<uint8_t> EvtRenderDistanceChanged;
 		Event<bool> RequestQuitToMainMenu;
 
 		// ----- Internal Methods -----
@@ -105,6 +108,9 @@ namespace onion::voxel
 
 		double m_DeltaTime = 0.0f;
 		double m_LastFrame = 0.0f;
+		bool m_IsVsyncEnabled = true;
+		uint32_t m_MaxFps = 60;
+		void CapFPS(double targetFrameTime);
 
 		// ----- Configurations -----
 	  private:

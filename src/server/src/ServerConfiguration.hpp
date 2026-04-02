@@ -15,6 +15,7 @@ namespace onion::voxel
 		std::string ServerName = "DefaultServer";
 		std::string UUID;
 		uint16_t Port = 7777;
+		std::filesystem::path WorldDirectory{};
 		uint8_t SimulationDistance = 8;
 		uint32_t Seed = 1;
 		uint8_t WorldGenerationType = 1;

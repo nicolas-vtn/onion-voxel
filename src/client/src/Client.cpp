@@ -82,7 +82,6 @@ namespace onion::voxel
 		m_Config.Load(m_ConfigFilePath);
 
 		// Apply configuration to the client
-		m_WorldManager->SetChunkPersistanceDistance(m_Config.clientData.RenderDistance);
 		m_Renderer.SetPlayerUUID(m_Config.clientData.UUID);
 	}
 
@@ -93,13 +92,22 @@ namespace onion::voxel
 
 	void Client::Handle_StartSingleplayerRequest(const WorldInfos& worldInfos)
 	{
-		m_NetworkClient.SetRemoteHost("127.0.0.1");
-		m_NetworkClient.SetRemotePort(7777);
+		std::string host = "127.0.0.1";
+		uint16_t port = 7777;
+
+		m_NetworkClient.SetRemoteHost(host);
+		m_NetworkClient.SetRemotePort(port);
 
 		// Starts a Server on Localhost
 		if (m_LocalhostServer == nullptr)
 		{
-			m_LocalhostServer = std::make_unique<Server>(worldInfos.SaveDirectory);
+			ServerConfiguration cfg;
+			cfg.serverData.ServerName = host;
+			cfg.serverData.UUID = Utils::GenerateUUID();
+			cfg.serverData.Port = port;
+			cfg.serverData.SimulationDistance = m_Renderer.GetRenderDistance();
+			cfg.serverData.WorldDirectory = worldInfos.SaveDirectory;
+			m_LocalhostServer = std::make_unique<Server>(cfg);
 			m_LocalhostServer->Start();
 		}
 		else
@@ -238,6 +246,17 @@ namespace onion::voxel
 		m_RendererEventHandles.push_back(m_Renderer.RequestStartMultiplayerGame.Subscribe(
 			[this](const Gui::MultiplayerGameStartInfo& multiplayerGameStartInfo)
 			{ Handle_StartMultiplayerRequest(multiplayerGameStartInfo); }));
+
+		m_RendererEventHandles.push_back(m_Renderer.EvtRenderDistanceChanged.Subscribe(
+			[this](uint8_t renderDistance) { Handle_RenderDistanceChanged(renderDistance); }));
+	}
+
+	void Client::Handle_RenderDistanceChanged(uint8_t renderDistance)
+	{
+		if (m_LocalhostServer != nullptr)
+		{
+			m_LocalhostServer->SetChunkLoadingDistance(renderDistance);
+		}
 	}
 
 	void Client::SubscribeToNetworkClientEvents()
@@ -308,7 +327,7 @@ namespace onion::voxel
 		serverInfo->SimulationDistance = msg.SimulationDistance;
 
 		m_Renderer.SetServerInfo(serverInfo);
-		m_WorldManager->SetServerSimulationDistance(msg.SimulationDistance);
+		m_WorldManager->SetChunkLoadingDistance(msg.SimulationDistance);
 	}
 
 	void Client::Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg)

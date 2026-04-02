@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <random>
 #include <string>
 
 namespace onion::voxel::Utils
@@ -78,6 +79,18 @@ namespace onion::voxel::Utils
 		}
 
 		return result;
+	}
+
+	std::string GenerateUUID()
+	{
+		// Generate a random UUID
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_int_distribution<> dis(0, 15);
+		std::string uuid;
+		for (int i = 0; i < 32; i++)
+			uuid += "0123456789abcdef"[dis(gen)];
+		return uuid;
 	}
 
 } // namespace onion::voxel::Utils

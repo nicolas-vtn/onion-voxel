@@ -107,6 +107,11 @@ namespace onion::voxel
 		return m_ServerInfo;
 	}
 
+	uint8_t Renderer::GetRenderDistance() const
+	{
+		return m_WorldManager->GetChunkPersistanceDistance();
+	}
+
 	void Renderer::SetPlayerUUID(const std::string& uuid)
 	{
 		m_PlayerUUID = uuid;
@@ -255,6 +260,13 @@ namespace onion::voxel
 			// Swap buffers and poll events
 			glfwSwapBuffers(m_Window);
 			glfwPollEvents();
+
+			// Cap FPS if needed
+			if (!m_IsVsyncEnabled && m_MaxFps > 0)
+			{
+				double targetFrameTime = 1.0 / static_cast<double>(m_MaxFps);
+				CapFPS(targetFrameTime);
+			}
 		}
 
 		// Cleanup
@@ -303,6 +315,35 @@ namespace onion::voxel
 		stbi_image_free(pixels);
 	}
 
+	void Renderer::CapFPS(double targetFrameTime)
+	{
+		using clock = std::chrono::high_resolution_clock;
+
+		static auto lastTime = clock::now();
+
+		auto now = clock::now();
+		double elapsed = std::chrono::duration<double>(now - lastTime).count();
+
+		double remaining = targetFrameTime - elapsed;
+
+		if (remaining > 0.0)
+		{
+			// Sleep most of it (leave a small margin)
+			if (remaining > 0.002) // 2 ms safety margin
+			{
+				std::this_thread::sleep_for(std::chrono::duration<double>(remaining - 0.001));
+			}
+
+			// Busy wait for precision
+			while (std::chrono::duration<double>(clock::now() - lastTime).count() < targetFrameTime)
+			{
+				// spin
+			}
+		}
+
+		lastTime = clock::now();
+	}
+
 	std::filesystem::path Renderer::GetUserSettingsPath() const
 	{
 		return Utils::GetExecutableDirectory() / "user_settings.json";
@@ -329,6 +370,28 @@ namespace onion::voxel
 		if (args.MouseScrollSensitivity_Changed)
 		{
 			m_InputsManager.SetMouseScrollSensitivity(controls.mouseSettings.ScrollSensitivity);
+		}
+
+		if (args.VSyncEnabled_Changed)
+		{
+			m_IsVsyncEnabled = settings.Video.VSyncEnabled;
+			glfwSwapInterval(m_IsVsyncEnabled ? 1 : 0);
+		}
+
+		if (args.MaxFPS_Changed)
+		{
+			m_MaxFps = settings.Video.MaxFPS;
+		}
+
+		if (args.RenderDistance_Changed)
+		{
+			m_WorldManager->SetChunkPersistanceDistance(settings.Video.RenderDistance);
+			EvtRenderDistanceChanged.Trigger(settings.Video.RenderDistance);
+		}
+
+		if (args.SimulationDistance_Changed)
+		{
+			//m_WorldManager->SetSimulationDistance(settings.Video.SimulationDistance);
 		}
 
 		if (args.KeyBinds_Changed)
