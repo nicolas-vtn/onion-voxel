@@ -12,6 +12,8 @@
 #include <string>
 #include <thread>
 
+#include <onion/Timer.hpp>
+
 #include <shared/physics/PhysicsEngine.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
@@ -107,7 +109,9 @@ namespace onion::voxel
 		// ----- Configurations -----
 	  private:
 		std::filesystem::path GetUserSettingsPath() const;
-		void ApplyUserSettings();
+		void ApplyUserSettings(const UserSettingsChangedEventArgs& args);
+		Timer m_TimerDelayedSaveUserSettings;
+		void SaveUserSettings();
 
 		// ----- Inputs -----
 	  private:
@@ -171,6 +175,7 @@ namespace onion::voxel
 		void Handle_BackToGameRequest();
 		void Handle_QuitToMainMenuRequest(bool quit);
 		void Handle_ResourcePackChangeRequest(const std::string& resourcePackName);
+		void Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& args);
 
 		// ----- ImGui -----
 	  private:

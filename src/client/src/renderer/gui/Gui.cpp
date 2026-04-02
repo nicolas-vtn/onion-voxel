@@ -29,7 +29,7 @@ namespace onion::voxel
 		  m_OptionsPanel("OptionsPanel"), m_ResourcePacksPanel("ResourcePacksPanel"),
 		  m_DemoScrollingPanel("DemoScrollingPanel"), m_SingleplayerPanel("SingleplayerPanel")
 	{
-		SubscribeToPannelsEvents();
+		SubscribeToPanelsEvents();
 	}
 
 	Gui::~Gui()
@@ -37,7 +37,7 @@ namespace onion::voxel
 		m_EventHandles.clear();
 	}
 
-	void Gui::SubscribeToPannelsEvents()
+	void Gui::SubscribeToPanelsEvents()
 	{
 		m_EventHandles.push_back(GuiElement::RequestCursorStyleChange.Subscribe(
 			[this](const CursorStyle& style) { Handle_CursorStyleChangeRequest(style); }));
@@ -65,6 +65,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_OptionsPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																				{ Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_OptionsPanel.EvtUserSettingsChanged.Subscribe(
+			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
 
 		m_EventHandles.push_back(m_ResourcePacksPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																					  { Handle_BackRequest(sender); }));
@@ -130,6 +133,11 @@ namespace onion::voxel
 		std::cout << "Selected Resource Pack: " << resourcePackName << std::endl;
 
 		RequestResourcePackChange.Trigger(resourcePackName);
+	}
+
+	void Gui::Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& eventArgs)
+	{
+		UserSettingsChanged.Trigger(eventArgs);
 	}
 
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)

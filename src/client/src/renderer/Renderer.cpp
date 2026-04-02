@@ -24,6 +24,11 @@ namespace onion::voxel
 		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager),
 		  m_EntityRenderer(m_Camera)
 	{
+		// Setup Timer Save UserSettings
+		m_TimerDelayedSaveUserSettings.setTimeoutFunction([this]() { SaveUserSettings(); });
+		m_TimerDelayedSaveUserSettings.setElapsedPeriod(std::chrono::milliseconds(1000));
+		m_TimerDelayedSaveUserSettings.setRepeat(false);
+
 		// Load User Settings
 		std::filesystem::path userSettingsPath = GetUserSettingsPath();
 		UserSettings settings = UserSettings::Load(userSettingsPath);
@@ -38,7 +43,8 @@ namespace onion::voxel
 		// Sets the Engine Context
 		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager, settings);
 
-		ApplyUserSettings();
+		UserSettingsChangedEventArgs args(settings, true);
+		ApplyUserSettings(args);
 	}
 
 	Renderer::~Renderer()
@@ -302,15 +308,42 @@ namespace onion::voxel
 		return Utils::GetExecutableDirectory() / "user_settings.json";
 	}
 
-	void Renderer::ApplyUserSettings()
+	void Renderer::ApplyUserSettings(const UserSettingsChangedEventArgs& args)
 	{
-		const auto settings = EngineContext::Get().Settings();
+		EngineContext::Get().UpdateSettings(args.NewSettings);
+
+		const auto& settings = args.NewSettings;
 
 		// ----- Apply Controls Settings -----
 		const auto& controls = settings.Controls;
-		m_InputsManager.SetMouseSensitivity(controls.mouseSettings.Sensitivity);
-		m_InputsManager.SetMouseScrollSensitivity(controls.mouseSettings.ScrollSensitivity);
-		RegisterInputs();
+		if (args.FOV_Changed)
+		{
+			m_Camera->SetFovY(controls.FOV);
+		}
+
+		if (args.MouseSensitivity_Changed)
+		{
+			m_InputsManager.SetMouseSensitivity(controls.mouseSettings.Sensitivity);
+		}
+
+		if (args.MouseScrollSensitivity_Changed)
+		{
+			m_InputsManager.SetMouseScrollSensitivity(controls.mouseSettings.ScrollSensitivity);
+		}
+
+		if (args.KeyBinds_Changed)
+		{
+			RegisterInputs();
+		}
+
+		// Restart the Save timer : Will be saved in 1s if no other setting is changed
+		m_TimerDelayedSaveUserSettings.Restart();
+	}
+
+	void Renderer::SaveUserSettings()
+	{
+		std::filesystem::path userSettingsPath = GetUserSettingsPath();
+		EngineContext::Get().SaveSettings(userSettingsPath);
 	}
 
 	void Renderer::SubscribeToInputsManagerEvents()
@@ -869,6 +902,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_Gui.RequestResourcePackChange.Subscribe(
 			[this](const std::string& resourcePackName) { Handle_ResourcePackChangeRequest(resourcePackName); }));
+
+		m_EventHandles.push_back(m_Gui.UserSettingsChanged.Subscribe([this](const UserSettingsChangedEventArgs& args)
+																	 { Handle_UserSettingsChanged(args); }));
 	}
 
 	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)
@@ -923,6 +959,12 @@ namespace onion::voxel
 		m_Gui.ReloadTextures();
 		m_WorldRenderer.ReloadTextures();
 		m_EntityRenderer.ReloadTextures();
+	}
+
+	void Renderer::Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& args)
+	{
+		//std::cout << "User settings changed. Applying new settings...\n";
+		ApplyUserSettings(args);
 	}
 
 	void Renderer::InitImGui()

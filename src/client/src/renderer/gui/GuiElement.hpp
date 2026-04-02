@@ -17,6 +17,8 @@
 
 namespace onion::voxel
 {
+	class UserSettingsChangedEventArgs;
+
 	enum class eMenu
 	{
 		None,
@@ -128,5 +130,44 @@ namespace onion::voxel
 
 		std::atomic_bool m_HasBeenInit{false};
 		std::atomic_bool m_HasBeenDeleted{false};
+	};
+
+	// ----- Event Args Classes -----
+	class UserSettingsChangedEventArgs
+	{
+
+	  public:
+		UserSettingsChangedEventArgs(const UserSettings& newSettings, bool allChanged = false)
+			: NewSettings(newSettings)
+		{
+			if (allChanged)
+			{
+				RenderDistance_Changed = true;
+				SimulationDistance_Changed = true;
+				MaxFPS_Changed = true;
+				VSyncEnabled_Changed = true;
+				FOV_Changed = true;
+				MouseSensitivity_Changed = true;
+				MouseScrollSensitivity_Changed = true;
+				KeyBinds_Changed = true;
+			}
+		}
+
+	  public:
+		UserSettings NewSettings;
+
+		bool RenderDistance_Changed = false;
+		bool SimulationDistance_Changed = false;
+
+		bool MaxFPS_Changed = false;
+		bool VSyncEnabled_Changed = false;
+
+		bool FOV_Changed = false;
+
+		bool MouseSensitivity_Changed = false;
+		bool MouseScrollSensitivity_Changed = false;
+
+		bool KeyBinds_Changed = false;
+		std::unordered_map<eAction, Key> ChangedKeyBinds; // Action -> NewKey
 	};
 } // namespace onion::voxel
