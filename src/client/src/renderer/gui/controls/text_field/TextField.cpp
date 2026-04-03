@@ -178,6 +178,15 @@ namespace onion::voxel
 	void TextField::SetText(const std::string& text)
 	{
 		m_Text = text;
+
+		// Reset States
+		m_CursorPosition = std::min(m_CursorPosition, m_Text.size());
+		if (m_SelectionStart != SIZE_MAX)
+		{
+			m_SelectionStart = std::min(m_SelectionStart, m_Text.size());
+			if (m_SelectionStart == m_CursorPosition)
+				m_SelectionStart = SIZE_MAX; // No selection if selection start and cursor position are the same
+		}
 	}
 
 	std::string TextField::GetText() const
