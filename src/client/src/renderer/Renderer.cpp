@@ -167,19 +167,43 @@ namespace onion::voxel
 		InitImGui();
 	}
 
-	void Renderer::InitOpenGlState()
+	void Renderer::InitOpenGl()
 	{
+		// ----- OpenGL State -----
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
-
-		//glEnable(GL_CULL_FACE);
-		//glCullFace(GL_BACK);
-		//glFrontFace(GL_CCW);
-
 		glDisable(GL_CULL_FACE);
-
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		// ----- OpenGL Buffers -----
+		glGenFramebuffers(1, &m_SceneFBO);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_SceneFBO);
+
+		// Color texture
+		glGenTextures(1, &m_SceneColorTexture);
+		glBindTexture(GL_TEXTURE_2D, m_SceneColorTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_WindowWidth, m_WindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_SceneColorTexture, 0);
+
+		// Depth buffer
+		glGenRenderbuffers(1, &m_DepthRenderBuffer);
+		glBindRenderbuffer(GL_RENDERBUFFER, m_DepthRenderBuffer);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_WindowWidth, m_WindowHeight);
+
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_DepthRenderBuffer);
+
+		// Check
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			std::cerr << "Framebuffer not complete!" << std::endl;
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void Renderer::RenderThreadFunction(std::stop_token st)
@@ -188,7 +212,7 @@ namespace onion::voxel
 
 		InitWindow();
 
-		InitOpenGlState();
+		InitOpenGl();
 
 		Gui::StaticInitialize();
 		DebugDraws::ScreenWidth = m_WindowWidth;
@@ -209,7 +233,6 @@ namespace onion::voxel
 
 			// Pool inputs
 			m_InputsManager.PoolInputs();
-			//m_InputsSnapshot = m_InputsManager.GetInputsSnapshot();
 
 			// Process Global Inputs
 			ProcessInputs();
@@ -226,28 +249,17 @@ namespace onion::voxel
 			// DEBUG : Sets DebugDraws ViewProj Matrix
 			DebugDraws::SetViewProjMatrix(viewProjectionMatrix);
 
-			// Render World
-			if (GetRenderState() == eRenderState::InGame)
+			// Draws the 3D Scene to the FBO
+			RenderSceneToFBO();
+
+			bool blurry = true;
+			if (blurry)
 			{
-				if (!m_IsPaused)
-				{
-					m_WorldManager->RemoveDistantChunks();
-					constexpr float maxDeltaTime = 1.f / 30.f; // Cap delta time to avoid big jumps
-					float deltaTime = static_cast<float>(m_DeltaTime);
-					m_PhysicsEngine.Update(std::min(deltaTime, maxDeltaTime));
-				}
-
-				m_WorldRenderer.Render();
-
-				// Render the Player entity only when in freecam mode.
-				std::vector<std::string> hiddenEntities;
-				if (!m_IsFreeCamera)
-				{
-					hiddenEntities.push_back(m_PlayerUUID);
-				}
-
-				m_EntityRenderer.RenderEntities(hiddenEntities);
+				// ????
 			}
+
+			// Draws the FBO texture to the screen
+			PresentScene();
 
 			// Render GUI
 			m_Gui.Render();
@@ -419,10 +431,20 @@ namespace onion::voxel
 
 	void Renderer::Handle_FramebufferResized(const FramebufferState& framebufferState)
 	{
-		glViewport(0, 0, framebufferState.Width, framebufferState.Height);
-
 		m_WindowWidth = framebufferState.Width;
 		m_WindowHeight = framebufferState.Height;
+
+		glViewport(0, 0, m_WindowWidth, m_WindowHeight);
+
+		// Resize color texture
+		glBindTexture(GL_TEXTURE_2D, m_SceneColorTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_WindowWidth, m_WindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		// Resize depth buffer (THIS WAS MISSING)
+		glBindRenderbuffer(GL_RENDERBUFFER, m_DepthRenderBuffer);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_WindowWidth, m_WindowHeight);
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
 		DebugDraws::ScreenWidth = m_WindowWidth;
 		DebugDraws::ScreenHeight = m_WindowHeight;
@@ -1150,6 +1172,95 @@ namespace onion::voxel
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
 
-	void Renderer::CleanupOpenGl() {}
+	void Renderer::CleanupOpenGl()
+	{
+		// ----- Cleanup Shaders -----
+		m_ScreenShader.Delete();
+
+		// ----- Cleanup Buffers -----
+		glDeleteFramebuffers(1, &m_SceneFBO);
+		glDeleteTextures(1, &m_SceneColorTexture);
+		glDeleteRenderbuffers(1, &m_DepthRenderBuffer);
+	}
+
+	void Renderer::RenderSceneToFBO()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, m_SceneFBO);
+		glViewport(0, 0, m_WindowWidth, m_WindowHeight);
+
+		glEnable(GL_DEPTH_TEST);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		if (GetRenderState() == eRenderState::InGame)
+		{
+			if (!m_IsPaused)
+			{
+				m_WorldManager->RemoveDistantChunks();
+				constexpr float maxDeltaTime = 1.f / 30.f; // Cap delta time to avoid big jumps
+				float deltaTime = static_cast<float>(m_DeltaTime);
+				m_PhysicsEngine.Update(std::min(deltaTime, maxDeltaTime));
+			}
+
+			m_WorldRenderer.Render();
+
+			// Render the Player entity only when in freecam mode.
+			std::vector<std::string> hiddenEntities;
+			if (!m_IsFreeCamera)
+			{
+				hiddenEntities.push_back(m_PlayerUUID);
+			}
+
+			m_EntityRenderer.RenderEntities(hiddenEntities);
+		}
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	void Renderer::PresentScene()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glViewport(0, 0, m_WindowWidth, m_WindowHeight);
+
+		glDisable(GL_DEPTH_TEST);
+
+		m_ScreenShader.Use();
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_SceneColorTexture);
+		m_ScreenShader.setInt("u_Texture", 0);
+
+		RenderFullscreenQuad();
+	}
+
+	void Renderer::RenderFullscreenQuad()
+	{
+		static GLuint VAO = 0;
+		static GLuint VBO = 0;
+
+		if (VAO == 0)
+		{
+			float quadVertices[] = {// positions   // UVs
+									-1.f, 1.f, 0.f, 1.f, -1.f, -1.f, 0.f, 0.f, 1.f, -1.f, 1.f, 0.f,
+
+									-1.f, 1.f, 0.f, 1.f, 1.f,  -1.f, 1.f, 0.f, 1.f, 1.f,  1.f, 1.f};
+
+			glGenVertexArrays(1, &VAO);
+			glGenBuffers(1, &VBO);
+
+			glBindVertexArray(VAO);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+			glEnableVertexAttribArray(0);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*) 0);
+
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*) (2 * sizeof(float)));
+		}
+
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
 
 } // namespace onion::voxel
