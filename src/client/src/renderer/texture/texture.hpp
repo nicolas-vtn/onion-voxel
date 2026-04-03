@@ -97,6 +97,10 @@ namespace onion::voxel
 				int height,
 				int channels);
 
+		// ------------ PUBLIC HELPERS ------------
+	  public:
+		static unsigned int GetPixelFormat(int channels);
+
 		// ------------ OPENGL ------------
 	  private:
 		/// @brief The file path of the texture.

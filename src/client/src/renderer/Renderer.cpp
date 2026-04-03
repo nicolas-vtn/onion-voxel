@@ -982,6 +982,8 @@ namespace onion::voxel
 		// Enable mouse capture for gameplay
 		m_InputsManager.SetMouseCaptureEnabled(true);
 
+		m_Gui.SetIsInGame(true);
+
 		m_IsPaused = false;
 	}
 
@@ -1009,6 +1011,8 @@ namespace onion::voxel
 
 			m_WorldManager->RemoveAllChunks();
 			m_WorldRenderer.DeleteChunkMeshes();
+
+			m_Gui.SetIsInGame(false);
 
 			m_IsPaused = false;
 		}

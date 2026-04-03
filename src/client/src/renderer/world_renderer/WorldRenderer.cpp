@@ -25,6 +25,18 @@ namespace onion::voxel
 	{
 		m_TextureAtlas->Initialize(m_MeshBuilder.GetAllRegisteredTextureNames());
 		m_MeshBuilder.Initialize();
+
+		// Initialize Skybox
+		auto skyboxPath = EngineContext::Get().Assets->GetAssetsDirectory() / "textures" / "skybox";
+		Skybox::CubeMapTextures cubeMapTextures{
+			.RightFaceTexture = (skyboxPath / "right.bmp").string(),
+			.LeftFaceTexture = (skyboxPath / "left.bmp").string(),
+			.TopFaceTexture = (skyboxPath / "top.bmp").string(),
+			.BottomFaceTexture = (skyboxPath / "bottom.bmp").string(),
+			.FrontFaceTexture = (skyboxPath / "front.bmp").string(),
+			.BackFaceTexture = (skyboxPath / "back.bmp").string(),
+		};
+		m_Skybox.ReloadTextures(cubeMapTextures);
 	}
 
 	void WorldRenderer::PrepareForRendering()

@@ -276,6 +276,21 @@ namespace onion::voxel
 	{
 	}
 
+	unsigned int Texture::GetPixelFormat(int channels)
+	{
+		switch (channels)
+		{
+			case 1:
+				return GL_RED;
+			case 3:
+				return GL_RGB;
+			case 4:
+				return GL_RGBA;
+			default:
+				throw std::runtime_error("Unsupported channel count: " + std::to_string(channels));
+		}
+	}
+
 	Texture Texture::SubTexture(int x, int y, int width, int height) const
 	{
 		if (x < 0 || y < 0 || width <= 0 || height <= 0 || x + width > m_Width || y + height > m_Height)

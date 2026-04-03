@@ -6,6 +6,8 @@
 
 namespace onion::voxel
 {
+	Camera Gui::s_Camera(glm::vec3(0.f), 800, 600);
+
 	void Gui::StaticInitialize()
 	{
 		GuiElement::Load();
@@ -37,6 +39,36 @@ namespace onion::voxel
 	Gui::~Gui()
 	{
 		m_EventHandles.clear();
+	}
+
+	void Gui::ReloadSkyboxTextures()
+	{
+		// Reload the skybox textures.
+		auto pathPanorama = std::filesystem::path("assets") / "minecraft" / "textures" / "gui" / "title" / "background";
+		auto pathPano0 = pathPanorama / "panorama_0.png";
+		auto pathPano1 = pathPanorama / "panorama_1.png";
+		auto pathPano2 = pathPanorama / "panorama_2.png";
+		auto pathPano3 = pathPanorama / "panorama_3.png";
+		auto pathPano4 = pathPanorama / "panorama_4.png";
+		auto pathPano5 = pathPanorama / "panorama_5.png";
+
+		auto assetsManager = EngineContext::Get().Assets;
+		std::vector<uint8_t> dataPano0 = assetsManager->GetResourcePackFileBinary(pathPano0);
+		std::vector<uint8_t> dataPano1 = assetsManager->GetResourcePackFileBinary(pathPano1);
+		std::vector<uint8_t> dataPano2 = assetsManager->GetResourcePackFileBinary(pathPano2);
+		std::vector<uint8_t> dataPano3 = assetsManager->GetResourcePackFileBinary(pathPano3);
+		std::vector<uint8_t> dataPano4 = assetsManager->GetResourcePackFileBinary(pathPano4);
+		std::vector<uint8_t> dataPano5 = assetsManager->GetResourcePackFileBinary(pathPano5);
+
+		Skybox::CubeMapData cubeMapData{};
+		cubeMapData.RightFaceData = dataPano0;
+		cubeMapData.BackFaceData = dataPano1;
+		cubeMapData.LeftFaceData = dataPano2;
+		cubeMapData.FrontFaceData = dataPano3;
+		cubeMapData.TopFaceData = dataPano4;
+		cubeMapData.BottomFaceData = dataPano5;
+
+		m_Skybox.ReloadTextures(cubeMapData);
 	}
 
 	void Gui::SubscribeToPanelsEvents()
@@ -177,6 +209,7 @@ namespace onion::voxel
 	void Gui::Handle_FramebufferResized(const FramebufferState& framebufferState)
 	{
 		GuiElement::SetScreenSize(framebufferState.Width, framebufferState.Height);
+		s_Camera.SetAspectRatio(static_cast<float>(framebufferState.Width) / framebufferState.Height);
 	}
 
 	void Gui::RenderDebugPanel()
@@ -195,6 +228,11 @@ namespace onion::voxel
 				SetGuiScale(guiScale);
 			}
 		}
+
+		ImGui::Separator();
+
+		ImGui::SliderFloat("Skybox Rotation Period", &s_SkyboxRotationPeriod, 1.f, 500.f, "%.1f seconds");
+		ImGui::SliderFloat("Camera FOV", &s_CameraFov, 30.f, 120.f, "%.1f degrees");
 
 		ImGui::End();
 	}
@@ -285,6 +323,11 @@ namespace onion::voxel
 		return GuiElement::GetGuiScale();
 	}
 
+	void Gui::SetIsInGame(bool isInGame)
+	{
+		m_IsInGame = isInGame;
+	}
+
 	void Gui::Initialize()
 	{
 		m_DemoPanel.Initialize();
@@ -298,6 +341,8 @@ namespace onion::voxel
 		m_ControlsPanel.Initialize();
 		m_MouseSettingsPanel.Initialize();
 		m_KeyBindsPanel.Initialize();
+
+		ReloadSkyboxTextures();
 	}
 
 	void Gui::Render()
@@ -314,7 +359,29 @@ namespace onion::voxel
 			}
 		}
 
-		switch (GetActiveMenu())
+		// Render the skybox if we are not in-game
+		if (!m_IsInGame)
+		{
+			double time = glfwGetTime();
+
+			// Convert time --> angle (radians)
+			double angle = (time / s_SkyboxRotationPeriod) * glm::two_pi<double>();
+
+			// Rotate around Y axis
+			glm::vec3 facingDirection = glm::vec3(std::sin(angle), 0.0f, -std::cos(angle));
+
+			// Sets the camera position and orientation
+			s_Camera.SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+			s_Camera.SetFront(facingDirection);
+			s_Camera.SetFovY(s_CameraFov);
+
+			glm::mat4 view = s_Camera.GetViewMatrix();
+			glm::mat4 projection = s_Camera.GetProjectionMatrix();
+			m_Skybox.Render(view, projection);
+		}
+
+		const eMenu activeMenu = GetActiveMenu();
+		switch (activeMenu)
 		{
 			case eMenu::DemoPanel:
 				m_DemoPanel.Render();
@@ -369,6 +436,8 @@ namespace onion::voxel
 		m_ControlsPanel.Delete();
 		m_MouseSettingsPanel.Delete();
 		m_KeyBindsPanel.Delete();
+
+		m_Skybox.Unload();
 	}
 
 	void Gui::ReloadTextures()
@@ -384,6 +453,8 @@ namespace onion::voxel
 		m_ControlsPanel.ReloadTextures();
 		m_MouseSettingsPanel.ReloadTextures();
 		m_KeyBindsPanel.ReloadTextures();
+
+		ReloadSkyboxTextures();
 	}
 
 } // namespace onion::voxel

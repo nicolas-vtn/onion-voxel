@@ -1,0 +1,12 @@
+
+		----- ONION - VOXEL -----
+
+- Delete Variables.hpp
+- Blured Background
+- Pulsating home text (and in front of button text)
+- Multiplayer Menu (UI + Add Server + List of servers)
+- Key Binds Menu
+- Better ResourcePack menu (with scroller, filter and selectable tiles) + save last used
+
+
+- BUGFIX : Crash with Textfield after a world creation and going back to singleplayer and creating a new world

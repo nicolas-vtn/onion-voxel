@@ -6,6 +6,9 @@
 
 #include <user_settings/UserSettings.hpp>
 
+#include <renderer/camera/Camera.hpp>
+#include <renderer/skybox/Skybox.hpp>
+
 #include "panels/controls_panel/ControlsPanel.hpp"
 #include "panels/demo_panel/DemoPanel.hpp"
 #include "panels/demo_scrolling_panel/DemoScrollingPanel.hpp"
@@ -53,6 +56,7 @@ namespace onion::voxel
 		eMenu GetActiveMenu() const;
 		void SetGuiScale(int scale);
 		int GetGuiScale() const;
+		void SetIsInGame(bool isInGame);
 
 		// ----- Events -----
 	  public:
@@ -78,6 +82,15 @@ namespace onion::voxel
 		ControlsPanel m_ControlsPanel;
 		MouseSettingsPanel m_MouseSettingsPanel;
 		KeyBindsPanel m_KeyBindsPanel;
+
+		// ---- Private Members -----
+	  private:
+		bool m_IsInGame = false;
+		Skybox m_Skybox;
+		static Camera s_Camera; // Camera for Skybox.
+		static inline float s_CameraFov{90.f};
+		static inline float s_SkyboxRotationPeriod{400.0f}; // Time in seconds for a full rotation
+		void ReloadSkyboxTextures();
 
 		// ----- Panel Events Handling -----
 	  private:
