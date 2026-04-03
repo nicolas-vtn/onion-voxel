@@ -1,7 +1,6 @@
 
 		----- ONION - VOXEL -----
 
-- Delete Variables.hpp
 - Blured Background
 - Multiplayer Menu (UI + Add Server + List of servers)
 - Key Binds Menu

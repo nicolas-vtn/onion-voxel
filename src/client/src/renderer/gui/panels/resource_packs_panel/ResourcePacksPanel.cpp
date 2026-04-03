@@ -6,7 +6,6 @@
 
 #include <shared/zip_archive/ZipArchive.hpp>
 
-#include <renderer/Variables.hpp>
 #include <renderer/gui/LayoutHelper.hpp>
 
 namespace onion::voxel

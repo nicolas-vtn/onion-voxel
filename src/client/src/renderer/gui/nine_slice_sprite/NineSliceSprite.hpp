@@ -1,6 +1,5 @@
 #pragma once
 
-#include <renderer/Variables.hpp>
 #include <renderer/gui/GuiElement.hpp>
 #include <renderer/shader/shader.hpp>
 #include <renderer/texture/texture.hpp>

@@ -39,12 +39,11 @@ namespace onion::voxel
 
 	// -------- Static Member Definitions --------
 
-	Shader GuiElement::s_ShaderSprites(GetAssetsPath() / "shaders/sprite.vert",
-									   GetAssetsPath() / "shaders/sprite.frag");
+	Shader GuiElement::s_ShaderSprites(AssetsManager::GetShadersDirectory() / "sprite.vert",
+									   AssetsManager::GetShadersDirectory() / "sprite.frag");
 
-	Shader GuiElement::s_ShaderNineSliceSprites(GetAssetsPath() / "shaders/nine_slice_sprite.vert",
-												GetAssetsPath() / "shaders/nine_slice_sprite.frag");
-
+	Shader GuiElement::s_ShaderNineSliceSprites(AssetsManager::GetShadersDirectory() / "nine_slice_sprite.vert",
+												AssetsManager::GetShadersDirectory() / "nine_slice_sprite.frag");
 	Font GuiElement::s_TextFont{s_PathFont, 16, 16};
 
 	Event<const CursorStyle&> GuiElement::RequestCursorStyleChange;

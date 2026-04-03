@@ -1,16 +1,15 @@
 #include "font.hpp"
 
-#include <renderer/Variables.hpp>
-
 #include <glm/gtc/matrix_transform.hpp>
 
 using namespace onion::voxel;
 
 // -------- Static Member Definitions --------
 
-Shader Font::s_ShaderFont(GetAssetsPath() / "shaders" / "font.vert", GetAssetsPath() / "shaders" / "font.frag");
-Shader Font::s_ShaderBackground(GetAssetsPath() / "shaders" / "rectangle.vert",
-								GetAssetsPath() / "shaders" / "rectangle.frag");
+Shader Font::s_ShaderFont(AssetsManager::GetShadersDirectory() / "font.vert",
+						  AssetsManager::GetShadersDirectory() / "font.frag");
+Shader Font::s_ShaderBackground(AssetsManager::GetShadersDirectory() / "rectangle.vert",
+								AssetsManager::GetShadersDirectory() / "rectangle.frag");
 
 glm::mat4 Font::s_ProjectionMatrix{1.0f};
 

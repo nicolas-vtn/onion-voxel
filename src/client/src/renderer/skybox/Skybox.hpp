@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <vector>
 
-#include <renderer/Variables.hpp>
+#include <renderer/assets_manager/AssetsManager.hpp>
 #include <renderer/shader/shader.hpp>
 #include <renderer/texture/texture.hpp>
 
@@ -50,7 +50,8 @@ namespace onion::voxel
 		unsigned int m_TextureID = 0;
 		unsigned int m_VAO = 0, m_VBO = 0;
 
-		Shader m_ShaderSkybox{GetAssetsPath() / "shaders" / "skybox.vert", GetAssetsPath() / "shaders" / "skybox.frag"};
+		Shader m_ShaderSkybox{AssetsManager::GetShadersDirectory() / "skybox.vert",
+							  AssetsManager::GetShadersDirectory() / "skybox.frag"};
 
 		// ----- Initialization -----
 	  private:

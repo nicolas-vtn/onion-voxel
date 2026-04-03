@@ -24,6 +24,17 @@ include(FetchCereal)
 include(FetchFastNoiseLite)
 include(FetchMiniz)
 
+include(GetGitVersion)
+
+get_git_version(GIT_VERSION)
+message(STATUS "Git Version: ${GIT_VERSION}")
+
+# Ensure CMake reconfigures when .git/index changes (e.g., new commits, branch changes)
+set_property(DIRECTORY APPEND PROPERTY
+    CMAKE_CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/.git/index"
+)
+
 add_subdirectory(external/glad)
 
 # Internal Dependencies

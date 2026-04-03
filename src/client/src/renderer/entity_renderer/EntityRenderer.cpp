@@ -6,14 +6,14 @@
 #include <chrono>
 #include <iostream>
 
-#include <renderer/Variables.hpp>
+#include <renderer/assets_manager/AssetsManager.hpp>
 #include <renderer/debug_draws/DebugDraws.hpp>
 
 namespace onion::voxel
 {
 	EntityRenderer::EntityRenderer(const std::shared_ptr<Camera>& camera)
-		: m_Camera(camera),
-		  m_ShaderEntity(GetAssetsPath() / "shaders" / "entity.vert", GetAssetsPath() / "shaders" / "entity.frag")
+		: m_Camera(camera), m_ShaderEntity(AssetsManager::GetShadersDirectory() / "entity.vert",
+										   AssetsManager::GetShadersDirectory() / "entity.frag")
 	{
 
 		// Starts the thread that will download the player skins asynchronously

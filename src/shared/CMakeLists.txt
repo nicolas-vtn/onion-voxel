@@ -64,3 +64,10 @@ set_target_properties(onion_voxel_shared PROPERTIES
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )
+
+configure_file(
+    ${CMAKE_SOURCE_DIR}/cmake/version.hpp.in
+    ${CMAKE_BINARY_DIR}/generated/version.hpp
+    @ONLY
+)
+target_include_directories(onion_voxel_shared PUBLIC ${CMAKE_BINARY_DIR}/generated)

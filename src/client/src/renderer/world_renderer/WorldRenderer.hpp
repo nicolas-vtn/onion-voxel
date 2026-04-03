@@ -8,7 +8,6 @@
 
 #include <shared/world/world_manager/WorldManager.hpp>
 
-#include <renderer/Variables.hpp>
 #include <renderer/camera/camera.hpp>
 #include <renderer/skybox/Skybox.hpp>
 #include <renderer/texture_atlas/TextureAtlas.hpp>

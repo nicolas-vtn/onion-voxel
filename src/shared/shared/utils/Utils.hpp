@@ -6,6 +6,8 @@
 
 #include <shared/world/WorldConstants.hpp>
 
+#include "version.hpp"
+
 namespace onion::voxel::Utils
 {
 	inline int FloorDiv(int a, int b)

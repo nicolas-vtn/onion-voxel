@@ -5,8 +5,6 @@
 
 #include <iostream>
 
-#include <renderer/Variables.hpp>
-
 namespace onion::voxel
 {
 	// -------- Constructor --------

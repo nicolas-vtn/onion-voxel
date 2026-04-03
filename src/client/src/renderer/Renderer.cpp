@@ -5,6 +5,8 @@
 #include <stop_token>
 #include <thread>
 
+#include "version.hpp"
+
 #include <shared/utils/Utils.hpp>
 
 #include "debug_draws/DebugDraws.hpp"
@@ -1061,7 +1063,7 @@ namespace onion::voxel
 
 		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 
-		ImGui::Text("Client Version: %s", CLIENT_VERSION.c_str());
+		ImGui::Text("Client Version: %s", PROJECT_VERSION);
 
 		// ----- Server Info Debug -----
 		if (ImGui::CollapsingHeader("Server Info", ImGuiTreeNodeFlags_DefaultOpen))

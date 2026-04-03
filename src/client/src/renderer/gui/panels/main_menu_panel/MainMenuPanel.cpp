@@ -2,6 +2,8 @@
 
 #include <renderer/gui/LayoutHelper.hpp>
 
+#include "version.hpp"
+
 #include <fstream>
 #include <iostream>
 #include <random>
@@ -32,7 +34,8 @@ namespace onion::voxel
 		m_SplashText_Label.SetRotationDegrees(-25.f);
 		m_SplashText_Label.SetTextAlignment(Font::eTextAlignment::Center);
 
-		m_Version_Label.SetText("Voxel::Onion " + CLIENT_VERSION);
+		std::string versionText = "Voxel::Onion " + std::string(PROJECT_VERSION);
+		m_Version_Label.SetText(versionText);
 		m_Version_Label.SetTextAlignment(Font::eTextAlignment::Left);
 
 		m_Copyright_Label.SetText("Uses Mojang's assets, DO NOT DISTRIBUTE.");

@@ -4,7 +4,7 @@
 
 #include <glm/glm.hpp>
 
-#include <renderer/Variables.hpp>
+#include <renderer/assets_manager/AssetsManager.hpp>
 #include <renderer/shader/shader.hpp>
 
 namespace onion::voxel
@@ -133,8 +133,8 @@ namespace onion::voxel
 	  private:
 		static inline glm::mat4 s_ViewProjMatrix;
 
-		static inline Shader s_LineShader{GetAssetsPath() / "shaders" / "line.vert",
-										  GetAssetsPath() / "shaders" / "line.frag"};
+		static inline Shader s_LineShader{AssetsManager::GetShadersDirectory() / "line.vert",
+										  AssetsManager::GetShadersDirectory() / "line.frag"};
 		static inline GLuint s_VAOLine = 0;
 		static inline GLuint s_VBOLine = 0;
 

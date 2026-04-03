@@ -29,7 +29,7 @@ namespace onion::voxel
 
 		// ----- Properties -----
 	  private:
-		std::string m_SpritePath = (GetAssetsPath() / "textures" / "OnionVoxelTitle.png").string();
+		std::string m_SpritePath = (AssetsManager::GetTexturesDirectory() / "OnionVoxelTitle.png").string();
 
 		// ----- Controls -----
 	  private:

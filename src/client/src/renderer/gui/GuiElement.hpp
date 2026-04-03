@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <iostream>
 #include <memory>
 #include <string>
 
@@ -9,7 +10,7 @@
 #include <onion/Event.hpp>
 
 #include <renderer/EngineContext.hpp>
-#include <renderer/Variables.hpp>
+#include <renderer/assets_manager/AssetsManager.hpp>
 #include <renderer/gui/colored_background/ColoredBackground.hpp>
 #include <renderer/gui/font/Font.hpp>
 #include <renderer/inputs_manager/inputs_manager.hpp>

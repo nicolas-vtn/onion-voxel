@@ -250,12 +250,12 @@ namespace onion::voxel
 	{
 
 		const std::vector<std::string> faces = {
-			(GetTexturesPath() / "skybox" / "right.bmp").string(),	// +X
-			(GetTexturesPath() / "skybox" / "left.bmp").string(),	// -X
-			(GetTexturesPath() / "skybox" / "top.bmp").string(),	// +Y
-			(GetTexturesPath() / "skybox" / "bottom.bmp").string(), // -Y
-			(GetTexturesPath() / "skybox" / "front.bmp").string(),	// +Z
-			(GetTexturesPath() / "skybox" / "back.bmp").string()	// -Z
+			(AssetsManager::GetTexturesDirectory() / "skybox" / "right.bmp").string(),	// +X
+			(AssetsManager::GetTexturesDirectory() / "skybox" / "left.bmp").string(),	// -X
+			(AssetsManager::GetTexturesDirectory() / "skybox" / "top.bmp").string(),	// +Y
+			(AssetsManager::GetTexturesDirectory() / "skybox" / "bottom.bmp").string(), // -Y
+			(AssetsManager::GetTexturesDirectory() / "skybox" / "front.bmp").string(),	// +Z
+			(AssetsManager::GetTexturesDirectory() / "skybox" / "back.bmp").string()	// -Z
 		};
 
 		unsigned int textureID;

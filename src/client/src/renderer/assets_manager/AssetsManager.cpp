@@ -18,29 +18,62 @@ namespace
 
 namespace onion::voxel
 {
+	std::filesystem::path AssetsManager::s_ExecutableDirectory = GetExecutableDirectory();
+
 	AssetsManager::AssetsManager()
 	{
-		m_AssetsDirectory = GetExecutableDirectory() / "assets";
-		if (!std::filesystem::exists(m_AssetsDirectory))
+		const auto assetsDir = GetAssetsDirectory();
+		if (!std::filesystem::exists(assetsDir))
 		{
-			std::cerr << "WARNING: Assets directory not found at: " << m_AssetsDirectory << std::endl;
-			throw std::runtime_error("Assets directory not found at: " + m_AssetsDirectory.string());
+			std::cerr << "ERROR: Assets directory not found at: " << assetsDir << std::endl;
+			throw std::runtime_error("Assets directory not found at: " + assetsDir.string());
 		}
 
-		std::filesystem::path resourcePacksDirectory = m_AssetsDirectory / "resourcepacks";
+		const auto texturesDir = GetTexturesDirectory();
+		if (!std::filesystem::exists(texturesDir))
+		{
+			std::cerr << "ERROR: Textures directory not found at: " << texturesDir << std::endl;
+			throw std::runtime_error("Textures directory not found at: " + texturesDir.string());
+		}
+
+		const auto shadersDir = GetShadersDirectory();
+		if (!std::filesystem::exists(shadersDir))
+		{
+			std::cerr << "ERROR: Shaders directory not found at: " << shadersDir << std::endl;
+			throw std::runtime_error("Shaders directory not found at: " + shadersDir.string());
+		}
+
+		const auto resourcePacksDirectory = GetResourcePacksDirectory();
 		if (!std::filesystem::exists(resourcePacksDirectory))
 		{
-			std::cerr << "WARNING: Resource packs directory not found at: " << resourcePacksDirectory << std::endl;
-			throw std::runtime_error("Resource packs directory not found at: " + resourcePacksDirectory.string());
+			// If the resource packs directory doesn't exist, we create it.
+			std::cout << "WARNING: Resource packs directory not found at: " << resourcePacksDirectory
+					  << ". Creating it now." << std::endl;
+			std::filesystem::create_directories(resourcePacksDirectory);
 		}
+
 		m_ResourcePackManager.SetResourcePackDirectory(resourcePacksDirectory);
+
+		const auto textsDir = GetTextsDirectory();
+		if (!std::filesystem::exists(textsDir))
+		{
+			std::cerr << "ERROR: Texts directory not found at: " << textsDir << std::endl;
+			throw std::runtime_error("Texts directory not found at: " + textsDir.string());
+		}
+
+		const auto appIconsDir = GetAppIconsDirectory();
+		if (!std::filesystem::exists(appIconsDir))
+		{
+			std::cerr << "ERROR: App icons directory not found at: " << appIconsDir << std::endl;
+			throw std::runtime_error("App icons directory not found at: " + appIconsDir.string());
+		}
 	}
 
 	AssetsManager::~AssetsManager() {}
 
 	std::string AssetsManager::GetFileText(const std::filesystem::path& path) const
 	{
-		std::filesystem::path fullPath = m_AssetsDirectory / path;
+		std::filesystem::path fullPath = GetAssetsDirectory() / path;
 		if (!std::filesystem::exists(fullPath))
 		{
 			throw std::runtime_error("AssetsManager::GetFileText: File not found: " + fullPath.string());
@@ -59,7 +92,7 @@ namespace onion::voxel
 
 	std::vector<unsigned char> AssetsManager::GetFileBinary(const std::filesystem::path& path) const
 	{
-		std::filesystem::path fullPath = m_AssetsDirectory / path;
+		std::filesystem::path fullPath = GetAssetsDirectory() / path;
 
 		if (!std::filesystem::exists(fullPath))
 		{
@@ -97,14 +130,34 @@ namespace onion::voxel
 		return m_ResourcePackManager.GetCurrentResourcePack();
 	}
 
-	std::filesystem::path AssetsManager::GetAssetsDirectory() const
+	std::filesystem::path AssetsManager::GetAssetsDirectory()
 	{
-		return m_AssetsDirectory;
+		return s_ExecutableDirectory / ASSETS_FOLDER_NAME;
 	}
 
-	std::filesystem::path AssetsManager::GetResourcePacksDirectory() const
+	std::filesystem::path AssetsManager::GetTexturesDirectory()
 	{
-		return m_AssetsDirectory / "resourcepacks";
+		return s_ExecutableDirectory / ASSETS_FOLDER_NAME / TEXTURES_FOLDER_NAME;
+	}
+
+	std::filesystem::path AssetsManager::GetShadersDirectory()
+	{
+		return s_ExecutableDirectory / ASSETS_FOLDER_NAME / SHADERS_FOLDER_NAME;
+	}
+
+	std::filesystem::path AssetsManager::GetResourcePacksDirectory()
+	{
+		return s_ExecutableDirectory / ASSETS_FOLDER_NAME / RESOURCE_PACKS_FOLDER_NAME;
+	}
+
+	std::filesystem::path AssetsManager::GetTextsDirectory()
+	{
+		return s_ExecutableDirectory / ASSETS_FOLDER_NAME / TEXTS_FOLDER_NAME;
+	}
+
+	std::filesystem::path AssetsManager::GetAppIconsDirectory()
+	{
+		return s_ExecutableDirectory / ASSETS_FOLDER_NAME / APPICONS_FOLDER_NAME;
 	}
 
 } // namespace onion::voxel

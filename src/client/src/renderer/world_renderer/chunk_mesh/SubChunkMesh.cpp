@@ -1,13 +1,15 @@
 #include "SubChunkMesh.hpp"
 
-#include <renderer/Variables.hpp>
+#include <iostream>
+
+#include <renderer/assets_manager/AssetsManager.hpp>
 
 namespace onion::voxel
 {
 	// ----- Static Initialization -----
 	Shader SubChunkMesh::s_Shader{
-		GetAssetsPath() / "shaders" / "blocks.vert",
-		GetAssetsPath() / "shaders" / "blocks.frag",
+		AssetsManager::GetShadersDirectory() / "blocks.vert",
+		AssetsManager::GetShadersDirectory() / "blocks.frag",
 	};
 
 	// ----- Constructor / Destructor -----
