@@ -208,6 +208,9 @@ namespace onion::voxel
 
 	void Gui::Handle_FramebufferResized(const FramebufferState& framebufferState)
 	{
+		if (framebufferState.Width == 0 || framebufferState.Height == 0)
+			return;
+
 		GuiElement::SetScreenSize(framebufferState.Width, framebufferState.Height);
 		s_Camera.SetAspectRatio(static_cast<float>(framebufferState.Width) / framebufferState.Height);
 	}
@@ -347,7 +350,8 @@ namespace onion::voxel
 
 	void Gui::Render()
 	{
-		RenderDebugPanel();
+		if (EngineContext::Get().ShowDebugMenus)
+			RenderDebugPanel();
 
 		{
 			// Reset the back button state if we have switched to a different menu since the last frame.

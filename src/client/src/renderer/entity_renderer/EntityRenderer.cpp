@@ -64,7 +64,10 @@ namespace onion::voxel
 		}
 
 		// Render DEBUG
-		RenderPlayerDebugPanel();
+
+		if (EngineContext::Get().ShowDebugMenus)
+			RenderPlayerDebugPanel();
+
 		if (m_RenderPlayerBoundingBoxes)
 		{
 			RenderPlayersBoundingBoxes();

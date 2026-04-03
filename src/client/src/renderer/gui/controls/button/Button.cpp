@@ -37,7 +37,8 @@ namespace onion::voxel
 		}
 
 		// DEBUG
-		// RenderImGuiDebug();
+		//if (EngineContext::Get().ShowDebugMenus)
+		//	RenderImGuiDebug();
 
 		// Pulls events
 		m_NineSliceSprite_Basic.PullEvents();
@@ -236,21 +237,6 @@ namespace onion::voxel
 		}
 		OnHoverLeave.Trigger(*this);
 	}
-
-	//std::filesystem::path Button::GetSpritePath_Basic()
-	//{
-	//	return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button.png";
-	//}
-
-	//std::filesystem::path Button::GetSpritePath_Disabled()
-	//{
-	//	return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button_disabled.png";
-	//}
-
-	//std::filesystem::path Button::GetSpritePath_Highlighted()
-	//{
-	//	return GetMinecraftTexturesPath() / "gui" / "sprites" / "widget" / "button_highlighted.png";
-	//}
 
 	void Button::RenderImGuiDebug()
 	{

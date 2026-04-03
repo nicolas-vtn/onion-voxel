@@ -288,8 +288,11 @@ namespace onion::voxel
 			m_Gui.Render();
 
 			// Render Debug Panels
-			RenderDebugPanel();
-			RenderPhysicsDebugPanel();
+			if (EngineContext::Get().ShowDebugMenus)
+			{
+				RenderDebugPanel();
+				RenderPhysicsDebugPanel();
+			}
 
 			// End ImGui Frame
 			EndImGuiFrame();
@@ -457,6 +460,9 @@ namespace onion::voxel
 		m_WindowWidth = framebufferState.Width;
 		m_WindowHeight = framebufferState.Height;
 
+		if (m_WindowWidth == 0 || m_WindowHeight == 0)
+			return;
+
 		glViewport(0, 0, m_WindowWidth, m_WindowHeight);
 
 		// Resize color texture
@@ -480,10 +486,7 @@ namespace onion::voxel
 		DebugDraws::ScreenWidth = m_WindowWidth;
 		DebugDraws::ScreenHeight = m_WindowHeight;
 
-		if (m_WindowWidth != 0 && m_WindowHeight != 0)
-		{
-			m_Camera->SetAspectRatio(static_cast<float>(m_WindowWidth) / static_cast<float>(m_WindowHeight));
-		}
+		m_Camera->SetAspectRatio(static_cast<float>(m_WindowWidth) / static_cast<float>(m_WindowHeight));
 	}
 
 	void Renderer::RegisterInputs()
@@ -506,6 +509,7 @@ namespace onion::voxel
 		m_KeyBinds.RemapAction(eAction::ToggleMouseCapture, actionToKey.at(eAction::ToggleMouseCapture), noRepeat);
 		m_KeyBinds.RemapAction(eAction::Pause, actionToKey.at(eAction::Pause), noRepeat);
 		m_KeyBinds.RemapAction(eAction::CloseMenu, actionToKey.at(eAction::CloseMenu), noRepeat);
+		m_KeyBinds.RemapAction(eAction::ToggleDebugMenus, actionToKey.at(eAction::ToggleDebugMenus), noRepeat);
 
 		m_KeyBinds.RemapAction(eAction::Attack, actionToKey.at(eAction::Attack), repeatWithDelay);
 		m_KeyBinds.RemapAction(eAction::Interact, actionToKey.at(eAction::Interact), repeatWithDelay);
@@ -519,6 +523,13 @@ namespace onion::voxel
 		{
 			bool mouseCapture = m_InputsManager.IsMouseCaptureEnabled();
 			m_InputsManager.SetMouseCaptureEnabled(!mouseCapture);
+		}
+
+		KeyState toggleDebugMenusKeyState = m_KeyBinds.GetKeyState(eAction::ToggleDebugMenus);
+		if (toggleDebugMenusKeyState.IsPressed)
+		{
+			auto& engineContext = EngineContext::Get();
+			engineContext.ShowDebugMenus = !engineContext.ShowDebugMenus;
 		}
 
 		KeyState pauseKeyState = m_KeyBinds.GetKeyState(eAction::Pause);

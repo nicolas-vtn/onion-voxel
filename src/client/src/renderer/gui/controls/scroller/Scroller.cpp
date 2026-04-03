@@ -43,7 +43,8 @@ namespace onion::voxel
 	void Scroller::Render()
 	{
 		// DEBUG
-		RenderImGuiDebug();
+		//if (EngineContext::Get().ShowDebugMenus)
+		//	RenderImGuiDebug();
 
 		bool wasCissoring = m_Cissoring;
 		StopCissoring();

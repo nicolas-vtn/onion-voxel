@@ -52,7 +52,8 @@ namespace onion::voxel
 		Handle_KeyInputs();
 
 		// DEBUG
-		// RenderImGuiDebug();
+		//if (EngineContext::Get().ShowDebugMenus)
+		//	RenderImGuiDebug();
 
 		// Calculate text position
 		glm::ivec2 size = GetSize();

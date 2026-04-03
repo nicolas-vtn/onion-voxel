@@ -20,6 +20,7 @@ namespace onion::voxel
 														{eAction::ToggleMouseCapture, Key::KP7},
 														{eAction::Pause, Key::Escape},
 														{eAction::CloseMenu, Key::Escape},
+														{eAction::ToggleDebugMenus, Key::F3},
 
 														{eAction::Attack, Key::MouseButtonLeft},
 														{eAction::Interact, Key::MouseButtonRight},

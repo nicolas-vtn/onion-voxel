@@ -133,7 +133,8 @@ namespace onion::voxel
 		m_Skybox.Render(view, projection);
 
 		// Render Debug Panel
-		RenderDebugPanel();
+		if (EngineContext::Get().ShowDebugMenus)
+			RenderDebugPanel();
 
 		if (!m_HasShaderBeenInitialized)
 		{

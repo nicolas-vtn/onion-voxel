@@ -22,6 +22,7 @@ namespace onion::voxel
 		Attack,
 		Interact,
 		CloseMenu,
+		ToggleDebugMenus
 	};
 
 	class KeyBinds
@@ -59,6 +60,7 @@ namespace onion::voxel
 		{eAction::Attack, "Attack"},
 		{eAction::Interact, "Interact"},
 		{eAction::CloseMenu, "Close Menu"},
+		{eAction::ToggleDebugMenus, "Toggle Debug Menus"},
 	};
 
 	static std::unordered_map<std::string, eAction> StringToActionMap = []()

@@ -51,7 +51,8 @@ namespace onion::voxel
 		}
 
 		// DEBUG
-		// RenderImGuiDebug();
+		//if (EngineContext::Get().ShowDebugMenus)
+		//	RenderImGuiDebug();
 
 		m_NineSliceSprite_SliderBasic.PullEvents();
 

@@ -17,6 +17,7 @@ namespace onion::voxel
 		WorldManager* World;
 		AssetsManager* Assets;
 		InputsManager* Inputs;
+		std::atomic_bool ShowDebugMenus{true};
 
 		UserSettings Settings() const
 		{
