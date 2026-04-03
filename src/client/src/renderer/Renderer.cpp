@@ -589,12 +589,6 @@ namespace onion::voxel
 			prevBlock = hitBlock;
 		}
 
-		if (hitBlock.ID() != BlockId::Air)
-		{
-			DebugDraws::DrawBlockOutline(hitBlock.Position, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);
-			//DebugDraws::DrawBlockOutline(prevBlockPos, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 3, true);
-		}
-
 		m_HitBlock = hitBlock;
 
 		KeyState attackKeyState = m_KeyBinds.GetKeyState(eAction::Attack);
@@ -1234,6 +1228,14 @@ namespace onion::voxel
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// Render Raycasted block highlight
+		if (m_HitBlock.ID() != BlockId::Air)
+		{
+			DebugDraws::DrawBlockOutline(m_HitBlock.Position, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);
+			//DebugDraws::DrawBlockOutline(prevBlockPos, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 3, true);
+		}
+
+		// Update and render the world and entities only when in the InGame state
 		if (GetRenderState() == eRenderState::InGame)
 		{
 			if (!m_IsPaused)

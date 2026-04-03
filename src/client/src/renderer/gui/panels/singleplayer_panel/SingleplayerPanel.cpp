@@ -7,7 +7,7 @@
 namespace onion::voxel
 {
 	SingleplayerPanel::SingleplayerPanel(const std::string& name)
-		: GuiElement(name), m_LabelTitle("Title"), m_TextFieldFilter("Filter"), m_Scroller("Scroller"),
+		: GuiElement(name), m_LabelTitle("Title"), m_TextFieldFilter("Search..."), m_Scroller("Scroller"),
 		  m_ButtonBack("Back"), m_ButtonCreateNewWorld("Create New World"),
 		  m_ButtonPlaySelectedWorld("Play Selected World"), m_ButtonDeleteSelectedWorld("Delete Selected World"),
 		  m_ButtonEdit("Edit"), m_ButtonRefreshWorldTiles("Re-Create Selected World"),
