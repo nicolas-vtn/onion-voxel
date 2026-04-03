@@ -351,12 +351,13 @@ namespace onion::voxel
 
 	void WorldManager::Handle_PlayerChangedChunk(const PlayerChangedChunkEventArgs& args)
 	{
+		(void) args;
+
 		//std::cout << "Player " << args.PlayerUUID << " changed chunk from " << args.OldChunkPosition.x << ", "
 		//		  << args.OldChunkPosition.y << " to " << args.NewChunkPosition.x << ", " << args.NewChunkPosition.y
 		//		  << std::endl;
 
 		RemoveDistantChunks();
-		//RequestMissingChunksAround(args.NewChunkPosition);
 		RequestAllMissingChunks();
 
 		// Save Players to the world save (if it exists)

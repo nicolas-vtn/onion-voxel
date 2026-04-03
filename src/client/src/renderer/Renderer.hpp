@@ -81,8 +81,24 @@ namespace onion::voxel
 		// ----- Internal Methods -----
 	  private:
 		void InitWindow();
-		void InitOpenGlState();
+		void InitOpenGl();
 		void CleanupOpenGl();
+
+		GLuint m_SceneFBO = 0;
+		GLuint m_DepthRenderBuffer = 0;
+		GLuint m_SceneColorTexture = 0;
+		GLuint m_BlurFBO[2];
+		GLuint m_BlurTexture[2];
+
+		void RenderSceneToFBO();
+		GLuint ApplyBlur(GLuint inputTexture);
+		void PresentScene(GLuint texture);
+		void RenderFullscreenQuad();
+
+		Shader m_ScreenShader{AssetsManager::GetShadersDirectory() / "screen.vert",
+							  AssetsManager::GetShadersDirectory() / "screen.frag"};
+		Shader m_BlurShader{AssetsManager::GetShadersDirectory() / "blur.vert",
+							AssetsManager::GetShadersDirectory() / "blur.frag"};
 
 		// ----- Main Loop -----
 	  private:

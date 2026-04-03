@@ -46,6 +46,7 @@ namespace onion::voxel
 	  public:
 		void Initialize();
 		void Render();
+		void RenderBackground();
 		void Shutdown();
 		void ReloadTextures();
 
