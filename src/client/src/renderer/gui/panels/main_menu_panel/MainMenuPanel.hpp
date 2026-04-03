@@ -53,7 +53,7 @@ namespace onion::voxel
 		void LoadSplashes();
 		std::vector<std::string> m_Splashes;
 		int m_CurrentSplashIndex = 0;
-		SinusPulseGenerator m_SplashTextPulse{1, 0.1f, 1.f};
+		SinusPulseGenerator m_SplashTextPulse{1.5, 0.1f, 1.f};
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:

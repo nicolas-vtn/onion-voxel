@@ -27,6 +27,7 @@ namespace onion::voxel
 		m_QuitGame_Button.SetText("Quit Game");
 
 		m_SplashText_Label.SetTextColor({1.f, 1.f, 0.0f, 1.f});
+		m_SplashText_Label.SetZOffset(0.9f);
 		m_SplashText_Label.SetShadowColor({0.246f, 0.246f, 0.0f, 1.f});
 		m_SplashText_Label.SetRotationDegrees(-25.f);
 		m_SplashText_Label.SetTextAlignment(Font::eTextAlignment::Center);
@@ -134,7 +135,8 @@ namespace onion::voxel
 		if (!m_Splashes.empty())
 		{
 			const std::string& splashText = m_Splashes[m_CurrentSplashIndex];
-			float splashTextHeight = textHeight * m_SplashTextPulse.GetValue(glfwTime);
+			float pulse = m_SplashTextPulse.GetValueSmoothPulse(glfwTime);
+			float splashTextHeight = textHeight * pulse;
 			glm::ivec2 splashTextSize = s_TextFont.MeasureText(splashText, splashTextHeight);
 			constexpr float splashTextXratioCenter = 1420.f / 1920.f;
 			constexpr float splashTextYratioCenter = 267.f / 1009.f;

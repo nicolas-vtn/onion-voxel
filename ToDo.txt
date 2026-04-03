@@ -3,7 +3,6 @@
 
 - Delete Variables.hpp
 - Blured Background
-- Pulsating home text (and in front of button text)
 - Multiplayer Menu (UI + Add Server + List of servers)
 - Key Binds Menu
 - Better ResourcePack menu (with scroller, filter and selectable tiles) + save last used
