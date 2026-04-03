@@ -204,6 +204,25 @@ namespace onion::voxel
 			std::cerr << "Framebuffer not complete!" << std::endl;
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		// Framebuffers for blurring
+		for (int i = 0; i < 2; i++)
+		{
+			glGenFramebuffers(1, &m_BlurFBO[i]);
+			glBindFramebuffer(GL_FRAMEBUFFER, m_BlurFBO[i]);
+
+			glGenTextures(1, &m_BlurTexture[i]);
+			glBindTexture(GL_TEXTURE_2D, m_BlurTexture[i]);
+
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_WindowWidth, m_WindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_BlurTexture[i], 0);
+		}
 	}
 
 	void Renderer::RenderThreadFunction(std::stop_token st)
@@ -252,14 +271,18 @@ namespace onion::voxel
 			// Draws the 3D Scene to the FBO
 			RenderSceneToFBO();
 
-			bool blurry = true;
+			GLuint finalTexture = m_SceneColorTexture;
+			eMenu activeMenu = m_Gui.GetActiveMenu();
+			bool isMainMenu = activeMenu == eMenu::MainMenu;
+			bool isInGameplay = activeMenu == eMenu::Gameplay;
+			bool blurry = (!isMainMenu && !isInGameplay);
 			if (blurry)
 			{
-				// ????
+				finalTexture = ApplyBlur(m_SceneColorTexture);
 			}
 
 			// Draws the FBO texture to the screen
-			PresentScene();
+			PresentScene(finalTexture);
 
 			// Render GUI
 			m_Gui.Render();
@@ -441,10 +464,18 @@ namespace onion::voxel
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_WindowWidth, m_WindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-		// Resize depth buffer (THIS WAS MISSING)
+		// Resize depth buffer
 		glBindRenderbuffer(GL_RENDERBUFFER, m_DepthRenderBuffer);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_WindowWidth, m_WindowHeight);
 		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+		// Resize blur textures
+		for (int i = 0; i < 2; i++)
+		{
+			glBindTexture(GL_TEXTURE_2D, m_BlurTexture[i]);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_WindowWidth, m_WindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
 
 		DebugDraws::ScreenWidth = m_WindowWidth;
 		DebugDraws::ScreenHeight = m_WindowHeight;
@@ -1176,6 +1207,7 @@ namespace onion::voxel
 	{
 		// ----- Cleanup Shaders -----
 		m_ScreenShader.Delete();
+		m_BlurShader.Delete();
 
 		// ----- Cleanup Buffers -----
 		glDeleteFramebuffers(1, &m_SceneFBO);
@@ -1213,10 +1245,48 @@ namespace onion::voxel
 			m_EntityRenderer.RenderEntities(hiddenEntities);
 		}
 
+		// Renger GUI Background (without ImGui elements) (so it can be blurred if needed)
+		m_Gui.RenderBackground();
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	void Renderer::PresentScene()
+	GLuint Renderer::ApplyBlur(GLuint inputTexture)
+	{
+		bool horizontal = true;
+		bool firstIteration = true;
+
+		const int blurPasses = 6;
+
+		m_BlurShader.Use();
+
+		for (int i = 0; i < blurPasses; i++)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, m_BlurFBO[horizontal]);
+
+			m_BlurShader.setBool("horizontal", horizontal);
+
+			glActiveTexture(GL_TEXTURE0);
+
+			if (firstIteration)
+				glBindTexture(GL_TEXTURE_2D, inputTexture);
+			else
+				glBindTexture(GL_TEXTURE_2D, m_BlurTexture[!horizontal]);
+
+			RenderFullscreenQuad();
+
+			horizontal = !horizontal;
+
+			if (firstIteration)
+				firstIteration = false;
+		}
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		return m_BlurTexture[!horizontal];
+	}
+
+	void Renderer::PresentScene(GLuint texture)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glViewport(0, 0, m_WindowWidth, m_WindowHeight);
@@ -1226,7 +1296,7 @@ namespace onion::voxel
 		m_ScreenShader.Use();
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_SceneColorTexture);
+		glBindTexture(GL_TEXTURE_2D, texture);
 		m_ScreenShader.setInt("u_Texture", 0);
 
 		RenderFullscreenQuad();

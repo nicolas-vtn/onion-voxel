@@ -359,27 +359,6 @@ namespace onion::voxel
 			}
 		}
 
-		// Render the skybox if we are not in-game
-		if (!m_IsInGame)
-		{
-			double time = glfwGetTime();
-
-			// Convert time --> angle (radians)
-			double angle = (time / s_SkyboxRotationPeriod) * glm::two_pi<double>();
-
-			// Rotate around Y axis
-			glm::vec3 facingDirection = glm::vec3(std::sin(angle), 0.0f, -std::cos(angle));
-
-			// Sets the camera position and orientation
-			s_Camera.SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-			s_Camera.SetFront(facingDirection);
-			s_Camera.SetFovY(s_CameraFov);
-
-			glm::mat4 view = s_Camera.GetViewMatrix();
-			glm::mat4 projection = s_Camera.GetProjectionMatrix();
-			m_Skybox.Render(view, projection);
-		}
-
 		const eMenu activeMenu = GetActiveMenu();
 		switch (activeMenu)
 		{
@@ -421,6 +400,30 @@ namespace onion::voxel
 
 		std::lock_guard lock(m_MutexState);
 		m_MenuPreviousFrame = m_ActiveMenu;
+	}
+
+	void Gui::RenderBackground()
+	{
+		// Render the skybox if we are not in-game
+		if (!m_IsInGame)
+		{
+			double time = glfwGetTime();
+
+			// Convert time --> angle (radians)
+			double angle = (time / s_SkyboxRotationPeriod) * glm::two_pi<double>();
+
+			// Rotate around Y axis
+			glm::vec3 facingDirection = glm::vec3(std::sin(angle), 0.0f, -std::cos(angle));
+
+			// Sets the camera position and orientation
+			s_Camera.SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+			s_Camera.SetFront(facingDirection);
+			s_Camera.SetFovY(s_CameraFov);
+
+			glm::mat4 view = s_Camera.GetViewMatrix();
+			glm::mat4 projection = s_Camera.GetProjectionMatrix();
+			m_Skybox.Render(view, projection);
+		}
 	}
 
 	void Gui::Shutdown()
