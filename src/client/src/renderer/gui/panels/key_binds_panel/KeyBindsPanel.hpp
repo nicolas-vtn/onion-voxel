@@ -6,6 +6,8 @@
 #include <renderer/gui/controls/scroller/Scroller.hpp>
 #include <renderer/gui/controls/slider/Slider.hpp>
 
+#include "KeyBindsTile.hpp"
+
 namespace onion::voxel
 {
 	class KeyBindsPanel : public GuiElement
@@ -22,6 +24,8 @@ namespace onion::voxel
 		void Delete() override;
 		void ReloadTextures() override;
 
+		void RefreshKeyBinds();
+
 		// ----- Public Events -----
 	  public:
 		Event<const GuiElement*> EvtRequestBackNavigation;
@@ -32,10 +36,18 @@ namespace onion::voxel
 		Label m_Title_Label;
 		Scroller m_Scroller;
 
+		Label m_TitleMovement_Label;
+		Label m_TitleGameplay_Label;
+		Label m_TitleDebug_Label;
+		std::unordered_map<eAction, std::unique_ptr<KeyBindsTile>> m_ActionToKeyBindTileMap;
+
+		Button m_ResetAll_Button;
 		Button m_Done_Button;
 
-		// ----- States -----
+		// ----- Private Methods -----
 	  private:
+		void InitializeKeyBindTiles();
+
 		// ----- Internal Event Subscription and Handlers -----
 	  private:
 		std::vector<EventHandle> m_EventHandles;
