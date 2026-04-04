@@ -6,8 +6,12 @@ namespace onion::voxel
 		: GuiElement(name), m_Action(action), m_Key(key), m_LabelAction(name), m_ButtonKey("ButtonKey"),
 		  m_ButtonReset("ButtonReset")
 	{
+		SubscribeToControlEvents();
+
 		m_LabelAction.SetTextAlignment(Font::eTextAlignment::Left);
 		m_ButtonReset.SetText("Reset");
+
+		m_DefaultKey = GetDefaultKeyForAction(action);
 	}
 
 	KeyBindsTile::~KeyBindsTile()
@@ -43,12 +47,14 @@ namespace onion::voxel
 		m_ButtonKey.Render();
 
 		// ---- Render Reset Button ----
+		bool enableResetButton = (m_Key != m_DefaultKey);
 		const float resetButtonPosXRatio = 1250.f / originalTileWidth;
 		const int resetButtonPosX = static_cast<int>(round(leftX + m_Size.x * resetButtonPosXRatio));
 		const float resetButtonWidthRatio = 200.f / originalTileWidth;
 		const int resetButtonWidth = static_cast<int>(round(m_Size.x * resetButtonWidthRatio));
 		m_ButtonReset.SetPosition({resetButtonPosX, m_Position.y});
 		m_ButtonReset.SetSize({resetButtonWidth, buttonsHeight});
+		m_ButtonReset.SetEnabled(enableResetButton);
 		m_ButtonReset.Render();
 	}
 
@@ -87,6 +93,11 @@ namespace onion::voxel
 		m_ButtonReset.SetVisibility(btResetVisibility);
 	}
 
+	bool KeyBindsTile::IsDefaultKey() const
+	{
+		return m_Key == m_DefaultKey;
+	}
+
 	void KeyBindsTile::SetSize(const glm::vec2& size)
 	{
 		m_Size = size;
@@ -123,11 +134,29 @@ namespace onion::voxel
 	void KeyBindsTile::SetAction(eAction action)
 	{
 		m_Action = action;
+		m_DefaultKey = GetDefaultKeyForAction(action);
 	}
 
 	eAction KeyBindsTile::GetAction() const
 	{
 		return m_Action;
+	}
+
+	void KeyBindsTile::SubscribeToControlEvents()
+	{
+		m_EventHandles.push_back(
+			m_ButtonKey.OnClick.Subscribe([this](const Button& sender) { Handle_ButtonKey_Click(sender); }));
+
+		m_EventHandles.push_back(
+			m_ButtonReset.OnClick.Subscribe([this](const Button& sender) { Handle_ButtonReset_Click(sender); }));
+	}
+
+	void KeyBindsTile::Handle_ButtonKey_Click(const Button& sender) {}
+
+	void KeyBindsTile::Handle_ButtonReset_Click(const Button& sender)
+	{
+		SetKey(m_DefaultKey);
+		EvtKeyBindChanged.Trigger(*this);
 	}
 
 } // namespace onion::voxel

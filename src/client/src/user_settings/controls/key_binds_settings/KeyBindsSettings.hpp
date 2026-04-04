@@ -28,6 +28,20 @@ namespace onion::voxel
 														{eAction::ToggleFlyMode, Key::Space}};
 	};
 
+	// ----- Utilities -----
+	inline Key GetDefaultKeyForAction(eAction action)
+	{
+		KeyBindsSettings defaultSettings;
+		if (defaultSettings.ActionToKey.contains(action))
+		{
+			return defaultSettings.ActionToKey.at(action);
+		}
+		else
+		{
+			throw std::runtime_error("No default key defined for action: " + ActionToString(action));
+		}
+	}
+
 	// ---------- Serialization ----------
 
 	template <typename BasicJsonType> inline void to_json(BasicJsonType& j, const KeyBindsSettings& s)

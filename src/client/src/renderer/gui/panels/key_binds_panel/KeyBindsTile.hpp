@@ -28,6 +28,7 @@ namespace onion::voxel
 		void Delete() override;
 		void ReloadTextures() override;
 		void SetVisibility(const Visibility& visibility) override;
+		bool IsDefaultKey() const;
 
 		// ----- Public Events -----
 	  public:
@@ -56,6 +57,7 @@ namespace onion::voxel
 
 		eAction m_Action;
 		Key m_Key;
+		Key m_DefaultKey;
 
 		// ----- Private Helpers -----
 	  private:

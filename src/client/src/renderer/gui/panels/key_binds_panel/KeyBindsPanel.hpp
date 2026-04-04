@@ -47,12 +47,16 @@ namespace onion::voxel
 		// ----- Private Methods -----
 	  private:
 		void InitializeKeyBindTiles();
+		bool AreAllKeyBindsDefault() const;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:
 		std::vector<EventHandle> m_EventHandles;
 		void SubscribeToControlEvents();
 
+		void Handle_KeyBindChanged(const KeyBindsTile& sender);
+
+		void Handle_ResetAll_Click(const Button& sender);
 		void Handle_Done_Click(const Button& sender);
 	};
 } // namespace onion::voxel

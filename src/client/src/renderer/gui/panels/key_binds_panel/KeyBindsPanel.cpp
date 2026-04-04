@@ -193,6 +193,7 @@ namespace onion::voxel
 			resetAndDoneLayout.GetElementPosition(0, 0) + resetAndDoneTableTopLeftCorner;
 		m_ResetAll_Button.SetSize(resetAndDoneLayout.GetCellSize());
 		m_ResetAll_Button.SetPosition(resetAllButtonPosition);
+		m_ResetAll_Button.SetEnabled(!AreAllKeyBindsDefault());
 		m_ResetAll_Button.Render();
 
 		// ----- Render Done Button -----
@@ -282,15 +283,72 @@ namespace onion::voxel
 				std::string tileName = "KeyBindTile_" + ActionToString(action);
 				std::unique_ptr<KeyBindsTile> tilePtr = std::make_unique<KeyBindsTile>(tileName, action, key);
 				tilePtr->Initialize();
+				m_EventHandles.push_back(tilePtr->EvtKeyBindChanged.Subscribe([this](const KeyBindsTile& sender)
+																			  { Handle_KeyBindChanged(sender); }));
 				m_ActionToKeyBindTileMap[action] = std::move(tilePtr);
 			}
 		}
+	}
+
+	bool KeyBindsPanel::AreAllKeyBindsDefault() const
+	{
+		bool allDefault = true;
+
+		for (auto& [action, tilePtr] : m_ActionToKeyBindTileMap)
+		{
+			if (!tilePtr->IsDefaultKey())
+			{
+				allDefault = false;
+				break;
+			}
+		}
+
+		return allDefault;
 	}
 
 	void KeyBindsPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(
 			m_Done_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
+
+		m_EventHandles.push_back(
+			m_ResetAll_Button.OnClick.Subscribe([this](const Button& sender) { Handle_ResetAll_Click(sender); }));
+	}
+
+	void KeyBindsPanel::Handle_KeyBindChanged(const KeyBindsTile& sender)
+	{
+		UserSettings userSettings = EngineContext::Get().Settings();
+
+		// Update the changed key bind in the settings
+		eAction changedAction = sender.GetAction();
+		Key newKey = sender.GetKey();
+
+		UserSettingsChangedEventArgs evtArgs = UserSettingsChangedEventArgs(userSettings);
+		evtArgs.KeyBinds_Changed = true;
+		evtArgs.ChangedKeyBinds[changedAction] = newKey;
+		EvtUserSettingsChanged.Trigger(evtArgs);
+	}
+
+	void KeyBindsPanel::Handle_ResetAll_Click(const Button& sender)
+	{
+		(void) sender;
+
+		if (AreAllKeyBindsDefault())
+			return;
+
+		UserSettings userSettings = EngineContext::Get().Settings();
+		UserSettingsChangedEventArgs evtArgs = UserSettingsChangedEventArgs(userSettings);
+
+		for (auto& [action, tilePtr] : m_ActionToKeyBindTileMap)
+		{
+			Key defaultKey = GetDefaultKeyForAction(action);
+			tilePtr->SetKey(defaultKey);
+
+			evtArgs.KeyBinds_Changed = true;
+			evtArgs.ChangedKeyBinds[action] = defaultKey;
+		}
+
+		EvtUserSettingsChanged.Trigger(evtArgs);
 	}
 
 	void KeyBindsPanel::Handle_Done_Click(const Button& sender)
