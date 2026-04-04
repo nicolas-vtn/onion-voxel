@@ -70,7 +70,7 @@ namespace onion::voxel
 		m_Scroller.StartCissoring();
 
 		// ----- Constants for scroller area -----
-		const float firstElementYOffsetRatio = 50.f / 1009.f;
+		const float firstElementYOffsetRatio = 52.f / 1009.f;
 		const int firstElementYOffset = static_cast<int>(round(s_ScreenHeight * firstElementYOffsetRatio));
 		const float otherElementsYOffsetRatio = 80.f / 1009.f;
 		const int otherElementsYOffset = static_cast<int>(round(s_ScreenHeight * otherElementsYOffsetRatio));

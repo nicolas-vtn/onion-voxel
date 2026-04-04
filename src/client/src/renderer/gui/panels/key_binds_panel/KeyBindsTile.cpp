@@ -22,7 +22,8 @@ namespace onion::voxel
 		const int buttonsHeight = static_cast<int>(round(m_Size.y));
 
 		// ---- Render Action Label ----
-		const float textHeight = round(buttonsHeight * 0.425f);
+		const float textHeightRatio = 32.f / 1009.f;
+		const float textHeight = s_ScreenHeight * textHeightRatio;
 		const std::string actionText = ActionToString(m_Action);
 		m_LabelAction.SetPosition({leftX, m_Position.y});
 		m_LabelAction.SetTextHeight(textHeight);
@@ -30,9 +31,10 @@ namespace onion::voxel
 		m_LabelAction.Render();
 
 		//---- Render Key Button ----
-		const float keyButtonPosXRatio = 980.f / 1345.f;
+		const float originalTileWidth = 1355.f;
+		const float keyButtonPosXRatio = 980.f / originalTileWidth;
 		const int keyButtonPosX = static_cast<int>(round(leftX + m_Size.x * keyButtonPosXRatio));
-		const float buttonWidthRatio = 300.f / 1375.f;
+		const float buttonWidthRatio = 300.f / originalTileWidth;
 		const int buttonWidth = static_cast<int>(round(m_Size.x * buttonWidthRatio));
 		const std::string keyText = KeyToString(m_Key);
 		m_ButtonKey.SetPosition({keyButtonPosX, m_Position.y});
@@ -41,9 +43,9 @@ namespace onion::voxel
 		m_ButtonKey.Render();
 
 		// ---- Render Reset Button ----
-		const float resetButtonPosXRatio = 1250.f / 1345.f;
+		const float resetButtonPosXRatio = 1250.f / originalTileWidth;
 		const int resetButtonPosX = static_cast<int>(round(leftX + m_Size.x * resetButtonPosXRatio));
-		const float resetButtonWidthRatio = 200.f / 1375.f;
+		const float resetButtonWidthRatio = 200.f / originalTileWidth;
 		const int resetButtonWidth = static_cast<int>(round(m_Size.x * resetButtonWidthRatio));
 		m_ButtonReset.SetPosition({resetButtonPosX, m_Position.y});
 		m_ButtonReset.SetSize({resetButtonWidth, buttonsHeight});

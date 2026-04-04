@@ -84,8 +84,8 @@ namespace onion::voxel
 
 		bool m_DebugRenderScrollArea = false;
 
-		float m_ScrollerWidthRatio = 30.f / 1920.f;
-		float m_HandleXPositionRatio = 0.875f;
+		float m_ScrollerWidthRatio = 24.f / 1920.f;
+		float m_HandleXPositionRatio = 1696.f / 1920.f;
 		float m_HeaderHeightRatio = 8.f / 1009.f;
 
 		glm::ivec2 GetScrollHandleSize() const;
