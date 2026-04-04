@@ -79,8 +79,12 @@ namespace onion::voxel
 
 	void KeyBindsTile::SetVisibility(const Visibility& visibility)
 	{
-		m_ButtonKey.SetVisibility(visibility);
-		m_ButtonReset.SetVisibility(visibility);
+		Visibility btKeyVisibility = Visibility::Compose(visibility, m_ButtonKey.GetPosition(), m_ButtonKey.GetSize());
+		m_ButtonKey.SetVisibility(btKeyVisibility);
+
+		Visibility btResetVisibility =
+			Visibility::Compose(visibility, m_ButtonReset.GetPosition(), m_ButtonReset.GetSize());
+		m_ButtonReset.SetVisibility(btResetVisibility);
 	}
 
 	void KeyBindsTile::SetSize(const glm::vec2& size)

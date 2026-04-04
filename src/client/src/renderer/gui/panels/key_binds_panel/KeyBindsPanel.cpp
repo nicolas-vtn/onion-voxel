@@ -83,7 +83,7 @@ namespace onion::voxel
 		const glm::ivec2 tileSize(tileWidth, tileHeight);
 
 		int currentYPosition = topLeftCorner.y + firstElementYOffset;
-		const glm::ivec2 scrollerOffset(0, -m_Scroller.GetContentYOffset());
+		const glm::ivec2 scrollerOffset(0, -static_cast<int>(m_Scroller.GetContentYOffset()));
 
 		// ----- Render Title Movement
 		const glm::ivec2 titleMovementPosition(centerX, currentYPosition);
@@ -168,17 +168,7 @@ namespace onion::voxel
 
 		// ----- Update Scrolling Area Height -----
 		const int tableHeight = currentYPosition - topLeftCorner.y;
-		m_Scroller.SetScrollAreaHeight(tableHeight * 2);
-		const int yOffsetScroller = m_Scroller.GetContentYOffset();
-
-		//// ----- Render Mouse Settings Button -----
-		//const glm::ivec2 mouseSettingsButtonSize = tableLayout.GetCellSize();
-		//const glm::ivec2 mouseSettingsButtonPosition = tableLayout.GetElementPosition(0, 0) + tableTopLeftCorner;
-		//m_MouseSettings_Button.SetSize(mouseSettingsButtonSize);
-		//m_MouseSettings_Button.SetPosition(mouseSettingsButtonPosition + scrollerOffset);
-		//m_MouseSettings_Button.SetVisibility(
-		//	m_Scroller.GetControlVisibleArea(m_MouseSettings_Button.GetPosition(), mouseSettingsButtonSize));
-		//m_MouseSettings_Button.Render();
+		m_Scroller.SetScrollAreaHeight(tableHeight);
 
 		// Stop Scroller Cissoring
 		m_Scroller.StopCissoring();

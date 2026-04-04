@@ -51,6 +51,39 @@ namespace onion::voxel
 			bool IsFullyVisible = false;
 			glm::ivec2 VisibleAreaTopLeftCorner{0, 0};
 			glm::ivec2 VisibleAreaBottomRightCorner{0, 0};
+
+			static Visibility Compose(const Visibility& parent, glm::ivec2 position, glm::ivec2 size)
+			{
+				Visibility result;
+
+				if (!parent.IsVisible)
+					return result;
+
+				// Compute child rect from center + size
+				glm::ivec2 half = size / 2;
+				glm::ivec2 childMin = position - half;
+				glm::ivec2 childMax = position + half;
+
+				// Intersection
+				glm::ivec2 clippedMin{std::max(parent.VisibleAreaTopLeftCorner.x, childMin.x),
+									  std::max(parent.VisibleAreaTopLeftCorner.y, childMin.y)};
+
+				glm::ivec2 clippedMax{std::min(parent.VisibleAreaBottomRightCorner.x, childMax.x),
+									  std::min(parent.VisibleAreaBottomRightCorner.y, childMax.y)};
+
+				// Check validity
+				if (clippedMin.x >= clippedMax.x || clippedMin.y >= clippedMax.y)
+					return result; // invisible
+
+				result.IsVisible = true;
+				result.VisibleAreaTopLeftCorner = clippedMin;
+				result.VisibleAreaBottomRightCorner = clippedMax;
+
+				// Fully visible if no clipping happened
+				result.IsFullyVisible = (clippedMin == childMin && clippedMax == childMax);
+
+				return result;
+			}
 		};
 
 		// ----- Constructor / Destructor -----
