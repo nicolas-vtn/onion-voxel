@@ -48,6 +48,7 @@ namespace onion::voxel
 	  private:
 		void InitializeKeyBindTiles();
 		bool AreAllKeyBindsDefault() const;
+		bool IsAnyTileCapturingKey() const;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:

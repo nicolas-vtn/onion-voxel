@@ -48,6 +48,8 @@ namespace onion::voxel
 		void SetAction(eAction action);
 		eAction GetAction() const;
 
+		bool IsCapturingKey() const;
+
 		// ----- Properties -----
 	  private:
 		glm::vec2 m_Position{0, 0};
@@ -59,6 +61,8 @@ namespace onion::voxel
 		Key m_Key;
 		Key m_DefaultKey;
 
+		bool m_IsCapturingKey = false;
+
 		// ----- Private Helpers -----
 	  private:
 		// ----- Events Subscription and Handlers -----
@@ -68,6 +72,9 @@ namespace onion::voxel
 
 		void Handle_ButtonKey_Click(const Button& sender);
 		void Handle_ButtonReset_Click(const Button& sender);
+
+		EventHandle m_EvtHandle_KeyPressed;
+		void Handle_KeyPressed(Key key);
 
 		// ----- Components -----
 	  private:

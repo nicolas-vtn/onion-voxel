@@ -40,7 +40,9 @@ namespace onion::voxel
 		const int keyButtonPosX = static_cast<int>(round(leftX + m_Size.x * keyButtonPosXRatio));
 		const float buttonWidthRatio = 300.f / originalTileWidth;
 		const int buttonWidth = static_cast<int>(round(m_Size.x * buttonWidthRatio));
-		const std::string keyText = KeyToString(m_Key);
+		std::string keyText = KeyToString(m_Key);
+		if (m_IsCapturingKey)
+			keyText = "...";
 		m_ButtonKey.SetPosition({keyButtonPosX, m_Position.y});
 		m_ButtonKey.SetSize({buttonWidth, buttonsHeight});
 		m_ButtonKey.SetText(keyText);
@@ -142,6 +144,11 @@ namespace onion::voxel
 		return m_Action;
 	}
 
+	bool KeyBindsTile::IsCapturingKey() const
+	{
+		return m_IsCapturingKey;
+	}
+
 	void KeyBindsTile::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(
@@ -151,12 +158,25 @@ namespace onion::voxel
 			m_ButtonReset.OnClick.Subscribe([this](const Button& sender) { Handle_ButtonReset_Click(sender); }));
 	}
 
-	void KeyBindsTile::Handle_ButtonKey_Click(const Button& sender) {}
+	void KeyBindsTile::Handle_ButtonKey_Click(const Button& sender)
+	{
+		InputsManager& inputsManager = *EngineContext::Get().Inputs;
+		m_EvtHandle_KeyPressed =
+			inputsManager.EvtIntercptedKeyPressed.Subscribe([this](Key key) { Handle_KeyPressed(key); });
+		m_IsCapturingKey = true;
+	}
 
 	void KeyBindsTile::Handle_ButtonReset_Click(const Button& sender)
 	{
 		SetKey(m_DefaultKey);
 		EvtKeyBindChanged.Trigger(*this);
+	}
+
+	void KeyBindsTile::Handle_KeyPressed(Key key)
+	{
+		SetKey(key);
+		EvtKeyBindChanged.Trigger(*this);
+		m_IsCapturingKey = false;
 	}
 
 } // namespace onion::voxel

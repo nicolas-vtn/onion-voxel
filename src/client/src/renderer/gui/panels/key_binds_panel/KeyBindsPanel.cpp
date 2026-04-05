@@ -37,6 +37,7 @@ namespace onion::voxel
 	{
 		if (s_IsBackPressed)
 		{
+			std::cout << "Any tile capturing key: " << IsAnyTileCapturingKey() << std::endl;
 			Handle_Done_Click(m_Done_Button);
 			return;
 		}
@@ -306,6 +307,20 @@ namespace onion::voxel
 		return allDefault;
 	}
 
+	bool KeyBindsPanel::IsAnyTileCapturingKey() const
+	{
+		bool anyCapturing = false;
+		for (auto& [action, tilePtr] : m_ActionToKeyBindTileMap)
+		{
+			if (tilePtr->IsCapturingKey())
+			{
+				anyCapturing = true;
+				break;
+			}
+		}
+		return anyCapturing;
+	}
+
 	void KeyBindsPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(
@@ -320,12 +335,15 @@ namespace onion::voxel
 		UserSettings userSettings = EngineContext::Get().Settings();
 
 		// Update the changed key bind in the settings
-		eAction changedAction = sender.GetAction();
+		eAction action = sender.GetAction();
 		Key newKey = sender.GetKey();
+
+		// Updates the settings with the new key bind
+		userSettings.Controls.keyBindsSettings.ActionToKey[action] = newKey;
 
 		UserSettingsChangedEventArgs evtArgs = UserSettingsChangedEventArgs(userSettings);
 		evtArgs.KeyBinds_Changed = true;
-		evtArgs.ChangedKeyBinds[changedAction] = newKey;
+		evtArgs.ChangedKeyBinds[action] = newKey;
 		EvtUserSettingsChanged.Trigger(evtArgs);
 	}
 
