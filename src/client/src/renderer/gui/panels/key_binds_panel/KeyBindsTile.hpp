@@ -62,6 +62,8 @@ namespace onion::voxel
 		Key m_DefaultKey;
 
 		bool m_IsCapturingKey = false;
+		// Used to delay the reset of m_IsCapturingKey of 1 frame, to avoid KeyBindsPanel to exit on Escape pressed.
+		bool m_KeyCapturedThisFrame = false;
 
 		// ----- Private Helpers -----
 	  private:

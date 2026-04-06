@@ -164,6 +164,11 @@ void InputsManager::PollKeyboardInputs()
 	{
 		const Key key = keyControl.key;
 
+		if (key == Key::Unknown)
+		{
+			continue; // Skip unknown keys
+		}
+
 		// If it's a mouse button
 		if (mouseInputs.contains(key))
 		{

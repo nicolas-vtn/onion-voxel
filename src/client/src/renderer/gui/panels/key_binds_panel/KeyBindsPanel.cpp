@@ -35,9 +35,8 @@ namespace onion::voxel
 
 	void KeyBindsPanel::Render()
 	{
-		if (s_IsBackPressed)
+		if (s_IsBackPressed && !IsAnyTileCapturingKey())
 		{
-			std::cout << "Any tile capturing key: " << IsAnyTileCapturingKey() << std::endl;
 			Handle_Done_Click(m_Done_Button);
 			return;
 		}
@@ -356,11 +355,14 @@ namespace onion::voxel
 
 		UserSettings userSettings = EngineContext::Get().Settings();
 		UserSettingsChangedEventArgs evtArgs = UserSettingsChangedEventArgs(userSettings);
+		auto& actionToKeyBindMap = evtArgs.NewSettings.Controls.keyBindsSettings.ActionToKey;
 
 		for (auto& [action, tilePtr] : m_ActionToKeyBindTileMap)
 		{
 			Key defaultKey = GetDefaultKeyForAction(action);
 			tilePtr->SetKey(defaultKey);
+
+			actionToKeyBindMap[action] = defaultKey;
 
 			evtArgs.KeyBinds_Changed = true;
 			evtArgs.ChangedKeyBinds[action] = defaultKey;

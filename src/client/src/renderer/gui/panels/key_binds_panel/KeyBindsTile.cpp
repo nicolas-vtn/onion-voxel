@@ -21,6 +21,12 @@ namespace onion::voxel
 
 	void KeyBindsTile::Render()
 	{
+		if (m_KeyCapturedThisFrame)
+		{
+			m_KeyCapturedThisFrame = false;
+			m_IsCapturingKey = false;
+		}
+
 		// ---- Constants ----
 		const int leftX = static_cast<int>(round(m_Position.x - m_Size.x / 2.f));
 		const int buttonsHeight = static_cast<int>(round(m_Size.y));
@@ -43,6 +49,8 @@ namespace onion::voxel
 		std::string keyText = KeyToString(m_Key);
 		if (m_IsCapturingKey)
 			keyText = "...";
+		if (m_Key == Key::Unknown)
+			keyText = "Not Bound";
 		m_ButtonKey.SetPosition({keyButtonPosX, m_Position.y});
 		m_ButtonKey.SetSize({buttonWidth, buttonsHeight});
 		m_ButtonKey.SetText(keyText);
@@ -174,9 +182,15 @@ namespace onion::voxel
 
 	void KeyBindsTile::Handle_KeyPressed(Key key)
 	{
+		if (key == Key::Escape)
+		{
+			// Unbound the Key
+			key = Key::Unknown;
+		}
+
 		SetKey(key);
 		EvtKeyBindChanged.Trigger(*this);
-		m_IsCapturingKey = false;
+		m_KeyCapturedThisFrame = true;
 	}
 
 } // namespace onion::voxel
