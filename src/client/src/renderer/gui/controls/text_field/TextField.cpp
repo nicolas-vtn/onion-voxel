@@ -97,7 +97,7 @@ namespace onion::voxel
 			// PLACEHOLDER TEXT
 
 			m_Label.SetText(m_PlaceholderText);
-			m_Label.SetTextColor(s_PlaceholderTextColor);
+			m_Label.SetCustomTextColor(s_PlaceholderTextColor);
 			m_Label.SetPosition(textPos);
 			m_Label.Render();
 		}
@@ -129,21 +129,21 @@ namespace onion::voxel
 
 				// Render text before selection
 				m_Label.SetText(textBeforeSelection);
-				m_Label.SetTextColor(s_TextColor);
+				m_Label.SetCustomTextColor(s_TextColor);
 				m_Label.SetPosition(textPos);
 				m_Label.Render();
 
 				// Render selected text with highlight
 				m_Label.SetText(selectedText);
-				m_Label.SetTextColor(s_SelectedTextColor);
-				m_Label.SetShadowColor(s_SelectedTextShadowColor);
+				m_Label.SetCustomTextColor(s_SelectedTextColor);
+				m_Label.SetCustomShadowColor(s_SelectedTextShadowColor);
 				m_Label.SetBackgroundColor(glm::vec4(1.f));
 				m_Label.SetPosition(selectedTextPos);
 				m_Label.Render();
 
 				// Render text after selection
 				m_Label.SetText(textAfterSelection);
-				m_Label.SetTextColor(s_TextColor);
+				m_Label.SetCustomTextColor(s_TextColor);
 				m_Label.ResetShadowColor(); // Reset shadow color for non-selected text
 				m_Label.SetPosition(textAfterSelectionPos);
 				m_Label.SetBackgroundColor(glm::vec4(0.f)); // Disable background for non-selected text
@@ -153,7 +153,7 @@ namespace onion::voxel
 			{
 				// NO SELECTION
 				m_Label.SetText(drawnText);
-				m_Label.SetTextColor(s_TextColor);
+				m_Label.SetCustomTextColor(s_TextColor);
 				m_Label.SetPosition(textPos);
 				m_Label.Render();
 			}

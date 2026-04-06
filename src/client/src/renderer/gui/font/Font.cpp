@@ -203,152 +203,6 @@ namespace onion::voxel
 						  eTextAlignment alignment,
 						  const glm::vec2& position,
 						  float textHeightPx,
-						  const glm::vec3& color,
-						  float zOffset,
-						  float rotationDegrees,
-						  const glm::vec4& backgroundColor)
-	{
-		if (text.empty())
-			return;
-
-		glm::vec2 size = MeasureText(text, textHeightPx);
-
-		// Calculate Starting position based on alignment
-		float startX = 0.f, startY = 0.f;
-		glm::vec2 topLeftCorner{};
-		glm::vec2 bottomRightCorner{};
-		switch (alignment)
-		{
-			case eTextAlignment::Left:
-				startX = position.x;
-				startY = position.y - size.y * 0.5f; // Center vertically
-				topLeftCorner = {position.x, position.y - size.y * 0.5f};
-				bottomRightCorner = {position.x + size.x, position.y + size.y * 0.5f};
-				break;
-
-			case eTextAlignment::Center:
-				startX = position.x - size.x * 0.5f;
-				startY = position.y - size.y * 0.5f; // Center vertically
-				topLeftCorner = {position.x - size.x * 0.5f, position.y - size.y * 0.5f};
-				bottomRightCorner = {position.x + size.x * 0.5f, position.y + size.y * 0.5f};
-				break;
-
-			case eTextAlignment::Right:
-				startX = position.x - size.x;
-				startY = position.y - size.y * 0.5f; // Center vertically
-				topLeftCorner = {static_cast<int>(position.x - size.x), static_cast<int>(position.y - size.y * 0.5f)};
-				bottomRightCorner = {static_cast<int>(position.x), static_cast<int>(position.y + size.y * 0.5f)};
-				break;
-		}
-
-		// Build vertices
-		float cursorX = startX;
-		float cursorY = startY;
-
-		float scale = textHeightPx / m_GlyphSize.y;
-
-		for (char c : text)
-		{
-			int ascii = static_cast<unsigned char>(c);
-			const Glyph& glyph = m_Glyphs[ascii];
-
-			float x0 = cursorX;
-			float y0 = cursorY;
-			float x1 = x0 + glyph.width * scale;
-			float y1 = y0 + glyph.height * scale;
-
-			m_Vertices.push_back({x0, y0, zOffset, glyph.u0, glyph.v0});
-			m_Vertices.push_back({x1, y0, zOffset, glyph.u1, glyph.v0});
-			m_Vertices.push_back({x1, y1, zOffset, glyph.u1, glyph.v1});
-
-			m_Vertices.push_back({x0, y0, zOffset, glyph.u0, glyph.v0});
-			m_Vertices.push_back({x1, y1, zOffset, glyph.u1, glyph.v1});
-			m_Vertices.push_back({x0, y1, zOffset, glyph.u0, glyph.v1});
-
-			cursorX += glyph.advance * scale;
-		}
-
-		// --- Rotation Matrix ---
-		glm::mat4 model(1.0f);
-
-		if (rotationDegrees != 0.0f)
-		{
-			model = glm::translate(model, glm::vec3(position, 0.0f));
-			model = glm::rotate(model, glm::radians(rotationDegrees), glm::vec3(0, 0, 1));
-			model = glm::translate(model, glm::vec3(-position, 0.0f));
-		}
-
-		// --- Render Background ---
-		if (backgroundColor.a > 0.0f)
-		{
-			const float glyphPixelSize = textHeightPx / m_GlyphSize.y;
-
-			const float paddingTop = 1.2f * glyphPixelSize;
-			const float paddingBottom = 1.f * glyphPixelSize;
-			const float paddingLeft = 1.f * glyphPixelSize;
-			const float paddingRight = -0.8f * glyphPixelSize;
-
-			topLeftCorner.x -= paddingLeft;
-			topLeftCorner.y -= paddingTop;
-			bottomRightCorner.x += paddingRight;
-			bottomRightCorner.y += paddingBottom;
-
-			glm::ivec2 topLeftCornerInt = glm::ivec2(std::floor(topLeftCorner.x), std::floor(topLeftCorner.y));
-			glm::ivec2 bottomRightCornerInt =
-				glm::ivec2(std::floor(bottomRightCorner.x), std::floor(bottomRightCorner.y));
-
-			// Build background vertices
-			m_VerticesBackground = {{{topLeftCornerInt.x, topLeftCornerInt.y, zOffset - 0.02f}},
-									{{bottomRightCornerInt.x, topLeftCornerInt.y, zOffset - 0.02f}},
-									{{bottomRightCornerInt.x, bottomRightCornerInt.y, zOffset - 0.02f}},
-									{{topLeftCornerInt.x, topLeftCornerInt.y, zOffset - 0.02f}},
-									{{bottomRightCornerInt.x, bottomRightCornerInt.y, zOffset - 0.02f}},
-									{{topLeftCornerInt.x, bottomRightCornerInt.y, zOffset - 0.02f}}};
-
-			// Upload background vertices
-			glBindVertexArray(m_VAO_Background);
-			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Background);
-
-			glBufferData(GL_ARRAY_BUFFER,
-						 m_VerticesBackground.size() * sizeof(VertexBackground),
-						 m_VerticesBackground.data(),
-						 GL_DYNAMIC_DRAW);
-
-			// Set Uniforms
-			s_ShaderBackground.Use();
-			s_ShaderBackground.setMat4("uModel", model);
-			s_ShaderBackground.setVec4("uColor", backgroundColor);
-
-			// Draw background
-			glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m_VerticesBackground.size()));
-
-			glBindVertexArray(0);
-		}
-
-		// --- Render Text ---
-		glBindVertexArray(m_VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-
-		glBufferData(GL_ARRAY_BUFFER, m_Vertices.size() * sizeof(Vertex), m_Vertices.data(), GL_DYNAMIC_DRAW);
-
-		m_TextureAtlas.Bind();
-
-		s_ShaderFont.Use();
-		s_ShaderFont.setVec3("uTextColor", color);
-		s_ShaderFont.setInt("uTexture", 0);
-		s_ShaderFont.setMat4("uModel", model);
-
-		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m_Vertices.size()));
-
-		glBindVertexArray(0);
-
-		m_Vertices.clear();
-	}
-
-	void Font::RenderText(const std::string& text,
-						  eTextAlignment alignment,
-						  const glm::vec2& position,
-						  float textHeightPx,
 						  float zOffset,
 						  float rotationDegrees,
 						  bool renderShadow,
@@ -420,6 +274,71 @@ namespace onion::voxel
 			currentPos = RenderPartialText(
 				segment.text, foregroundColor, currentPos, textHeightPx, zOffset, rotationDegrees, backgroundColor);
 		}
+	}
+
+	void Font::RenderText(const std::string& text,
+						  eTextAlignment alignment,
+						  const glm::vec2& position,
+						  const glm::vec3& textColor,
+						  const glm::vec3& shadowColor,
+						  float textHeightPx,
+						  float zOffset,
+						  float rotationDegrees,
+						  bool renderShadow,
+						  const glm::vec4& backgroundColor)
+	{
+		glm::ivec2 size = MeasureText(text, textHeightPx);
+
+		// Calculate Starting position based on alignment
+		float startX = 0.f, startY = 0.f;
+		glm::vec2 topLeftCorner{};
+		glm::vec2 bottomRightCorner{};
+		switch (alignment)
+		{
+			case eTextAlignment::Left:
+				startX = position.x;
+				startY = position.y - size.y * 0.5f; // Center vertically
+				topLeftCorner = {position.x, position.y - size.y * 0.5f};
+				bottomRightCorner = {position.x + size.x, position.y + size.y * 0.5f};
+				break;
+
+			case eTextAlignment::Center:
+				startX = position.x - size.x * 0.5f;
+				startY = position.y - size.y * 0.5f; // Center vertically
+				topLeftCorner = {position.x - size.x * 0.5f, position.y - size.y * 0.5f};
+				bottomRightCorner = {position.x + size.x * 0.5f, position.y + size.y * 0.5f};
+				break;
+
+			case eTextAlignment::Right:
+				startX = position.x - size.x;
+				startY = position.y - size.y * 0.5f; // Center vertically
+				topLeftCorner = {static_cast<int>(position.x - size.x), static_cast<int>(position.y - size.y * 0.5f)};
+				bottomRightCorner = {static_cast<int>(position.x), static_cast<int>(position.y + size.y * 0.5f)};
+				break;
+		}
+
+		glm::vec2 currentPos = {startX, startY};
+		if (renderShadow)
+		{
+			currentPos = {startX, startY};
+			glm::ivec2 shadowOffset{static_cast<int>(round(textHeightPx / 8.f)),
+									static_cast<int>(round(textHeightPx / 8.f))};
+			currentPos += shadowOffset;
+
+			glm::vec4 transparentBackgroundColor = {0, 0, 0, 0};
+
+			currentPos = RenderPartialText(text,
+										   shadowColor,
+										   currentPos,
+										   textHeightPx,
+										   zOffset - 0.01f,
+										   rotationDegrees,
+										   transparentBackgroundColor);
+		}
+
+		currentPos = {startX, startY};
+		currentPos =
+			RenderPartialText(text, textColor, currentPos, textHeightPx, zOffset, rotationDegrees, backgroundColor);
 	}
 
 	glm::vec2 Font::MeasureText(const std::string& text, float textHeightPx) const

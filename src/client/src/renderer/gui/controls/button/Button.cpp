@@ -68,8 +68,8 @@ namespace onion::voxel
 
 		glm::ivec2 textCenter = GetPosition();
 
-		constexpr glm::vec3 disabledTextColor{0.6196f, 0.6196f, 0.6196f};
-		glm::vec3 textColor = m_IsEnabled ? s_ColorMainText : disabledTextColor;
+		constexpr Font::eColor disabledTextColor = Font::eColor::Gray;
+		Font::eColor textColor = m_IsEnabled ? s_ColorMainText : disabledTextColor;
 
 		m_Label.SetPosition(textCenter);
 		m_Label.SetTextColor(textColor);

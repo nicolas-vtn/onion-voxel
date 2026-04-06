@@ -103,29 +103,40 @@ namespace onion::voxel
 		/// @brief Sets the projection matrix to be used for rendering text. This should be called whenever the screen size changes to update the projection matrix accordingly.
 		static void SetProjectionMatrix(const glm::mat4& projection);
 
-		//void RenderText(const std::string& text, float x, float y, float textHeightPx, const glm::vec3& color);
-
 		/// @brief Renders the given text at the specified position with the specified height and color. The text is aligned based on the given alignment parameter, and can be optionally rotated by a specified angle in degrees and offset in the Z direction.
 		/// @param text The text to render
 		/// @param alignment The alignment of the text (Left, Center, Right)
 		/// @param position The position to render the text (center for Center alignment, left-center edge for Left alignment, right-center edge for Right alignment)
 		/// @param textHeightPx The height of the text in pixels
-		/// @param color The color of the text
-		/// @param rotationDegrees The rotation of the text in degrees
 		/// @param zOffset The offset of the text in the Z direction
+		/// @param rotationDegrees The rotation of the text in degrees
+		/// @param renderShadow Whether to render a shadow for the text.
 		/// @param backgroundColor The background color of the text
 		void RenderText(const std::string& text,
 						eTextAlignment alignment,
 						const glm::vec2& position,
 						float textHeightPx,
-						const glm::vec3& color,
 						float zOffset = 0.0f,
 						float rotationDegrees = 0.0f,
+						bool renderShadow = true,
 						const glm::vec4& backgroundColor = glm::vec4(0.0f));
 
+		/// @brief Renders the given text at the specified position with the specified height and color. The text is aligned based on the given alignment parameter, and can be optionally rotated by a specified angle in degrees and offset in the Z direction.
+		/// @param text The text to render
+		/// @param alignment The alignment of the text (Left, Center, Right)
+		/// @param position The position to render the text (center for Center alignment, left-center edge for Left alignment, right-center edge for Right alignment)
+		/// @param textColor The color of the text
+		/// @param shadowColor The color of the shadow
+		/// @param textHeightPx The height of the text in pixels
+		/// @param zOffset The offset of the text in the Z direction
+		/// @param rotationDegrees The rotation of the text in degrees
+		/// @param renderShadow Whether to render a shadow for the text.
+		/// @param backgroundColor The background color of the text
 		void RenderText(const std::string& text,
 						eTextAlignment alignment,
 						const glm::vec2& position,
+						const glm::vec3& textColor,
+						const glm::vec3& shadowColor,
 						float textHeightPx,
 						float zOffset = 0.0f,
 						float rotationDegrees = 0.0f,

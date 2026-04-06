@@ -106,8 +106,8 @@ namespace onion::voxel
 		static inline const std::filesystem::path s_SpritePathFromGui_HandleHighlighted =
 			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "slider_handle_highlighted.png";
 
-		static inline constexpr glm::vec3 s_TextColor = glm::vec3(1.f);
-		static inline constexpr glm::vec3 s_TextShadowColor = glm::vec3(63.f / 255.f);
+		static inline constexpr Font::eColor s_TextColor = Font::eColor::White;
+		//static inline constexpr glm::vec3 s_TextShadowColor = glm::vec3(63.f / 255.f);
 
 		// ----- DEBUG -----
 	  private:

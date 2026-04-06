@@ -13,6 +13,7 @@ namespace onion::voxel
 		for (int i = 0; i < static_cast<int>(LabelType::Count); i++)
 		{
 			LabelType labelType = static_cast<LabelType>(i);
+			Font::eColor color = Font::eColor::White;
 			std::string labelText;
 			switch (labelType)
 			{
@@ -20,52 +21,68 @@ namespace onion::voxel
 					labelText = "Regular";
 					break;
 				case LabelType::Color0:
-					labelText = Font::ColorToString(Font::eColor::Black);
+					color = Font::eColor::Black;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::Color1:
-					labelText = Font::ColorToString(Font::eColor::DarkBlue);
+					color = Font::eColor::DarkBlue;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::Color2:
-					labelText = Font::ColorToString(Font::eColor::DarkGreen);
+					color = Font::eColor::DarkGreen;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::Color3:
-					labelText = Font::ColorToString(Font::eColor::DarkAqua);
+					color = Font::eColor::DarkAqua;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::Color4:
-					labelText = Font::ColorToString(Font::eColor::DarkRed);
+					color = Font::eColor::DarkRed;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::Color5:
-					labelText = Font::ColorToString(Font::eColor::DarkPurple);
+					color = Font::eColor::DarkPurple;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::Color6:
-					labelText = Font::ColorToString(Font::eColor::Gold);
+					color = Font::eColor::Gold;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::Color7:
-					labelText = Font::ColorToString(Font::eColor::Gray);
+					color = Font::eColor::Gray;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::Color8:
-					labelText = Font::ColorToString(Font::eColor::DarkGray);
+					color = Font::eColor::DarkGray;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::Color9:
-					labelText = Font::ColorToString(Font::eColor::Blue);
+					color = Font::eColor::Blue;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::ColorA:
-					labelText = Font::ColorToString(Font::eColor::Green);
+					color = Font::eColor::Green;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::ColorB:
-					labelText = Font::ColorToString(Font::eColor::Aqua);
+					color = Font::eColor::Aqua;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::ColorC:
-					labelText = Font::ColorToString(Font::eColor::Red);
+					color = Font::eColor::Red;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::ColorD:
-					labelText = Font::ColorToString(Font::eColor::LightPurple);
+					color = Font::eColor::LightPurple;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::ColorE:
-					labelText = Font::ColorToString(Font::eColor::Yellow);
+					color = Font::eColor::Yellow;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::ColorF:
-					labelText = Font::ColorToString(Font::eColor::White);
+					color = Font::eColor::White;
+					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::Bold:
 					labelText = "bold";
@@ -86,6 +103,7 @@ namespace onion::voxel
 
 			std::unique_ptr<Label> label = std::make_unique<Label>(labelText);
 			label->SetText(labelText);
+			label->SetTextColor(color);
 			label->SetTextAlignment(Font::eTextAlignment::Center);
 			m_Labels.push_back(std::move(label));
 		}
