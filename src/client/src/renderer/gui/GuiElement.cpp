@@ -105,7 +105,7 @@ namespace onion::voxel
 			glm::ortho(0.0f, static_cast<float>(screenWidth), static_cast<float>(screenHeight), 0.0f, -1.0f, 1.0f);
 
 		s_TextHeight = 32.f / 1009.f * static_cast<float>(screenHeight);
-		s_ControlHeight = 80.f / 1009.f * static_cast<float>(screenHeight);
+		s_ControlHeight = static_cast<int>(round(80.f / 1009.f * static_cast<float>(screenHeight)));
 		s_CenterX = static_cast<int>(std::round(screenWidth / 2.0));
 
 		Font::SetProjectionMatrix(s_ProjectionMatrix);

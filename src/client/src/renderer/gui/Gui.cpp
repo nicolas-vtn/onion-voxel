@@ -31,7 +31,8 @@ namespace onion::voxel
 		  m_OptionsPanel("OptionsPanel"), m_ResourcePacksPanel("ResourcePacksPanel"),
 		  m_DemoScrollingPanel("DemoScrollingPanel"), m_SingleplayerPanel("SingleplayerPanel"),
 		  m_VideoSettingsPanel("VideoSettingsPanel"), m_ControlsPanel("ControlsPanel"),
-		  m_MouseSettingsPanel("MouseSettingsPanel"), m_KeyBindsPanel("KeyBindsPanel")
+		  m_MouseSettingsPanel("MouseSettingsPanel"), m_KeyBindsPanel("KeyBindsPanel"),
+		  m_DemoTextsPanel("DemoTextsPanel")
 	{
 		SubscribeToPanelsEvents();
 	}
@@ -144,6 +145,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_KeyBindsPanel.EvtUserSettingsChanged.Subscribe(
 			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
+
+		m_EventHandles.push_back(m_DemoTextsPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
+																					 { Handle_BackRequest(sender); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -336,6 +340,7 @@ namespace onion::voxel
 		m_DemoPanel.Initialize();
 		m_MainMenuPanel.Initialize();
 		m_DemoScrollingPanel.Initialize();
+		m_DemoTextsPanel.Initialize();
 		m_PausePanel.Initialize();
 		m_OptionsPanel.Initialize();
 		m_ResourcePacksPanel.Initialize();
@@ -372,6 +377,9 @@ namespace onion::voxel
 			case eMenu::DemoScrollingPanel:
 				m_DemoScrollingPanel.Render();
 				break;
+			case eMenu::DemoTextsPanel:
+				m_DemoTextsPanel.Render();
+				break;
 			case eMenu::MainMenu:
 				m_MainMenuPanel.Render();
 				break;
@@ -398,6 +406,7 @@ namespace onion::voxel
 				break;
 			case eMenu::KeyBinds:
 				m_KeyBindsPanel.Render();
+				break;
 			default:
 				break;
 		}
@@ -435,6 +444,7 @@ namespace onion::voxel
 		m_DemoPanel.Delete();
 		m_MainMenuPanel.Delete();
 		m_DemoScrollingPanel.Delete();
+		m_DemoTextsPanel.Delete();
 		m_PausePanel.Delete();
 		m_OptionsPanel.Delete();
 		m_ResourcePacksPanel.Delete();
@@ -452,6 +462,7 @@ namespace onion::voxel
 		m_DemoPanel.ReloadTextures();
 		m_MainMenuPanel.ReloadTextures();
 		m_DemoScrollingPanel.ReloadTextures();
+		m_DemoTextsPanel.ReloadTextures();
 		m_PausePanel.ReloadTextures();
 		m_OptionsPanel.ReloadTextures();
 		m_ResourcePacksPanel.ReloadTextures();

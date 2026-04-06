@@ -37,6 +37,7 @@ namespace onion::voxel
 		Button m_Button2;
 		Button m_ButtonMainMenu;
 		Button m_ButtonScrollingPanel;
+		Button m_ButtonTextsPanel;
 		Sprite m_Sprite;
 		Checkbox m_Checkbox;
 		TextField m_TextField;
@@ -55,5 +56,6 @@ namespace onion::voxel
 		void Handle_CheckboxCheckedChanged(const Checkbox& checkbox);
 		void Handle_SliderValueChanged(const Slider& slider);
 		void Handle_ButtonScrollingPanelClick(const Button& button);
+		void Handle_ButtonTextsPanelClick(const Button& button);
 	};
 } // namespace onion::voxel

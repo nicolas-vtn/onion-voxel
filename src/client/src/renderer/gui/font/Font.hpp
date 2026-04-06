@@ -16,12 +16,57 @@ namespace onion::voxel
 {
 	class Font
 	{
+		// ----- Enums -----
 	  public:
 		enum class eTextAlignment
 		{
 			Left,
 			Center,
 			Right
+		};
+
+		enum class eColor : uint8_t
+		{
+			Black = '0',
+			DarkBlue = '1',
+			DarkGreen = '2',
+			DarkAqua = '3',
+			DarkRed = '4',
+			DarkPurple = '5',
+			Gold = '6',
+			Gray = '7',
+			DarkGray = '8',
+			Blue = '9',
+			Green = 'a',
+			Aqua = 'b',
+			Red = 'c',
+			LightPurple = 'd',
+			Yellow = 'e',
+			White = 'f'
+		};
+
+		enum class eStyle : uint8_t
+		{
+			Bold = 'l',
+			Strikethrough = 'm',
+			Underline = 'n',
+			Italic = 'o',
+			Reset = 'r'
+		};
+
+		struct TextFormat
+		{
+			eColor color = eColor::White;
+			bool bold = false;
+			bool strikethrough = false;
+			bool underline = false;
+			bool italic = false;
+		};
+
+		struct TextSegment
+		{
+			std::string text;
+			TextFormat format;
 		};
 
 		// ----- Constructor / Destructor -----
@@ -35,6 +80,16 @@ namespace onion::voxel
 		static void StaticInitialize();
 		/// @brief Shuts down static resources for the Font class, such as shaders. This should be called once after all Font instances are destroyed.
 		static void StaticShutdown();
+
+		// ----- Helper Methods -----
+	  public:
+		static std::string ColorToString(eColor color);
+		static std::string GetColorTag(eColor color);
+		static std::string StyleToString(eStyle style);
+		static std::string GetStyleTag(eStyle style);
+
+		static std::string GetFormatTag(const TextFormat& format);
+		static std::string FormatText(const std::string& text, const TextFormat& format);
 
 		// ----- Public API -----
 	  public:
@@ -66,6 +121,15 @@ namespace onion::voxel
 						const glm::vec3& color,
 						float zOffset = 0.0f,
 						float rotationDegrees = 0.0f,
+						const glm::vec4& backgroundColor = glm::vec4(0.0f));
+
+		void RenderText(const std::string& text,
+						eTextAlignment alignment,
+						const glm::vec2& position,
+						float textHeightPx,
+						float zOffset = 0.0f,
+						float rotationDegrees = 0.0f,
+						bool renderShadow = true,
 						const glm::vec4& backgroundColor = glm::vec4(0.0f));
 
 		/// @brief Gets the size of the given text when rendered with the specified height. This can be used to calculate the position to render the text based on the desired alignment.
@@ -120,10 +184,29 @@ namespace onion::voxel
 		Glyph m_Glyphs[256]{};
 		void InitializeGlyphs();
 
+		// ----- Partial Rendering -----
+	  private:
+		glm::ivec2 RenderPartialText(const std::string& text,
+									 const glm::vec3& color,
+									 const glm::vec2& position,
+									 float textHeightPx,
+									 float zOffset,
+									 float rotationDegrees,
+									 const glm::vec4& backgroundColor);
+
 		// ----- Static Resources -----
 	  private:
 		static glm::mat4 s_ProjectionMatrix;
 		static Shader s_ShaderFont;
 		static Shader s_ShaderBackground;
+
+		// ----- Helper Methods -----
+	  private:
+		static std::vector<Font::TextSegment> SegmentText(const std::string& text);
+
+		// ----- Static Private Members -----
+	  private:
+		static const std::unordered_map<eColor, glm::vec3> s_ForegroundColorMap;
+		static const std::unordered_map<eColor, glm::vec3> s_BackgroundColorMap;
 	};
 } // namespace onion::voxel

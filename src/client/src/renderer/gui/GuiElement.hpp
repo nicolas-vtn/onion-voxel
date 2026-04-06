@@ -25,6 +25,7 @@ namespace onion::voxel
 		None,
 		DemoPanel,
 		DemoScrollingPanel,
+		DemoTextsPanel,
 		MainMenu,
 		Singleplayer,
 		Multiplayer,

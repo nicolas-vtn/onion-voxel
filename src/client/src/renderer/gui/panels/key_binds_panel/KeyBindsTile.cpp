@@ -168,6 +168,8 @@ namespace onion::voxel
 
 	void KeyBindsTile::Handle_ButtonKey_Click(const Button& sender)
 	{
+		(void) sender;
+
 		InputsManager& inputsManager = *EngineContext::Get().Inputs;
 		m_EvtHandle_KeyPressed =
 			inputsManager.EvtIntercptedKeyPressed.Subscribe([this](Key key) { Handle_KeyPressed(key); });
@@ -176,6 +178,8 @@ namespace onion::voxel
 
 	void KeyBindsTile::Handle_ButtonReset_Click(const Button& sender)
 	{
+		(void) sender;
+
 		SetKey(m_DefaultKey);
 		EvtKeyBindChanged.Trigger(*this);
 	}

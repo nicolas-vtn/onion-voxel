@@ -3,6 +3,4 @@
 
 - Multiplayer Menu (UI + Add Server + List of servers)
 - Better ResourcePack menu (with scroller, filter and selectable tiles) + save last used
-- Consistent Text Height across UI : 		const float textHeightRatio = 32.f / 1009.f; const float textHeight = s_ScreenHeight * textHeightRatio;
-	- Uniform Components Height : 80.f / 1009.f * s_ScreenHeight
 		

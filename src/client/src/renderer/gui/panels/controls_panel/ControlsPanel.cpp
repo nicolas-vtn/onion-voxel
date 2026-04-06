@@ -63,7 +63,6 @@ namespace onion::voxel
 		// ----- Constants -----
 		UserSettings userSettings = EngineContext::Get().Settings();
 
-		const int centerX = static_cast<int>(round(s_ScreenWidth / 2.0));
 		const float leftXratio = 340.f / 1920.f;
 		const int leftX = static_cast<int>(round(s_ScreenWidth * leftXratio));
 		const float controlsHeightRatio = 80.f / 1009.f;
