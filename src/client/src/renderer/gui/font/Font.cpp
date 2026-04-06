@@ -9,8 +9,6 @@ namespace onion::voxel
 
 	Shader Font::s_ShaderFont(AssetsManager::GetShadersDirectory() / "font.vert",
 							  AssetsManager::GetShadersDirectory() / "font.frag");
-	Shader Font::s_ShaderBackground(AssetsManager::GetShadersDirectory() / "rectangle.vert",
-									AssetsManager::GetShadersDirectory() / "rectangle.frag");
 
 	glm::mat4 Font::s_ProjectionMatrix{1.0f};
 
@@ -19,7 +17,7 @@ namespace onion::voxel
 		return v / 255.f;
 	}
 
-	const std::unordered_map<Font::eColor, glm::vec3> Font::s_ForegroundColorMap = {
+	const std::unordered_map<Font::eColor, glm::vec3> Font::s_TextColorMap = {
 		{eColor::Black, {c(0.f), c(0.f), c(0.f)}},
 		{eColor::DarkBlue, {c(0.f), c(0.f), c(170.f)}},
 		{eColor::DarkGreen, {c(0.f), c(170.f), c(0.f)}},
@@ -37,7 +35,7 @@ namespace onion::voxel
 		{eColor::Yellow, {c(255.f), c(255.f), c(85.f)}},
 		{eColor::White, {c(255.f), c(255.f), c(255.f)}}};
 
-	const std::unordered_map<Font::eColor, glm::vec3> Font::s_BackgroundColorMap = {
+	const std::unordered_map<Font::eColor, glm::vec3> Font::s_ShadowColorMap = {
 		{eColor::Black, {c(0.f), c(0.f), c(0.f)}},
 		{eColor::DarkBlue, {c(0.f), c(0.f), c(42.f)}},
 		{eColor::DarkGreen, {c(0.f), c(42.f), c(0.f)}},
@@ -97,7 +95,6 @@ namespace onion::voxel
 	void Font::StaticShutdown()
 	{
 		s_ShaderFont.Delete();
-		s_ShaderBackground.Delete();
 	}
 
 	std::string Font::ColorToString(eColor color)
@@ -170,10 +167,10 @@ namespace onion::voxel
 		return std::string("§") + static_cast<char>(style);
 	}
 
-	std::string Font::GetFormatTag(const TextFormat& format)
+	std::string Font::GetFormatTag(eColor color, const TextFormat& format)
 	{
 		std::string tag;
-		tag += GetColorTag(format.color);
+		tag += GetColorTag(color);
 		if (format.bold)
 			tag += GetStyleTag(eStyle::Bold);
 		if (format.strikethrough)
@@ -185,9 +182,9 @@ namespace onion::voxel
 		return tag;
 	}
 
-	std::string Font::FormatText(const std::string& text, const TextFormat& format)
+	std::string Font::FormatText(const std::string& text, eColor color, const TextFormat& format)
 	{
-		return GetFormatTag(format) + text + GetStyleTag(eStyle::Reset);
+		return GetFormatTag(color, format) + text + GetStyleTag(eStyle::Reset);
 	}
 
 	void Font::SetProjectionMatrix(const glm::mat4& projection)
@@ -195,8 +192,6 @@ namespace onion::voxel
 		s_ProjectionMatrix = projection;
 		s_ShaderFont.Use();
 		s_ShaderFont.setMat4("uProjection", s_ProjectionMatrix);
-		s_ShaderBackground.Use();
-		s_ShaderBackground.setMat4("uProjection", s_ProjectionMatrix);
 	}
 
 	void Font::RenderText(const std::string& text,
@@ -205,8 +200,7 @@ namespace onion::voxel
 						  float textHeightPx,
 						  float zOffset,
 						  float rotationDegrees,
-						  bool renderShadow,
-						  const glm::vec4& backgroundColor)
+						  bool renderShadow)
 	{
 		std::vector<TextSegment> segments = SegmentText(text);
 
@@ -246,6 +240,8 @@ namespace onion::voxel
 				break;
 		}
 
+		glm::vec2 pivot = {topLeftCorner.x + size.x * 0.5f, topLeftCorner.y + size.y * 0.5f};
+
 		glm::vec2 currentPos = {startX, startY};
 		if (renderShadow)
 		{
@@ -255,24 +251,18 @@ namespace onion::voxel
 			currentPos += shadowOffset;
 			for (const TextSegment& segment : segments)
 			{
-				const glm::vec3& shadowColor = s_BackgroundColorMap.at(segment.format.color);
-				glm::vec4 transparentBackgroundColor = {0, 0, 0, 0};
-				currentPos = RenderPartialText(segment.text,
-											   shadowColor,
-											   currentPos,
-											   textHeightPx,
-											   zOffset - 0.01f,
-											   rotationDegrees,
-											   transparentBackgroundColor);
+				const glm::vec3& shadowColor = s_ShadowColorMap.at(segment.color);
+				currentPos = RenderPartialText(
+					segment.text, shadowColor, currentPos, textHeightPx, zOffset - 0.01f, rotationDegrees, pivot);
 			}
 		}
 
 		currentPos = {startX, startY};
 		for (const TextSegment& segment : segments)
 		{
-			const glm::vec3& foregroundColor = s_ForegroundColorMap.at(segment.format.color);
+			const glm::vec3& foregroundColor = s_TextColorMap.at(segment.color);
 			currentPos = RenderPartialText(
-				segment.text, foregroundColor, currentPos, textHeightPx, zOffset, rotationDegrees, backgroundColor);
+				segment.text, foregroundColor, currentPos, textHeightPx, zOffset, rotationDegrees, pivot);
 		}
 	}
 
@@ -284,8 +274,7 @@ namespace onion::voxel
 						  float textHeightPx,
 						  float zOffset,
 						  float rotationDegrees,
-						  bool renderShadow,
-						  const glm::vec4& backgroundColor)
+						  bool renderShadow)
 	{
 		glm::ivec2 size = MeasureText(text, textHeightPx);
 
@@ -317,6 +306,8 @@ namespace onion::voxel
 				break;
 		}
 
+		glm::vec2 pivot = {topLeftCorner.x + size.x * 0.5f, topLeftCorner.y + size.y * 0.5f};
+
 		glm::vec2 currentPos = {startX, startY};
 		if (renderShadow)
 		{
@@ -325,20 +316,12 @@ namespace onion::voxel
 									static_cast<int>(round(textHeightPx / 8.f))};
 			currentPos += shadowOffset;
 
-			glm::vec4 transparentBackgroundColor = {0, 0, 0, 0};
-
-			currentPos = RenderPartialText(text,
-										   shadowColor,
-										   currentPos,
-										   textHeightPx,
-										   zOffset - 0.01f,
-										   rotationDegrees,
-										   transparentBackgroundColor);
+			currentPos =
+				RenderPartialText(text, shadowColor, currentPos, textHeightPx, zOffset - 0.01f, rotationDegrees, pivot);
 		}
 
 		currentPos = {startX, startY};
-		currentPos =
-			RenderPartialText(text, textColor, currentPos, textHeightPx, zOffset, rotationDegrees, backgroundColor);
+		currentPos = RenderPartialText(text, textColor, currentPos, textHeightPx, zOffset, rotationDegrees, pivot);
 	}
 
 	glm::vec2 Font::MeasureText(const std::string& text, float textHeightPx) const
@@ -385,18 +368,7 @@ namespace onion::voxel
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
 		glEnableVertexAttribArray(1);
 
-		// ----- Background Vertices -----
-		glGenVertexArrays(1, &m_VAO_Background);
-		glGenBuffers(1, &m_VBO_Background);
-
-		glBindVertexArray(m_VAO_Background);
-		glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Background);
-		glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
-
-		glVertexAttribPointer(
-			0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexBackground), (void*) offsetof(VertexBackground, position));
-		glEnableVertexAttribArray(0);
-
+		// ----- Unbind -----
 		glBindVertexArray(0);
 	}
 
@@ -408,16 +380,8 @@ namespace onion::voxel
 		if (m_VBO)
 			glDeleteBuffers(1, &m_VBO);
 
-		if (m_VAO_Background)
-			glDeleteVertexArrays(1, &m_VAO_Background);
-
-		if (m_VBO_Background)
-			glDeleteBuffers(1, &m_VBO_Background);
-
 		m_VAO = 0;
 		m_VBO = 0;
-		m_VAO_Background = 0;
-		m_VBO_Background = 0;
 	}
 
 	float GetGlyphAdvance(unsigned char* data,
@@ -508,6 +472,7 @@ namespace onion::voxel
 	{
 		std::vector<TextSegment> segments;
 
+		eColor currentColor = eColor::White;
 		TextFormat currentFormat;
 		std::string currentText;
 
@@ -520,7 +485,7 @@ namespace onion::voxel
 				// Flush accumulated text before applying new formatting
 				if (!currentText.empty())
 				{
-					segments.push_back({currentText, currentFormat});
+					segments.push_back({currentText, currentColor, currentFormat});
 					currentText.clear();
 				}
 
@@ -531,7 +496,7 @@ namespace onion::voxel
 				if ((code >= '0' && code <= '9') || (code >= 'a' && code <= 'f'))
 				{
 					currentFormat = TextFormat{};
-					currentFormat.color = static_cast<eColor>(code);
+					currentColor = static_cast<eColor>(code);
 				}
 				else
 				{
@@ -566,7 +531,7 @@ namespace onion::voxel
 
 		if (!currentText.empty())
 		{
-			segments.push_back({currentText, currentFormat});
+			segments.push_back({currentText, currentColor, currentFormat});
 		}
 
 		return segments;
@@ -578,7 +543,7 @@ namespace onion::voxel
 									   float textHeightPx,
 									   float zOffset,
 									   float rotationDegrees,
-									   const glm::vec4& backgroundColor)
+									   const glm::vec2& pivot)
 	{
 		if (text.empty())
 			return position;
@@ -616,58 +581,9 @@ namespace onion::voxel
 
 		if (rotationDegrees != 0.0f)
 		{
-			model = glm::translate(model, glm::vec3(position, 0.0f));
+			model = glm::translate(model, glm::vec3(pivot, 0.0f));
 			model = glm::rotate(model, glm::radians(rotationDegrees), glm::vec3(0, 0, 1));
-			model = glm::translate(model, glm::vec3(-position, 0.0f));
-		}
-
-		// --- Render Background ---
-		glm::vec2 topLeftCorner = {position.x, position.y - size.y * 0.5f};
-		glm::vec2 bottomRightCorner = {position.x + size.x, position.y + size.y * 0.5f};
-		if (backgroundColor.a > 0.0f)
-		{
-			const float glyphPixelSize = textHeightPx / m_GlyphSize.y;
-
-			const float paddingTop = 1.2f * glyphPixelSize;
-			const float paddingBottom = 1.f * glyphPixelSize;
-			const float paddingLeft = 1.f * glyphPixelSize;
-			const float paddingRight = -0.8f * glyphPixelSize;
-
-			topLeftCorner.x -= paddingLeft;
-			topLeftCorner.y -= paddingTop;
-			bottomRightCorner.x += paddingRight;
-			bottomRightCorner.y += paddingBottom;
-
-			glm::ivec2 topLeftCornerInt = glm::ivec2(std::floor(topLeftCorner.x), std::floor(topLeftCorner.y));
-			glm::ivec2 bottomRightCornerInt =
-				glm::ivec2(std::floor(bottomRightCorner.x), std::floor(bottomRightCorner.y));
-
-			// Build background vertices
-			m_VerticesBackground = {{{topLeftCornerInt.x, topLeftCornerInt.y, zOffset - 0.02f}},
-									{{bottomRightCornerInt.x, topLeftCornerInt.y, zOffset - 0.02f}},
-									{{bottomRightCornerInt.x, bottomRightCornerInt.y, zOffset - 0.02f}},
-									{{topLeftCornerInt.x, topLeftCornerInt.y, zOffset - 0.02f}},
-									{{bottomRightCornerInt.x, bottomRightCornerInt.y, zOffset - 0.02f}},
-									{{topLeftCornerInt.x, bottomRightCornerInt.y, zOffset - 0.02f}}};
-
-			// Upload background vertices
-			glBindVertexArray(m_VAO_Background);
-			glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Background);
-
-			glBufferData(GL_ARRAY_BUFFER,
-						 m_VerticesBackground.size() * sizeof(VertexBackground),
-						 m_VerticesBackground.data(),
-						 GL_DYNAMIC_DRAW);
-
-			// Set Uniforms
-			s_ShaderBackground.Use();
-			s_ShaderBackground.setMat4("uModel", model);
-			s_ShaderBackground.setVec4("uColor", backgroundColor);
-
-			// Draw background
-			glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m_VerticesBackground.size()));
-
-			glBindVertexArray(0);
+			model = glm::translate(model, glm::vec3(-pivot, 0.0f));
 		}
 
 		// --- Render Text ---

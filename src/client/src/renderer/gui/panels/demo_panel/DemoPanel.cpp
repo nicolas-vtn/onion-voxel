@@ -146,7 +146,7 @@ namespace onion::voxel
 		glm::ivec2 bgPosition = {s_ScreenWidth / 1.2f, s_ScreenHeight / 1.2f};
 		glm::ivec2 bgSize = {s_ScreenWidth / 10.f, s_ScreenHeight / 10.f};
 		glm::vec4 bgColor = glm::vec4(1.f, 0.4f, 0.8f, 0.5f);
-		ColoredBackground::Options bgOptions;
+		ColoredBackground::CenterOptions bgOptions;
 		bgOptions.Position = bgPosition;
 		bgOptions.Size = bgSize;
 		bgOptions.Color = bgColor;

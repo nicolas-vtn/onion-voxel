@@ -9,7 +9,21 @@ namespace onion::voxel
 	Shader ColoredBackground::s_Shader(Utils::GetExecutableDirectory() / "assets" / "shaders" / "rectangle.vert",
 									   Utils::GetExecutableDirectory() / "assets" / "shaders" / "rectangle.frag");
 
-	void ColoredBackground::Render(const Options& options)
+	void ColoredBackground::Render(const CenterOptions& options)
+	{
+		// Convert CenterOptions to CornerOptions
+		CornerOptions cornerOptions;
+		cornerOptions.TopLeftCorner = options.Position - options.Size / 2;
+		cornerOptions.BottomRightCorner = options.Position + options.Size / 2;
+		cornerOptions.Color = options.Color;
+		cornerOptions.ZOffset = options.ZOffset;
+		cornerOptions.RotationDegrees = options.RotationDegrees;
+
+		// Call the CornerOptions version of Render
+		Render(cornerOptions);
+	}
+
+	void ColoredBackground::Render(const CornerOptions& options)
 	{
 		if (!s_IsInitialized)
 			Initialize();
@@ -17,20 +31,24 @@ namespace onion::voxel
 		// --- Rotation Matrix ---
 		glm::mat4 model(1.0f);
 
+		float centerX = (options.TopLeftCorner.x + options.BottomRightCorner.x) / 2.0f;
+		float centerY = (options.TopLeftCorner.y + options.BottomRightCorner.y) / 2.0f;
+		glm::vec2 center{centerX, centerY};
+
 		if (options.RotationDegrees != 0.0f)
 		{
-			model = glm::translate(model, glm::vec3(options.Position, 0.0f));
+			model = glm::translate(model, glm::vec3(center, 0.0f));
 			model = glm::rotate(model, glm::radians(options.RotationDegrees), glm::vec3(0, 0, 1));
-			model = glm::translate(model, glm::vec3(-options.Position, 0.0f));
+			model = glm::translate(model, glm::vec3(-center, 0.0f));
 		}
 
 		// --- Render Background ---
 		if (options.Color.a > 0.0f)
 		{
 			const float& zOffset = options.ZOffset;
-			glm::ivec2 topLeftCorner{options.Position.x - options.Size.x / 2, options.Position.y - options.Size.y / 2};
-			glm::ivec2 bottomRightCorner{options.Position.x + options.Size.x / 2,
-										 options.Position.y + options.Size.y / 2};
+
+			const glm::ivec2& topLeftCorner = options.TopLeftCorner;
+			const glm::ivec2& bottomRightCorner = options.BottomRightCorner;
 
 			// Build background vertices
 			std::vector<Vertex> vertices = {{{topLeftCorner.x, topLeftCorner.y, zOffset}},

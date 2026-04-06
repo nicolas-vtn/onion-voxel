@@ -15,18 +15,10 @@ namespace onion::voxel
 
 		if (!m_HasCustomTextColor)
 		{
-			Font::TextFormat textFormat;
-			textFormat.color = m_TextColor;
-			std::string formatedText = Font::FormatText(m_Text, textFormat);
+			std::string formatedText = Font::FormatText(m_Text, m_TextColor, m_TextFormat);
 
-			s_TextFont.RenderText(formatedText,
-								  m_TextAlignment,
-								  m_Position,
-								  m_TextHeight,
-								  m_zOffset,
-								  m_RotationDegrees,
-								  m_ShadowEnabled,
-								  m_BackgroundColor);
+			s_TextFont.RenderText(
+				formatedText, m_TextAlignment, m_Position, m_TextHeight, m_zOffset, m_RotationDegrees, m_ShadowEnabled);
 		}
 		else
 		{
@@ -45,8 +37,7 @@ namespace onion::voxel
 								  m_TextHeight,
 								  m_zOffset,
 								  m_RotationDegrees,
-								  m_ShadowEnabled,
-								  m_BackgroundColor);
+								  m_ShadowEnabled);
 		}
 	}
 
@@ -211,21 +202,16 @@ namespace onion::voxel
 		return m_ShadowEnabled;
 	}
 
-	void Label::SetBackgroundColor(const glm::vec4& color)
+	void Label::SetTextFormat(const Font::TextFormat& textFormat)
 	{
 		std::lock_guard lock(m_MutexState);
-		m_BackgroundColor = color;
+		m_TextFormat = textFormat;
 	}
 
-	void Label::SetBackgroundColor(const glm::vec3& color)
-	{
-		SetBackgroundColor(glm::vec4(color, 1.f));
-	}
-
-	glm::vec4 Label::GetBackgroundColor() const
+	Font::TextFormat Label::GetTextFormat() const
 	{
 		std::lock_guard lock(m_MutexState);
-		return m_BackgroundColor;
+		return m_TextFormat;
 	}
 
 } // namespace onion::voxel

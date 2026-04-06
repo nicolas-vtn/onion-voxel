@@ -56,7 +56,6 @@ namespace onion::voxel
 
 		struct TextFormat
 		{
-			eColor color = eColor::White;
 			bool bold = false;
 			bool strikethrough = false;
 			bool underline = false;
@@ -66,7 +65,8 @@ namespace onion::voxel
 		struct TextSegment
 		{
 			std::string text;
-			TextFormat format;
+			eColor color = eColor::White;
+			TextFormat format{};
 		};
 
 		// ----- Constructor / Destructor -----
@@ -88,8 +88,8 @@ namespace onion::voxel
 		static std::string StyleToString(eStyle style);
 		static std::string GetStyleTag(eStyle style);
 
-		static std::string GetFormatTag(const TextFormat& format);
-		static std::string FormatText(const std::string& text, const TextFormat& format);
+		static std::string GetFormatTag(eColor color, const TextFormat& format);
+		static std::string FormatText(const std::string& text, eColor color, const TextFormat& format);
 
 		// ----- Public API -----
 	  public:
@@ -111,15 +111,13 @@ namespace onion::voxel
 		/// @param zOffset The offset of the text in the Z direction
 		/// @param rotationDegrees The rotation of the text in degrees
 		/// @param renderShadow Whether to render a shadow for the text.
-		/// @param backgroundColor The background color of the text
 		void RenderText(const std::string& text,
 						eTextAlignment alignment,
 						const glm::vec2& position,
 						float textHeightPx,
 						float zOffset = 0.0f,
 						float rotationDegrees = 0.0f,
-						bool renderShadow = true,
-						const glm::vec4& backgroundColor = glm::vec4(0.0f));
+						bool renderShadow = true);
 
 		/// @brief Renders the given text at the specified position with the specified height and color. The text is aligned based on the given alignment parameter, and can be optionally rotated by a specified angle in degrees and offset in the Z direction.
 		/// @param text The text to render
@@ -131,7 +129,6 @@ namespace onion::voxel
 		/// @param zOffset The offset of the text in the Z direction
 		/// @param rotationDegrees The rotation of the text in degrees
 		/// @param renderShadow Whether to render a shadow for the text.
-		/// @param backgroundColor The background color of the text
 		void RenderText(const std::string& text,
 						eTextAlignment alignment,
 						const glm::vec2& position,
@@ -140,8 +137,7 @@ namespace onion::voxel
 						float textHeightPx,
 						float zOffset = 0.0f,
 						float rotationDegrees = 0.0f,
-						bool renderShadow = true,
-						const glm::vec4& backgroundColor = glm::vec4(0.0f));
+						bool renderShadow = true);
 
 		/// @brief Gets the size of the given text when rendered with the specified height. This can be used to calculate the position to render the text based on the desired alignment.
 		glm::vec2 MeasureText(const std::string& text, float textHeightPx) const;
@@ -157,11 +153,6 @@ namespace onion::voxel
 			float texX, texY;
 		};
 
-		struct VertexBackground
-		{
-			glm::vec3 position;
-		};
-
 		struct Glyph
 		{
 			float advance;
@@ -174,11 +165,7 @@ namespace onion::voxel
 		GLuint m_VAO = 0;
 		GLuint m_VBO = 0;
 
-		GLuint m_VAO_Background = 0;
-		GLuint m_VBO_Background = 0;
-
 		std::vector<Vertex> m_Vertices;
-		std::vector<VertexBackground> m_VerticesBackground;
 
 		void GenerateBuffers();
 		void DeleteBuffers();
@@ -203,13 +190,12 @@ namespace onion::voxel
 									 float textHeightPx,
 									 float zOffset,
 									 float rotationDegrees,
-									 const glm::vec4& backgroundColor);
+									 const glm::vec2& pivot);
 
 		// ----- Static Resources -----
 	  private:
 		static glm::mat4 s_ProjectionMatrix;
 		static Shader s_ShaderFont;
-		static Shader s_ShaderBackground;
 
 		// ----- Helper Methods -----
 	  private:
@@ -217,7 +203,7 @@ namespace onion::voxel
 
 		// ----- Static Private Members -----
 	  private:
-		static const std::unordered_map<eColor, glm::vec3> s_ForegroundColorMap;
-		static const std::unordered_map<eColor, glm::vec3> s_BackgroundColorMap;
+		static const std::unordered_map<eColor, glm::vec3> s_TextColorMap;
+		static const std::unordered_map<eColor, glm::vec3> s_ShadowColorMap;
 	};
 } // namespace onion::voxel

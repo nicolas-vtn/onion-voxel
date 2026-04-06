@@ -4,3 +4,4 @@
 - Multiplayer Menu (UI + Add Server + List of servers)
 - Better ResourcePack menu (with scroller, filter and selectable tiles) + save last used
 		
+- BUGFIX : Z-Ordering issue in GUI (Fix TestField Background)

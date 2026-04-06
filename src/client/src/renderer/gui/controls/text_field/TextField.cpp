@@ -4,6 +4,7 @@
 #include <misc/cpp/imgui_stdlib.h>
 
 #include <renderer/debug_draws/DebugDraws.hpp>
+#include <renderer/gui/colored_background/ColoredBackground.hpp>
 
 namespace onion::voxel
 {
@@ -59,10 +60,11 @@ namespace onion::voxel
 		glm::ivec2 size = GetSize();
 		glm::ivec2 pos = GetPosition();
 		glm::ivec2 textPos = pos - glm::ivec2(size.x / m_TextStartXratio, 0);
+		float textHeight = size.y * m_TextScaleFactor;
 
 		// Add trailing '_' or Render Cursor
 		std::string drawnText = m_Text;
-		bool visible = fmod(glfwGetTime(), 0.8) < 0.5;
+		bool visible = fmod(glfwGetTime(), 0.6) < 0.3;
 		if (visible && m_IsActive && !m_ReadOnly)
 		{
 			if (m_CursorPosition == m_Text.size())
@@ -74,13 +76,24 @@ namespace onion::voxel
 				std::string textBeforeCursor = m_Text.substr(0, m_CursorPosition);
 				glm::vec2 textBeforeCursorSize =
 					s_TextFont.MeasureText(textBeforeCursor, GetSize().y * m_TextScaleFactor);
-				glm::ivec2 cursorPos = textPos + glm::ivec2(textBeforeCursorSize.x, 0);
 
-				float cursorHeight = size.y * m_CursorHeightRatio;
-				glm::ivec2 bottomCursor = cursorPos + glm::ivec2(0, cursorHeight / 2.f);
-				glm::ivec2 topCursor = cursorPos - glm::ivec2(0, cursorHeight / 2.f);
+				int onePx = static_cast<int>(round(4.f / 1920.f * s_ScreenWidth));
 
-				DebugDraws::DrawScreenLine_Pixels(bottomCursor, topCursor, glm::vec4(s_TextColor, 1.f), m_CursorWidth);
+				int cursorLeftX = textPos.x + static_cast<int>(textBeforeCursorSize.x);
+				int cursorRightX = cursorLeftX + onePx;
+
+				int cursorTopY = textPos.y - static_cast<int>(round(textHeight / 2.f)) - onePx;
+				int cursorBottomY = textPos.y + static_cast<int>(round(textHeight / 2.f)) + (3 * onePx);
+
+				glm::ivec2 topLeftCursor = {cursorLeftX, cursorTopY};
+				glm::ivec2 bottomRightCursor = {cursorRightX, cursorBottomY};
+
+				ColoredBackground::CornerOptions options;
+				options.TopLeftCorner = topLeftCursor;
+				options.BottomRightCorner = bottomRightCursor;
+				options.Color = glm::vec4(s_TextColor, 1.f);
+				options.ZOffset = 0.9f; // Render on top of text
+				ColoredBackground::Render(options);
 			}
 		}
 
@@ -90,7 +103,6 @@ namespace onion::voxel
 			m_NineSliceSprite_TextField.Render();
 
 		// ----- Render Label -----
-		float textHeight = size.y * m_TextScaleFactor;
 		m_Label.SetTextHeight(textHeight);
 		if (m_Text.empty() && !m_IsActive)
 		{
@@ -133,11 +145,29 @@ namespace onion::voxel
 				m_Label.SetPosition(textPos);
 				m_Label.Render();
 
+				// Render Selection Text Background
+				int onePx = static_cast<int>(round(4.f / 1920.f * s_ScreenWidth));
+
+				int bgLeftX = textPos.x + static_cast<int>(textBeforeSelectionSize.x);
+				int bgRightX = bgLeftX + static_cast<int>(selectedTextSize.x);
+
+				int bgTopY = textPos.y - static_cast<int>(round(textHeight / 2.f)) - onePx;
+				int bgBottomY = textPos.y + static_cast<int>(round(textHeight / 2.f)) + (3 * onePx);
+
+				glm::ivec2 topLeftCursor = {bgLeftX, bgTopY};
+				glm::ivec2 bottomRightCursor = {bgRightX, bgBottomY};
+
+				ColoredBackground::CornerOptions options;
+				options.TopLeftCorner = topLeftCursor;
+				options.BottomRightCorner = bottomRightCursor;
+				options.Color = glm::vec4(1.f);
+				options.ZOffset = 0.5f; // Render behind text
+				ColoredBackground::Render(options);
+
 				// Render selected text with highlight
 				m_Label.SetText(selectedText);
 				m_Label.SetCustomTextColor(s_SelectedTextColor);
 				m_Label.SetCustomShadowColor(s_SelectedTextShadowColor);
-				m_Label.SetBackgroundColor(glm::vec4(1.f));
 				m_Label.SetPosition(selectedTextPos);
 				m_Label.Render();
 
@@ -146,7 +176,6 @@ namespace onion::voxel
 				m_Label.SetCustomTextColor(s_TextColor);
 				m_Label.ResetShadowColor(); // Reset shadow color for non-selected text
 				m_Label.SetPosition(textAfterSelectionPos);
-				m_Label.SetBackgroundColor(glm::vec4(0.f)); // Disable background for non-selected text
 				m_Label.Render();
 			}
 			else
@@ -156,6 +185,39 @@ namespace onion::voxel
 				m_Label.SetCustomTextColor(s_TextColor);
 				m_Label.SetPosition(textPos);
 				m_Label.Render();
+			}
+		}
+
+		// --- BUG ---
+		// This code is duplicated because z-ordering issues cause the cursor to be rendered behind the text. So it's re renderer after.
+		if (visible && m_IsActive && !m_ReadOnly)
+		{
+			if (m_CursorPosition == m_Text.size())
+			{
+			}
+			else
+			{
+				std::string textBeforeCursor = m_Text.substr(0, m_CursorPosition);
+				glm::vec2 textBeforeCursorSize =
+					s_TextFont.MeasureText(textBeforeCursor, GetSize().y * m_TextScaleFactor);
+
+				int onePx = static_cast<int>(round(4.f / 1920.f * s_ScreenWidth));
+
+				int cursorLeftX = textPos.x + static_cast<int>(textBeforeCursorSize.x);
+				int cursorRightX = cursorLeftX + onePx;
+
+				int cursorTopY = textPos.y - static_cast<int>(round(textHeight / 2.f)) - onePx;
+				int cursorBottomY = textPos.y + static_cast<int>(round(textHeight / 2.f)) + (3 * onePx);
+
+				glm::ivec2 topLeftCursor = {cursorLeftX, cursorTopY};
+				glm::ivec2 bottomRightCursor = {cursorRightX, cursorBottomY};
+
+				ColoredBackground::CornerOptions options;
+				options.TopLeftCorner = topLeftCursor;
+				options.BottomRightCorner = bottomRightCursor;
+				options.Color = glm::vec4(s_TextColor, 1.f);
+				options.ZOffset = 0.9f; // Render on top of text
+				ColoredBackground::Render(options);
 			}
 		}
 	}
