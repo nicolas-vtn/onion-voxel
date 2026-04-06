@@ -52,6 +52,10 @@ namespace onion::voxel
 	int GuiElement::s_ScreenWidth = 800;
 	int GuiElement::s_ScreenHeight = 600;
 
+	float GuiElement::s_TextHeight = 16.0f;
+	int GuiElement::s_ControlHeight = 20;
+	int GuiElement::s_CenterX = 400;
+
 	std::shared_ptr<InputsSnapshot> GuiElement::s_InputsSnapshot = nullptr;
 
 	// -------- Constructor / Destructor --------
@@ -99,6 +103,10 @@ namespace onion::voxel
 
 		s_ProjectionMatrix =
 			glm::ortho(0.0f, static_cast<float>(screenWidth), static_cast<float>(screenHeight), 0.0f, -1.0f, 1.0f);
+
+		s_TextHeight = 32.f / 1009.f * static_cast<float>(screenHeight);
+		s_ControlHeight = 80.f / 1009.f * static_cast<float>(screenHeight);
+		s_CenterX = static_cast<int>(std::round(screenWidth / 2.0));
 
 		Font::SetProjectionMatrix(s_ProjectionMatrix);
 		ColoredBackground::SetProjectionMatrix(s_ProjectionMatrix);

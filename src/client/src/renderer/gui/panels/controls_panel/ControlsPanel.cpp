@@ -41,7 +41,7 @@ namespace onion::voxel
 		m_SprintWindow_Slider.SetMaxValue(10);
 		m_SprintWindow_Slider.SetValue(7);
 
-		m_OperatorItemTabs_Button.SetText("Operator Item Tabs: OFF");
+		m_OperatorItemTabs_Button.SetText("Operator Items Tabs: OFF");
 		m_OperatorItemTabs_Button.SetEnabled(false);
 
 		m_Done_Button.SetText("Done");
@@ -76,11 +76,10 @@ namespace onion::voxel
 		const int tablesWidth = static_cast<int>(round(s_ScreenWidth * tablesWidthRatio));
 
 		// ----- Render Title Label -----
-		const float titleYratio = (88.f - 23.f) / 1009.f;
-		const glm::ivec2 titlePosition(centerX, static_cast<int>(round(s_ScreenHeight * titleYratio)));
-		float textHeightRatio = 32.f / 1009.f;
-		m_Title_Label.SetPosition(titlePosition);
-		m_Title_Label.SetTextHeight(s_ScreenHeight * textHeightRatio);
+		constexpr float menuYOffsetRatio = (87.f - 23.f) / 1009.f;
+		glm::vec2 labelPosition = {s_ScreenWidth / 2, s_ScreenHeight * menuYOffsetRatio};
+		m_Title_Label.SetPosition(labelPosition);
+		m_Title_Label.SetTextHeight(s_TextHeight);
 		m_Title_Label.Render();
 
 		// ----- Render Scroller -----
@@ -196,12 +195,11 @@ namespace onion::voxel
 		m_Scroller.StopCissoring();
 
 		// ----- Render Done Button -----
-		const float doneButtonYRatio = (972.f - 23.f) / 1009.f;
-		const float doneButtonWidthRatio = 800.f / 1920.f;
-		const glm::ivec2 doneButtonSize(static_cast<int>(round(s_ScreenWidth * doneButtonWidthRatio)), controlsHeight);
-		const glm::ivec2 doneButtonPosition(centerX, static_cast<int>(round(s_ScreenHeight * doneButtonYRatio)));
-		m_Done_Button.SetSize(doneButtonSize);
-		m_Done_Button.SetPosition(doneButtonPosition);
+		float doneButtonYPosRatio = 948.f / 1009.f;
+		float doneButtonWidth = (800.f / 1920.f) * s_ScreenWidth;
+		glm::vec2 buttonPos = {s_ScreenWidth * 0.5f, s_ScreenHeight * doneButtonYPosRatio};
+		m_Done_Button.SetPosition(buttonPos);
+		m_Done_Button.SetSize({doneButtonWidth, s_ControlHeight});
 		m_Done_Button.Render();
 	}
 

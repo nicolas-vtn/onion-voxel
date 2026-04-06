@@ -98,6 +98,7 @@ namespace onion::voxel
 		}
 
 		// Render Text
+		m_Label.SetTextHeight(s_TextHeight);
 		m_Label.Render();
 	}
 	void Slider::Delete()
@@ -143,9 +144,6 @@ namespace onion::voxel
 		const glm::ivec2 handleSize = {m_HandleWidth, size.y};
 		m_NineSliceSprite_HandleBasic.SetSize(handleSize);
 		m_NineSliceSprite_HandleHighlighted.SetSize(handleSize);
-
-		// Update Label Size
-		m_Label.SetTextHeight(size.y * m_TextHeightRatio);
 	}
 
 	glm::ivec2 Slider::GetSize() const
@@ -286,7 +284,6 @@ namespace onion::voxel
 
 		ImGui::Separator();
 
-		ImGui::SliderFloat("Text Height Ratio", &m_TextHeightRatio, 0.3f, 0.4f);
 		ImGui::SliderInt("Handle Width", &m_HandleWidth, 1, 100);
 
 		ImGui::Separator();

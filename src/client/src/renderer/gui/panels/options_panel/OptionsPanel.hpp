@@ -47,7 +47,7 @@ namespace onion::voxel
 		// ----- Parameters -----
 	  private:
 		static const int s_FovMinValue = 30;
-		static const int s_FovMaxValue = 150;
+		static const int s_FovMaxValue = 110;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:

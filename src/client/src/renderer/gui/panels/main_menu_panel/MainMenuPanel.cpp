@@ -52,8 +52,7 @@ namespace onion::voxel
 		// ---- Constants for Layout ----
 		float glfwTime = (float) glfwGetTime();
 		float buttonWidthRatio = 800.f / 1920.f;
-		float buttonHeightRatio = 80.f / 1009.f;
-		glm::vec2 buttonSize{buttonWidthRatio * s_ScreenWidth, buttonHeightRatio * s_ScreenHeight};
+		glm::vec2 buttonSize{buttonWidthRatio * s_ScreenWidth, s_ControlHeight};
 		float buttonYSpacingRatio = 96.f / 1009.f;
 		float firstButtonYPosRatio = 484.f / 1009.f;
 
@@ -73,19 +72,19 @@ namespace onion::voxel
 		m_Title_Sprite.Render();
 
 		// ---- Render Singleplayer Button ----
-		glm::vec2 buttonPos{s_ScreenWidth * 0.5f, s_ScreenHeight * firstButtonYPosRatio};
+		glm::vec2 buttonPos{s_CenterX, s_ScreenHeight * firstButtonYPosRatio};
 		m_Singleplayer_Button.SetPosition(buttonPos);
 		m_Singleplayer_Button.SetSize(buttonSize);
 		m_Singleplayer_Button.Render();
 
 		// ---- Render Multiplayer Button ----
-		buttonPos = {s_ScreenWidth * 0.5f, s_ScreenHeight * (firstButtonYPosRatio + buttonYSpacingRatio)};
+		buttonPos = {s_CenterX, s_ScreenHeight * (firstButtonYPosRatio + buttonYSpacingRatio)};
 		m_Multiplayer_Button.SetPosition(buttonPos);
 		m_Multiplayer_Button.SetSize(buttonSize);
 		m_Multiplayer_Button.Render();
 
 		// ---- Render Demo Panel Button ----
-		buttonPos = {s_ScreenWidth * 0.5f, s_ScreenHeight * (firstButtonYPosRatio + buttonYSpacingRatio * 2)};
+		buttonPos = {s_CenterX, s_ScreenHeight * (firstButtonYPosRatio + buttonYSpacingRatio * 2)};
 		m_DemoPanel_Button.SetPosition(buttonPos);
 		m_DemoPanel_Button.SetSize(buttonSize);
 		m_DemoPanel_Button.Render();
@@ -117,14 +116,13 @@ namespace onion::voxel
 		m_QuitGame_Button.Render();
 
 		// ---- Render Version Label ----
-		float LabelY = s_ScreenHeight * 0.97f;
-		float textHeight = s_ScreenHeight * (28.f / 1009.f);
+		float LabelY = s_ScreenHeight * 0.98f;
 
 		float versionLabelX = s_ScreenHeight * 0.01f;
 		glm::vec2 versionLabelPos{versionLabelX, LabelY};
 
 		m_Version_Label.SetPosition(versionLabelPos);
-		m_Version_Label.SetTextHeight(textHeight);
+		m_Version_Label.SetTextHeight(s_TextHeight);
 		m_Version_Label.Render();
 
 		// ---- Render Copyright Label ----
@@ -132,7 +130,7 @@ namespace onion::voxel
 		glm::vec2 copyrightLabelPos{copyrightLabelX, LabelY};
 
 		m_Copyright_Label.SetPosition(copyrightLabelPos);
-		m_Copyright_Label.SetTextHeight(textHeight);
+		m_Copyright_Label.SetTextHeight(s_TextHeight);
 		m_Copyright_Label.Render();
 
 		// ---- Render Splash Label ----
@@ -140,7 +138,7 @@ namespace onion::voxel
 		{
 			const std::string& splashText = m_Splashes[m_CurrentSplashIndex];
 			float pulse = m_SplashTextPulse.GetValueSmoothPulse(glfwTime);
-			float splashTextHeight = textHeight * pulse;
+			float splashTextHeight = s_TextHeight * pulse;
 			glm::ivec2 splashTextSize = s_TextFont.MeasureText(splashText, splashTextHeight);
 			constexpr float splashTextXratioCenter = 1420.f / 1920.f;
 			constexpr float splashTextYratioCenter = 267.f / 1009.f;
