@@ -49,8 +49,6 @@ namespace onion::voxel
 		const int centerX = static_cast<int>(round(s_ScreenWidth / 2.0));
 		const float leftXratio = 340.f / 1920.f;
 		const int leftX = static_cast<int>(round(s_ScreenWidth * leftXratio));
-		const float controlsHeightRatio = 80.f / 1009.f;
-		const int controlsHeight = static_cast<int>(round(s_ScreenHeight * controlsHeightRatio));
 		const float horizontalSpacingRatio = 40.f / 1920.f;
 		const int horizontalSpacing = static_cast<int>(round(s_ScreenWidth * horizontalSpacingRatio));
 		const float verticalSpacingRatio = 20.f / 1009.f;
@@ -61,11 +59,10 @@ namespace onion::voxel
 		const int spacingYBetweenSections = static_cast<int>(round(s_ScreenHeight * spacingYratioBetweenSections));
 
 		// ----- Render Title Label -----
-		const float titleYratio = (88.f - 23.f) / 1009.f;
-		const glm::ivec2 titlePosition(centerX, static_cast<int>(round(s_ScreenHeight * titleYratio)));
-		float textHeightRatio = 32.f / 1009.f;
-		m_Title_Label.SetPosition(titlePosition);
-		m_Title_Label.SetTextHeight(s_ScreenHeight * textHeightRatio);
+		constexpr float menuYOffsetRatio = (87.f - 23.f) / 1009.f;
+		glm::vec2 labelPosition = {s_ScreenWidth / 2, s_ScreenHeight * menuYOffsetRatio};
+		m_Title_Label.SetPosition(labelPosition);
+		m_Title_Label.SetTextHeight(s_TextHeight);
 		m_Title_Label.Render();
 
 		// ----- Render Scroller -----
@@ -87,14 +84,14 @@ namespace onion::voxel
 		const glm::ivec2 displaySettingsTitlePosition(
 			leftX, static_cast<int>(round(s_ScreenHeight * displaySettingsTitleYRatio)));
 		m_DisplayTitle_Label.SetPosition(displaySettingsTitlePosition + scrollerOffset);
-		m_DisplayTitle_Label.SetTextHeight(s_ScreenHeight * textHeightRatio);
+		m_DisplayTitle_Label.SetTextHeight(s_TextHeight);
 		m_DisplayTitle_Label.Render();
 		const int textHeight = m_DisplayTitle_Label.GetTextSize().y;
 
 		// Build Layout Grid for Display Settings
 		const int displaySettingsRows = 1;
 		const int tableDisplayHeight =
-			controlsHeight * displaySettingsRows + verticalSpacing * (displaySettingsRows - 1);
+			s_ControlHeight * displaySettingsRows + verticalSpacing * (displaySettingsRows - 1);
 		const glm::ivec2 tableDisplaySize(tablesWidth, tableDisplayHeight);
 		const TableLayout displaySettingsLayout = LayoutHelper::CreateTableLayout(
 			displaySettingsRows, 2, tableDisplaySize, horizontalSpacing, verticalSpacing);
@@ -130,12 +127,12 @@ namespace onion::voxel
 		const int qualAndPerfSettingsTitleY = vsyncButtonPosition.y + spacingYBetweenSections;
 		const glm::ivec2 qualAndPerfSettingsTitlePosition(leftX, qualAndPerfSettingsTitleY);
 		m_QualAndPerfTitle_Label.SetPosition(qualAndPerfSettingsTitlePosition + scrollerOffset);
-		m_QualAndPerfTitle_Label.SetTextHeight(s_ScreenHeight * textHeightRatio);
+		m_QualAndPerfTitle_Label.SetTextHeight(s_TextHeight);
 		m_QualAndPerfTitle_Label.Render();
 
 		// Build Layout Grid for Quality and Performance Settings
 		const int displayQualRows = 1;
-		const int tableQualHeight = controlsHeight * displayQualRows + verticalSpacing * (displayQualRows - 1);
+		const int tableQualHeight = s_ControlHeight * displayQualRows + verticalSpacing * (displayQualRows - 1);
 		const glm::ivec2 tableQualSize(tablesWidth, tableQualHeight);
 		const TableLayout qualSettingsLayout =
 			LayoutHelper::CreateTableLayout(displayQualRows, 2, tableQualSize, horizontalSpacing, verticalSpacing);
@@ -179,12 +176,11 @@ namespace onion::voxel
 		m_Scroller.SetScrollAreaHeight(contentHeight);
 
 		// ----- Render Done Button -----
-		const float doneButtonYRatio = (972.f - 23.f) / 1009.f;
-		const float doneButtonWidthRatio = 800.f / 1920.f;
-		const glm::ivec2 doneButtonSize(static_cast<int>(round(s_ScreenWidth * doneButtonWidthRatio)), controlsHeight);
-		const glm::ivec2 doneButtonPosition(centerX, static_cast<int>(round(s_ScreenHeight * doneButtonYRatio)));
-		m_Done_Button.SetSize(doneButtonSize);
-		m_Done_Button.SetPosition(doneButtonPosition);
+		float doneButtonYPosRatio = 948.f / 1009.f;
+		float doneButtonWidth = (800.f / 1920.f) * s_ScreenWidth;
+		glm::vec2 buttonPos = {s_ScreenWidth * 0.5f, s_ScreenHeight * doneButtonYPosRatio};
+		m_Done_Button.SetPosition(buttonPos);
+		m_Done_Button.SetSize({doneButtonWidth, s_ControlHeight});
 		m_Done_Button.Render();
 	}
 

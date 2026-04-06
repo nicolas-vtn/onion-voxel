@@ -77,7 +77,6 @@ namespace onion::voxel
 		uint32_t m_Value = 0;
 		uint32_t m_MaxValue = 100;
 
-		float m_TextHeightRatio = 0.390f;
 		int m_HandleWidth = 32;
 
 		uint32_t GetValueFromMousePosition(const glm::ivec2& mousePosition) const;

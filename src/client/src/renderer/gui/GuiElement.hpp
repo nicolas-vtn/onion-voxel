@@ -143,6 +143,10 @@ namespace onion::voxel
 		static int s_ScreenWidth;
 		static int s_ScreenHeight;
 
+		static float s_TextHeight;
+		static int s_ControlHeight;
+		static int s_CenterX;
+
 		static inline glm::vec3 s_ColorMainText{1.f, 1.f, 1.f};
 		static inline glm::vec3 s_ColorSecondaryText{0.5f, 0.5f, 0.5f};
 		static inline glm::vec3 s_ColorTertiaryText{0.3333f, 0.3333f, 0.3333f};

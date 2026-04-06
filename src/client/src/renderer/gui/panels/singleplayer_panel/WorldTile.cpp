@@ -81,7 +81,7 @@ namespace onion::voxel
 		const glm::ivec2 thumbnailPos{
 			posBorderLeft + (2 * borderThickness) + static_cast<int>(round(thumbnailSize.x / 2)), m_Position.y};
 
-		const int startTextPosX = thumbnailPos.x + static_cast<int>(round(thumbnailSize.x / 2)) + (2 * borderThickness);
+		const int startTextPosX = thumbnailPos.x + static_cast<int>(round(thumbnailSize.x / 2)) + (3 * borderThickness);
 		const float textSpacingY = m_Size.y / 4.f;
 
 		// ---- Render Border ----
@@ -145,24 +145,23 @@ namespace onion::voxel
 		}
 
 		// ---- Render Title ----
-		float textHeight = s_ScreenHeight * (31.f / 1009.f);
-		int textPosY = static_cast<int>(round(posBorderTop + textSpacingY));
+		int textPosY = static_cast<int>(round(posBorderTop + (textSpacingY * 0.75f)));
 		m_LabelTitle.SetPosition({startTextPosX, textPosY});
-		m_LabelTitle.SetTextHeight(textHeight);
+		m_LabelTitle.SetTextHeight(s_TextHeight);
 		m_LabelTitle.SetText(m_WorldInfos.Name);
 		m_LabelTitle.Render();
 
 		// ---- Render Description ----
 		textPosY = static_cast<int>(round(posBorderTop + (2 * textSpacingY)));
 		m_LabelDescription.SetPosition({startTextPosX, textPosY});
-		m_LabelDescription.SetTextHeight(textHeight);
+		m_LabelDescription.SetTextHeight(s_TextHeight);
 		m_LabelDescription.SetText(FormatDescription());
 		m_LabelDescription.Render();
 
 		// ---- Render Last Played ----
 		textPosY = static_cast<int>(round(posBorderTop + (3 * textSpacingY)));
 		m_LabelDetails.SetPosition({startTextPosX, textPosY});
-		m_LabelDetails.SetTextHeight(textHeight);
+		m_LabelDetails.SetTextHeight(s_TextHeight);
 		m_LabelDetails.SetText(FormatDetails());
 		m_LabelDetails.Render();
 

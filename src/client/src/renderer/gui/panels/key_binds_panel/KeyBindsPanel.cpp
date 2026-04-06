@@ -49,12 +49,10 @@ namespace onion::voxel
 		const int controlsHeight = static_cast<int>(round(s_ScreenHeight * controlsHeightRatio));
 
 		// ----- Render Title Label -----
-		const float titleYratio = (88.f - 23.f) / 1009.f;
-		const glm::ivec2 titlePosition(centerX, static_cast<int>(round(s_ScreenHeight * titleYratio)));
-		const float textHeightRatio = 32.f / 1009.f;
-		const float textHeight = s_ScreenHeight * textHeightRatio;
-		m_Title_Label.SetPosition(titlePosition);
-		m_Title_Label.SetTextHeight(textHeight);
+		constexpr float menuYOffsetRatio = (87.f - 23.f) / 1009.f;
+		glm::vec2 labelPosition = {s_ScreenWidth / 2, s_ScreenHeight * menuYOffsetRatio};
+		m_Title_Label.SetPosition(labelPosition);
+		m_Title_Label.SetTextHeight(s_TextHeight);
 		m_Title_Label.Render();
 
 		// ----- Render Scroller -----
@@ -88,7 +86,7 @@ namespace onion::voxel
 		// ----- Render Title Movement
 		const glm::ivec2 titleMovementPosition(centerX, currentYPosition);
 		m_TitleMovement_Label.SetPosition(titleMovementPosition + scrollerOffset);
-		m_TitleMovement_Label.SetTextHeight(textHeight);
+		m_TitleMovement_Label.SetTextHeight(s_TextHeight);
 		m_TitleMovement_Label.Render();
 		currentYPosition += otherElementsYOffset;
 
@@ -119,7 +117,7 @@ namespace onion::voxel
 		// ----- Render Title Gameplay -----
 		const glm::ivec2 titleGameplayPosition(centerX, currentYPosition);
 		m_TitleGameplay_Label.SetPosition(titleGameplayPosition + scrollerOffset);
-		m_TitleGameplay_Label.SetTextHeight(textHeight);
+		m_TitleGameplay_Label.SetTextHeight(s_TextHeight);
 		m_TitleGameplay_Label.Render();
 		currentYPosition += otherElementsYOffset;
 
@@ -144,7 +142,7 @@ namespace onion::voxel
 		// ----- Render Title Debug -----
 		const glm::ivec2 titleDebugPosition(centerX, currentYPosition);
 		m_TitleDebug_Label.SetPosition(titleDebugPosition + scrollerOffset);
-		m_TitleDebug_Label.SetTextHeight(textHeight);
+		m_TitleDebug_Label.SetTextHeight(s_TextHeight);
 		m_TitleDebug_Label.Render();
 		currentYPosition += otherElementsYOffset;
 
@@ -174,17 +172,17 @@ namespace onion::voxel
 		m_Scroller.StopCissoring();
 
 		// ----- Create Layout for Reset All and Done Buttons -----
-		const float tableWidthRatio = 1230.f / 1920.f;
+		const float tableWidthRatio = 1232.f / 1920.f;
 		const int tableWidth = static_cast<int>(round(s_ScreenWidth * tableWidthRatio));
 		const glm::ivec2 resetAndDoneTableSize(tableWidth, controlsHeight);
-		const float resetAndDoneHorizontalSpacingRatio = 30.f / 1920.f;
+		const float resetAndDoneHorizontalSpacingRatio = 32.f / 1920.f;
 		const int resetAndDoneHorizontalSpacing =
 			static_cast<int>(round(s_ScreenWidth * resetAndDoneHorizontalSpacingRatio));
 		const TableLayout resetAndDoneLayout =
 			LayoutHelper::CreateTableLayout(1, 2, resetAndDoneTableSize, resetAndDoneHorizontalSpacing, 0);
-		float resetAndDoneTopYRatio = (930.f - 23.f) / 1009.f;
-		int resetAndDoneTopY = static_cast<int>(round(s_ScreenHeight * resetAndDoneTopYRatio));
-		float resetAndDoneLeftXRatio = 343.f / 1920.f;
+		float doneButtonYPosRatio = 948.f / 1009.f;
+		int resetAndDoneTopY = static_cast<int>(round(s_ScreenHeight * doneButtonYPosRatio - (s_ControlHeight / 2.f)));
+		float resetAndDoneLeftXRatio = 344.f / 1920.f;
 		int resetAndDoneLeftX = static_cast<int>(round(s_ScreenWidth * resetAndDoneLeftXRatio));
 		const glm::ivec2 resetAndDoneTableTopLeftCorner(resetAndDoneLeftX, resetAndDoneTopY);
 

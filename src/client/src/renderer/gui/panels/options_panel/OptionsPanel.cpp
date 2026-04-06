@@ -67,35 +67,32 @@ namespace onion::voxel
 		}
 
 		// ---- Constants for Layout ----
-		constexpr glm::vec2 buttonSizeRatio{0.415f, 0.08f};
-		glm::vec2 buttonSize{buttonSizeRatio.x * s_ScreenWidth, buttonSizeRatio.y * s_ScreenHeight};
+		const float buttonWidthRatio = 600.f / 1920.f;
+		glm::vec2 buttonSize{buttonWidthRatio * s_ScreenWidth, s_ControlHeight};
 
 		// ---- Menu Title ----
-		constexpr float menuYOffsetRatio = (85.f - 23.f) / 1009.f;
+		constexpr float menuYOffsetRatio = (87.f - 23.f) / 1009.f;
 		glm::vec2 labelPosition = {s_ScreenWidth / 2, s_ScreenHeight * menuYOffsetRatio};
-		float textHeight = s_ScreenHeight * (31.f / 1009.f);
 
 		m_Title_Label.SetPosition(labelPosition);
-		m_Title_Label.SetTextHeight(textHeight);
+		m_Title_Label.SetTextHeight(s_TextHeight);
 		m_Title_Label.Render();
 
 		// ---- Prepare Layout for first 2 buttons ----
 		constexpr float tablesWidthRatio = 1229.f / 1920.f;
 		float tablesWidth = s_ScreenWidth * tablesWidthRatio;
-		constexpr float table1HeightRatio = 79.f / 1009.f;
-		float table1Height = s_ScreenHeight * table1HeightRatio;
 
-		constexpr float horizontalSpacingRatios = 33.f / 1920.f;
+		constexpr float horizontalSpacingRatios = 32.f / 1920.f;
 		float horizontalSpacings = s_ScreenWidth * horizontalSpacingRatios;
-		constexpr float verticalSpacingRatios = 17.f / 1009.f;
-		float verticalSpacings = s_ScreenHeight * verticalSpacingRatios;
+		constexpr float verticalSpacingRatios = 16.f / 1009.f;
+		int verticalSpacings = static_cast<int>(round(s_ScreenHeight * verticalSpacingRatios));
 
-		constexpr float table1TopRatio = 138.f / 1009.f;
+		constexpr float table1TopRatio = 116.f / 1009.f;
 
 		glm::ivec2 topLeftOfTable1{s_ScreenWidth * 0.5 - (tablesWidth / 2), s_ScreenHeight * table1TopRatio};
 
 		TableLayout tableLayout1 = LayoutHelper::CreateTableLayout(
-			1, 2, glm::ivec2(tablesWidth, table1Height), (int) horizontalSpacings, (int) verticalSpacings);
+			1, 2, glm::ivec2(tablesWidth, s_ControlHeight), (int) horizontalSpacings, verticalSpacings);
 
 		const glm::ivec2 cellSize1 = tableLayout1.GetCellSize();
 
@@ -116,9 +113,8 @@ namespace onion::voxel
 		m_Online_Button.Render();
 
 		// ---- Prepare Layout for next 10 buttons ----
-		float table2TopRatio = 386.f / 1009.f;
-		float table2HeightRatio = 462.f / 1009.f;
-		float table2Height = s_ScreenHeight * table2HeightRatio;
+		float table2TopRatio = 365.f / 1009.f;
+		int table2Height = 5 * s_ControlHeight + 4 * verticalSpacings;
 
 		glm::ivec2 topLeftOfTable2{s_ScreenWidth * 0.5 - (tablesWidth / 2), s_ScreenHeight * table2TopRatio};
 		TableLayout tableLayout2 = LayoutHelper::CreateTableLayout(
@@ -187,9 +183,10 @@ namespace onion::voxel
 
 		// ---- Render Done Button ----
 		float doneButtonYPosRatio = 948.f / 1009.f;
+		float doneButtonWidth = (800.f / 1920.f) * s_ScreenWidth;
 		glm::vec2 buttonPos = {s_ScreenWidth * 0.5f, s_ScreenHeight * doneButtonYPosRatio};
 		m_Done_Button.SetPosition(buttonPos);
-		m_Done_Button.SetSize(buttonSize);
+		m_Done_Button.SetSize({doneButtonWidth, s_ControlHeight});
 		m_Done_Button.Render();
 	}
 

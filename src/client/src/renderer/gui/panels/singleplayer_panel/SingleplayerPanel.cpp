@@ -24,10 +24,10 @@ namespace onion::voxel
 
 		// ---- Initialize Controls World Tiles ----
 		{
-			m_LabelTitle.SetText("Singleplayer");
+			m_LabelTitle.SetText("Select World");
 			m_LabelTitle.SetTextAlignment(Font::eTextAlignment::Center);
 
-			m_TextFieldFilter.SetPlaceholderText("Filter...");
+			m_TextFieldFilter.SetPlaceholderText("Search...");
 
 			m_ButtonPlaySelectedWorld.SetText("Play Selected World");
 			m_ButtonPlaySelectedWorld.SetEnabled(false);
@@ -231,29 +231,27 @@ namespace onion::voxel
 
 		// Constants for Layout
 		glm::vec2 controlsSizeRatio{800.f / 1920.f, 0.08f};
-		glm::vec2 controlsSize{controlsSizeRatio.x * s_ScreenWidth, controlsSizeRatio.y * s_ScreenHeight};
-		int centerX = s_ScreenWidth / 2;
+		glm::vec2 controlsSize{controlsSizeRatio.x * s_ScreenWidth, s_ControlHeight};
 
 		// ---- Render Title ----
-		float titleYOffsetRatio = (73.f - 23.f) / 1009.f;
-		float textHeight = s_ScreenHeight * (28.f / 1009.f);
-		m_LabelTitle.SetPosition({centerX, s_ScreenHeight * titleYOffsetRatio});
-		m_LabelTitle.SetTextHeight(textHeight);
+		float titleYOffsetRatio = (71.f - 23.f) / 1009.f;
+		m_LabelTitle.SetPosition({s_CenterX, s_ScreenHeight * titleYOffsetRatio});
+		m_LabelTitle.SetTextHeight(s_TextHeight);
 		m_LabelTitle.Render();
 
 		// ---- Render Filter Text Field ----
-		float filterYOffsetRatio = (145.f - 23.f) / 1009.f;
-		m_TextFieldFilter.SetPosition({centerX, s_ScreenHeight * filterYOffsetRatio});
+		float filterYOffsetRatio = (147.f - 23.f) / 1009.f;
+		m_TextFieldFilter.SetPosition({s_CenterX, s_ScreenHeight * filterYOffsetRatio});
 		m_TextFieldFilter.SetSize(controlsSize);
 		m_TextFieldFilter.Render();
 
 		// ---- Render Scroller ----
 		float scrollerWidthRatio = 1.f;
-		float scrollerHeightRatio = 580.f / 1009.f;
+		float scrollerHeightRatio = 574.f / 1009.f;
 		glm::ivec2 scrollerSize{static_cast<int>(s_ScreenWidth * scrollerWidthRatio),
 								static_cast<int>(s_ScreenHeight * scrollerHeightRatio)};
-		float scrollCenterYratio = (503.f - 23.f) / 1009.f;
-		glm::ivec2 scrollCenter{centerX, static_cast<int>(s_ScreenHeight * scrollCenterYratio)};
+		float scrollCenterYratio = (508.f - 23.f) / 1009.f;
+		glm::ivec2 scrollCenter{s_CenterX, static_cast<int>(s_ScreenHeight * scrollCenterYratio)};
 
 		glm::ivec2 scrollerTopLeftCorner{scrollCenter.x - scrollerSize.x / 2, scrollCenter.y - scrollerSize.y / 2};
 		glm::ivec2 scrollerBottomRightCorner{scrollCenter.x + scrollerSize.x / 2, scrollCenter.y + scrollerSize.y / 2};
@@ -276,7 +274,7 @@ namespace onion::voxel
 
 		// ---- Render World Tiles ----
 		const glm::ivec2 firstTilePos{scrollCenter.x,
-									  scrollerTopLeftCorner.y + (worldTileSize.y / 2) + (worldTileSize.y / 10) -
+									  scrollerTopLeftCorner.y + (worldTileSize.y / 2) + (worldTileSize.y / 20) -
 										  m_Scroller.GetContentYOffset()};
 
 		int drawnTileIndex = 0;
@@ -298,7 +296,8 @@ namespace onion::voxel
 				continue;
 			}
 
-			glm::ivec2 tilePosition = firstTilePos + glm::ivec2{0, static_cast<int>(drawnTileIndex * worldTileSize.y)};
+			glm::ivec2 tilePosition =
+				firstTilePos + glm::ivec2{0, static_cast<int>(drawnTileIndex * worldTileSize.y - drawnTileIndex)};
 			Visibility visibility = m_Scroller.GetControlVisibleArea(tilePosition, worldTileSize);
 
 			worldTile.SetPosition(tilePosition);
@@ -313,17 +312,16 @@ namespace onion::voxel
 		m_Scroller.StopCissoring();
 
 		// Create Layouts for buttons
-		glm::ivec2 tableSize{static_cast<int>(1232.f / 1920.f * s_ScreenWidth),
-							 static_cast<int>(82.f / 1009.f * s_ScreenHeight)};
-		int horizontalSpacing = static_cast<int>(std::round(30.f / 1920.f * s_ScreenWidth));
+		glm::ivec2 tableSize{static_cast<int>(1232.f / 1920.f * s_ScreenWidth), s_ControlHeight};
+		int horizontalSpacing = static_cast<int>(std::round(32.f / 1920.f * s_ScreenWidth));
 
 		TableLayout layoutButtonsTop = LayoutHelper::CreateTableLayout(1, 2, tableSize, horizontalSpacing, 0);
-		glm::ivec2 layoutButtonsTop_TopLeftCorner{centerX - (tableSize.x / 2),
-												  static_cast<int>((825.f - 23.f) / 1009.f * s_ScreenHeight)};
+		glm::ivec2 layoutButtonsTop_TopLeftCorner{s_CenterX - (tableSize.x / 2),
+												  static_cast<int>((827.f - 23.f) / 1009.f * s_ScreenHeight)};
 
 		TableLayout layoutButtonsBottom = LayoutHelper::CreateTableLayout(1, 4, tableSize, horizontalSpacing, 0);
-		glm::ivec2 layoutButtonsBottom_TopLeftCorner{centerX - (tableSize.x / 2),
-													 static_cast<int>((921.f - 23.f) / 1009.f * s_ScreenHeight)};
+		glm::ivec2 layoutButtonsBottom_TopLeftCorner{s_CenterX - (tableSize.x / 2),
+													 static_cast<int>((923.f - 23.f) / 1009.f * s_ScreenHeight)};
 		// ---- Render Play Selected World Button ----
 		glm::ivec2 buttonPos = layoutButtonsTop_TopLeftCorner + layoutButtonsTop.GetElementPosition(0, 0);
 		glm::ivec2 buttonSize = layoutButtonsTop.GetCellSize();

@@ -42,9 +42,9 @@ namespace onion::voxel
 
 		//---- Render Key Button ----
 		const float originalTileWidth = 1355.f;
-		const float keyButtonPosXRatio = 980.f / originalTileWidth;
+		const float keyButtonPosXRatio = 981.f / originalTileWidth;
 		const int keyButtonPosX = static_cast<int>(round(leftX + m_Size.x * keyButtonPosXRatio));
-		const float buttonWidthRatio = 300.f / originalTileWidth;
+		const float buttonWidthRatio = 301.f / originalTileWidth;
 		const int buttonWidth = static_cast<int>(round(m_Size.x * buttonWidthRatio));
 		std::string keyText = KeyToString(m_Key);
 		if (m_IsCapturingKey)
