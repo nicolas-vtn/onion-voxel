@@ -164,6 +164,11 @@ void InputsManager::PollKeyboardInputs()
 	{
 		const Key key = keyControl.key;
 
+		if (key == Key::Unknown)
+		{
+			continue; // Skip unknown keys
+		}
+
 		// If it's a mouse button
 		if (mouseInputs.contains(key))
 		{
@@ -233,6 +238,26 @@ void InputsManager::InitCallbacks()
 							if (self)
 								self->CharCallback(codepoint);
 						});
+
+	// KEY CALLBACK (For intercepting key presses, etc.)
+	glfwSetKeyCallback(m_Window,
+					   [](GLFWwindow* window, int key, int scancode, int action, int mods)
+					   {
+						   // Retrieve the user pointer
+						   auto* self = static_cast<InputsManager*>(glfwGetWindowUserPointer(window));
+						   if (self)
+							   self->KeyCallback(key, scancode, action, mods);
+					   });
+
+	// MOUSE BUTTON CALLBACK (For intercepting mouse button presses, etc.)
+	glfwSetMouseButtonCallback(m_Window,
+							   [](GLFWwindow* window, int button, int action, int mods)
+							   {
+								   // Retrieve the user pointer
+								   auto* self = static_cast<InputsManager*>(glfwGetWindowUserPointer(window));
+								   if (self)
+									   self->MouseButtonCallback(button, action, mods);
+							   });
 }
 
 void InputsManager::FramebufferSizeCallback(int width, int height)
@@ -258,6 +283,37 @@ void InputsManager::MouseScrollCallback(double xoffset, double yoffset)
 void onion::voxel::InputsManager::CharCallback(unsigned int codepoint)
 {
 	EventCharInput.Trigger(codepoint);
+}
+
+void onion::voxel::InputsManager::KeyCallback(int key, int scancode, int action, int mods)
+{
+
+	if (action != GLFW_PRESS)
+		return;
+
+	if (EvtIntercptedKeyPressed.HandlerCount() > 0)
+	{
+		Key intercepted = static_cast<Key>(key);
+
+		EvtIntercptedKeyPressed.Trigger(intercepted);
+		EvtIntercptedKeyPressed.Clear();
+		return;
+	}
+}
+
+void onion::voxel::InputsManager::MouseButtonCallback(int button, int action, int mods)
+{
+	if (action != GLFW_PRESS)
+		return;
+
+	if (EvtIntercptedKeyPressed.HandlerCount() > 0)
+	{
+		Key intercepted = static_cast<Key>(button);
+
+		EvtIntercptedKeyPressed.Trigger(intercepted);
+		EvtIntercptedKeyPressed.Clear();
+		return;
+	}
 }
 
 void InputsManager::SetMouseCaptureEnabled(bool enabled)

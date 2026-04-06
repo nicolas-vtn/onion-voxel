@@ -177,6 +177,8 @@ namespace onion::voxel
 		/// @brief Event triggered when the user inputs a character (e.g., for text input). The event provides the Unicode code point of the character that was input. Triggered functions will be called on Render Thread.
 		Event<const unsigned int&> EventCharInput;
 
+		Event<const Key&> EvtIntercptedKeyPressed;
+
 		// ------------ INPUTS SNAPSHOT MANAGEMENT ------------
 	  private:
 		mutable std::mutex m_MutexSnapshot;
@@ -209,6 +211,8 @@ namespace onion::voxel
 		double m_MouseSensitivity = 0.1f;
 		double m_MouseScrollSensitivity = 1.f;
 
+		bool m_IsCapturingInput = false;
+
 		mutable std::mutex m_MutexFramebuffer;
 		FramebufferState m_FramebufferState;
 
@@ -236,6 +240,8 @@ namespace onion::voxel
 		void FramebufferSizeCallback(int width, int height);
 		void MouseScrollCallback(double xoffset, double yoffset);
 		void CharCallback(unsigned int codepoint);
+		void KeyCallback(int key, int scancode, int action, int mods);
+		void MouseButtonCallback(int button, int action, int mods);
 
 		// ------------ Deleted Copy & Move Constructors and Assignment Operators ------------
 	  public:

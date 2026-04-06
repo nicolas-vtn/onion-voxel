@@ -334,7 +334,7 @@ float GetGlyphAdvance(
 	if (isEmpty)
 		return glyphPixelWidth * 0.5f; // Arbitrary advance for empty glyphs
 
-	return lastNonEmpty - firstNonEmpty + 2.5f;
+	return lastNonEmpty - firstNonEmpty + 2.f;
 }
 
 void onion::voxel::Font::InitializeGlyphs()

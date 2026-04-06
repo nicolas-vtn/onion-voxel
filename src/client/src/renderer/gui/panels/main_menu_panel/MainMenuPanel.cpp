@@ -51,10 +51,11 @@ namespace onion::voxel
 	{
 		// ---- Constants for Layout ----
 		float glfwTime = (float) glfwGetTime();
-		glm::vec2 buttonSizeRatio{0.415f, 0.08f};
-		glm::vec2 buttonSize{buttonSizeRatio.x * s_ScreenWidth, buttonSizeRatio.y * s_ScreenHeight};
-		float buttonYSpacingRatio = 94.f / 1009.f;
-		float firstButtonYPosRatio = 486.f / 1009.f;
+		float buttonWidthRatio = 800.f / 1920.f;
+		float buttonHeightRatio = 80.f / 1009.f;
+		glm::vec2 buttonSize{buttonWidthRatio * s_ScreenWidth, buttonHeightRatio * s_ScreenHeight};
+		float buttonYSpacingRatio = 96.f / 1009.f;
+		float firstButtonYPosRatio = 484.f / 1009.f;
 
 		// ---- Render Title Sprite ----
 		float spriteXScaleFacor = 0.5f;

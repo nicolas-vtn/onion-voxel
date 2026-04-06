@@ -64,7 +64,7 @@ namespace onion::voxel
 		{
 			size = glm::ivec2(glm::vec2(size) * m_ScaleFactorOnClick);
 		}
-		float textHeight = size.y / 2.5f;
+		float textHeight = size.y * 0.4f;
 
 		glm::ivec2 textCenter = GetPosition();
 
