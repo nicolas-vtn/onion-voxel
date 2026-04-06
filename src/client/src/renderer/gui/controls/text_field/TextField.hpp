@@ -116,7 +116,7 @@ namespace onion::voxel
 		bool m_IsPressed = false;
 
 		float m_TextScaleFactor = 0.4f;
-		float m_TextStartXratio = 2.1f;
+		float m_TextStartXratio = 2.078f;
 		int m_CursorWidth = 4;
 		float m_CursorHeightRatio = 0.6f;
 
@@ -144,7 +144,7 @@ namespace onion::voxel
 			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "text_field_highlighted.png";
 
 		static inline constexpr glm::vec3 s_TextColor = glm::vec3(224.f / 255.f);
-		static inline constexpr glm::vec3 s_PlaceholderTextColor = glm::vec3(85.f / 255.f);
+		static inline constexpr glm::vec3 s_PlaceholderTextColor = glm::vec3(168.f / 255.f);
 		static inline constexpr glm::vec3 s_SelectedTextColor = glm::vec3(0.1216f, 0.1216f, 1.f);
 		static inline constexpr glm::vec3 s_SelectedTextShadowColor = glm::vec3(0.7804f, 0.7804f, 1.f);
 

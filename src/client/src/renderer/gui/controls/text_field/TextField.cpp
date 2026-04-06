@@ -108,10 +108,15 @@ namespace onion::voxel
 		{
 			// PLACEHOLDER TEXT
 
+			Font::TextFormat placeholderFormat;
+			placeholderFormat.italic = true;
+
 			m_Label.SetText(m_PlaceholderText);
 			m_Label.SetCustomTextColor(s_PlaceholderTextColor);
 			m_Label.SetPosition(textPos);
+			m_Label.SetTextFormat(placeholderFormat);
 			m_Label.Render();
+			m_Label.SetTextFormat(Font::TextFormat{}); // Reset to default format for future renders
 		}
 		else
 		{

@@ -35,6 +35,7 @@ namespace onion::voxel
 								  m_CustomTextColor,
 								  shadowColor,
 								  m_TextHeight,
+								  m_TextFormat,
 								  m_zOffset,
 								  m_RotationDegrees,
 								  m_ShadowEnabled);

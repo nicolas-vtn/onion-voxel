@@ -48,7 +48,7 @@ namespace onion::voxel
 		const int buttonWidth = static_cast<int>(round(m_Size.x * buttonWidthRatio));
 		std::string keyText = KeyToString(m_Key);
 		if (m_IsCapturingKey)
-			keyText = "...";
+			keyText = "§e> §r§f§n" + keyText + "§r §e<";
 		if (m_Key == Key::Unknown)
 			keyText = "Not Bound";
 		m_ButtonKey.SetPosition({keyButtonPosX, m_Position.y});

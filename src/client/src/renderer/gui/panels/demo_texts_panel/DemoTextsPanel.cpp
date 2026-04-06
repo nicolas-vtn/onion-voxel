@@ -14,6 +14,7 @@ namespace onion::voxel
 		{
 			LabelType labelType = static_cast<LabelType>(i);
 			Font::eColor color = Font::eColor::White;
+			Font::TextFormat format{};
 			std::string labelText;
 			switch (labelType)
 			{
@@ -85,15 +86,19 @@ namespace onion::voxel
 					labelText = Font::ColorToString(color);
 					break;
 				case LabelType::Bold:
+					format.bold = true;
 					labelText = "bold";
 					break;
 				case LabelType::Strikethrough:
+					format.strikethrough = true;
 					labelText = "strikethrough";
 					break;
 				case LabelType::Underline:
+					format.underline = true;
 					labelText = "underline";
 					break;
 				case LabelType::Italic:
+					format.italic = true;
 					labelText = "italic";
 					break;
 				default:
@@ -104,6 +109,8 @@ namespace onion::voxel
 			std::unique_ptr<Label> label = std::make_unique<Label>(labelText);
 			label->SetText(labelText);
 			label->SetTextColor(color);
+			label->SetTextFormat(format);
+			//label->SetRotationDegrees(-15.f); // Rotate all labels by 15 degrees for demonstration
 			label->SetTextAlignment(Font::eTextAlignment::Center);
 			m_Labels.push_back(std::move(label));
 		}

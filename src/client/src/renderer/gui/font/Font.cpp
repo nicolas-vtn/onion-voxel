@@ -2,6 +2,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <renderer/gui/colored_background/ColoredBackground.hpp>
+
 namespace onion::voxel
 {
 
@@ -208,8 +210,8 @@ namespace onion::voxel
 		for (const TextSegment& segment : segments)
 		{
 			glm::vec2 segmentSize = MeasureText(segment.text, textHeightPx);
-			size.x += segmentSize.x;
-			size.y = std::max(size.y, static_cast<int>(segmentSize.y));
+			size.x += static_cast<int>(round(segmentSize.x));
+			size.y = std::max(size.y, static_cast<int>(round(segmentSize.y)));
 		}
 
 		// Calculate Starting position based on alignment
@@ -252,8 +254,14 @@ namespace onion::voxel
 			for (const TextSegment& segment : segments)
 			{
 				const glm::vec3& shadowColor = s_ShadowColorMap.at(segment.color);
-				currentPos = RenderPartialText(
-					segment.text, shadowColor, currentPos, textHeightPx, zOffset - 0.01f, rotationDegrees, pivot);
+				currentPos = RenderPartialText(segment.text,
+											   shadowColor,
+											   currentPos,
+											   segment.format,
+											   textHeightPx,
+											   zOffset - 0.01f,
+											   rotationDegrees,
+											   pivot);
 			}
 		}
 
@@ -261,8 +269,14 @@ namespace onion::voxel
 		for (const TextSegment& segment : segments)
 		{
 			const glm::vec3& foregroundColor = s_TextColorMap.at(segment.color);
-			currentPos = RenderPartialText(
-				segment.text, foregroundColor, currentPos, textHeightPx, zOffset, rotationDegrees, pivot);
+			currentPos = RenderPartialText(segment.text,
+										   foregroundColor,
+										   currentPos,
+										   segment.format,
+										   textHeightPx,
+										   zOffset,
+										   rotationDegrees,
+										   pivot);
 		}
 	}
 
@@ -272,6 +286,7 @@ namespace onion::voxel
 						  const glm::vec3& textColor,
 						  const glm::vec3& shadowColor,
 						  float textHeightPx,
+						  const Font::TextFormat& format,
 						  float zOffset,
 						  float rotationDegrees,
 						  bool renderShadow)
@@ -316,12 +331,13 @@ namespace onion::voxel
 									static_cast<int>(round(textHeightPx / 8.f))};
 			currentPos += shadowOffset;
 
-			currentPos =
-				RenderPartialText(text, shadowColor, currentPos, textHeightPx, zOffset - 0.01f, rotationDegrees, pivot);
+			currentPos = RenderPartialText(
+				text, shadowColor, currentPos, format, textHeightPx, zOffset - 0.01f, rotationDegrees, pivot);
 		}
 
 		currentPos = {startX, startY};
-		currentPos = RenderPartialText(text, textColor, currentPos, textHeightPx, zOffset, rotationDegrees, pivot);
+		currentPos =
+			RenderPartialText(text, textColor, currentPos, format, textHeightPx, zOffset, rotationDegrees, pivot);
 	}
 
 	glm::vec2 Font::MeasureText(const std::string& text, float textHeightPx) const
@@ -540,6 +556,7 @@ namespace onion::voxel
 	glm::ivec2 Font::RenderPartialText(const std::string& text,
 									   const glm::vec3& color,
 									   const glm::vec2& position,
+									   const Font::TextFormat& textFormat,
 									   float textHeightPx,
 									   float zOffset,
 									   float rotationDegrees,
@@ -551,29 +568,51 @@ namespace onion::voxel
 		glm::vec2 size = MeasureText(text, textHeightPx);
 
 		// Build vertices
-		float cursorX = position.x;
-		float cursorY = position.y;
-		float scale = textHeightPx / m_GlyphSize.y;
-
-		for (char c : text)
+		auto DrawGlyph = [&](float offsetX_px)
 		{
-			int ascii = static_cast<unsigned char>(c);
-			const Glyph& glyph = m_Glyphs[ascii];
+			float cursorX = position.x;
+			float cursorY = position.y;
+			float scale = textHeightPx / m_GlyphSize.y;
 
-			float x0 = cursorX;
-			float y0 = cursorY;
-			float x1 = x0 + glyph.width * scale;
-			float y1 = y0 + glyph.height * scale;
+			for (char c : text)
+			{
+				int ascii = static_cast<unsigned char>(c);
+				const Glyph& glyph = m_Glyphs[ascii];
 
-			m_Vertices.push_back({x0, y0, zOffset, glyph.u0, glyph.v0});
-			m_Vertices.push_back({x1, y0, zOffset, glyph.u1, glyph.v0});
-			m_Vertices.push_back({x1, y1, zOffset, glyph.u1, glyph.v1});
+				float skew = textFormat.italic ? (glyph.height * scale * 0.25f) : 0.0f;
 
-			m_Vertices.push_back({x0, y0, zOffset, glyph.u0, glyph.v0});
-			m_Vertices.push_back({x1, y1, zOffset, glyph.u1, glyph.v1});
-			m_Vertices.push_back({x0, y1, zOffset, glyph.u0, glyph.v1});
+				float x0 = cursorX + offsetX_px;
+				float x1 = x0 + glyph.width * scale;
 
-			cursorX += glyph.advance * scale;
+				float y0 = cursorY;
+				float y1 = y0 + glyph.height * scale;
+
+				// Top edge is shifted to the right
+				float x0_top = x0 + skew;
+				float x1_top = x1 + skew;
+
+				m_Vertices.push_back({x0_top, y0, zOffset, glyph.u0, glyph.v0});
+				m_Vertices.push_back({x1_top, y0, zOffset, glyph.u1, glyph.v0});
+				m_Vertices.push_back({x1, y1, zOffset, glyph.u1, glyph.v1});
+
+				m_Vertices.push_back({x0_top, y0, zOffset, glyph.u0, glyph.v0});
+				m_Vertices.push_back({x1, y1, zOffset, glyph.u1, glyph.v1});
+				m_Vertices.push_back({x0, y1, zOffset, glyph.u0, glyph.v1});
+
+				cursorX += glyph.advance * scale;
+			}
+		};
+
+		// Draw main text
+		DrawGlyph(0.0f);
+
+		// Draw bold text (simple offset)
+		if (textFormat.bold)
+		{
+			int offsetX_px = static_cast<int>(round(textHeightPx / 8.f));
+			int magicOffset = static_cast<int>(round(offsetX_px / 2.f));
+			offsetX_px -= magicOffset;
+			DrawGlyph(static_cast<float>(offsetX_px));
 		}
 
 		// --- Rotation Matrix ---
@@ -604,6 +643,46 @@ namespace onion::voxel
 		glBindVertexArray(0);
 
 		m_Vertices.clear();
+
+		// Draw Underline
+		if (textFormat.underline)
+		{
+			int onePx = static_cast<int>(round(textHeightPx / 8.f));
+
+			int topY = static_cast<int>(round(position.y + textHeightPx));
+			int bottomY = topY + onePx;
+
+			int leftX = static_cast<int>(round(position.x));
+			int rightX = static_cast<int>(round(position.x + size.x));
+			ColoredBackground::CornerOptions underlineOptions;
+			underlineOptions.TopLeftCorner = {leftX, topY};
+			underlineOptions.BottomRightCorner = {rightX, bottomY};
+			underlineOptions.Color = glm::vec4(color, 1.0f);
+			underlineOptions.ZOffset = zOffset;
+			underlineOptions.RotationDegrees = rotationDegrees;
+
+			ColoredBackground::Render(underlineOptions);
+		}
+
+		// Draw Strikethrough
+		if (textFormat.strikethrough)
+		{
+			int onePx = static_cast<int>(round(textHeightPx / 8.f));
+
+			int centerY = static_cast<int>(round(position.y + textHeightPx * 0.5f));
+			int topY = centerY - static_cast<int>(round(onePx * 0.5f));
+			int bottomY = centerY + static_cast<int>(round(onePx * 0.5f));
+			int leftX = static_cast<int>(round(position.x));
+			int rightX = static_cast<int>(round(position.x + size.x));
+			ColoredBackground::CornerOptions strikethroughOptions;
+			strikethroughOptions.TopLeftCorner = {leftX, topY};
+			strikethroughOptions.BottomRightCorner = {rightX, bottomY};
+			strikethroughOptions.Color = glm::vec4(color, 1.0f);
+			strikethroughOptions.ZOffset = zOffset;
+			strikethroughOptions.RotationDegrees = rotationDegrees;
+
+			ColoredBackground::Render(strikethroughOptions);
+		}
 
 		return {position.x + size.x, position.y};
 	}

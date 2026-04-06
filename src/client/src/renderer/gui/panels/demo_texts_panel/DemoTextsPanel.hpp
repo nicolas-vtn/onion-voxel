@@ -32,7 +32,7 @@ namespace onion::voxel
 		std::string m_AllTextStylesLabelText_1 =
 			"§0Black §1DarkBlue §2DarkGreen §3DarkAqua §4DarkRed §5DarkPurple §6Gold §7Gray §8DarkGray §9Blue";
 		std::string m_AllTextStylesLabelText_2 =
-			"§aGreen §bAqua §cRed §dLightPurple §eYellow §fWhite §lBold §mStrikethrough §nUnderline §oItalic";
+			"§aGreen §bAqua §cRed §dLightPurple §eYellow §fWhite §lBold§r §mStrikethrough§r §nUnderline§r §oItalic§r";
 
 		// ----- Controls -----
 	  private:

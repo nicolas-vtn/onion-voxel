@@ -135,6 +135,7 @@ namespace onion::voxel
 						const glm::vec3& textColor,
 						const glm::vec3& shadowColor,
 						float textHeightPx,
+						const Font::TextFormat& format = {},
 						float zOffset = 0.0f,
 						float rotationDegrees = 0.0f,
 						bool renderShadow = true);
@@ -187,6 +188,7 @@ namespace onion::voxel
 		glm::ivec2 RenderPartialText(const std::string& text,
 									 const glm::vec3& color,
 									 const glm::vec2& position,
+									 const Font::TextFormat& textFormat,
 									 float textHeightPx,
 									 float zOffset,
 									 float rotationDegrees,
