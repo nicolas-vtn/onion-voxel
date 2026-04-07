@@ -107,8 +107,8 @@ namespace onion::voxel
 		m_EventHandles.push_back(m_ResourcePacksPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																					  { Handle_BackRequest(sender); }));
 
-		m_EventHandles.push_back(m_ResourcePacksPanel.RequestResourcePackChange.Subscribe(
-			[this](const std::string& resourcePackName) { Handle_ResourcePackChangeRequest(resourcePackName); }));
+		m_EventHandles.push_back(m_ResourcePacksPanel.EvtUserSettingsChanged.Subscribe(
+			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
 
 		m_EventHandles.push_back(m_DemoScrollingPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																					  { Handle_BackRequest(sender); }));
@@ -191,13 +191,6 @@ namespace onion::voxel
 	{
 		(void) sender; // Unused parameter
 		GoBackToPreviousMenu();
-	}
-
-	void Gui::Handle_ResourcePackChangeRequest(const std::string& resourcePackName)
-	{
-		std::cout << "Selected Resource Pack: " << resourcePackName << std::endl;
-
-		RequestResourcePackChange.Trigger(resourcePackName);
 	}
 
 	void Gui::Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& eventArgs)

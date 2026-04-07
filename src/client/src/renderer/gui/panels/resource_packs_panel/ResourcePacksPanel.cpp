@@ -71,7 +71,7 @@ namespace onion::voxel
 		float tileHeightRatio = 128.f / 1009.f;
 		int tileHeight = static_cast<int>(round(s_ScreenHeight * tileHeightRatio));
 		float tileWidthRatio = 0.6f;
-		int tileWidth = tileWidthRatio * s_ScreenWidth;
+		int tileWidth = static_cast<int>(round(s_ScreenWidth * tileWidthRatio));
 		glm::vec2 tileSize{tileWidth, tileHeight};
 		float tileSpacingYratio = 26.f / 1009.f;
 		int tileSpacingY = static_cast<int>(round(s_ScreenHeight * tileSpacingYratio));
@@ -122,7 +122,7 @@ namespace onion::voxel
 			std::lock_guard lock(m_MutexResourcePacks);
 			size_t totalTiles = m_ResourcePacksTiles.size() + 1; // +1 for the default pack
 			int totalHeight = static_cast<int>(totalTiles * (tileHeight + tileSpacingY)) +
-				((currentTileY - tileHeight / 2) - scrollerTopLeftY);
+				static_cast<int>((currentTileY - tileHeight / 2) - scrollerTopLeftY);
 			m_ResourcePacks_Scroller.SetScrollAreaHeight(totalHeight);
 		}
 		m_ResourcePacks_Scroller.Render();
@@ -134,17 +134,29 @@ namespace onion::voxel
 		{
 			std::lock_guard lock(m_MutexResourcePacks);
 
-			// Render Default Resource Pack Tile
-			glm::ivec2 defaultTilePosition = {middleX, currentTileY - m_ResourcePacks_Scroller.GetContentYOffset()};
-			Visibility defaultTileVisibility =
-				m_ResourcePacks_Scroller.GetControlVisibleArea(defaultTilePosition, tileSize);
-			m_DefaultResourcePack_Tile.SetPosition(defaultTilePosition);
-			m_DefaultResourcePack_Tile.SetSize(tileSize);
-			m_DefaultResourcePack_Tile.SetVisibility(defaultTileVisibility);
-			m_DefaultResourcePack_Tile.Render();
-			currentTileY += tileSize.y + tileSpacingY; // Add some spacing after the default pack
-
+			std::vector<ResourcePackTile*> visibleTiles;
+			visibleTiles.push_back(&m_DefaultResourcePack_Tile);
 			for (const auto& resourcePackTile : m_ResourcePacksTiles)
+			{
+				visibleTiles.push_back(resourcePackTile.get());
+			}
+
+			std::string searchText = m_Search_TextField.GetText();
+			if (!searchText.empty())
+			{
+				visibleTiles.erase(std::remove_if(visibleTiles.begin(),
+												  visibleTiles.end(),
+												  [&searchText](ResourcePackTile* tile)
+												  {
+													  std::string name = tile->GetResourcePackName();
+													  std::string description = tile->GetResourcePackDescription();
+													  return name.find(searchText) == std::string::npos &&
+														  description.find(searchText) == std::string::npos;
+												  }),
+								   visibleTiles.end());
+			}
+
+			for (const auto& resourcePackTile : visibleTiles)
 			{
 				glm::ivec2 tilePosition = {middleX, currentTileY - m_ResourcePacks_Scroller.GetContentYOffset()};
 				Visibility tileVisibility = m_ResourcePacks_Scroller.GetControlVisibleArea(tilePosition, tileSize);
@@ -407,7 +419,13 @@ namespace onion::voxel
 
 		if (currentPack != selectedPack)
 		{
-			RequestResourcePackChange.Trigger(selectedPack);
+			auto settings = EngineContext::Get().Settings();
+			settings.ResourcePack = selectedPack;
+
+			UserSettingsChangedEventArgs args(settings);
+			args.ResourcePack_Changed = true;
+
+			EvtUserSettingsChanged.Trigger(args);
 		}
 
 		RequestBackNavigation.Trigger(this);

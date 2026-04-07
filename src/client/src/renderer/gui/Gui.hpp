@@ -68,7 +68,6 @@ namespace onion::voxel
 		Event<bool> RequestQuitToMainMenu;
 		Event<bool> RequestBackToGame;
 		Event<bool> RequestBack;
-		Event<const std::string&> RequestResourcePackChange;
 		Event<const UserSettingsChangedEventArgs&> UserSettingsChanged;
 
 		// ----- Panels -----
@@ -106,7 +105,6 @@ namespace onion::voxel
 		void Handle_BackToGameRequest(const GuiElement* sender);
 		void Handle_QuitToMainMenuRequest(const GuiElement* sender);
 		void Handle_BackRequest(const GuiElement* sender);
-		void Handle_ResourcePackChangeRequest(const std::string& resourcePackName);
 		void Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& eventArgs);
 
 		// ----- Set Static States -----

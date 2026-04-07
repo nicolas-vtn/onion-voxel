@@ -196,7 +196,6 @@ namespace onion::voxel
 		void Handle_StartMultiplayerGameRequest(const Gui::MultiplayerGameStartInfo& startInfo);
 		void Handle_BackToGameRequest();
 		void Handle_QuitToMainMenuRequest(bool quit);
-		void Handle_ResourcePackChangeRequest(const std::string& resourcePackName);
 		void Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& args);
 
 		// ----- ImGui -----
