@@ -40,6 +40,24 @@ namespace onion::voxel
 		glDepthFunc(GL_LESS); // reset
 	}
 
+	std::vector<uint8_t> Rotate90CW(const uint8_t* src, int w, int h, int channels)
+	{
+		std::vector<uint8_t> dst(w * h * channels);
+
+		for (int y = 0; y < h; ++y)
+		{
+			for (int x = 0; x < w; ++x)
+			{
+				int srcIndex = (y * w + x) * channels;
+				int dstIndex = ((x * h) + (h - y - 1)) * channels;
+
+				std::memcpy(&dst[dstIndex], &src[srcIndex], channels);
+			}
+		}
+
+		return dst;
+	}
+
 	void Skybox::ReloadTextures(const CubeMapData& cubeMap)
 	{
 		const std::vector<std::vector<uint8_t>> faces = {cubeMap.RightFaceData,
@@ -63,8 +81,13 @@ namespace onion::voxel
 
 		for (unsigned int i = 0; i < faces.size(); i++)
 		{
-			unsigned char* pixels = stbi_load_from_memory(
-				faces[i].data(), static_cast<int>(faces[i].size()), &width, &height, &nrChannels, 0);
+			unsigned char* pixels = stbi_load_from_memory(faces[i].data(),
+														  static_cast<int>(faces[i].size()),
+														  &width,
+														  &height,
+														  &nrChannels,
+														  STBI_rgb_alpha // force RGBA
+			);
 
 			if (!pixels)
 			{
@@ -74,17 +97,32 @@ namespace onion::voxel
 				throw std::runtime_error("Failed to decode CubeMap texture from memory: " + error);
 			}
 
-			GLenum srcFormat = Texture::GetPixelFormat(nrChannels);
+			if (i == 2)
+			{
+				std::vector<uint8_t> rotatedData = Rotate90CW(pixels, width, height, 4);
+				rotatedData = Rotate90CW(rotatedData.data(), height, width, 4); // Rotate 180 degrees
+				rotatedData = Rotate90CW(rotatedData.data(), width, height, 4); // Rotate 270 degrees total
+				std::memcpy(pixels, rotatedData.data(), rotatedData.size());
+			}
+
+			if (i == 3)
+			{
+				std::vector<uint8_t> rotatedData = Rotate90CW(pixels, width, height, 4);
+				std::memcpy(pixels, rotatedData.data(), rotatedData.size());
+			}
+
+			//GLenum srcFormat = Texture::GetPixelFormat(nrChannels);
 
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
 						 0,
-						 srcFormat,
+						 GL_RGBA8, // fixed internal format
 						 width,
 						 height,
 						 0,
-						 srcFormat,
+						 GL_RGBA, // data format
 						 GL_UNSIGNED_BYTE,
 						 pixels);
+
 			stbi_image_free(pixels);
 		}
 
