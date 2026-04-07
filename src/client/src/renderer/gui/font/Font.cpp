@@ -391,11 +391,23 @@ namespace onion::voxel
 
 		const float refGlyphHeight = m_UnicodeGlyphs.at('A').height;
 
+		int lines = 1;
+
+		float maxLineWidth = 0.f;
+
 		float width = 0.f;
 		for (int i = 0; i < text.size(); i++)
 		{
 			float scale = textHeightPx / refGlyphHeight;
 			char32_t c = text[i];
+
+			if (c == '\n')
+			{
+				lines++;
+				maxLineWidth = std::max(maxLineWidth, width);
+				width = 0.f;
+				continue;
+			}
 
 			auto it = m_UnicodeGlyphs.find(c);
 			if (it != m_UnicodeGlyphs.end())
@@ -408,11 +420,12 @@ namespace onion::voxel
 				width += m_UnicodeGlyphs.at(' ').advance * scale; // Fallback to space advance for unknown characters
 			}
 		}
+		maxLineWidth = std::max(maxLineWidth, width);
 
 		const float scale = textHeightPx / refGlyphHeight;
-		float height = refGlyphHeight * scale;
+		float height = refGlyphHeight * scale * lines;
 
-		return {width, height};
+		return {maxLineWidth, height};
 	}
 
 	// -------- OpenGL Buffer Setup --------
@@ -670,6 +683,9 @@ namespace onion::voxel
 
 		const float refGlyphHeight = m_UnicodeGlyphs['A'].height;
 
+		float lastCursorX = position.x;
+		float lastCursorY = position.y;
+
 		// Build vertices
 		auto DrawGlyph = [&](float offsetX_px)
 		{
@@ -678,6 +694,14 @@ namespace onion::voxel
 
 			for (char32_t c : text)
 			{
+				// Ignore newline characters
+				if (c == '\n')
+				{
+					cursorX = position.x;
+					cursorY += refGlyphHeight * (textHeightPx / refGlyphHeight) * 1.3f; // Move down by one line
+					continue;
+				}
+
 				Glyph glyph = m_UnicodeGlyphs.at('?'); // Fallback glyph
 				auto it = m_UnicodeGlyphs.find(c);
 				if (it != m_UnicodeGlyphs.end())
@@ -714,6 +738,12 @@ namespace onion::voxel
 				vertices.push_back({x0, y1, zOffset, glyph.u0, glyph.v1});
 
 				cursorX += glyph.advance * scale;
+			}
+
+			if (offsetX_px == 0.f)
+			{
+				lastCursorX = cursorX;
+				lastCursorY = cursorY;
 			}
 		};
 
@@ -806,6 +836,7 @@ namespace onion::voxel
 			ColoredBackground::Render(strikethroughOptions);
 		}
 
-		return {position.x + size.x, position.y};
+		//return {position.x + size.x, position.y + (lines * textHeightPx)};
+		return {lastCursorX, lastCursorY};
 	}
 } // namespace onion::voxel
