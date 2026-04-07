@@ -17,6 +17,7 @@ namespace onion::voxel
 		// ----- Public Members -----
 	  public:
 		std::string Version = "1.0";
+		std::string ResourcePack = "Default";
 		VideoSettings Video{};
 		ControlsSettings Controls{};
 
@@ -28,13 +29,17 @@ namespace onion::voxel
 
 	template <typename BasicJsonType> inline void to_json(BasicJsonType& j, const UserSettings& s)
 	{
-		j = BasicJsonType{{"Version", s.Version}, {"Video", s.Video}, {"Controls", s.Controls}};
+		j = BasicJsonType{
+			{"Version", s.Version}, {"ResourcePack", s.ResourcePack}, {"Video", s.Video}, {"Controls", s.Controls}};
 	}
 
 	template <typename BasicJsonType> inline void from_json(const BasicJsonType& j, UserSettings& s)
 	{
 		if (j.contains("Version"))
 			j.at("Version").get_to(s.Version);
+
+		if (j.contains("ResourcePack"))
+			j.at("ResourcePack").get_to(s.ResourcePack);
 
 		if (j.contains("Controls"))
 			j.at("Controls").get_to(s.Controls);

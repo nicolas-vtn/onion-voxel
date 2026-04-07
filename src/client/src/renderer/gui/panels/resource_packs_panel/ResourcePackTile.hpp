@@ -28,7 +28,7 @@ namespace onion::voxel
 
 		// ----- Public Events -----
 	  public:
-		Event<const ResourcePackTile&> OnCheckedChanged;
+		Event<const ResourcePackTile&> EvtCheckedChanged;
 
 		// ----- Getters / Setters -----
 	  public:
@@ -40,8 +40,10 @@ namespace onion::voxel
 		void SetPosition(const glm::vec2& pos);
 		glm::vec2 GetPosition() const;
 
-		void SetChecked(bool checked);
-		bool IsChecked() const;
+		void SetVisibility(const Visibility& visibility) override;
+
+		void SetSelected(bool selected);
+		bool IsSelected() const;
 
 		void SetResourcePackName(const std::string& name);
 		std::string GetResourcePackName() const;
@@ -55,6 +57,9 @@ namespace onion::voxel
 		glm::vec2 m_Size{1, 1};
 
 		bool m_HasBeenInitialized = false;
+
+		bool m_WasMouseHovering = false;
+		bool m_WasMouseDown = false;
 
 		// ----- Events Subscription and Handlers -----
 	  private:
@@ -72,5 +77,9 @@ namespace onion::voxel
 
 		static inline const std::filesystem::path s_DefaultResourcePackThumbnailPath =
 			std::filesystem::path("textures") / "default_pack.png";
+
+		// ----- Private Helpers -----
+	  private:
+		bool IsMouseHovering() const;
 	};
 }; // namespace onion::voxel

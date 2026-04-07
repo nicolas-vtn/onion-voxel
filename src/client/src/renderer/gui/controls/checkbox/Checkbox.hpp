@@ -24,6 +24,8 @@ namespace onion::voxel
 		void Delete() override;
 		void ReloadTextures() override;
 
+		bool IsHovered() const;
+
 		// ----- Public Events -----
 	  public:
 		Event<const Checkbox&> OnCheckedChanged;
@@ -60,10 +62,6 @@ namespace onion::voxel
 		void Handle_Click(const Sprite& sprite);
 		void Handle_HoverEnter(const Sprite& sprite);
 		void Handle_HoverLeave(const Sprite& sprite);
-
-		// ----- Internal Helpers -----
-	  private:
-		bool IsHovered() const;
 
 		// ----- Sprites -----
 	  private:

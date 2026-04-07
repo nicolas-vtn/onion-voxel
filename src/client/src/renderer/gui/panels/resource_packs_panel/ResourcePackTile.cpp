@@ -1,5 +1,7 @@
 #include "ResourcePackTile.hpp"
 
+#include <renderer/gui/colored_background/ColoredBackground.hpp>
+
 namespace onion::voxel
 {
 	ResourcePackTile::ResourcePackTile(const std::string& name, Texture texture)
@@ -27,6 +29,60 @@ namespace onion::voxel
 			Initialize();
 		}
 
+		bool isHovered = IsMouseHovering();
+
+		// ---- Hover Handling ----
+		if (isHovered && !m_WasMouseHovering)
+		{
+			auto inputsManager = EngineContext::Get().Inputs;
+			inputsManager->SetCursorStyle(CursorStyle::Hand);
+		}
+		else if (!isHovered && m_WasMouseHovering)
+		{
+			auto inputsManager = EngineContext::Get().Inputs;
+			inputsManager->SetCursorStyle(CursorStyle::Arrow);
+		}
+
+		// ---- Click Handling ----
+		bool isMouseDown = s_InputsSnapshot->Mouse.LeftButtonPressed;
+		if (isHovered && isMouseDown && !m_WasMouseDown)
+		{
+			if (!IsSelected() && !m_Checkbox.IsHovered())
+			{
+				SetSelected(true);
+				EvtCheckedChanged.Trigger(*this);
+			}
+		}
+
+		bool isSelected = IsSelected();
+
+		// Render Border and Background if Selected
+		const int borderThickness = static_cast<int>(round(4.f / 1009.f * s_ScreenHeight));
+		const int posBorderLeft = static_cast<int>(round(m_Position.x - (m_Size.x / 2) - (2 * borderThickness)));
+		const int posBorderRight = static_cast<int>(round(m_Position.x + (m_Size.x / 2) + (2 * borderThickness)));
+		const int posBorderTop = static_cast<int>(round(m_Position.y - (m_Size.y / 2) - (2 * borderThickness)));
+		const int posBorderBottom = static_cast<int>(round(m_Position.y + (m_Size.y / 2) + (2 * borderThickness)));
+
+		// ---- Render Border and Background if Selected ----
+		if (isSelected)
+		{
+			// ---- Render Border ----
+			ColoredBackground::CornerOptions bgOptionsBorder;
+			bgOptionsBorder.TopLeftCorner = {posBorderLeft, posBorderTop};
+			bgOptionsBorder.BottomRightCorner = {posBorderRight, posBorderBottom};
+			bgOptionsBorder.Color = glm::vec4(1.f, 1.f, 1.f, 1.f);
+			bgOptionsBorder.ZOffset = -0.5f;
+			ColoredBackground::Render(bgOptionsBorder);
+
+			// ---- Render Background ----
+			ColoredBackground::CornerOptions bgOptions;
+			bgOptions.TopLeftCorner = {posBorderLeft + borderThickness, posBorderTop + borderThickness};
+			bgOptions.BottomRightCorner = {posBorderRight - borderThickness, posBorderBottom - borderThickness};
+			bgOptions.Color = glm::vec4(0.f, 0.f, 0.f, 1.f);
+			bgOptions.ZOffset = -0.4f;
+			ColoredBackground::Render(bgOptions);
+		}
+
 		// ----- Render Checkbox -----
 		glm::ivec2 checkboxSize{m_Size.y / 2, m_Size.y / 2};
 		glm::ivec2 checkboxPos{m_Position.x - (m_Size.x / 2) + checkboxSize.x, m_Position.y};
@@ -41,17 +97,24 @@ namespace onion::voxel
 		m_Thumbnail.SetSize(thumbnailSize);
 		m_Thumbnail.Render();
 
-		// ----- Render Name and Description -----
-		glm::ivec2 nameLabelPos{thumbnailPos.x + thumbnailSize.x / 2 + 10, m_Position.y - m_Size.y * 0.2f};
-		float textHeight = m_Size.y * 0.25f;
+		// ----- Render Name -----
+		int topY = static_cast<int>(round(m_Position.y - (m_Size.y / 2)));
+		int namePosY = topY + static_cast<int>(round(m_Size.y * 0.20f));
+		glm::ivec2 nameLabelPos{thumbnailPos.x + thumbnailSize.x / 2 + 10, namePosY};
 		m_NameLabel.SetPosition(nameLabelPos);
-		m_NameLabel.SetTextHeight(textHeight);
+		m_NameLabel.SetTextHeight(s_TextHeight);
 		m_NameLabel.Render();
 
-		glm::ivec2 descriptionLabelPos{nameLabelPos.x, m_Position.y + m_Size.y * 0.2f};
+		// ----- Render Description -----
+		int descriptionPosY = static_cast<int>(round(m_Position.y + m_Size.y * 0.15f));
+		glm::ivec2 descriptionLabelPos{nameLabelPos.x, descriptionPosY};
 		m_DescriptionLabel.SetPosition(descriptionLabelPos);
-		m_DescriptionLabel.SetTextHeight(textHeight * 0.8f);
+		m_DescriptionLabel.SetTextHeight(s_TextHeight);
 		m_DescriptionLabel.Render();
+
+		// ---- Update previous state ----
+		m_WasMouseHovering = isHovered;
+		m_WasMouseDown = isMouseDown;
 	}
 
 	void ResourcePackTile::Initialize()
@@ -105,12 +168,19 @@ namespace onion::voxel
 		return m_Position;
 	}
 
-	void ResourcePackTile::SetChecked(bool checked)
+	void ResourcePackTile::SetVisibility(const Visibility& visibility)
 	{
-		m_Checkbox.SetChecked(checked);
+		Visibility cbVisibility = Visibility::Compose(visibility, m_Checkbox.GetPosition(), m_Checkbox.GetSize());
+		m_Checkbox.SetVisibility(cbVisibility);
+		GuiElement::SetVisibility(visibility);
 	}
 
-	bool ResourcePackTile::IsChecked() const
+	void ResourcePackTile::SetSelected(bool selected)
+	{
+		m_Checkbox.SetChecked(selected);
+	}
+
+	bool ResourcePackTile::IsSelected() const
 	{
 		return m_Checkbox.IsChecked();
 	}
@@ -144,7 +214,38 @@ namespace onion::voxel
 	void ResourcePackTile::Handle_CheckboxCheckedChanged(const Checkbox& sender)
 	{
 		(void) sender; // Unused
-		OnCheckedChanged.Trigger(*this);
+
+		EvtCheckedChanged.Trigger(*this);
+	}
+
+	bool ResourcePackTile::IsMouseHovering() const
+	{
+		glm::vec2 mousePos = EngineContext::Get().Inputs->GetMousePosition();
+
+		Visibility visibility = GetVisibility();
+		if (!visibility.IsVisible)
+		{
+			return false;
+		}
+
+		glm::vec2 topLeft;
+		glm::vec2 bottomRight;
+
+		if (visibility.IsFullyVisible)
+		{
+			topLeft = glm::vec2(m_Position) - glm::vec2(m_Size) * 0.5f;
+			bottomRight = glm::vec2(m_Position) + glm::vec2(m_Size) * 0.5f;
+		}
+		else
+		{
+			topLeft = glm::vec2(visibility.VisibleAreaTopLeftCorner);
+			bottomRight = glm::vec2(visibility.VisibleAreaBottomRightCorner);
+		}
+
+		bool hovered = mousePos.x >= topLeft.x && mousePos.x <= bottomRight.x && mousePos.y >= topLeft.y &&
+			mousePos.y <= bottomRight.y;
+
+		return hovered;
 	}
 
 } // namespace onion::voxel

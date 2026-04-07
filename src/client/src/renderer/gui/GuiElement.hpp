@@ -185,6 +185,7 @@ namespace onion::voxel
 		{
 			if (allChanged)
 			{
+				ResourcePack_Changed = true;
 				RenderDistance_Changed = true;
 				SimulationDistance_Changed = true;
 				MaxFPS_Changed = true;
@@ -198,6 +199,8 @@ namespace onion::voxel
 
 	  public:
 		UserSettings NewSettings;
+
+		bool ResourcePack_Changed = false;
 
 		bool RenderDistance_Changed = false;
 		bool SimulationDistance_Changed = false;

@@ -46,6 +46,11 @@ namespace onion::voxel
 		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager, settings);
 
 		UserSettingsChangedEventArgs args(settings, true);
+
+		// Dirty Tick to avoid crash on first load because OpenGL context is not created yet.
+		args.RenderDistance_Changed = false;
+		EngineContext::Get().Assets->SetCurrentResourcePack(settings.ResourcePack);
+
 		ApplyUserSettings(args);
 	}
 
@@ -394,6 +399,22 @@ namespace onion::voxel
 		EngineContext::Get().UpdateSettings(args.NewSettings);
 
 		const auto& settings = args.NewSettings;
+
+		// ----- Apply Last Selected Resource Pack -----
+		if (args.ResourcePack_Changed)
+		{
+			std::string currentPack = m_AssetsManager.GetCurrentResourcePack();
+			std::string newlySelectedPack = settings.ResourcePack;
+			if (currentPack != newlySelectedPack)
+			{
+				EngineContext::Get().Assets->SetCurrentResourcePack(newlySelectedPack);
+
+				// Reload everything that uses assets
+				m_Gui.ReloadTextures();
+				m_WorldRenderer.ReloadTextures();
+				m_EntityRenderer.ReloadTextures();
+			}
+		}
 
 		// ----- Apply Controls Settings -----
 		const auto& controls = settings.Controls;
@@ -1023,9 +1044,6 @@ namespace onion::voxel
 		m_EventHandles.push_back(
 			m_Gui.RequestQuitToMainMenu.Subscribe([this](bool quit) { Handle_QuitToMainMenuRequest(quit); }));
 
-		m_EventHandles.push_back(m_Gui.RequestResourcePackChange.Subscribe(
-			[this](const std::string& resourcePackName) { Handle_ResourcePackChangeRequest(resourcePackName); }));
-
 		m_EventHandles.push_back(m_Gui.UserSettingsChanged.Subscribe([this](const UserSettingsChangedEventArgs& args)
 																	 { Handle_UserSettingsChanged(args); }));
 	}
@@ -1076,16 +1094,6 @@ namespace onion::voxel
 
 			m_IsPaused = false;
 		}
-	}
-
-	void Renderer::Handle_ResourcePackChangeRequest(const std::string& resourcePackName)
-	{
-		EngineContext::Get().Assets->SetCurrentResourcePack(resourcePackName);
-
-		// Reload everything that uses assets
-		m_Gui.ReloadTextures();
-		m_WorldRenderer.ReloadTextures();
-		m_EntityRenderer.ReloadTextures();
 	}
 
 	void Renderer::Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& args)
