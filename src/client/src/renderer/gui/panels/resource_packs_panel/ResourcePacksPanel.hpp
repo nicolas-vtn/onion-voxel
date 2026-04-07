@@ -10,7 +10,8 @@
 #include <renderer/gui/GuiElement.hpp>
 #include <renderer/gui/controls/button/Button.hpp>
 #include <renderer/gui/controls/label/Label.hpp>
-#include <renderer/gui/controls/sprite/Sprite.hpp>
+#include <renderer/gui/controls/scroller/Scroller.hpp>
+#include <renderer/gui/controls/text_field/TextField.hpp>
 
 #include "ResourcePackTile.hpp"
 
@@ -44,6 +45,9 @@ namespace onion::voxel
 	  private:
 		Label m_Title_Label;
 		Label m_Description_Label;
+
+		TextField m_Search_TextField;
+		Scroller m_ResourcePacks_Scroller;
 
 		ResourcePackTile m_DefaultResourcePack_Tile;
 

@@ -13,7 +13,8 @@ namespace onion::voxel
 	ResourcePacksPanel::ResourcePacksPanel(const std::string& name)
 		: GuiElement(name), m_Title_Label("ResourcePacksTitle_Label"),
 		  m_Description_Label("ResourcePacksDescription_Label"), m_OpenPackFolder_Button("OpenPackFolder_Button"),
-		  m_Done_Button("Done_Button"), m_DefaultResourcePack_Tile("DefaultResourcePack_Tile")
+		  m_Done_Button("Done_Button"), m_DefaultResourcePack_Tile("DefaultResourcePack_Tile"),
+		  m_Search_TextField("Search_TextField"), m_ResourcePacks_Scroller("ResourcePacks_Scroller")
 	{
 		SubscribeToControlEvents();
 
@@ -27,8 +28,10 @@ namespace onion::voxel
 		m_Description_Label.SetTextAlignment(Font::eTextAlignment::Center);
 		m_Description_Label.SetTextColor(s_ColorSecondaryText);
 
+		m_Search_TextField.SetPlaceholderText("Search...");
+
 		m_DefaultResourcePack_Tile.SetResourcePackName("Default");
-		m_DefaultResourcePack_Tile.SetResourcePackDescription("The default look and feel of Onion::Voxel (built-in)");
+		m_DefaultResourcePack_Tile.SetResourcePackDescription("The default look of Onion::Voxel (built-in)");
 
 		m_OpenPackFolder_Button.SetText("Open Pack Folder");
 
@@ -63,47 +66,98 @@ namespace onion::voxel
 		glm::vec2 buttonSize{buttonSizeRatio.x * s_ScreenWidth, buttonSizeRatio.y * s_ScreenHeight};
 		float middleX = s_ScreenWidth * 0.5f;
 
+		float firstTileYratio = (300.f - 23.f) / 1009.f;
+		float currentTileY = s_ScreenHeight * firstTileYratio;
+		float tileHeightRatio = 128.f / 1009.f;
+		int tileHeight = static_cast<int>(round(s_ScreenHeight * tileHeightRatio));
+		float tileWidthRatio = 0.6f;
+		int tileWidth = tileWidthRatio * s_ScreenWidth;
+		glm::vec2 tileSize{tileWidth, tileHeight};
+		float tileSpacingYratio = 26.f / 1009.f;
+		int tileSpacingY = static_cast<int>(round(s_ScreenHeight * tileSpacingYratio));
+
 		// ---- Render Menu Title ----
-		constexpr float titleYOffsetRatio = 0.0320f;
-		glm::vec2 textTitlePosition = {s_ScreenWidth / 2, s_ScreenHeight * titleYOffsetRatio};
-		float textHeight = s_ScreenHeight * (31.f / 1009.f);
+		constexpr float titleYOffsetRatio = (57.f - 23.f) / 1009.f;
+		glm::vec2 textTitlePosition = {middleX, s_ScreenHeight * titleYOffsetRatio};
 
 		m_Title_Label.SetPosition(textTitlePosition);
-		m_Title_Label.SetTextHeight(textHeight);
+		m_Title_Label.SetTextHeight(s_TextHeight);
 		m_Title_Label.Render();
 
 		// ---- Render Description Label ----
-		constexpr float descYOffsetRatio = 0.0833f;
-		glm::vec2 textDescPosition = {s_ScreenWidth / 2, s_ScreenHeight * descYOffsetRatio};
+		constexpr float descYOffsetRatio = (109.f - 23.f) / 1009.f;
+		glm::vec2 textDescPosition = {middleX, s_ScreenHeight * descYOffsetRatio};
 
 		m_Description_Label.SetPosition(textDescPosition);
-		m_Description_Label.SetTextHeight(textHeight);
+		m_Description_Label.SetTextHeight(s_TextHeight);
 		m_Description_Label.Render();
+
+		// ---- Render Search TextField ----
+		constexpr float searchYOffsetRatio = (170.f - 23.f) / 1009.f;
+		glm::vec2 searchTextFieldPosition = {middleX, s_ScreenHeight * searchYOffsetRatio};
+		float searchTextFieldWidthRatio = 800.f / 1920.f;
+		int searchTextFieldWidth = static_cast<int>(round(s_ScreenWidth * searchTextFieldWidthRatio));
+		float searchTextFieldHeightRatio = 64.f / 1009.f;
+		int searchTextFieldHeight = static_cast<int>(round(s_ScreenHeight * searchTextFieldHeightRatio));
+		glm::ivec2 searchTextFieldSize{searchTextFieldWidth, searchTextFieldHeight};
+
+		m_Search_TextField.SetPosition(searchTextFieldPosition);
+		m_Search_TextField.SetSize(searchTextFieldSize);
+		m_Search_TextField.Render();
+
+		// ---- Render Scroller ----
+		float scrollerYOffsetRatio = (558.f - 23.f) / 1009.f;
+		int scrollerYcenter = static_cast<int>(round(s_ScreenHeight * scrollerYOffsetRatio));
+		float scrollerHeightRatio = 690.f / 1009.f;
+		int scrollerHeight = static_cast<int>(round(s_ScreenHeight * scrollerHeightRatio));
+		int scrollerTopLeftY = scrollerYcenter - (scrollerHeight / 2);
+		glm::ivec2 scrollerTopLeft{0, scrollerTopLeftY};
+		int scrollerBottomY = scrollerYcenter + (scrollerHeight / 2);
+		glm::ivec2 scrollerBottomRight{s_ScreenWidth, scrollerBottomY};
+
+		m_ResourcePacks_Scroller.SetTopLeftCorner(scrollerTopLeft);
+		m_ResourcePacks_Scroller.SetBottomRightCorner(scrollerBottomRight);
+		// Compute Total Scroller Height
+		{
+			std::lock_guard lock(m_MutexResourcePacks);
+			size_t totalTiles = m_ResourcePacksTiles.size() + 1; // +1 for the default pack
+			int totalHeight = static_cast<int>(totalTiles * (tileHeight + tileSpacingY)) +
+				((currentTileY - tileHeight / 2) - scrollerTopLeftY);
+			m_ResourcePacks_Scroller.SetScrollAreaHeight(totalHeight);
+		}
+		m_ResourcePacks_Scroller.Render();
+
+		// ---- Start Cissoring for Resource Pack Tiles ----
+		m_ResourcePacks_Scroller.StartCissoring();
 
 		// ---- Render Resource Pack Tiles ----
 		{
 			std::lock_guard lock(m_MutexResourcePacks);
-			float firstYratio = 0.25f;
-			float currentY = s_ScreenHeight * firstYratio;
-			float tileHeightRatio = 0.13f;
-			float tileWidthRatio = 0.6f;
-			glm::vec2 tileSize{s_ScreenWidth * tileWidthRatio, s_ScreenHeight * tileHeightRatio};
-			float spacingYratio = 1.2f;
 
 			// Render Default Resource Pack Tile
-			m_DefaultResourcePack_Tile.SetPosition({middleX, currentY});
+			glm::ivec2 defaultTilePosition = {middleX, currentTileY - m_ResourcePacks_Scroller.GetContentYOffset()};
+			Visibility defaultTileVisibility =
+				m_ResourcePacks_Scroller.GetControlVisibleArea(defaultTilePosition, tileSize);
+			m_DefaultResourcePack_Tile.SetPosition(defaultTilePosition);
 			m_DefaultResourcePack_Tile.SetSize(tileSize);
+			m_DefaultResourcePack_Tile.SetVisibility(defaultTileVisibility);
 			m_DefaultResourcePack_Tile.Render();
-			currentY += tileSize.y * spacingYratio; // Add some spacing after the default pack
+			currentTileY += tileSize.y + tileSpacingY; // Add some spacing after the default pack
 
 			for (const auto& resourcePackTile : m_ResourcePacksTiles)
 			{
-				resourcePackTile->SetPosition({middleX, currentY});
+				glm::ivec2 tilePosition = {middleX, currentTileY - m_ResourcePacks_Scroller.GetContentYOffset()};
+				Visibility tileVisibility = m_ResourcePacks_Scroller.GetControlVisibleArea(tilePosition, tileSize);
+				resourcePackTile->SetPosition(tilePosition);
 				resourcePackTile->SetSize(tileSize);
+				resourcePackTile->SetVisibility(tileVisibility);
 				resourcePackTile->Render();
-				currentY += tileSize.y * spacingYratio; // Add some spacing between tiles
+				currentTileY += tileSize.y + tileSpacingY; // Add some spacing between tiles
 			}
 		}
+
+		// ---- Stop Cissoring for Resource Pack Tiles ----
+		m_ResourcePacks_Scroller.StopCissoring();
 
 		// ---- Prepare Layout for first 2 buttons ----
 		constexpr float tablesWidthRatio = 1229.f / 1920.f;
@@ -145,6 +199,8 @@ namespace onion::voxel
 		m_OpenPackFolder_Button.Initialize();
 		m_Done_Button.Initialize();
 		m_DefaultResourcePack_Tile.Initialize();
+		m_Search_TextField.Initialize();
+		m_ResourcePacks_Scroller.Initialize();
 
 		SetInitState(true);
 	}
@@ -156,6 +212,8 @@ namespace onion::voxel
 		m_OpenPackFolder_Button.Delete();
 		m_Done_Button.Delete();
 		m_DefaultResourcePack_Tile.Delete();
+		m_Search_TextField.Delete();
+		m_ResourcePacks_Scroller.Delete();
 
 		{
 			std::lock_guard lock(m_MutexResourcePacks);
@@ -176,6 +234,9 @@ namespace onion::voxel
 		m_OpenPackFolder_Button.ReloadTextures();
 		m_Done_Button.ReloadTextures();
 		m_DefaultResourcePack_Tile.ReloadTextures();
+		m_Search_TextField.ReloadTextures();
+		m_ResourcePacks_Scroller.ReloadTextures();
+
 		std::lock_guard lock(m_MutexResourcePacks);
 		for (auto& resourcePackTile : m_ResourcePacksTiles)
 		{
@@ -224,7 +285,7 @@ namespace onion::voxel
 			resourcePackTile->SetResourcePackDescription(packDescription);
 
 			// Subscribe to the tile's checked changed event
-			m_EventHandles.push_back(resourcePackTile->OnCheckedChanged.Subscribe(
+			m_EventHandles.push_back(resourcePackTile->EvtCheckedChanged.Subscribe(
 				[this](const ResourcePackTile& tile) { Handle_ResourcePackTileCheckedChanged(tile); }));
 
 			{
@@ -260,19 +321,19 @@ namespace onion::voxel
 	{
 		if (resourcePackName == "Default")
 		{
-			m_DefaultResourcePack_Tile.SetChecked(true);
+			m_DefaultResourcePack_Tile.SetSelected(true);
 		}
 
 		// Uncheck all other tiles and check the one that matches the selected resource pack
 		{
 			bool selectedDefaultPack = resourcePackName == m_DefaultResourcePack_Tile.GetResourcePackName();
-			m_DefaultResourcePack_Tile.SetChecked(selectedDefaultPack);
+			m_DefaultResourcePack_Tile.SetSelected(selectedDefaultPack);
 
 			std::lock_guard lock(m_MutexResourcePacks);
 			for (const auto& resourcePackTile : m_ResourcePacksTiles)
 			{
 				bool isSelectedTile = resourcePackTile->GetResourcePackName() == resourcePackName;
-				resourcePackTile->SetChecked(isSelectedTile);
+				resourcePackTile->SetSelected(isSelectedTile);
 			}
 		}
 
@@ -293,13 +354,13 @@ namespace onion::voxel
 		m_EventHandles.push_back(
 			m_Done_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
 
-		m_EventHandles.push_back(m_DefaultResourcePack_Tile.OnCheckedChanged.Subscribe(
+		m_EventHandles.push_back(m_DefaultResourcePack_Tile.EvtCheckedChanged.Subscribe(
 			[this](const ResourcePackTile& tile) { Handle_ResourcePackTileCheckedChanged(tile); }));
 	}
 
 	void ResourcePacksPanel::Handle_ResourcePackTileCheckedChanged(const ResourcePackTile& tile)
 	{
-		if (tile.IsChecked())
+		if (tile.IsSelected())
 		{
 			SetCurrentlySelectedResourcePack(tile.GetResourcePackName());
 		}
@@ -311,7 +372,7 @@ namespace onion::voxel
 				std::lock_guard lock(m_MutexResourcePacks);
 				for (const auto& resourcePackTile : m_ResourcePacksTiles)
 				{
-					if (resourcePackTile->IsChecked())
+					if (resourcePackTile->IsSelected())
 					{
 						anyTileChecked = true;
 						break;
@@ -338,8 +399,17 @@ namespace onion::voxel
 	void ResourcePacksPanel::Handle_Done_Click(const Button& sender)
 	{
 		(void) sender; // Unused parameter)
+
 		m_TimerScanResourcePacksFolder.Stop();
-		RequestResourcePackChange.Trigger(GetCurrentlySelectedResourcePack());
+
+		std::string currentPack = EngineContext::Get().Assets->GetCurrentResourcePack();
+		std::string selectedPack = GetCurrentlySelectedResourcePack();
+
+		if (currentPack != selectedPack)
+		{
+			RequestResourcePackChange.Trigger(selectedPack);
+		}
+
 		RequestBackNavigation.Trigger(this);
 	}
 
