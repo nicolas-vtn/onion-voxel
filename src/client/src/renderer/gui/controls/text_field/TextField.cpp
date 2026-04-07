@@ -4,6 +4,7 @@
 #include <misc/cpp/imgui_stdlib.h>
 
 #include <renderer/debug_draws/DebugDraws.hpp>
+#include <renderer/gui/colored_background/ColoredBackground.hpp>
 
 namespace onion::voxel
 {
@@ -59,10 +60,11 @@ namespace onion::voxel
 		glm::ivec2 size = GetSize();
 		glm::ivec2 pos = GetPosition();
 		glm::ivec2 textPos = pos - glm::ivec2(size.x / m_TextStartXratio, 0);
+		float textHeight = size.y * m_TextScaleFactor;
 
 		// Add trailing '_' or Render Cursor
-		std::string drawnText = m_Text;
-		bool visible = fmod(glfwGetTime(), 0.8) < 0.5;
+		std::u32string drawnText = m_Text;
+		bool visible = fmod(glfwGetTime(), 0.6) < 0.3;
 		if (visible && m_IsActive && !m_ReadOnly)
 		{
 			if (m_CursorPosition == m_Text.size())
@@ -71,16 +73,27 @@ namespace onion::voxel
 			}
 			else
 			{
-				std::string textBeforeCursor = m_Text.substr(0, m_CursorPosition);
+				std::u32string textBeforeCursor = m_Text.substr(0, m_CursorPosition);
 				glm::vec2 textBeforeCursorSize =
 					s_TextFont.MeasureText(textBeforeCursor, GetSize().y * m_TextScaleFactor);
-				glm::ivec2 cursorPos = textPos + glm::ivec2(textBeforeCursorSize.x, 0);
 
-				float cursorHeight = size.y * m_CursorHeightRatio;
-				glm::ivec2 bottomCursor = cursorPos + glm::ivec2(0, cursorHeight / 2.f);
-				glm::ivec2 topCursor = cursorPos - glm::ivec2(0, cursorHeight / 2.f);
+				int onePx = static_cast<int>(round(4.f / 1920.f * s_ScreenWidth));
 
-				DebugDraws::DrawScreenLine_Pixels(bottomCursor, topCursor, glm::vec4(s_TextColor, 1.f), m_CursorWidth);
+				int cursorLeftX = textPos.x + static_cast<int>(textBeforeCursorSize.x);
+				int cursorRightX = cursorLeftX + onePx;
+
+				int cursorTopY = textPos.y - static_cast<int>(round(textHeight / 2.f)) - onePx;
+				int cursorBottomY = textPos.y + static_cast<int>(round(textHeight / 2.f)) + (3 * onePx);
+
+				glm::ivec2 topLeftCursor = {cursorLeftX, cursorTopY};
+				glm::ivec2 bottomRightCursor = {cursorRightX, cursorBottomY};
+
+				ColoredBackground::CornerOptions options;
+				options.TopLeftCorner = topLeftCursor;
+				options.BottomRightCorner = bottomRightCursor;
+				options.Color = glm::vec4(s_TextColor, 1.f);
+				options.ZOffset = 0.9f; // Render on top of text
+				ColoredBackground::Render(options);
 			}
 		}
 
@@ -90,16 +103,20 @@ namespace onion::voxel
 			m_NineSliceSprite_TextField.Render();
 
 		// ----- Render Label -----
-		float textHeight = size.y * m_TextScaleFactor;
 		m_Label.SetTextHeight(textHeight);
 		if (m_Text.empty() && !m_IsActive)
 		{
 			// PLACEHOLDER TEXT
 
+			Font::TextFormat placeholderFormat;
+			placeholderFormat.italic = true;
+
 			m_Label.SetText(m_PlaceholderText);
-			m_Label.SetTextColor(s_PlaceholderTextColor);
+			m_Label.SetCustomTextColor(s_PlaceholderTextColor);
 			m_Label.SetPosition(textPos);
+			m_Label.SetTextFormat(placeholderFormat);
 			m_Label.Render();
+			m_Label.SetTextFormat(Font::TextFormat{}); // Reset to default format for future renders
 		}
 		else
 		{
@@ -114,9 +131,9 @@ namespace onion::voxel
 				size_t selectionEnd = std::max(m_SelectionStart, m_CursorPosition);
 
 				// Render 3 parts: text before selection, selected text, text after selection
-				std::string textBeforeSelection = drawnText.substr(0, selectionStart);
-				std::string selectedText = drawnText.substr(selectionStart, selectionEnd - selectionStart);
-				std::string textAfterSelection = drawnText.substr(selectionEnd);
+				std::u32string textBeforeSelection = drawnText.substr(0, selectionStart);
+				std::u32string selectedText = drawnText.substr(selectionStart, selectionEnd - selectionStart);
+				std::u32string textAfterSelection = drawnText.substr(selectionEnd);
 
 				// Measure text sizes for positioning
 				glm::vec2 textBeforeSelectionSize = s_TextFont.MeasureText(textBeforeSelection, textHeight);
@@ -129,33 +146,83 @@ namespace onion::voxel
 
 				// Render text before selection
 				m_Label.SetText(textBeforeSelection);
-				m_Label.SetTextColor(s_TextColor);
+				m_Label.SetCustomTextColor(s_TextColor);
 				m_Label.SetPosition(textPos);
 				m_Label.Render();
 
+				// Render Selection Text Background
+				int onePx = static_cast<int>(round(4.f / 1920.f * s_ScreenWidth));
+
+				int bgLeftX = textPos.x + static_cast<int>(textBeforeSelectionSize.x);
+				int bgRightX = bgLeftX + static_cast<int>(selectedTextSize.x);
+
+				int bgTopY = textPos.y - static_cast<int>(round(textHeight / 2.f)) - onePx;
+				int bgBottomY = textPos.y + static_cast<int>(round(textHeight / 2.f)) + (3 * onePx);
+
+				glm::ivec2 topLeftCursor = {bgLeftX, bgTopY};
+				glm::ivec2 bottomRightCursor = {bgRightX, bgBottomY};
+
+				ColoredBackground::CornerOptions options;
+				options.TopLeftCorner = topLeftCursor;
+				options.BottomRightCorner = bottomRightCursor;
+				options.Color = glm::vec4(1.f);
+				options.ZOffset = 0.5f; // Render behind text
+				ColoredBackground::Render(options);
+
 				// Render selected text with highlight
 				m_Label.SetText(selectedText);
-				m_Label.SetTextColor(s_SelectedTextColor);
-				m_Label.SetShadowColor(s_SelectedTextShadowColor);
-				m_Label.SetBackgroundColor(glm::vec4(1.f));
+				m_Label.SetCustomTextColor(s_SelectedTextColor);
+				m_Label.SetCustomShadowColor(s_SelectedTextShadowColor);
 				m_Label.SetPosition(selectedTextPos);
 				m_Label.Render();
 
 				// Render text after selection
 				m_Label.SetText(textAfterSelection);
-				m_Label.SetTextColor(s_TextColor);
+				m_Label.SetCustomTextColor(s_TextColor);
 				m_Label.ResetShadowColor(); // Reset shadow color for non-selected text
 				m_Label.SetPosition(textAfterSelectionPos);
-				m_Label.SetBackgroundColor(glm::vec4(0.f)); // Disable background for non-selected text
 				m_Label.Render();
 			}
 			else
 			{
 				// NO SELECTION
 				m_Label.SetText(drawnText);
-				m_Label.SetTextColor(s_TextColor);
+				m_Label.SetCustomTextColor(s_TextColor);
 				m_Label.SetPosition(textPos);
 				m_Label.Render();
+			}
+		}
+
+		// --- BUG ---
+		// This code is duplicated because z-ordering issues cause the cursor to be rendered behind the text. So it's re renderer after.
+		if (visible && m_IsActive && !m_ReadOnly)
+		{
+			if (m_CursorPosition == m_Text.size())
+			{
+			}
+			else
+			{
+				std::u32string textBeforeCursor = m_Text.substr(0, m_CursorPosition);
+				glm::vec2 textBeforeCursorSize =
+					s_TextFont.MeasureText(textBeforeCursor, GetSize().y * m_TextScaleFactor);
+
+				int onePx = static_cast<int>(round(4.f / 1920.f * s_ScreenWidth));
+
+				int cursorLeftX = textPos.x + static_cast<int>(textBeforeCursorSize.x);
+				int cursorRightX = cursorLeftX + onePx;
+
+				int cursorTopY = textPos.y - static_cast<int>(round(textHeight / 2.f)) - onePx;
+				int cursorBottomY = textPos.y + static_cast<int>(round(textHeight / 2.f)) + (3 * onePx);
+
+				glm::ivec2 topLeftCursor = {cursorLeftX, cursorTopY};
+				glm::ivec2 bottomRightCursor = {cursorRightX, cursorBottomY};
+
+				ColoredBackground::CornerOptions options;
+				options.TopLeftCorner = topLeftCursor;
+				options.BottomRightCorner = bottomRightCursor;
+				options.Color = glm::vec4(s_TextColor, 1.f);
+				options.ZOffset = 0.9f; // Render on top of text
+				ColoredBackground::Render(options);
 			}
 		}
 	}
@@ -178,7 +245,7 @@ namespace onion::voxel
 
 	void TextField::SetText(const std::string& text)
 	{
-		m_Text = text;
+		m_Text = Utf8ToUtf32(text);
 
 		// Reset States
 		m_CursorPosition = std::min(m_CursorPosition, m_Text.size());
@@ -192,17 +259,17 @@ namespace onion::voxel
 
 	std::string TextField::GetText() const
 	{
-		return m_Text;
+		return Utf32ToUtf8(m_Text);
 	}
 
 	void TextField::SetPlaceholderText(const std::string& placeholderText)
 	{
-		m_PlaceholderText = placeholderText;
+		m_PlaceholderText = Utf8ToUtf32(placeholderText);
 	}
 
 	std::string TextField::GetPlaceholderText() const
 	{
-		return m_PlaceholderText;
+		return Utf32ToUtf8(m_PlaceholderText);
 	}
 
 	void TextField::SetSize(const glm::ivec2& size)
@@ -417,15 +484,15 @@ namespace onion::voxel
 			// Ctrl + C: Copy selected text to clipboard
 			if (HasSelection())
 			{
-				std::string selectedText = GetSelectedText();
-				inputsManager->SetClipboardText(selectedText);
+				std::u32string selectedText = GetSelectedText();
+				inputsManager->SetClipboardText(Utf32ToUtf8(selectedText));
 			}
 		}
 
 		if (vPressed && ctrlPressed)
 		{
 			// Ctrl + V: Paste from clipboard
-			std::string clipboardText = inputsManager->GetClipboardText();
+			std::u32string clipboardText = Utf8ToUtf32(inputsManager->GetClipboardText());
 
 			// If there's a selection, remove it before pasting the clipboard text
 			if (HasSelection())
@@ -446,9 +513,9 @@ namespace onion::voxel
 			// Ctrl + X: Cut selected text to clipboard
 			if (HasSelection())
 			{
-				std::string selectedText = GetSelectedText();
+				std::u32string selectedText = GetSelectedText();
 
-				inputsManager->SetClipboardText(selectedText);
+				inputsManager->SetClipboardText(Utf32ToUtf8(selectedText));
 
 				auto [selectionStart, selectionEnd] = GetSelectionRange();
 				m_Text.erase(m_Text.begin() + selectionStart, m_Text.begin() + selectionEnd);
@@ -613,8 +680,7 @@ namespace onion::voxel
 			ResetSelection();
 		}
 
-		// Append the new character to the text
-		m_Text.insert(m_Text.begin() + m_CursorPosition, static_cast<char>(codepoint));
+		m_Text.insert(m_Text.begin() + m_CursorPosition, static_cast<char32_t>(codepoint));
 		m_CursorPosition++;
 	}
 
@@ -641,10 +707,10 @@ namespace onion::voxel
 		return {selectionStart, selectionEnd};
 	}
 
-	std::string TextField::GetSelectedText() const
+	std::u32string TextField::GetSelectedText() const
 	{
 		if (m_SelectionStart == SIZE_MAX || m_SelectionStart == m_CursorPosition)
-			return "";
+			return U"";
 
 		size_t selectionStart = std::min(m_SelectionStart, m_CursorPosition);
 		size_t selectionEnd = std::max(m_SelectionStart, m_CursorPosition);
@@ -664,12 +730,12 @@ namespace onion::voxel
 		int startTextX = GetPosition().x - static_cast<int>(GetSize().x / m_TextStartXratio);
 
 		float textHeight = GetSize().y * m_TextScaleFactor;
-		std::string textToMeasure;
+		std::u32string textToMeasure;
 
 		// Iterate through the text character by character to find where the mouse click occurred
 		for (size_t i = 0; i < m_Text.size(); i++)
 		{
-			textToMeasure += m_Text[i];
+			textToMeasure.push_back(m_Text[i]);
 			float textWidth = s_TextFont.MeasureText(textToMeasure, textHeight).x;
 
 			textWidth -= 5; // Magic number
@@ -693,7 +759,7 @@ namespace onion::voxel
 		return 0; // Default to start if something goes wrong
 	}
 
-	size_t TextField::GetNextWordBoundary(const std::string& text, size_t cursorPosition, eDirection direction) const
+	size_t TextField::GetNextWordBoundary(const std::u32string& text, size_t cursorPosition, eDirection direction) const
 	{
 		if (direction == eDirection::Left)
 		{

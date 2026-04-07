@@ -625,6 +625,9 @@ namespace onion::voxel
 			worldTile->SetSelected(false);
 		}
 
+		// Clear Filter Text
+		m_TextFieldFilter.SetText("");
+
 		EvtRequestBackNavigation.Trigger(this);
 	}
 

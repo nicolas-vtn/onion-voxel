@@ -100,23 +100,23 @@ namespace onion::voxel
 
 		bool HasSelection() const;
 		std::pair<size_t, size_t> GetSelectionRange() const;
-		std::string GetSelectedText() const;
+		std::u32string GetSelectedText() const;
 		void ResetSelection();
 
 		// ----- Properties -----
 	  private:
 		bool m_ReadOnly = false;
 		bool m_IsActive = false;
-		std::string m_PlaceholderText = "Enter text...";
+		std::u32string m_PlaceholderText = U"Enter text...";
 
-		std::string m_Text;
-		std::string m_TextAtActivation;
+		std::u32string m_Text;
+		std::u32string m_TextAtActivation;
 		glm::ivec2 m_Position{0, 0};
 		glm::ivec2 m_Size{1, 1};
 		bool m_IsPressed = false;
 
 		float m_TextScaleFactor = 0.4f;
-		float m_TextStartXratio = 2.1f;
+		float m_TextStartXratio = 2.078f;
 		int m_CursorWidth = 4;
 		float m_CursorHeightRatio = 0.6f;
 
@@ -144,7 +144,7 @@ namespace onion::voxel
 			GuiElement::s_BasePathGuiAssets / "sprites" / "widget" / "text_field_highlighted.png";
 
 		static inline constexpr glm::vec3 s_TextColor = glm::vec3(224.f / 255.f);
-		static inline constexpr glm::vec3 s_PlaceholderTextColor = glm::vec3(85.f / 255.f);
+		static inline constexpr glm::vec3 s_PlaceholderTextColor = glm::vec3(168.f / 255.f);
 		static inline constexpr glm::vec3 s_SelectedTextColor = glm::vec3(0.1216f, 0.1216f, 1.f);
 		static inline constexpr glm::vec3 s_SelectedTextShadowColor = glm::vec3(0.7804f, 0.7804f, 1.f);
 
@@ -155,7 +155,7 @@ namespace onion::voxel
 		};
 
 		size_t GetCursorPositionFromMouseX(int mouseX);
-		size_t GetNextWordBoundary(const std::string& text, size_t cursorPosition, eDirection direction) const;
+		size_t GetNextWordBoundary(const std::u32string& text, size_t cursorPosition, eDirection direction) const;
 
 		// ----- DEBUG -----
 	  private:

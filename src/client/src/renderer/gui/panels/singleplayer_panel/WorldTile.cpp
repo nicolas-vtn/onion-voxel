@@ -87,7 +87,7 @@ namespace onion::voxel
 		// ---- Render Border ----
 		if (m_IsSelected)
 		{
-			ColoredBackground::Options bgOptions;
+			ColoredBackground::CenterOptions bgOptions;
 			bgOptions.Position = m_Position;
 			bgOptions.Size = m_Size;
 			bgOptions.Color = glm::vec4(1.f, 1.f, 1.f, 1.f);
@@ -98,7 +98,7 @@ namespace onion::voxel
 		// ---- Render Background ----
 		if (m_IsSelected)
 		{
-			ColoredBackground::Options bgOptions;
+			ColoredBackground::CenterOptions bgOptions;
 			bgOptions.Position = m_Position;
 			glm::vec2 sizeFloat = m_Size - glm::vec2(static_cast<float>(2 * borderThickness));
 			bgOptions.Size = {static_cast<int>(round(sizeFloat.x)), static_cast<int>(round(sizeFloat.y))};
@@ -120,7 +120,7 @@ namespace onion::voxel
 			// ---- Render Background ----
 			glm::vec4 bgColor = glm::vec4(0.5f, 0.5f, 0.5f, 0.5f);
 			zOffset += 0.05f;
-			ColoredBackground::Options bgOptions;
+			ColoredBackground::CenterOptions bgOptions;
 			bgOptions.Position = thumbnailPos;
 			bgOptions.Size = thumbnailSize;
 			bgOptions.Color = bgColor;

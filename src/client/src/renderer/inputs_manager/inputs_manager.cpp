@@ -287,6 +287,8 @@ void onion::voxel::InputsManager::CharCallback(unsigned int codepoint)
 
 void onion::voxel::InputsManager::KeyCallback(int key, int scancode, int action, int mods)
 {
+	(void) scancode; // Unused parameter
+	(void) mods;	 // Unused parameter
 
 	if (action != GLFW_PRESS)
 		return;
@@ -303,6 +305,8 @@ void onion::voxel::InputsManager::KeyCallback(int key, int scancode, int action,
 
 void onion::voxel::InputsManager::MouseButtonCallback(int button, int action, int mods)
 {
+	(void) mods; // Unused parameter
+
 	if (action != GLFW_PRESS)
 		return;
 

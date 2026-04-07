@@ -28,9 +28,8 @@ namespace onion::voxel
 
 		m_QuitGame_Button.SetText("Quit Game");
 
-		m_SplashText_Label.SetTextColor({1.f, 1.f, 0.0f, 1.f});
+		m_SplashText_Label.SetCustomTextColor({1.f, 1.f, 0.0f, 1.f});
 		m_SplashText_Label.SetZOffset(0.9f);
-		m_SplashText_Label.SetShadowColor({0.246f, 0.246f, 0.0f, 1.f});
 		m_SplashText_Label.SetRotationDegrees(-25.f);
 		m_SplashText_Label.SetTextAlignment(Font::eTextAlignment::Center);
 

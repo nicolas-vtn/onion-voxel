@@ -24,7 +24,6 @@ namespace onion::voxel
 		m_Label.SetTextAlignment(Font::eTextAlignment::Center);
 		m_Label.SetZOffset(0.8f);
 		m_Label.SetTextColor(s_TextColor);
-		m_Label.SetShadowColor(s_TextShadowColor);
 	}
 
 	Slider::~Slider()

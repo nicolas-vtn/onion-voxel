@@ -44,7 +44,7 @@ namespace onion::voxel
 
 	Shader GuiElement::s_ShaderNineSliceSprites(AssetsManager::GetShadersDirectory() / "nine_slice_sprite.vert",
 												AssetsManager::GetShadersDirectory() / "nine_slice_sprite.frag");
-	Font GuiElement::s_TextFont{s_PathFont, 16, 16};
+	Font GuiElement::s_TextFont;
 
 	Event<const CursorStyle&> GuiElement::RequestCursorStyleChange;
 
@@ -76,6 +76,11 @@ namespace onion::voxel
 
 	// -------- Public API --------
 
+	void GuiElement::ReloadStaticTextures()
+	{
+		s_TextFont.Reload();
+	}
+
 	std::string GuiElement::GetName() const
 	{
 		return m_Name;
@@ -105,7 +110,7 @@ namespace onion::voxel
 			glm::ortho(0.0f, static_cast<float>(screenWidth), static_cast<float>(screenHeight), 0.0f, -1.0f, 1.0f);
 
 		s_TextHeight = 32.f / 1009.f * static_cast<float>(screenHeight);
-		s_ControlHeight = 80.f / 1009.f * static_cast<float>(screenHeight);
+		s_ControlHeight = static_cast<int>(round(80.f / 1009.f * static_cast<float>(screenHeight)));
 		s_CenterX = static_cast<int>(std::round(screenWidth / 2.0));
 
 		Font::SetProjectionMatrix(s_ProjectionMatrix);
@@ -126,6 +131,8 @@ namespace onion::voxel
 	void GuiElement::Load()
 	{
 		Font::StaticInitialize();
+		s_TextFont.Load();
+		ReloadStaticTextures();
 	}
 
 	void GuiElement::Unload()

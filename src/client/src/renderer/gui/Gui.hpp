@@ -12,6 +12,7 @@
 #include "panels/controls_panel/ControlsPanel.hpp"
 #include "panels/demo_panel/DemoPanel.hpp"
 #include "panels/demo_scrolling_panel/DemoScrollingPanel.hpp"
+#include "panels/demo_texts_panel/DemoTextsPanel.hpp"
 #include "panels/key_binds_panel/KeyBindsPanel.hpp"
 #include "panels/main_menu_panel/MainMenuPanel.hpp"
 #include "panels/mouse_settings_panel/MouseSettingsPanel.hpp"
@@ -74,6 +75,7 @@ namespace onion::voxel
 	  private:
 		DemoPanel m_DemoPanel;
 		DemoScrollingPanel m_DemoScrollingPanel;
+		DemoTextsPanel m_DemoTextsPanel;
 		MainMenuPanel m_MainMenuPanel;
 		PausePanel m_PausePanel;
 		OptionsPanel m_OptionsPanel;

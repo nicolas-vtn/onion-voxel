@@ -13,39 +13,33 @@ namespace onion::voxel
 		if (m_Text.empty())
 			return;
 
-		if (m_ShadowEnabled)
+		if (!m_HasCustomTextColor)
 		{
-			float shadowOffset = m_TextHeight / s_TextFont.GetGlyphSize().y;
-			glm::vec2 shadowOffsetVec{shadowOffset, shadowOffset};
+			std::u32string formatedText = Font::FormatText(m_Text, m_TextColor, m_TextFormat);
 
-			glm::vec4 shadowColor;
-			if (m_DefaultShadowColor)
-			{
-				shadowColor = m_TextColor / 4.f;
-			}
+			s_TextFont.RenderText(
+				formatedText, m_TextAlignment, m_Position, m_TextHeight, m_zOffset, m_RotationDegrees, m_ShadowEnabled);
+		}
+		else
+		{
+			glm::vec4 shadowColor{};
+			if (m_HasCustomShadowColor)
+				shadowColor = m_CustomShadowColor;
 			else
-			{
-				shadowColor = m_ShadowColor;
-			}
+				shadowColor = {
+					m_CustomTextColor.r / 4, m_CustomTextColor.g / 4, m_CustomTextColor.b / 4, m_CustomTextColor.a};
 
 			s_TextFont.RenderText(m_Text,
 								  m_TextAlignment,
-								  m_Position + shadowOffsetVec,
-								  m_TextHeight,
+								  m_Position,
+								  m_CustomTextColor,
 								  shadowColor,
-								  m_zOffset - 0.01f,
+								  m_TextHeight,
+								  m_TextFormat,
+								  m_zOffset,
 								  m_RotationDegrees,
-								  m_BackgroundColor);
+								  m_ShadowEnabled);
 		}
-
-		s_TextFont.RenderText(m_Text,
-							  m_TextAlignment,
-							  m_Position,
-							  m_TextHeight,
-							  m_TextColor,
-							  m_zOffset,
-							  m_RotationDegrees,
-							  m_BackgroundColor);
 	}
 
 	void Label::Initialize()
@@ -61,19 +55,25 @@ namespace onion::voxel
 
 	void Label::ReloadTextures()
 	{
-		s_TextFont.Reload();
+		// s_TextFont.Reload();
 	}
 
 	void Label::SetText(const std::string& text)
 	{
 		std::lock_guard lock(m_MutexState);
-		m_Text = text;
+		m_Text = Utf8ToUtf32(text);
 	}
 
 	std::string Label::GetText() const
 	{
 		std::lock_guard lock(m_MutexState);
-		return m_Text;
+		return Utf32ToUtf8(m_Text);
+	}
+
+	void Label::SetText(const std::u32string& text)
+	{
+		std::lock_guard lock(m_MutexState);
+		m_Text = text;
 	}
 
 	void Label::SetPosition(const glm::vec2& pos)
@@ -118,45 +118,59 @@ namespace onion::voxel
 		return m_TextAlignment;
 	}
 
-	void Label::SetTextColor(const glm::vec3& color)
-	{
-		SetTextColor(glm::vec4(color, 1.f));
-	}
-
-	void Label::SetTextColor(const glm::vec4& color)
+	void Label::SetTextColor(Font::eColor color)
 	{
 		std::lock_guard lock(m_MutexState);
 		m_TextColor = color;
+		m_HasCustomTextColor = false;
 	}
 
-	glm::vec4 Label::GetTextColor() const
+	Font::eColor Label::GetTextColor() const
 	{
 		std::lock_guard lock(m_MutexState);
 		return m_TextColor;
 	}
 
-	void Label::SetShadowColor(const glm::vec4& color)
+	void Label::SetCustomTextColor(const glm::vec3& color)
 	{
-		std::lock_guard lock(m_MutexState);
-		m_DefaultShadowColor = false;
-		m_ShadowColor = color;
+		SetCustomTextColor(glm::vec4(color, 1.f));
 	}
 
-	void Label::SetShadowColor(const glm::vec3& color)
+	void Label::SetCustomTextColor(const glm::vec4& color)
 	{
-		SetShadowColor(glm::vec4(color, 1.f));
+		std::lock_guard lock(m_MutexState);
+		m_CustomTextColor = color;
+		m_HasCustomTextColor = true;
+	}
+
+	glm::vec4 Label::GetCustomTextColor() const
+	{
+		std::lock_guard lock(m_MutexState);
+		return m_CustomTextColor;
+	}
+
+	void Label::SetCustomShadowColor(const glm::vec4& color)
+	{
+		std::lock_guard lock(m_MutexState);
+		m_CustomShadowColor = color;
+		m_HasCustomShadowColor = true;
+	}
+
+	void Label::SetCustomShadowColor(const glm::vec3& color)
+	{
+		SetCustomShadowColor(glm::vec4(color, 1.f));
 	}
 
 	void Label::ResetShadowColor()
 	{
 		std::lock_guard lock(m_MutexState);
-		m_DefaultShadowColor = true;
+		m_HasCustomShadowColor = false;
 	}
 
-	glm::vec4 Label::GetShadowColor() const
+	glm::vec4 Label::GetCustomShadowColor() const
 	{
 		std::lock_guard lock(m_MutexState);
-		return m_ShadowColor;
+		return m_CustomShadowColor;
 	}
 
 	void Label::SetZOffset(float zOffset)
@@ -195,21 +209,16 @@ namespace onion::voxel
 		return m_ShadowEnabled;
 	}
 
-	void Label::SetBackgroundColor(const glm::vec4& color)
+	void Label::SetTextFormat(const Font::TextFormat& textFormat)
 	{
 		std::lock_guard lock(m_MutexState);
-		m_BackgroundColor = color;
+		m_TextFormat = textFormat;
 	}
 
-	void Label::SetBackgroundColor(const glm::vec3& color)
-	{
-		SetBackgroundColor(glm::vec4(color, 1.f));
-	}
-
-	glm::vec4 Label::GetBackgroundColor() const
+	Font::TextFormat Label::GetTextFormat() const
 	{
 		std::lock_guard lock(m_MutexState);
-		return m_BackgroundColor;
+		return m_TextFormat;
 	}
 
 } // namespace onion::voxel

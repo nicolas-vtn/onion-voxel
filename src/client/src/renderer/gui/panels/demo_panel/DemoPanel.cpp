@@ -6,7 +6,8 @@ namespace onion::voxel
 	DemoPanel::DemoPanel(const std::string& name)
 		: GuiElement(name), m_Button("DemoButton"), m_Sprite("DemoSprite", m_SpritePath, Sprite::eOrigin::Asset),
 		  m_Button2("DemoButton2"), m_ButtonMainMenu("MainMenuButton"), m_Checkbox("DemoCheckbox"),
-		  m_TextField("DemoTextField"), m_Slider("DemoSlider"), m_ButtonScrollingPanel("DemoScrollingPanelButton")
+		  m_TextField("DemoTextField"), m_Slider("DemoSlider"), m_ButtonScrollingPanel("DemoScrollingPanelButton"),
+		  m_ButtonTextsPanel("DemoTextsPanelButton")
 	{
 
 		SubscribeToControlEvents();
@@ -38,8 +39,10 @@ namespace onion::voxel
 
 		m_ButtonScrollingPanel.SetPosition({400, 500});
 		m_ButtonScrollingPanel.SetSize({200.f, 40.f});
-		m_ButtonScrollingPanel.SetText("Demo Scrolling Panel");
+		m_ButtonScrollingPanel.SetText("Demo Scrolling");
 		m_ButtonScrollingPanel.SetEnabled(true);
+
+		m_ButtonTextsPanel.SetText("Demo Texts");
 	}
 
 	DemoPanel::~DemoPanel()
@@ -119,13 +122,23 @@ namespace onion::voxel
 		m_Slider.Render();
 
 		// ---- Render Button Demo Scrolling Panel ----
-		float buttonScrollingPanelXRatio = 0.5f;
+		glm::ivec2 smallButtonSize{buttonSize.x / 2.f, s_ControlHeight};
+		float buttonScrollingPanelXRatio = 0.35f;
 		float buttonScrollingPanelYRatio = 0.8f;
 		const glm::vec2 buttonScrollingPanelPos{s_ScreenWidth * buttonScrollingPanelXRatio,
 												s_ScreenHeight * buttonScrollingPanelYRatio};
 		m_ButtonScrollingPanel.SetPosition(buttonScrollingPanelPos);
-		m_ButtonScrollingPanel.SetSize(buttonSize);
+		m_ButtonScrollingPanel.SetSize(smallButtonSize);
 		m_ButtonScrollingPanel.Render();
+
+		// ---- Render Button Demo Texts Panel ----
+		float buttonTextsPanelXRatio = 0.65f;
+		float buttonTextsPanelYRatio = 0.8f;
+		const glm::vec2 buttonTextsPanelPos{s_ScreenWidth * buttonTextsPanelXRatio,
+											s_ScreenHeight * buttonTextsPanelYRatio};
+		m_ButtonTextsPanel.SetPosition(buttonTextsPanelPos);
+		m_ButtonTextsPanel.SetSize(smallButtonSize);
+		m_ButtonTextsPanel.Render();
 
 		// ---- Render Pink Rotating Background ----
 		float rotationSpeed = 20.f; // degrees per second
@@ -133,7 +146,7 @@ namespace onion::voxel
 		glm::ivec2 bgPosition = {s_ScreenWidth / 1.2f, s_ScreenHeight / 1.2f};
 		glm::ivec2 bgSize = {s_ScreenWidth / 10.f, s_ScreenHeight / 10.f};
 		glm::vec4 bgColor = glm::vec4(1.f, 0.4f, 0.8f, 0.5f);
-		ColoredBackground::Options bgOptions;
+		ColoredBackground::CenterOptions bgOptions;
 		bgOptions.Position = bgPosition;
 		bgOptions.Size = bgSize;
 		bgOptions.Color = bgColor;
@@ -158,6 +171,7 @@ namespace onion::voxel
 		m_Button.Initialize();
 		m_Button2.Initialize();
 		m_ButtonScrollingPanel.Initialize();
+		m_ButtonTextsPanel.Initialize();
 		m_ButtonMainMenu.Initialize();
 		m_Sprite.Initialize();
 		m_Checkbox.Initialize();
@@ -173,6 +187,7 @@ namespace onion::voxel
 		m_Button2.Delete();
 		m_ButtonMainMenu.Delete();
 		m_ButtonScrollingPanel.Delete();
+		m_ButtonTextsPanel.Delete();
 		m_Sprite.Delete();
 		m_Checkbox.Delete();
 		m_TextField.Delete();
@@ -187,6 +202,7 @@ namespace onion::voxel
 		m_Button2.ReloadTextures();
 		m_ButtonMainMenu.ReloadTextures();
 		m_ButtonScrollingPanel.ReloadTextures();
+		m_ButtonTextsPanel.ReloadTextures();
 		m_Sprite.ReloadTextures();
 		m_Checkbox.ReloadTextures();
 		m_TextField.ReloadTextures();
@@ -214,6 +230,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_ButtonScrollingPanel.OnClick.Subscribe(
 			[this](const Button& button) { Handle_ButtonScrollingPanelClick(button); }));
+
+		m_EventHandles.push_back(m_ButtonTextsPanel.OnClick.Subscribe([this](const Button& button)
+																	  { Handle_ButtonTextsPanelClick(button); }));
 	}
 
 	void DemoPanel::Handle_CheckboxCheckedChanged(const Checkbox& checkbox)
@@ -233,6 +252,12 @@ namespace onion::voxel
 	{
 		(void) button; // Unused parameter
 		RequestMenuNavigation.Trigger({this, eMenu::DemoScrollingPanel});
+	}
+
+	void DemoPanel::Handle_ButtonTextsPanelClick(const Button& button)
+	{
+		(void) button; // Unused parameter
+		RequestMenuNavigation.Trigger({this, eMenu::DemoTextsPanel});
 	}
 
 	void DemoPanel::Handle_ButtonClick(const Button& button)

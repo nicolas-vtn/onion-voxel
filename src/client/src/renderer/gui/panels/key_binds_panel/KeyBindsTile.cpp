@@ -48,7 +48,7 @@ namespace onion::voxel
 		const int buttonWidth = static_cast<int>(round(m_Size.x * buttonWidthRatio));
 		std::string keyText = KeyToString(m_Key);
 		if (m_IsCapturingKey)
-			keyText = "...";
+			keyText = "§e> §r§f§n" + keyText + "§r §e<";
 		if (m_Key == Key::Unknown)
 			keyText = "Not Bound";
 		m_ButtonKey.SetPosition({keyButtonPosX, m_Position.y});
@@ -168,6 +168,8 @@ namespace onion::voxel
 
 	void KeyBindsTile::Handle_ButtonKey_Click(const Button& sender)
 	{
+		(void) sender;
+
 		InputsManager& inputsManager = *EngineContext::Get().Inputs;
 		m_EvtHandle_KeyPressed =
 			inputsManager.EvtIntercptedKeyPressed.Subscribe([this](Key key) { Handle_KeyPressed(key); });
@@ -176,6 +178,8 @@ namespace onion::voxel
 
 	void KeyBindsTile::Handle_ButtonReset_Click(const Button& sender)
 	{
+		(void) sender;
+
 		SetKey(m_DefaultKey);
 		EvtKeyBindChanged.Trigger(*this);
 	}

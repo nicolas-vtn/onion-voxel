@@ -32,6 +32,8 @@ namespace onion::voxel
 		void SetText(const std::string& text);
 		std::string GetText() const;
 
+		void SetText(const std::u32string& text);
+
 		/// @brief Sets the position of the label. The position is interpreted as the center of the text for Center alignment, the left-center edge for Left alignment, and the right-center edge for Right alignment.
 		/// @param pos The new position of the label in pixels.
 		void SetPosition(const glm::vec2& pos);
@@ -50,21 +52,24 @@ namespace onion::voxel
 		void SetTextAlignment(Font::eTextAlignment alignment);
 		Font::eTextAlignment GetTextAlignment() const;
 
+		void SetTextColor(Font::eColor color);
+		Font::eColor GetTextColor() const;
+
 		/// @brief Sets the color of the text. The color is specified as a vec3. Red, Green, and Blue components should be in the range [0, 1]. Alpha is implicitly set to 1.
 		/// @param color The new color of the text.
-		void SetTextColor(const glm::vec3& color);
+		void SetCustomTextColor(const glm::vec3& color);
 
 		/// @brief Sets the color of the text. The color is specified as a vec4. Red, Green, Blue, and Alpha components should be in the range [0, 1]
 		/// @param color The new color of the text.
-		void SetTextColor(const glm::vec4& color);
-		glm::vec4 GetTextColor() const;
+		void SetCustomTextColor(const glm::vec4& color);
+		glm::vec4 GetCustomTextColor() const;
 
 		/// @brief Sets the color of the shadow. The color is specified as a vec4. Red, Green, Blue, and Alpha components should be in the range [0, 1]
 		/// @param color The new color of the shadow.
-		void SetShadowColor(const glm::vec4& color);
-		void SetShadowColor(const glm::vec3& color);
+		void SetCustomShadowColor(const glm::vec4& color);
+		void SetCustomShadowColor(const glm::vec3& color);
 		void ResetShadowColor();
-		glm::vec4 GetShadowColor() const;
+		glm::vec4 GetCustomShadowColor() const;
 
 		/// @brief Sets the offset of the text in the Z direction. In range [-1, 1], where 1 is the closest to the camera and -1 is the farthest from the camera.
 		/// @param zOffset The new offset of the text in the Z direction.
@@ -81,24 +86,27 @@ namespace onion::voxel
 		void EnableShadow(bool enable);
 		bool IsShadowEnabled() const;
 
-		void SetBackgroundColor(const glm::vec4& color);
-		void SetBackgroundColor(const glm::vec3& color);
-		glm::vec4 GetBackgroundColor() const;
+		void SetTextFormat(const Font::TextFormat& textFormat);
+		Font::TextFormat GetTextFormat() const;
 
 		// ----- Properties -----
-	  public:
+	  private:
 		mutable std::mutex m_MutexState;
-		std::string m_Text;
+		std::u32string m_Text;
 		glm::vec2 m_Position{0, 0};
 		float m_TextHeight{16.f};
 		Font::eTextAlignment m_TextAlignment{Font::eTextAlignment::Left};
-		glm::vec4 m_TextColor{1, 1, 1, 1};
-		glm::vec4 m_ShadowColor{0.246f, 0.246f, 0.246f, 1.f};
-		glm::vec4 m_BackgroundColor{0.f, 0.f, 0.f, 0.f};
+		Font::eColor m_TextColor{Font::eColor::White};
 		std::atomic_bool m_ShadowEnabled{true};
 		float m_zOffset{0.5f};
 		float m_RotationDegrees{0.f};
 
-		bool m_DefaultShadowColor = true;
+		Font::TextFormat m_TextFormat{};
+
+		bool m_HasCustomTextColor = false;
+		glm::vec4 m_CustomTextColor{0, 0, 0, 0};
+
+		bool m_HasCustomShadowColor = false;
+		glm::vec4 m_CustomShadowColor{0.246f, 0.246f, 0.246f, 1.f};
 	};
 }; // namespace onion::voxel

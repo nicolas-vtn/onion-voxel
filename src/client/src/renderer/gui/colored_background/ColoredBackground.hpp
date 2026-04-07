@@ -12,7 +12,7 @@ namespace onion::voxel
 	{
 		// ----- Structs and Enums -----
 	  public:
-		struct Options
+		struct CenterOptions
 		{
 			// Position of the background in pixels. The position is interpreted as the center of the background.
 			glm::ivec2 Position{0, 0};
@@ -26,9 +26,24 @@ namespace onion::voxel
 			float RotationDegrees = 0.f;
 		};
 
+		struct CornerOptions
+		{
+			// Top-left corner position of the background in pixels.
+			glm::ivec2 TopLeftCorner{0, 0};
+			// Bottom-right corner position of the background in pixels.
+			glm::ivec2 BottomRightCorner{100, 100};
+			// Color of the background. The color is specified as a vec4. Red, Green, Blue, and Alpha components should be in the range [0, 1]
+			glm::vec4 Color{1, 1, 1, 1};
+			// Offset of the background in the Z direction. In range [-1, 1], where 1 is the closest to the camera and -1 is the farthest from the camera.
+			float ZOffset = 0.f;
+			// Rotation of the background in degrees. Rotation is applied around the center of the background, and is in the clockwise direction.
+			float RotationDegrees = 0.f;
+		};
+
 		// ----- Public API -----
 	  public:
-		static void Render(const Options& options);
+		static void Render(const CenterOptions& options);
+		static void Render(const CornerOptions& options);
 
 		static void StaticShutdown();
 
