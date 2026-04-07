@@ -44,7 +44,7 @@ namespace onion::voxel
 
 	Shader GuiElement::s_ShaderNineSliceSprites(AssetsManager::GetShadersDirectory() / "nine_slice_sprite.vert",
 												AssetsManager::GetShadersDirectory() / "nine_slice_sprite.frag");
-	Font GuiElement::s_TextFont{s_PathFont, 16, 16};
+	Font GuiElement::s_TextFont;
 
 	Event<const CursorStyle&> GuiElement::RequestCursorStyleChange;
 

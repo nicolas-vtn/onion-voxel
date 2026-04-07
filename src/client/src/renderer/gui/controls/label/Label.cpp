@@ -15,7 +15,7 @@ namespace onion::voxel
 
 		if (!m_HasCustomTextColor)
 		{
-			std::string formatedText = Font::FormatText(m_Text, m_TextColor, m_TextFormat);
+			std::u32string formatedText = Font::FormatText(m_Text, m_TextColor, m_TextFormat);
 
 			s_TextFont.RenderText(
 				formatedText, m_TextAlignment, m_Position, m_TextHeight, m_zOffset, m_RotationDegrees, m_ShadowEnabled);
@@ -61,13 +61,19 @@ namespace onion::voxel
 	void Label::SetText(const std::string& text)
 	{
 		std::lock_guard lock(m_MutexState);
-		m_Text = text;
+		m_Text = Utf8ToUtf32(text);
 	}
 
 	std::string Label::GetText() const
 	{
 		std::lock_guard lock(m_MutexState);
-		return m_Text;
+		return Utf32ToUtf8(m_Text);
+	}
+
+	void Label::SetText(const std::u32string& text)
+	{
+		std::lock_guard lock(m_MutexState);
+		m_Text = text;
 	}
 
 	void Label::SetPosition(const glm::vec2& pos)

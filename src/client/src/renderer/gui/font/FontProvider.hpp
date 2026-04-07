@@ -33,7 +33,7 @@ namespace onion::voxel
 	};
 
 	// Simple UTF-8 → UTF-32 conversion
-	static std::u32string Utf8ToUtf32(const std::string& str)
+	static inline std::u32string Utf8ToUtf32(const std::string& str)
 	{
 		std::u32string result;
 
@@ -83,6 +83,44 @@ namespace onion::voxel
 			}
 
 			result.push_back(static_cast<char32_t>(codepoint));
+		}
+
+		return result;
+	}
+
+	static inline std::string Utf32ToUtf8(const std::u32string& str)
+	{
+		std::string result;
+
+		for (char32_t cp : str)
+		{
+			if (cp <= 0x7F) // 1 byte
+			{
+				result.push_back(static_cast<char>(cp));
+			}
+			else if (cp <= 0x7FF) // 2 bytes
+			{
+				result.push_back(static_cast<char>(0xC0 | (cp >> 6)));
+				result.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+			}
+			else if (cp <= 0xFFFF) // 3 bytes
+			{
+				result.push_back(static_cast<char>(0xE0 | (cp >> 12)));
+				result.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
+				result.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+			}
+			else if (cp <= 0x10FFFF) // 4 bytes
+			{
+				result.push_back(static_cast<char>(0xF0 | (cp >> 18)));
+				result.push_back(static_cast<char>(0x80 | ((cp >> 12) & 0x3F)));
+				result.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
+				result.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+			}
+			else
+			{
+				// invalid codepoint → replacement char U+FFFD
+				result += "\xEF\xBF\xBD";
+			}
 		}
 
 		return result;

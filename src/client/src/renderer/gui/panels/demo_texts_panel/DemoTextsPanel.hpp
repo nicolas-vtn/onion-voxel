@@ -29,10 +29,12 @@ namespace onion::voxel
 
 		// ----- Properties -----
 	  private:
-		std::string m_AllTextStylesLabelText_1 =
-			"§0Black §1DarkBlue §2DarkGreen §3DarkAqua §4DarkRed §5DarkPurple §6Gold §7Gray §8DarkGray §9Blue";
-		std::string m_AllTextStylesLabelText_2 =
-			"§aGreen §bAqua §cRed §dLightPurple §eYellow §fWhite §lBold§r §mStrikethrough§r §nUnderline§r §oItalic§r";
+		std::u32string m_AllTextStylesLabelText_1 =
+			U"\u00A70Black \u00A71DarkBlue \u00A72DarkGreen \u00A73DarkAqua \u00A74DarkRed "
+			U"\u00A75DarkPurple \u00A76Gold \u00A77Gray \u00A78DarkGray \u00A79Blue";
+		std::u32string m_AllTextStylesLabelText_2 =
+			U"\u00A7aGreen \u00A7bAqua \u00A7cRed \u00A7dLightPurple \u00A7eYellow \u00A7fWhite \u00A7lBold\u00A7r "
+			U"\u00A7mStrikethrough\u00A7r \u00A7nUnderline\u00A7r \u00A7oItalic\u00A7r";
 
 		// ----- Controls -----
 	  private:

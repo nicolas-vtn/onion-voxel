@@ -171,8 +171,8 @@ namespace onion::voxel
 		//m_LabelAllStyles.SetTextHeight(s_TextHeight / 2);
 		//m_LabelAllStyles.Render();
 
-		const std::string& txt1 = m_AllTextStylesLabelText_1;
-		const std::string& txt2 = m_AllTextStylesLabelText_2;
+		const std::u32string& txt1 = m_AllTextStylesLabelText_1;
+		const std::u32string& txt2 = m_AllTextStylesLabelText_2;
 		Font::eTextAlignment alignment = Font::eTextAlignment::Center;
 
 		glm::vec2 demoTxtPos = allStylesLabelPos + glm::vec2(0, s_TextHeight * 1.2f);

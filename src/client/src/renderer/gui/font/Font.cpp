@@ -59,7 +59,7 @@ namespace onion::voxel
 
 	// -------- Constructor / Destructor --------
 
-	Font::Font(const std::filesystem::path& fontFilePath, int atlasCols, int atlasRows) {}
+	Font::Font() {}
 
 	Font::~Font() {}
 
@@ -177,9 +177,9 @@ namespace onion::voxel
 		return tag;
 	}
 
-	std::string Font::FormatText(const std::string& text, eColor color, const TextFormat& format)
+	std::u32string Font::FormatText(const std::u32string& text, eColor color, const TextFormat& format)
 	{
-		return GetFormatTag(color, format) + text + GetStyleTag(eStyle::Reset);
+		return Utf8ToUtf32(GetFormatTag(color, format)) + text + Utf8ToUtf32(GetStyleTag(eStyle::Reset));
 	}
 
 	void Font::SetProjectionMatrix(const glm::mat4& projection)
@@ -190,6 +190,51 @@ namespace onion::voxel
 	}
 
 	void Font::RenderText(const std::string& text,
+						  eTextAlignment alignment,
+						  const glm::vec2& position,
+						  float textHeightPx,
+						  float zOffset,
+						  float rotationDegrees,
+						  bool renderShadow)
+	{
+		std::u32string unicodeText = Utf8ToUtf32(text);
+		RenderText(unicodeText,
+				   alignment,
+				   position,
+				   s_TextColorMap.at(eColor::White),
+				   s_ShadowColorMap.at(eColor::Black),
+				   textHeightPx,
+				   TextFormat{},
+				   zOffset,
+				   rotationDegrees,
+				   renderShadow);
+	}
+
+	void Font::RenderText(const std::string& text,
+						  eTextAlignment alignment,
+						  const glm::vec2& position,
+						  const glm::vec3& textColor,
+						  const glm::vec3& shadowColor,
+						  float textHeightPx,
+						  const Font::TextFormat& format,
+						  float zOffset,
+						  float rotationDegrees,
+						  bool renderShadow)
+	{
+		std::u32string unicodeText = Utf8ToUtf32(text);
+		RenderText(unicodeText,
+				   alignment,
+				   position,
+				   textColor,
+				   shadowColor,
+				   textHeightPx,
+				   format,
+				   zOffset,
+				   rotationDegrees,
+				   renderShadow);
+	}
+
+	void Font::RenderText(const std::u32string& text,
 						  eTextAlignment alignment,
 						  const glm::vec2& position,
 						  float textHeightPx,
@@ -273,7 +318,7 @@ namespace onion::voxel
 		}
 	}
 
-	void Font::RenderText(const std::string& text,
+	void Font::RenderText(const std::u32string& text,
 						  eTextAlignment alignment,
 						  const glm::vec2& position,
 						  const glm::vec3& textColor,
@@ -335,18 +380,22 @@ namespace onion::voxel
 
 	glm::vec2 Font::MeasureText(const std::string& text, float textHeightPx) const
 	{
+		const std::u32string unicodeText = Utf8ToUtf32(text);
+		return MeasureText(unicodeText, textHeightPx);
+	}
+
+	glm::vec2 Font::MeasureText(const std::u32string& text, float textHeightPx) const
+	{
 		if (text.empty())
 			return {0.f, 0.f};
-
-		std::u32string unicodeText = Utf8ToUtf32(text);
 
 		const float refGlyphHeight = m_UnicodeGlyphs.at('A').height;
 
 		float width = 0.f;
-		for (int i = 0; i < unicodeText.size(); i++)
+		for (int i = 0; i < text.size(); i++)
 		{
 			float scale = textHeightPx / refGlyphHeight;
-			char32_t c = unicodeText[i];
+			char32_t c = text[i];
 
 			auto it = m_UnicodeGlyphs.find(c);
 			if (it != m_UnicodeGlyphs.end())
@@ -527,59 +576,66 @@ namespace onion::voxel
 			provider.VBO = 0;
 			provider.TextureGlyph.Delete();
 		}
+
+		m_GlyphProviders.clear();
 	}
 
-	std::vector<Font::TextSegment> Font::SegmentText(const std::string& text)
+	std::vector<Font::TextSegment> Font::SegmentText(const std::u32string& text)
 	{
 		std::vector<TextSegment> segments;
 
 		eColor currentColor = eColor::White;
 		TextFormat currentFormat;
-		std::string currentText;
+		std::u32string currentText;
 
 		for (size_t i = 0; i < text.size(); ++i)
 		{
-			// Detect UTF-8 section sign: 0xC2 0xA7
-			if (static_cast<unsigned char>(text[i]) == 0xC2 && i + 2 < text.size() &&
-				static_cast<unsigned char>(text[i + 1]) == 0xA7)
+			if (text[i] == U'\u00A7' && i + 1 < text.size())
 			{
-				// Flush accumulated text before applying new formatting
+				// Flush accumulated text
 				if (!currentText.empty())
 				{
 					segments.push_back({currentText, currentColor, currentFormat});
 					currentText.clear();
 				}
 
-				char code = static_cast<char>(std::tolower(static_cast<unsigned char>(text[i + 2])));
-				i += 2; // Skip both UTF-8 bytes of § and the loop will continue after the code
+				char32_t rawCode = text[i + 1];
 
-				// Color code: colors also reset previous styles in Minecraft
-				if ((code >= '0' && code <= '9') || (code >= 'a' && code <= 'f'))
+				// Convert to lowercase (ASCII-safe)
+				char32_t code = rawCode;
+				if (code >= U'A' && code <= U'Z')
+					code = code - U'A' + U'a';
+
+				i += 1; // Skip formatting code
+
+				// Color codes
+				if ((code >= U'0' && code <= U'9') || (code >= U'a' && code <= U'f'))
 				{
 					currentFormat = TextFormat{};
-					currentColor = static_cast<eColor>(code);
+					currentColor = static_cast<eColor>(static_cast<char>(code));
 				}
 				else
 				{
 					switch (code)
 					{
-						case 'l':
+						case U'l':
 							currentFormat.bold = true;
 							break;
-						case 'm':
+						case U'm':
 							currentFormat.strikethrough = true;
 							break;
-						case 'n':
+						case U'n':
 							currentFormat.underline = true;
 							break;
-						case 'o':
+						case U'o':
 							currentFormat.italic = true;
 							break;
-						case 'r':
+						case U'r':
 							currentFormat = TextFormat{};
+							currentColor = eColor::White;
 							break;
 						default:
-							// Unknown code: ignore it
+							// Ignore unknown codes
 							break;
 					}
 				}
@@ -598,7 +654,7 @@ namespace onion::voxel
 		return segments;
 	}
 
-	glm::ivec2 Font::RenderPartialText(const std::string& text,
+	glm::ivec2 Font::RenderPartialText(const std::u32string& text,
 									   const glm::vec3& color,
 									   const glm::vec2& position,
 									   const Font::TextFormat& textFormat,
@@ -610,8 +666,6 @@ namespace onion::voxel
 		if (text.empty())
 			return position;
 
-		std::u32string unicodeText = Utf8ToUtf32(text);
-
 		glm::vec2 size = MeasureText(text, textHeightPx);
 
 		const float refGlyphHeight = m_UnicodeGlyphs['A'].height;
@@ -622,7 +676,7 @@ namespace onion::voxel
 			float cursorX = position.x;
 			float cursorY = position.y;
 
-			for (char32_t c : unicodeText)
+			for (char32_t c : text)
 			{
 				Glyph glyph = m_UnicodeGlyphs.at('?'); // Fallback glyph
 				auto it = m_UnicodeGlyphs.find(c);

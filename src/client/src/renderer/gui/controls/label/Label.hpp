@@ -32,6 +32,8 @@ namespace onion::voxel
 		void SetText(const std::string& text);
 		std::string GetText() const;
 
+		void SetText(const std::u32string& text);
+
 		/// @brief Sets the position of the label. The position is interpreted as the center of the text for Center alignment, the left-center edge for Left alignment, and the right-center edge for Right alignment.
 		/// @param pos The new position of the label in pixels.
 		void SetPosition(const glm::vec2& pos);
@@ -90,7 +92,7 @@ namespace onion::voxel
 		// ----- Properties -----
 	  private:
 		mutable std::mutex m_MutexState;
-		std::string m_Text;
+		std::u32string m_Text;
 		glm::vec2 m_Position{0, 0};
 		float m_TextHeight{16.f};
 		Font::eTextAlignment m_TextAlignment{Font::eTextAlignment::Left};

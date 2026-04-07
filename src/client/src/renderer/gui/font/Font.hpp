@@ -67,14 +67,14 @@ namespace onion::voxel
 
 		struct TextSegment
 		{
-			std::string text;
+			std::u32string text;
 			eColor color = eColor::White;
 			TextFormat format{};
 		};
 
 		// ----- Constructor / Destructor -----
 	  public:
-		Font(const std::filesystem::path& fontFilePath, int atlasCols, int atlasRows);
+		Font();
 		~Font();
 
 		// ----- Static Initialization / Shutdown -----
@@ -92,7 +92,7 @@ namespace onion::voxel
 		static std::string GetStyleTag(eStyle style);
 
 		static std::string GetFormatTag(eColor color, const TextFormat& format);
-		static std::string FormatText(const std::string& text, eColor color, const TextFormat& format);
+		static std::u32string FormatText(const std::u32string& text, eColor color, const TextFormat& format);
 
 		// ----- Public API -----
 	  public:
@@ -143,11 +143,47 @@ namespace onion::voxel
 						float rotationDegrees = 0.0f,
 						bool renderShadow = true);
 
+		/// @brief Renders the given text at the specified position with the specified height and color. The text is aligned based on the given alignment parameter, and can be optionally rotated by a specified angle in degrees and offset in the Z direction.
+		/// @param text The text to render
+		/// @param alignment The alignment of the text (Left, Center, Right)
+		/// @param position The position to render the text (center for Center alignment, left-center edge for Left alignment, right-center edge for Right alignment)
+		/// @param textHeightPx The height of the text in pixels
+		/// @param zOffset The offset of the text in the Z direction
+		/// @param rotationDegrees The rotation of the text in degrees
+		/// @param renderShadow Whether to render a shadow for the text.
+		void RenderText(const std::u32string& text,
+						eTextAlignment alignment,
+						const glm::vec2& position,
+						float textHeightPx,
+						float zOffset = 0.0f,
+						float rotationDegrees = 0.0f,
+						bool renderShadow = true);
+
+		/// @brief Renders the given text at the specified position with the specified height and color. The text is aligned based on the given alignment parameter, and can be optionally rotated by a specified angle in degrees and offset in the Z direction.
+		/// @param text The text to render
+		/// @param alignment The alignment of the text (Left, Center, Right)
+		/// @param position The position to render the text (center for Center alignment, left-center edge for Left alignment, right-center edge for Right alignment)
+		/// @param textColor The color of the text
+		/// @param shadowColor The color of the shadow
+		/// @param textHeightPx The height of the text in pixels
+		/// @param zOffset The offset of the text in the Z direction
+		/// @param rotationDegrees The rotation of the text in degrees
+		/// @param renderShadow Whether to render a shadow for the text.
+		void RenderText(const std::u32string& text,
+						eTextAlignment alignment,
+						const glm::vec2& position,
+						const glm::vec3& textColor,
+						const glm::vec3& shadowColor,
+						float textHeightPx,
+						const Font::TextFormat& format = {},
+						float zOffset = 0.0f,
+						float rotationDegrees = 0.0f,
+						bool renderShadow = true);
+
 		/// @brief Gets the size of the given text when rendered with the specified height. This can be used to calculate the position to render the text based on the desired alignment.
 		glm::vec2 MeasureText(const std::string& text, float textHeightPx) const;
 
-		/// @brief Gets the size of a single glyph in pixels.
-		glm::ivec2 GetGlyphSize() const;
+		glm::vec2 MeasureText(const std::u32string& text, float textHeightPx) const;
 
 		// ----- Private Structs -----
 	  private:
@@ -187,7 +223,7 @@ namespace onion::voxel
 
 		// ----- Partial Rendering -----
 	  private:
-		glm::ivec2 RenderPartialText(const std::string& text,
+		glm::ivec2 RenderPartialText(const std::u32string& text,
 									 const glm::vec3& color,
 									 const glm::vec2& position,
 									 const Font::TextFormat& textFormat,
@@ -203,7 +239,7 @@ namespace onion::voxel
 
 		// ----- Helper Methods -----
 	  private:
-		static std::vector<Font::TextSegment> SegmentText(const std::string& text);
+		static std::vector<Font::TextSegment> SegmentText(const std::u32string& text);
 
 		// ----- Static Private Members -----
 	  private:
