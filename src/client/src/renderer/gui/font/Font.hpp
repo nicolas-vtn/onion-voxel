@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <renderer/OpenGL.hpp>
@@ -11,6 +12,8 @@
 #include <renderer/EngineContext.hpp>
 #include <renderer/shader/shader.hpp>
 #include <renderer/texture/texture.hpp>
+
+#include "FontProvider.hpp"
 
 namespace onion::voxel
 {
@@ -154,34 +157,33 @@ namespace onion::voxel
 			float texX, texY;
 		};
 
-		struct Glyph
+		struct GlyphProvider
 		{
-			float advance;
-			float width;
-			float height;
-			float u0, v0, u1, v1; // Texture coordinates
+			Texture TextureGlyph;
+			GLuint VAO = 0;
+			GLuint VBO = 0;
+			std::vector<Vertex> Vertices;
 		};
 
-		// ----- OpenGL ------
-		GLuint m_VAO = 0;
-		GLuint m_VBO = 0;
-
-		std::vector<Vertex> m_Vertices;
-
-		void GenerateBuffers();
-		void DeleteBuffers();
-
-		// ----- Font Data -----
-	  private:
-		std::filesystem::path m_FontFilePath;
-		Texture m_TextureAtlas;
-		const int m_AtlasCols = 16;
-		const int m_AtlasRows = 16;
-		glm::ivec2 m_GlyphSize{0, 0};
+		struct Glyph
+		{
+			GlyphProvider* glyphProvider = nullptr;
+			int ascent = 0;
+			float advance = 0.f;
+			float width = 0.f;
+			float height = 0.f;
+			float u0 = 0.f, v0 = 0.f, u1 = 0.f, v1 = 0.f; // Texture coordinates
+		};
 
 		// ----- Glyph Data -----
-		Glyph m_Glyphs[256]{};
-		void InitializeGlyphs();
+	  private:
+		std::vector<GlyphProvider> m_GlyphProviders;
+		std::unordered_map<uint32_t, Glyph> m_UnicodeGlyphs;
+
+		void InitializeUnicodeGlyphs(const std::filesystem::path& fontProvidersPath);
+
+		void InitiaizeGlyphProviders();
+		void DeleteGlyphProviders();
 
 		// ----- Partial Rendering -----
 	  private:

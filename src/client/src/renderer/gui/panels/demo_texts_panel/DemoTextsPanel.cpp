@@ -6,7 +6,7 @@ namespace onion::voxel
 {
 	DemoTextsPanel::DemoTextsPanel(const std::string& name)
 		: GuiElement(name), m_BackButton("Back Button"), m_LabelAllStyles_1("All Styles Label 1"),
-		  m_LabelAllStyles_2("All Styles Label 2")
+		  m_LabelAllStyles_2("All Styles Label 2"), m_LabelUnicodes("Unicodes Label")
 	{
 		SubscribeToControlEvents();
 
@@ -121,6 +121,10 @@ namespace onion::voxel
 		m_LabelAllStyles_2.SetText(m_AllTextStylesLabelText_2);
 		m_LabelAllStyles_2.SetTextAlignment(Font::eTextAlignment::Center);
 
+		std::string unicodeTextExample = "Unicodes : àâäçèéêëîïôöùûü";
+		m_LabelUnicodes.SetText(unicodeTextExample);
+		m_LabelUnicodes.SetTextAlignment(Font::eTextAlignment::Center);
+
 		m_BackButton.SetText("Done");
 	}
 
@@ -171,18 +175,15 @@ namespace onion::voxel
 		const std::string& txt2 = m_AllTextStylesLabelText_2;
 		Font::eTextAlignment alignment = Font::eTextAlignment::Center;
 
+		glm::vec2 demoTxtPos = allStylesLabelPos + glm::vec2(0, s_TextHeight * 1.2f);
 		s_TextFont.RenderText(txt1, alignment, allStylesLabelPos, s_TextHeight, 0.8f, 0.f);
-		s_TextFont.RenderText(
-			txt2, alignment, allStylesLabelPos + glm::vec2(0, s_TextHeight * 1.2f), s_TextHeight, 0.8f, 0.f);
+		s_TextFont.RenderText(txt2, alignment, demoTxtPos, s_TextHeight, 0.8f, 0.f);
 
-		//void RenderText(const std::string& text,
-		//		eTextAlignment alignment,
-		//		const glm::vec2& position,
-		//		float textHeightPx,
-		//		float zOffset = 0.0f,
-		//		float rotationDegrees = 0.0f,
-		//		bool renderShadow = true,
-		//		const glm::vec4& backgroundColor = glm::vec4(0.0f));
+		// ----- Render Unicodes Label -----
+		glm::ivec2 unicodesLabelPos = demoTxtPos + glm::vec2(0, s_TextHeight * 1.2f);
+		m_LabelUnicodes.SetPosition(unicodesLabelPos);
+		m_LabelUnicodes.SetTextHeight(s_TextHeight);
+		m_LabelUnicodes.Render();
 
 		// ----- Render Back Button -----
 		float doneButtonYPosRatio = 948.f / 1009.f;
@@ -196,6 +197,7 @@ namespace onion::voxel
 	void DemoTextsPanel::Initialize()
 	{
 		m_BackButton.Initialize();
+		m_LabelUnicodes.Initialize();
 
 		for (auto& label : m_Labels)
 		{
@@ -208,6 +210,7 @@ namespace onion::voxel
 	void DemoTextsPanel::Delete()
 	{
 		m_BackButton.Delete();
+		m_LabelUnicodes.Delete();
 
 		for (auto& label : m_Labels)
 		{
@@ -220,6 +223,7 @@ namespace onion::voxel
 	void DemoTextsPanel::ReloadTextures()
 	{
 		m_BackButton.ReloadTextures();
+		m_LabelUnicodes.ReloadTextures();
 
 		for (auto& label : m_Labels)
 		{

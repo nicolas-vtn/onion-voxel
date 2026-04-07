@@ -1,5 +1,7 @@
 #include "font.hpp"
 
+#include <fstream>
+
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <renderer/gui/colored_background/ColoredBackground.hpp>
@@ -57,10 +59,7 @@ namespace onion::voxel
 
 	// -------- Constructor / Destructor --------
 
-	Font::Font(const std::filesystem::path& fontFilePath, int atlasCols, int atlasRows)
-		: m_FontFilePath(fontFilePath), m_AtlasCols(atlasCols), m_AtlasRows(atlasRows)
-	{
-	}
+	Font::Font(const std::filesystem::path& fontFilePath, int atlasCols, int atlasRows) {}
 
 	Font::~Font() {}
 
@@ -68,27 +67,21 @@ namespace onion::voxel
 
 	void Font::Load()
 	{
-		InitializeGlyphs();
+		auto& assetsManager = EngineContext::Get().Assets;
+		std::filesystem::path fontProvidersPath = std::filesystem::path("font") / "include" / "default.json";
+		InitializeUnicodeGlyphs(assetsManager->GetAssetsDirectory() / fontProvidersPath);
 
-		m_TextureAtlas.Bind(); // Upload texture
 		s_ShaderFont.Use();
-		s_ShaderFont.setInt("uTexture", m_TextureAtlas.TextureID());
-		GenerateBuffers();
 	}
 
 	void Font::Unload()
 	{
-		m_TextureAtlas.Delete();
-		DeleteBuffers();
+		DeleteGlyphProviders();
 	}
 
 	void Font::Reload()
 	{
 		Unload();
-
-		std::vector<unsigned char> data = EngineContext::Get().Assets->GetResourcePackFileBinary(m_FontFilePath);
-		m_TextureAtlas = Texture(m_FontFilePath.string(), data);
-
 		Load();
 	}
 
@@ -345,60 +338,35 @@ namespace onion::voxel
 		if (text.empty())
 			return {0.f, 0.f};
 
-		float scale = textHeightPx / m_GlyphSize.y;
+		std::u32string unicodeText = Utf8ToUtf32(text);
+
+		const float refGlyphHeight = m_UnicodeGlyphs.at('A').height;
 
 		float width = 0.f;
-		for (int i = 0; i < text.size(); i++)
+		for (int i = 0; i < unicodeText.size(); i++)
 		{
-			char c = text[i];
-			int ascii = static_cast<unsigned char>(c);
-			width += m_Glyphs[ascii].advance * scale;
+			float scale = textHeightPx / refGlyphHeight;
+			char32_t c = unicodeText[i];
+
+			auto it = m_UnicodeGlyphs.find(c);
+			if (it != m_UnicodeGlyphs.end())
+			{
+				const Glyph& glyph = m_UnicodeGlyphs.at(c);
+				width += glyph.advance * scale;
+			}
+			else
+			{
+				width += m_UnicodeGlyphs.at(' ').advance * scale; // Fallback to space advance for unknown characters
+			}
 		}
 
-		float height = m_GlyphSize.y * scale;
+		const float scale = textHeightPx / refGlyphHeight;
+		float height = refGlyphHeight * scale;
 
 		return {width, height};
 	}
 
-	glm::ivec2 Font::GetGlyphSize() const
-	{
-		return m_GlyphSize;
-	}
-
 	// -------- OpenGL Buffer Setup --------
-
-	void Font::GenerateBuffers()
-	{
-		// ----- Text Vertices -----
-		glGenVertexArrays(1, &m_VAO);
-		glGenBuffers(1, &m_VBO);
-
-		glBindVertexArray(m_VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-
-		glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
-
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, posX));
-		glEnableVertexAttribArray(0);
-
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
-		glEnableVertexAttribArray(1);
-
-		// ----- Unbind -----
-		glBindVertexArray(0);
-	}
-
-	void Font::DeleteBuffers()
-	{
-		if (m_VAO)
-			glDeleteVertexArrays(1, &m_VAO);
-
-		if (m_VBO)
-			glDeleteBuffers(1, &m_VBO);
-
-		m_VAO = 0;
-		m_VBO = 0;
-	}
 
 	float GetGlyphAdvance(unsigned char* data,
 						  int col,
@@ -451,37 +419,114 @@ namespace onion::voxel
 		return lastNonEmpty - firstNonEmpty + 2.f;
 	}
 
-	void Font::InitializeGlyphs()
+	void Font::InitializeUnicodeGlyphs(const std::filesystem::path& fontProvidersPath)
 	{
-		auto data = m_TextureAtlas.GetData();
-		int width = m_TextureAtlas.Width();
-		int height = m_TextureAtlas.Height();
-		int nrChannels = m_TextureAtlas.Channels();
+		std::ifstream file(fontProvidersPath);
+		if (!file.is_open())
+			throw std::runtime_error("Failed to open font providers file");
 
-		int glyphPixelWidth = width / m_AtlasCols;
-		int glyphPixelHeight = height / m_AtlasRows;
+		nlohmann::json j;
+		file >> j;
 
-		for (int i = 0; i < 256; i++)
+		FontProviders providers = j.get<FontProviders>();
+
+		for (auto& fontProvider : providers.providers)
 		{
-			int col = i % m_AtlasCols;
-			int row = i / m_AtlasCols;
+			// Load the Texture for this provider
 
-			m_Glyphs[i].width = (float) glyphPixelWidth;
-			m_Glyphs[i].height = (float) glyphPixelHeight;
+			// Remove all text before "minecraft:"
+			const std::string resourcePrefix = "minecraft:";
+			std::string relativePath = fontProvider.file;
+			size_t pos = relativePath.find(resourcePrefix);
+			if (pos != std::string::npos)
+			{
+				relativePath = relativePath.substr(pos + resourcePrefix.length());
+			}
 
-			m_Glyphs[i].advance =
-				GetGlyphAdvance(data.get(), col, row, glyphPixelWidth, glyphPixelHeight, width, nrChannels);
+			// Create a GlyphProvider
+			GlyphProvider provider;
 
-			float uvStepX = 1.0f / m_AtlasCols;
-			float uvStepY = 1.0f / m_AtlasRows;
+			std::filesystem::path providerTexturePath =
+				std::filesystem::path("assets") / "minecraft" / "textures" / relativePath;
+			std::vector<uint8_t> textureData =
+				EngineContext::Get().Assets->GetResourcePackFileBinary(providerTexturePath);
+			provider.TextureGlyph = std::move(Texture(providerTexturePath.string(), textureData));
+			m_GlyphProviders.push_back(std::move(provider));
+			GlyphProvider& providerRef = m_GlyphProviders.back();
+			Texture& providerTexture = providerRef.TextureGlyph;
 
-			m_Glyphs[i].u0 = col * uvStepX;
-			m_Glyphs[i].v0 = row * uvStepY;
-			m_Glyphs[i].u1 = m_Glyphs[i].u0 + uvStepX;
-			m_Glyphs[i].v1 = m_Glyphs[i].v0 + uvStepY;
+			// For each character mapping, store the corresponding UV coordinates
+			auto data = providerTexture.GetData();
+			int width = providerTexture.Width();
+			int height = providerTexture.Height();
+			int nrChannels = providerTexture.Channels();
+
+			int glyphPixelWidth = width / fontProvider.totalCols;
+			int glyphPixelHeight = height / fontProvider.totalRows;
+
+			for (auto& [charCode, glyphPos] : fontProvider.chars)
+			{
+				int col = glyphPos.colIndex;
+				int row = glyphPos.rowIndex;
+
+				Glyph glyph;
+				glyph.glyphProvider = &providerRef;
+
+				glyph.ascent = fontProvider.ascent;
+				glyph.width = (float) glyphPixelWidth;
+				glyph.height = (float) glyphPixelHeight;
+				glyph.advance =
+					GetGlyphAdvance(data.get(), col, row, glyphPixelWidth, glyphPixelHeight, width, nrChannels);
+				float uvStepX = 1.0f / fontProvider.totalCols;
+				float uvStepY = 1.0f / fontProvider.totalRows;
+				glyph.u0 = col * uvStepX;
+				glyph.v0 = row * uvStepY;
+				glyph.u1 = glyph.u0 + uvStepX;
+				glyph.v1 = glyph.v0 + uvStepY;
+
+				m_UnicodeGlyphs[charCode] = glyph;
+			}
 		}
 
-		m_GlyphSize = glm::ivec2(m_TextureAtlas.Width() / m_AtlasCols, m_TextureAtlas.Height() / m_AtlasRows);
+		InitiaizeGlyphProviders();
+	}
+
+	void Font::InitiaizeGlyphProviders()
+	{
+		for (auto& provider : m_GlyphProviders)
+		{
+			provider.TextureGlyph.Bind();
+
+			glGenVertexArrays(1, &provider.VAO);
+			glGenBuffers(1, &provider.VBO);
+
+			glBindVertexArray(provider.VAO);
+			glBindBuffer(GL_ARRAY_BUFFER, provider.VBO);
+			glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, posX));
+			glEnableVertexAttribArray(0);
+
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
+			glEnableVertexAttribArray(1);
+
+			// Unbind
+			glBindVertexArray(0);
+		}
+	}
+
+	void Font::DeleteGlyphProviders()
+	{
+		for (auto& provider : m_GlyphProviders)
+		{
+			if (provider.VAO)
+				glDeleteVertexArrays(1, &provider.VAO);
+			if (provider.VBO)
+				glDeleteBuffers(1, &provider.VBO);
+			provider.VAO = 0;
+			provider.VBO = 0;
+			provider.TextureGlyph.Delete();
+		}
 	}
 
 	std::vector<Font::TextSegment> Font::SegmentText(const std::string& text)
@@ -565,39 +610,54 @@ namespace onion::voxel
 		if (text.empty())
 			return position;
 
+		std::u32string unicodeText = Utf8ToUtf32(text);
+
 		glm::vec2 size = MeasureText(text, textHeightPx);
+
+		const float refGlyphHeight = m_UnicodeGlyphs['A'].height;
 
 		// Build vertices
 		auto DrawGlyph = [&](float offsetX_px)
 		{
 			float cursorX = position.x;
 			float cursorY = position.y;
-			float scale = textHeightPx / m_GlyphSize.y;
 
-			for (char c : text)
+			for (char32_t c : unicodeText)
 			{
-				int ascii = static_cast<unsigned char>(c);
-				const Glyph& glyph = m_Glyphs[ascii];
+				Glyph glyph = m_UnicodeGlyphs.at('?'); // Fallback glyph
+				auto it = m_UnicodeGlyphs.find(c);
+				if (it != m_UnicodeGlyphs.end())
+				{
+					glyph = it->second;
+				}
+
+				float scale = textHeightPx / refGlyphHeight;
 
 				float skew = textFormat.italic ? (glyph.height * scale * 0.25f) : 0.0f;
 
 				float x0 = cursorX + offsetX_px;
 				float x1 = x0 + glyph.width * scale;
 
-				float y0 = cursorY;
+				int deltaAscent = glyph.ascent - 7;
+
+				float y0 = cursorY - deltaAscent * scale;
 				float y1 = y0 + glyph.height * scale;
 
 				// Top edge is shifted to the right
 				float x0_top = x0 + skew;
 				float x1_top = x1 + skew;
 
-				m_Vertices.push_back({x0_top, y0, zOffset, glyph.u0, glyph.v0});
-				m_Vertices.push_back({x1_top, y0, zOffset, glyph.u1, glyph.v0});
-				m_Vertices.push_back({x1, y1, zOffset, glyph.u1, glyph.v1});
+				GlyphProvider* provider = glyph.glyphProvider;
 
-				m_Vertices.push_back({x0_top, y0, zOffset, glyph.u0, glyph.v0});
-				m_Vertices.push_back({x1, y1, zOffset, glyph.u1, glyph.v1});
-				m_Vertices.push_back({x0, y1, zOffset, glyph.u0, glyph.v1});
+				auto& vertices = provider->Vertices;
+
+				vertices.push_back({x0_top, y0, zOffset, glyph.u0, glyph.v0});
+				vertices.push_back({x1_top, y0, zOffset, glyph.u1, glyph.v0});
+				vertices.push_back({x1, y1, zOffset, glyph.u1, glyph.v1});
+
+				vertices.push_back({x0_top, y0, zOffset, glyph.u0, glyph.v0});
+				vertices.push_back({x1, y1, zOffset, glyph.u1, glyph.v1});
+				vertices.push_back({x0, y1, zOffset, glyph.u0, glyph.v1});
 
 				cursorX += glyph.advance * scale;
 			}
@@ -625,24 +685,32 @@ namespace onion::voxel
 			model = glm::translate(model, glm::vec3(-pivot, 0.0f));
 		}
 
-		// --- Render Text ---
-		glBindVertexArray(m_VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+		// --- Render Unicode Text ---
+		for (auto& glyphProvider : m_GlyphProviders)
+		{
+			auto& vertices = glyphProvider.Vertices;
 
-		glBufferData(GL_ARRAY_BUFFER, m_Vertices.size() * sizeof(Vertex), m_Vertices.data(), GL_DYNAMIC_DRAW);
+			if (vertices.empty())
+				continue;
 
-		m_TextureAtlas.Bind();
+			glBindVertexArray(glyphProvider.VAO);
+			glBindBuffer(GL_ARRAY_BUFFER, glyphProvider.VBO);
 
-		s_ShaderFont.Use();
-		s_ShaderFont.setVec3("uTextColor", color);
-		s_ShaderFont.setInt("uTexture", 0);
-		s_ShaderFont.setMat4("uModel", model);
+			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_DYNAMIC_DRAW);
 
-		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m_Vertices.size()));
+			glyphProvider.TextureGlyph.Bind();
 
-		glBindVertexArray(0);
+			s_ShaderFont.Use();
+			s_ShaderFont.setVec3("uTextColor", color);
+			s_ShaderFont.setInt("uTexture", 0);
+			s_ShaderFont.setMat4("uModel", model);
 
-		m_Vertices.clear();
+			glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()));
+
+			glBindVertexArray(0);
+
+			vertices.clear();
+		}
 
 		// Draw Underline
 		if (textFormat.underline)

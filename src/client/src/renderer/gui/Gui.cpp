@@ -459,6 +459,8 @@ namespace onion::voxel
 
 	void Gui::ReloadTextures()
 	{
+		GuiElement::ReloadStaticTextures();
+
 		m_DemoPanel.ReloadTextures();
 		m_MainMenuPanel.ReloadTextures();
 		m_DemoScrollingPanel.ReloadTextures();

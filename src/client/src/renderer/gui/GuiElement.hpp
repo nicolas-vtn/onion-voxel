@@ -98,6 +98,7 @@ namespace onion::voxel
 		virtual void Initialize() = 0;
 		virtual void Delete() = 0;
 		virtual void ReloadTextures() = 0;
+		static void ReloadStaticTextures();
 
 		// ----- Getters / Setters -----
 	  public:

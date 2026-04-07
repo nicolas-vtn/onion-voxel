@@ -76,6 +76,11 @@ namespace onion::voxel
 
 	// -------- Public API --------
 
+	void GuiElement::ReloadStaticTextures()
+	{
+		s_TextFont.Reload();
+	}
+
 	std::string GuiElement::GetName() const
 	{
 		return m_Name;
@@ -126,6 +131,8 @@ namespace onion::voxel
 	void GuiElement::Load()
 	{
 		Font::StaticInitialize();
+		s_TextFont.Load();
+		ReloadStaticTextures();
 	}
 
 	void GuiElement::Unload()

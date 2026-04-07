@@ -40,6 +40,8 @@ namespace onion::voxel
 		Label m_LabelAllStyles_1;
 		Label m_LabelAllStyles_2;
 
+		Label m_LabelUnicodes;
+
 		Button m_BackButton;
 
 		// ----- Internal Event Subscription and Handlers -----

@@ -55,7 +55,7 @@ namespace onion::voxel
 
 	void Label::ReloadTextures()
 	{
-		s_TextFont.Reload();
+		// s_TextFont.Reload();
 	}
 
 	void Label::SetText(const std::string& text)
