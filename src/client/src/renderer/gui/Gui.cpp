@@ -32,7 +32,7 @@ namespace onion::voxel
 		  m_DemoScrollingPanel("DemoScrollingPanel"), m_SingleplayerPanel("SingleplayerPanel"),
 		  m_VideoSettingsPanel("VideoSettingsPanel"), m_ControlsPanel("ControlsPanel"),
 		  m_MouseSettingsPanel("MouseSettingsPanel"), m_KeyBindsPanel("KeyBindsPanel"),
-		  m_DemoTextsPanel("DemoTextsPanel")
+		  m_DemoTextsPanel("DemoTextsPanel"), m_MultiplayerPanel("MultiplayerPanel")
 	{
 		SubscribeToPanelsEvents();
 	}
@@ -148,6 +148,12 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_DemoTextsPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																					 { Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_MultiplayerPanel.EvtRequestBackNavigation.Subscribe(
+			[this](const GuiElement* sender) { Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_MultiplayerPanel.EvtConnectToServer.Subscribe(
+			[this](const ServerInfos& serverInfos) { Handle_ConnectToServerRequest(serverInfos); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -156,13 +162,13 @@ namespace onion::voxel
 
 		SetActiveMenu(menu);
 
-		if (menu == eMenu::Multiplayer)
-		{
-			std::string serverAddress = "127.0.0.1";
-			uint16_t serverPort = 25565;
-			MultiplayerGameStartInfo info{serverAddress, serverPort};
-			RequestStartMultiplayerGame.Trigger(info);
-		}
+		//if (menu == eMenu::Multiplayer)
+		//{
+		//	std::string serverAddress = "127.0.0.1";
+		//	uint16_t serverPort = 25565;
+		//	MultiplayerGameStartInfo info{serverAddress, serverPort};
+		//	RequestStartMultiplayerGame.Trigger(info);
+		//}
 	}
 
 	void Gui::Handle_QuitGameRequest(const GuiElement* sender)
@@ -196,6 +202,12 @@ namespace onion::voxel
 	void Gui::Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& eventArgs)
 	{
 		UserSettingsChanged.Trigger(eventArgs);
+	}
+
+	void Gui::Handle_ConnectToServerRequest(const ServerInfos& serverInfos)
+	{
+		std::cout << "Connect to server requested: " << serverInfos.Name << " at " << serverInfos.Address << ":"
+				  << serverInfos.Port << std::endl;
 	}
 
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)
@@ -342,6 +354,7 @@ namespace onion::voxel
 		m_ControlsPanel.Initialize();
 		m_MouseSettingsPanel.Initialize();
 		m_KeyBindsPanel.Initialize();
+		m_MultiplayerPanel.Initialize();
 
 		ReloadSkyboxTextures();
 	}
@@ -390,6 +403,9 @@ namespace onion::voxel
 				break;
 			case eMenu::Singleplayer:
 				m_SingleplayerPanel.Render();
+				break;
+			case eMenu::Multiplayer:
+				m_MultiplayerPanel.Render();
 				break;
 			case eMenu::Controls:
 				m_ControlsPanel.Render();
@@ -446,6 +462,7 @@ namespace onion::voxel
 		m_ControlsPanel.Delete();
 		m_MouseSettingsPanel.Delete();
 		m_KeyBindsPanel.Delete();
+		m_MultiplayerPanel.Delete();
 
 		m_Skybox.Unload();
 	}
@@ -466,6 +483,7 @@ namespace onion::voxel
 		m_ControlsPanel.ReloadTextures();
 		m_MouseSettingsPanel.ReloadTextures();
 		m_KeyBindsPanel.ReloadTextures();
+		m_MultiplayerPanel.ReloadTextures();
 
 		ReloadSkyboxTextures();
 	}

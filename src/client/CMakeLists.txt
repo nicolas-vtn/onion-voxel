@@ -55,6 +55,8 @@ add_executable(OnionVoxel
 	"src/renderer/gui/panels/resource_packs_panel/ResourcePackTile.cpp"
 	"src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.cpp"
 	"src/renderer/gui/panels/singleplayer_panel/WorldTile.cpp"
+	"src/renderer/gui/panels/multiplayer_panel/MultiplayerPanel.cpp"
+	"src/renderer/gui/panels/multiplayer_panel/ServerTile.cpp"
 	"src/renderer/gui/panels/video_settings_panel/VideoSettingsPanel.cpp"
 	"src/renderer/gui/panels/controls_panel/ControlsPanel.cpp"
 	"src/renderer/gui/panels/mouse_settings_panel/MouseSettingsPanel.cpp"
@@ -88,7 +90,7 @@ add_executable(OnionVoxel
 
 	"src/user_settings/UserSettings.cpp"
 
- )
+   )
 
 if (WIN32)
     target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)

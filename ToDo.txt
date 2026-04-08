@@ -2,6 +2,10 @@
 		----- ONION - VOXEL -----
 
 - Multiplayer Menu (UI + Add Server + List of servers)
-- Better ResourcePack menu (with scroller, filter and selectable tiles) + save last used
+	- Add Thumbnails
+	- Add Colored Player Count
+	- Add Ping Sprite
+
+	- Add a Way to Ping Servers to retreve Infos (Players, Sprite, etc)
 		
 - BUGFIX : Z-Ordering issue in GUI (Fix TestField Background)
