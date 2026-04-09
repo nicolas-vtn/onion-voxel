@@ -48,7 +48,7 @@ namespace onion::voxel
 		UserSettingsChangedEventArgs args(settings, true);
 
 		// Dirty Tick to avoid crash on first load because OpenGL context is not created yet.
-		args.RenderDistance_Changed = false;
+		args.ResourcePack_Changed = false;
 		EngineContext::Get().Assets->SetCurrentResourcePack(settings.ResourcePack);
 
 		ApplyUserSettings(args);
