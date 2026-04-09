@@ -44,8 +44,7 @@ namespace onion::voxel
 			ServerTiles,
 			DirectConnect,
 			DeleteConfirmation,
-			AddServer,
-			EditServer
+			AddEditServer
 		};
 
 		// ----- Properties -----
@@ -81,6 +80,23 @@ namespace onion::voxel
 	  private:
 		// ---- Controls Add / Edit New Server -----
 	  private:
+		enum class eAddEditMode
+		{
+			Add,
+			Edit
+		};
+
+		eAddEditMode m_AddEditMode = eAddEditMode::Add;
+
+		Label m_LabelAddEditTitle;
+		Label m_LabelAddEditName;
+		TextField m_TextFieldAddEditName;
+		Label m_LabelAddEditAddress;
+		TextField m_TextFieldAddEditAddress;
+
+		Button m_ButtonAddEditDone;
+		Button m_ButtonAddEditCancel;
+
 		// ---- Controls Direct Connect -----
 	  private:
 		// ----- Internal Methods -----
@@ -89,15 +105,15 @@ namespace onion::voxel
 
 		void RenderServerTiles();
 		void RenderDeleteConfirmation();
-		void RenderEditServer();
-		void RenderAddServer();
+		void RenderAddEditServer();
 		void RenderDirectConnect();
 
 		bool IsAnyServerTileSelected() const;
 
 		void ClearServerTiles();
+		void SaveServerTiles();
 
-		void UpdateServerInfos(ServerInfos& serverInfos, std::stop_token& stopToken);
+		void UpdateServerTileInfos(ServerTile& serverTile, std::stop_token& stopToken);
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:
@@ -120,5 +136,10 @@ namespace onion::voxel
 		void Handle_NetworkClient_Disconnected(const bool& val);
 		void Handle_NetworkClient_MessageReceived(const NetworkMessage& message);
 		void Handle_NetworkClient_ServerMOTDReceived(const ServerMotdMsg& motdMsg);
+
+		void Handle_AddEditDone_Clicked(const Button& button);
+		void Handle_AddEditDone_AddMode(const Button& button);
+		void Handle_AddEditDone_EditMode(const Button& button);
+		void Handle_AddEditCancel_Clicked(const Button& button);
 	};
 } // namespace onion::voxel

@@ -8,7 +8,10 @@ namespace onion::voxel
 		: GuiElement(name), m_LabelTitle("Title"), m_Scroller("Scroller"), m_Button_JoinServer("Join Server"),
 		  m_Button_DirectConnect("Direct Connect"), m_Button_AddServer("Add Server"),
 		  m_Button_EditServer("Edit Server"), m_Button_DeleteServer("Delete Server"),
-		  m_Button_RefreshServerTiles("Refresh Server Tiles"), m_Button_Back("Back")
+		  m_Button_RefreshServerTiles("Refresh Server Tiles"), m_Button_Back("Back"),
+		  m_LabelAddEditTitle("AddEditTitle"), m_LabelAddEditName("AddEditName"), m_TextFieldAddEditName("AddEditName"),
+		  m_LabelAddEditAddress("AddEditAddress"), m_TextFieldAddEditAddress("AddEditAddress"),
+		  m_ButtonAddEditDone("AddEditDone"), m_ButtonAddEditCancel("AddEditCancel")
 	{
 		SubscribeToControlEvents();
 		SubscribeToNetworkClientEvents();
@@ -27,6 +30,22 @@ namespace onion::voxel
 			m_Button_DeleteServer.SetEnabled(false);
 			m_Button_RefreshServerTiles.SetText("Refresh");
 			m_Button_Back.SetText("Back");
+		}
+
+		// ---- Initialize Controls Add / Edit New Server ----
+		{
+			m_LabelAddEditTitle.SetText("Add Server");
+			m_LabelAddEditTitle.SetTextAlignment(Font::eTextAlignment::Center);
+			m_LabelAddEditName.SetText("Server Name");
+			m_LabelAddEditName.SetTextColor(Font::eColor::Gray);
+			m_LabelAddEditName.SetTextAlignment(Font::eTextAlignment::Left);
+			m_LabelAddEditAddress.SetText("Server Address");
+			m_LabelAddEditAddress.SetTextColor(Font::eColor::Gray);
+			m_LabelAddEditAddress.SetTextAlignment(Font::eTextAlignment::Left);
+			m_TextFieldAddEditAddress.SetPlaceholderText("IP:Port");
+			m_TextFieldAddEditName.SetPlaceholderText("My Server");
+			m_ButtonAddEditDone.SetText("Done");
+			m_ButtonAddEditCancel.SetText("Cancel");
 		}
 	}
 
@@ -60,11 +79,8 @@ namespace onion::voxel
 			case eRenderModule::DeleteConfirmation:
 				RenderDeleteConfirmation();
 				break;
-			case eRenderModule::AddServer:
-				RenderAddServer();
-				break;
-			case eRenderModule::EditServer:
-				RenderEditServer();
+			case eRenderModule::AddEditServer:
+				RenderAddEditServer();
 				break;
 			default:
 				break;
@@ -85,6 +101,14 @@ namespace onion::voxel
 
 		InitializeServerTiles();
 
+		m_LabelAddEditTitle.Initialize();
+		m_LabelAddEditName.Initialize();
+		m_TextFieldAddEditName.Initialize();
+		m_LabelAddEditAddress.Initialize();
+		m_TextFieldAddEditAddress.Initialize();
+		m_ButtonAddEditDone.Initialize();
+		m_ButtonAddEditCancel.Initialize();
+
 		SetInitState(true);
 	}
 
@@ -103,6 +127,14 @@ namespace onion::voxel
 		for (const auto& serverTile : m_ServerTiles)
 			serverTile->Delete();
 
+		m_LabelAddEditTitle.Delete();
+		m_LabelAddEditName.Delete();
+		m_TextFieldAddEditName.Delete();
+		m_LabelAddEditAddress.Delete();
+		m_TextFieldAddEditAddress.Delete();
+		m_ButtonAddEditDone.Delete();
+		m_ButtonAddEditCancel.Delete();
+
 		SetDeletedState(true);
 	}
 
@@ -120,6 +152,14 @@ namespace onion::voxel
 
 		for (const auto& serverTile : m_ServerTiles)
 			serverTile->ReloadTextures();
+
+		m_LabelAddEditTitle.ReloadTextures();
+		m_LabelAddEditName.ReloadTextures();
+		m_TextFieldAddEditName.ReloadTextures();
+		m_LabelAddEditAddress.ReloadTextures();
+		m_TextFieldAddEditAddress.ReloadTextures();
+		m_ButtonAddEditDone.ReloadTextures();
+		m_ButtonAddEditCancel.ReloadTextures();
 	}
 
 	void MultiplayerPanel::SubscribeToNetworkClientEvents()
@@ -141,16 +181,10 @@ namespace onion::voxel
 			if (stopToken.stop_requested())
 				return;
 
-			auto serverInfos = serverTile->GetServerInfos();
-			UpdateServerInfos(serverInfos, stopToken);
+			UpdateServerTileInfos(*serverTile, stopToken);
 		}
 
-		// Save Tiles
-		std::vector<ServerInfos> serversInfos;
-		for (const auto& serverTile : m_ServerTiles)
-			serversInfos.push_back(serverTile->GetServerInfos());
-
-		SaveServers(serversInfos, s_ServersListFilePath.string());
+		SaveServerTiles();
 	}
 
 	void MultiplayerPanel::InitializeServerTiles()
@@ -316,9 +350,66 @@ namespace onion::voxel
 
 	void MultiplayerPanel::RenderDeleteConfirmation() {}
 
-	void MultiplayerPanel::RenderEditServer() {}
+	void MultiplayerPanel::RenderAddEditServer()
+	{
+		if (s_IsBackPressed)
+		{
+			m_CurrentRenderModule = eRenderModule::ServerTiles;
+			return;
+		}
 
-	void MultiplayerPanel::RenderAddServer() {}
+		// ---- Layout Constants ----
+		int centerX = static_cast<int>(std::round(s_ScreenWidth / 2.f));
+		float controlWidthRatio = 800.f / 1920.f;
+		int controlWidth = static_cast<int>(std::round(s_ScreenWidth * controlWidthRatio));
+		int textX = centerX - controlWidth / 2;
+
+		// ---- Render Title ----
+		float titleYOffsetRatio = (87.f - 23.f) / 1009.f;
+		int titleY = static_cast<int>(std::round(s_ScreenHeight * titleYOffsetRatio));
+		m_LabelAddEditTitle.SetPosition({centerX, titleY});
+		m_LabelAddEditTitle.SetTextHeight(s_TextHeight);
+		m_LabelAddEditTitle.Render();
+
+		// ----- Render Name Label and TextField ----
+		float nameYOffsetRatio = (253.f - 23.f) / 1009.f;
+		int nameY = static_cast<int>(std::round(s_ScreenHeight * nameYOffsetRatio));
+		m_LabelAddEditName.SetPosition({textX, nameY});
+		m_LabelAddEditName.SetTextHeight(s_TextHeight);
+		m_LabelAddEditName.Render();
+
+		float nameFieldYOffsetRatio = (323.f - 23.f) / 1009.f;
+		int nameFieldY = static_cast<int>(std::round(s_ScreenHeight * nameFieldYOffsetRatio));
+		m_TextFieldAddEditName.SetPosition({centerX, nameFieldY});
+		m_TextFieldAddEditName.SetSize({controlWidth, s_ControlHeight});
+		m_TextFieldAddEditName.Render();
+
+		// ----- Render Address Label and TextField ----
+		float addressYOffsetRatio = (411.f - 23.f) / 1009.f;
+		int addressY = static_cast<int>(std::round(s_ScreenHeight * addressYOffsetRatio));
+		m_LabelAddEditAddress.SetPosition({textX, addressY});
+		m_LabelAddEditAddress.SetTextHeight(s_TextHeight);
+		m_LabelAddEditAddress.Render();
+
+		float addressFieldYOffsetRatio = (485.f - 23.f) / 1009.f;
+		int addressFieldY = static_cast<int>(std::round(s_ScreenHeight * addressFieldYOffsetRatio));
+		m_TextFieldAddEditAddress.SetPosition({centerX, addressFieldY});
+		m_TextFieldAddEditAddress.SetSize({controlWidth, s_ControlHeight});
+		m_TextFieldAddEditAddress.Render();
+
+		// ----- Render Done and Cancel Buttons ----
+		float buttonDoneYOffsetRatio = (770.f - 23.f) / 1009.f;
+		int buttonDoneY = static_cast<int>(std::round(s_ScreenHeight * buttonDoneYOffsetRatio));
+		m_ButtonAddEditDone.SetPosition({centerX, buttonDoneY});
+		m_ButtonAddEditDone.SetSize({controlWidth, s_ControlHeight});
+		m_ButtonAddEditDone.Render();
+
+		float buttonCancelYOffsetRatio = (865.f - 23.f) / 1009.f;
+		int buttonCancelY = static_cast<int>(std::round(s_ScreenHeight * buttonCancelYOffsetRatio));
+		m_ButtonAddEditCancel.SetPosition({centerX, buttonCancelY});
+		m_ButtonAddEditCancel.SetSize({controlWidth, s_ControlHeight});
+		m_ButtonAddEditCancel.Render();
+	}
 
 	void MultiplayerPanel::RenderDirectConnect() {}
 
@@ -341,13 +432,31 @@ namespace onion::voxel
 		m_ServerTiles.clear();
 	}
 
-	void MultiplayerPanel::UpdateServerInfos(ServerInfos& serverInfos, std::stop_token& stopToken)
+	void MultiplayerPanel::SaveServerTiles()
 	{
+		// Save Tiles
+		std::vector<ServerInfos> serversInfos;
+		for (const auto& serverTile : m_ServerTiles)
+			serversInfos.push_back(serverTile->GetServerInfos());
+
+		SaveServers(serversInfos, s_ServersListFilePath.string());
+	}
+
+	void MultiplayerPanel::UpdateServerTileInfos(ServerTile& serverTile, std::stop_token& stopToken)
+	{
+		// Retreve the infos
+		ServerInfos serverInfos = serverTile.GetServerInfos();
+
+		// Start Pinging
+		serverTile.SetPinging(true);
+
 		m_NetworkClient.Stop();
 		m_NetworkClient.SetRemoteHost(serverInfos.Address);
 		m_NetworkClient.SetRemotePort(serverInfos.Port);
 		m_NetworkClient.Start();
+
 		std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait a bit for the connection to establish
+
 		RequestMotdMsg requestMotdMsg;
 		m_NetworkClient.Send(requestMotdMsg);
 
@@ -367,18 +476,13 @@ namespace onion::voxel
 
 		if (!m_AckMotdReceived)
 		{
-			// Retreve the tile and set ping to -1
-			for (auto& serverTile : m_ServerTiles)
-			{
-				ServerInfos infos = serverTile->GetServerInfos();
-				if (infos.Address == serverInfos.Address && infos.Port == serverInfos.Port)
-				{
-					infos.Ping = -1;
-					serverTile->SetServerInfos(infos);
-					break;
-				}
-			}
+			// Set ping to -1
+			serverInfos = serverTile.GetServerInfos();
+			serverInfos.Ping = -1;
+			serverTile.SetServerInfos(serverInfos);
 		}
+
+		serverTile.SetPinging(false);
 
 		m_NetworkClient.Stop();
 	}
@@ -409,6 +513,12 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_Button_RefreshServerTiles.OnClick.Subscribe(
 			[this](const Button& button) { Handle_ButtonRefreshServerTiles_Clicked(button); }));
+
+		m_EventHandles.push_back(m_ButtonAddEditDone.OnClick.Subscribe([this](const Button& button)
+																	   { Handle_AddEditDone_Clicked(button); }));
+
+		m_EventHandles.push_back(m_ButtonAddEditCancel.OnClick.Subscribe([this](const Button& button)
+																		 { Handle_AddEditCancel_Clicked(button); }));
 	}
 
 	void MultiplayerPanel::Handle_ServerTileSelected(const ServerTile& serverTile)
@@ -450,13 +560,46 @@ namespace onion::voxel
 	void MultiplayerPanel::Handle_ButtonAddServer_Clicked(const Button& button)
 	{
 		(void) button;
-		throw std::logic_error("Not implemented");
+
+		m_CurrentRenderModule = eRenderModule::AddEditServer;
+		m_AddEditMode = eAddEditMode::Add;
+
+		// Set Title
+		m_LabelAddEditTitle.SetText("Add Server");
+
+		// Clear Add/Edit Fields
+		m_TextFieldAddEditName.SetText("");
+		m_TextFieldAddEditAddress.SetText("");
 	}
 
 	void MultiplayerPanel::Handle_ButtonEditServer_Clicked(const Button& button)
 	{
 		(void) button;
-		throw std::logic_error("Not implemented");
+
+		m_CurrentRenderModule = eRenderModule::AddEditServer;
+		m_AddEditMode = eAddEditMode::Edit;
+
+		// Retreve the selected tile
+		ServerTile* selectedTile = nullptr;
+		for (const auto& serverTile : m_ServerTiles)
+		{
+			if (serverTile->IsSelected())
+			{
+				selectedTile = serverTile.get();
+				break;
+			}
+		}
+
+		if (!selectedTile)
+			throw std::logic_error("No server tile selected for editing");
+
+		// Set Title
+		m_LabelAddEditTitle.SetText("Edit Server Info");
+
+		// Fill Add/Edit Fields with selected tile infos
+		ServerInfos serverInfos = selectedTile->GetServerInfos();
+		m_TextFieldAddEditName.SetText(serverInfos.Name);
+		m_TextFieldAddEditAddress.SetText(serverInfos.Address + ":" + std::to_string(serverInfos.Port));
 	}
 
 	void MultiplayerPanel::Handle_ButtonDeleteServer_Clicked(const Button& button)
@@ -540,6 +683,117 @@ namespace onion::voxel
 				m_AckMotdReceived = true;
 			}
 		}
+	}
+
+	void MultiplayerPanel::Handle_AddEditDone_Clicked(const Button& button)
+	{
+		switch (m_AddEditMode)
+		{
+			case eAddEditMode::Add:
+				Handle_AddEditDone_AddMode(button);
+				break;
+			case eAddEditMode::Edit:
+				Handle_AddEditDone_EditMode(button);
+				break;
+			default:
+				throw std::logic_error("Invalid Add/Edit mode");
+		}
+	}
+
+	void MultiplayerPanel::Handle_AddEditDone_AddMode(const Button& button)
+	{
+		(void) button;
+
+		// Retreve infos from fields
+		std::string name = m_TextFieldAddEditName.GetText();
+		std::string addressPort = m_TextFieldAddEditAddress.GetText();
+
+		size_t colonPos = addressPort.find(':');
+		if (colonPos == std::string::npos)
+		{
+			std::cerr << "Invalid address format. Expected format: IP:Port" << std::endl;
+			return;
+		}
+
+		// Split address and port
+		std::string address = addressPort.substr(0, colonPos);
+		uint16_t port = static_cast<uint16_t>(std::stoi(addressPort.substr(colonPos + 1)));
+
+		// Create new ServerInfos
+		ServerInfos newServerInfos;
+		newServerInfos.Name = name;
+		newServerInfos.Address = address;
+		newServerInfos.Port = port;
+
+		// Create new ServerTile
+		m_ServerTiles.push_back(std::make_unique<ServerTile>("ServerTile_" + name, newServerInfos));
+
+		// Subscribe to server tile events
+		m_EventHandles.push_back(m_ServerTiles.back()->EvtTileSelected.Subscribe(
+			[this](const ServerTile& serverTile) { Handle_ServerTileSelected(serverTile); }));
+		m_EventHandles.push_back(m_ServerTiles.back()->EvtTileDoubleClicked.Subscribe(
+			[this](const ServerTile& serverTile) { Handle_ServerTileDoubleClicked(serverTile); }));
+
+		// Initialize new tile
+		m_ServerTiles.back()->Initialize();
+
+		// Set current render module to server tiles to go back to the list
+		m_CurrentRenderModule = eRenderModule::ServerTiles;
+
+		// Force refresh to retreve the motd and ping of the new server (and saves the new server list to file)
+		RefreshServerTilesAsync();
+	}
+
+	void MultiplayerPanel::Handle_AddEditDone_EditMode(const Button& button)
+	{
+		(void) button;
+
+		// Retreve the selected tile
+		ServerTile* selectedTile = nullptr;
+		for (const auto& serverTile : m_ServerTiles)
+		{
+			if (serverTile->IsSelected())
+			{
+				selectedTile = serverTile.get();
+				break;
+			}
+		}
+
+		if (!selectedTile)
+			throw std::logic_error("No server tile selected for editing");
+
+		// Retreve infos from fields
+		std::string name = m_TextFieldAddEditName.GetText();
+		std::string addressPort = m_TextFieldAddEditAddress.GetText();
+
+		size_t colonPos = addressPort.find(':');
+		if (colonPos == std::string::npos)
+		{
+			std::cerr << "Invalid address format. Expected format: IP:Port" << std::endl;
+			return;
+		}
+
+		// Split address and port
+		std::string address = addressPort.substr(0, colonPos);
+		uint16_t port = static_cast<uint16_t>(std::stoi(addressPort.substr(colonPos + 1)));
+
+		ServerInfos serverInfos = selectedTile->GetServerInfos();
+		serverInfos.Name = name;
+		serverInfos.Address = address;
+		serverInfos.Port = port;
+		selectedTile->SetServerInfos(serverInfos);
+
+		// Set current render module to server tiles to go back to the list
+		m_CurrentRenderModule = eRenderModule::ServerTiles;
+
+		// Force refresh to retreve the motd and ping of the edited server
+		RefreshServerTilesAsync();
+	}
+
+	void MultiplayerPanel::Handle_AddEditCancel_Clicked(const Button& button)
+	{
+		(void) button;
+		m_CurrentRenderModule = eRenderModule::ServerTiles;
 	}
 
 } // namespace onion::voxel

@@ -200,7 +200,7 @@ namespace onion::voxel
 								ClientHandle handle;
 
 								{
-									std::lock_guard<std::mutex> lock(m_ClientMutex);
+									std::unique_lock<std::mutex> lock(m_ClientMutex);
 									auto it = m_PeerToSession.find(event.peer);
 									if (it == m_PeerToSession.end())
 										break;
@@ -232,7 +232,10 @@ namespace onion::voxel
 										args.IpAddress = ip;
 										args.PlayerName = clientInfo.PlayerName;
 
+										// Unlock before triggering event to avoid potential deadlocks if event handlers interact with NetworkServer
+										lock.unlock();
 										ClientConnected.Trigger(args);
+										lock.lock();
 									}
 
 									if (header.Type == MessageHeader::eType::RequestMotd)

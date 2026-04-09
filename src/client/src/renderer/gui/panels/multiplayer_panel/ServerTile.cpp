@@ -25,17 +25,7 @@ namespace onion::voxel
 		m_LabelPlayerCount.SetTextAlignment(Font::eTextAlignment::Right);
 
 		// Load texture if provided
-		if (m_ServerInfos.IconPngData.size() > 0)
-		{
-			Texture thumbnailTexture("ThumbnailServer_" + m_ServerInfos.Name, m_ServerInfos.IconPngData);
-			m_ThumbnailSprite.SwapTexture(std::move(thumbnailTexture));
-		}
-		else // Load default texture if none provided
-		{
-			std::filesystem::path defaultThumbnailPath =
-				EngineContext::Get().Assets->GetTexturesDirectory() / "ServerThumbnail.png";
-			m_ThumbnailSprite.SwapTexture(Texture(defaultThumbnailPath));
-		}
+		m_ThumbnailUpdateRequired = true;
 	}
 
 	ServerTile::~ServerTile()
@@ -45,6 +35,23 @@ namespace onion::voxel
 
 	void ServerTile::Render()
 	{
+
+		if (m_ThumbnailUpdateRequired)
+		{
+			std::lock_guard lock(m_ServerInfosMutex);
+			if (m_ServerInfos.IconPngData.size() > 0)
+			{
+				Texture thumbnailTexture("ThumbnailServer_" + m_ServerInfos.Name, m_ServerInfos.IconPngData);
+				m_ThumbnailSprite.SwapTexture(std::move(thumbnailTexture));
+			}
+			else
+			{
+				std::filesystem::path defaultThumbnailPath =
+					EngineContext::Get().Assets->GetTexturesDirectory() / "ServerThumbnail.png";
+				m_ThumbnailSprite.SwapTexture(Texture(defaultThumbnailPath));
+			}
+			m_ThumbnailUpdateRequired = false;
+		}
 
 		bool isHovered = IsMouseHovering();
 
@@ -77,6 +84,8 @@ namespace onion::voxel
 
 			m_LastClickTime = currentTime;
 		}
+
+		std::lock_guard lock(m_ServerInfosMutex);
 
 		const int borderThickness = static_cast<int>(round(4.f / 1009.f * s_ScreenHeight));
 		const glm::ivec2 thumbnailSize{static_cast<int>(round(m_Size.y - (4 * borderThickness)))};
@@ -117,26 +126,46 @@ namespace onion::voxel
 		// ---- Render Server Name ----
 		float textNamePosYratio = 28.f / 134.f;
 		const int textNamePosY = static_cast<int>(round(topPosY + (textNamePosYratio * m_Size.y)));
-		float textPosXratio = 143.f / 1211.f;
-		const int textPosX = static_cast<int>(round(posBorderLeft + (textPosXratio * m_Size.x)));
+		const int textPosX = static_cast<int>(round(posBorderLeft + (thumbnailSize.x) + (8 * borderThickness)));
 		m_LabelName.SetPosition({textPosX, textNamePosY});
 		m_LabelName.SetTextHeight(s_TextHeight);
 		m_LabelName.SetText(m_ServerInfos.Name);
 		m_LabelName.Render();
 
 		// ---- Render Server Description ----
+		std::string description = "";
+		if (m_IsPinging)
+		{
+			description = "";
+		}
+		else if (m_ServerInfos.Ping < 0)
+		{
+			description = "§4" + s_ErrorDescription;
+		}
+		else
+		{
+			description = m_ServerInfos.Description;
+		}
+
 		float textDescrPosYratio = 80.f / 134.f;
 		const int descriptionTextPosY = static_cast<int>(round(topPosY + (textDescrPosYratio * m_Size.y)));
 		m_LabelDescription.SetPosition({textPosX, descriptionTextPosY});
 		m_LabelDescription.SetTextHeight(s_TextHeight);
-		m_LabelDescription.SetText(m_ServerInfos.Description);
+		m_LabelDescription.SetText(description);
 		m_LabelDescription.Render();
 
 		// ---- Render Ping ----
 		// Select ping sprite based on ping value (0-1000ms mapped to 5 sprites)
 		Sprite* pingSprite = nullptr;
 
-		if (m_ServerInfos.Ping < 0)
+		if (m_IsPinging)
+		{
+			constexpr int frameCount = 5;
+			constexpr double fps = 10.0; // 100 ms per frame
+			int pingingIndex = static_cast<int>(glfwGetTime() * fps) % frameCount;
+			pingSprite = &m_PingingSprites[pingingIndex];
+		}
+		else if (m_ServerInfos.Ping < 0)
 		{
 			pingSprite = &m_UnreachableSprite;
 		}
@@ -155,15 +184,18 @@ namespace onion::voxel
 		pingSprite->Render();
 
 		// ---- Render Player Count ----
-		textPosXratio = 1040.f / 1211.f;
-		const int playerCountTextPosX = pingSpritePosX - pingSize;
-		m_LabelPlayerCount.SetPosition({playerCountTextPosX, textNamePosY});
-		m_LabelPlayerCount.SetTextHeight(s_TextHeight);
-		std::u32string playerCountText = U"\u00A77" + Utf8ToUtf32(std::to_string(m_ServerInfos.PlayerCount));
-		playerCountText += U"\u00A78/";
-		playerCountText += U"\u00A77" + Utf8ToUtf32(std::to_string(m_ServerInfos.MaxPlayerCount));
-		m_LabelPlayerCount.SetText(playerCountText);
-		m_LabelPlayerCount.Render();
+		if (!IsPinging() && m_ServerInfos.Ping > 0)
+		{
+			float textPosXratio = 1040.f / 1211.f;
+			const int playerCountTextPosX = pingSpritePosX - pingSize;
+			m_LabelPlayerCount.SetPosition({playerCountTextPosX, textNamePosY});
+			m_LabelPlayerCount.SetTextHeight(s_TextHeight);
+			std::u32string playerCountText = U"\u00A77" + Utf8ToUtf32(std::to_string(m_ServerInfos.PlayerCount));
+			playerCountText += U"\u00A78/";
+			playerCountText += U"\u00A77" + Utf8ToUtf32(std::to_string(m_ServerInfos.MaxPlayerCount));
+			m_LabelPlayerCount.SetText(playerCountText);
+			m_LabelPlayerCount.Render();
+		}
 
 		// ---- Update previous state ----
 		m_WasMouseDown = isMouseDown;
@@ -252,14 +284,16 @@ namespace onion::voxel
 
 	void ServerTile::SetServerInfos(const ServerInfos& serverInfos)
 	{
+		std::lock_guard lock(m_ServerInfosMutex);
+
 		m_ServerInfos = serverInfos;
 
-		Texture thumbnailTexture("ThumbnailServer_" + m_ServerInfos.Name, m_ServerInfos.IconPngData);
-		m_ThumbnailSprite.SwapTexture(std::move(thumbnailTexture));
+		m_ThumbnailUpdateRequired = true;
 	}
 
 	const ServerInfos ServerTile::GetServerInfos() const
 	{
+		std::lock_guard lock(m_ServerInfosMutex);
 		return m_ServerInfos;
 	}
 
@@ -273,7 +307,15 @@ namespace onion::voxel
 		return m_IsSelected;
 	}
 
-	void ServerTile::SetThumbnailTexture(Texture& texture) {}
+	void ServerTile::SetPinging(bool pinging)
+	{
+		m_IsPinging = pinging;
+	}
+
+	bool ServerTile::IsPinging() const
+	{
+		return m_IsPinging;
+	}
 
 	bool ServerTile::IsMouseHovering() const
 	{

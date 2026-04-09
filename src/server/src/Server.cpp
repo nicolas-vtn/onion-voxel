@@ -119,7 +119,6 @@ namespace onion::voxel
 	{
 		ServerMotdMsg motdMsg;
 		motdMsg.ServerMotd = m_Config.serverData.MOTD;
-		motdMsg.PlayerCount = static_cast<int>(m_ClientHandleToPlayerInfo.size());
 		motdMsg.MaxPlayers = 20;
 
 		auto players = m_WorldManager->GetAllPlayers();
@@ -127,6 +126,8 @@ namespace onion::voxel
 		{
 			motdMsg.PlayerNames.push_back(playerInfo->GetName());
 		}
+
+		motdMsg.PlayerCount = static_cast<int>(motdMsg.PlayerNames.size());
 
 		// Load Icon png data
 		std::filesystem::path iconPath = Utils::GetExecutableDirectory() / "ServerThumbnail.png";

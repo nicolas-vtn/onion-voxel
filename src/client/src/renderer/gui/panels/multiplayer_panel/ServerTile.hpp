@@ -48,7 +48,8 @@ namespace onion::voxel
 		void SetSelected(bool selected);
 		bool IsSelected() const;
 
-		void SetThumbnailTexture(Texture& texture);
+		void SetPinging(bool pinging);
+		bool IsPinging() const;
 
 		// ----- Properties -----
 	  private:
@@ -56,7 +57,11 @@ namespace onion::voxel
 		glm::vec2 m_Size{1, 1};
 
 		bool m_IsSelected = false;
+		bool m_IsPinging = false;
 
+		bool m_ThumbnailUpdateRequired = true;
+
+		mutable std::mutex m_ServerInfosMutex;
 		ServerInfos m_ServerInfos;
 
 		bool m_HasBeenInitialized = false;
@@ -81,6 +86,8 @@ namespace onion::voxel
 																				  s_BaseSpritesPath / "pinging_5.png"};
 
 		static inline std::filesystem::path s_UnreachableSpritePath = s_BaseSpritesPath / "unreachable.png";
+
+		static inline std::string s_ErrorDescription = "Can't connect to server";
 
 		// ----- Private Helpers -----
 	  private:
