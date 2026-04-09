@@ -78,6 +78,12 @@ namespace onion::voxel
 
 		// ---- Controls Delete Confirmation -----
 	  private:
+		Label m_LabelDeleteWarning;
+		Label m_LabelDeleteDetails;
+
+		Button m_ButtonDeleteConfirm;
+		Button m_ButtonDeleteCancel;
+
 		// ---- Controls Add / Edit New Server -----
 	  private:
 		enum class eAddEditMode
@@ -141,5 +147,8 @@ namespace onion::voxel
 		void Handle_AddEditDone_AddMode(const Button& button);
 		void Handle_AddEditDone_EditMode(const Button& button);
 		void Handle_AddEditCancel_Clicked(const Button& button);
+
+		void Handle_DeleteConfirm_Clicked(const Button& button);
+		void Handle_DeleteCancel_Clicked(const Button& button);
 	};
 } // namespace onion::voxel

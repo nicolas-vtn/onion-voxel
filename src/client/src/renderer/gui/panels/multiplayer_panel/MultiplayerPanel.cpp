@@ -11,7 +11,9 @@ namespace onion::voxel
 		  m_Button_RefreshServerTiles("Refresh Server Tiles"), m_Button_Back("Back"),
 		  m_LabelAddEditTitle("AddEditTitle"), m_LabelAddEditName("AddEditName"), m_TextFieldAddEditName("AddEditName"),
 		  m_LabelAddEditAddress("AddEditAddress"), m_TextFieldAddEditAddress("AddEditAddress"),
-		  m_ButtonAddEditDone("AddEditDone"), m_ButtonAddEditCancel("AddEditCancel")
+		  m_ButtonAddEditDone("AddEditDone"), m_ButtonAddEditCancel("AddEditCancel"),
+		  m_LabelDeleteWarning("Delete Warning"), m_LabelDeleteDetails("Delete Details"),
+		  m_ButtonDeleteConfirm("Delete Confirm"), m_ButtonDeleteCancel("Delete Cancel")
 	{
 		SubscribeToControlEvents();
 		SubscribeToNetworkClientEvents();
@@ -46,6 +48,15 @@ namespace onion::voxel
 			m_TextFieldAddEditName.SetPlaceholderText("My Server");
 			m_ButtonAddEditDone.SetText("Done");
 			m_ButtonAddEditCancel.SetText("Cancel");
+		}
+
+		// ---- Initialize Controls Delete Confirmation -----
+		{
+			m_LabelDeleteWarning.SetTextAlignment(Font::eTextAlignment::Center);
+			m_LabelDeleteDetails.SetTextAlignment(Font::eTextAlignment::Center);
+
+			m_ButtonDeleteConfirm.SetText("Delete");
+			m_ButtonDeleteCancel.SetText("Cancel");
 		}
 	}
 
@@ -109,6 +120,11 @@ namespace onion::voxel
 		m_ButtonAddEditDone.Initialize();
 		m_ButtonAddEditCancel.Initialize();
 
+		m_LabelDeleteWarning.Initialize();
+		m_LabelDeleteDetails.Initialize();
+		m_ButtonDeleteConfirm.Initialize();
+		m_ButtonDeleteCancel.Initialize();
+
 		SetInitState(true);
 	}
 
@@ -135,6 +151,11 @@ namespace onion::voxel
 		m_ButtonAddEditDone.Delete();
 		m_ButtonAddEditCancel.Delete();
 
+		m_LabelDeleteWarning.Delete();
+		m_LabelDeleteDetails.Delete();
+		m_ButtonDeleteConfirm.Delete();
+		m_ButtonDeleteCancel.Delete();
+
 		SetDeletedState(true);
 	}
 
@@ -160,6 +181,11 @@ namespace onion::voxel
 		m_TextFieldAddEditAddress.ReloadTextures();
 		m_ButtonAddEditDone.ReloadTextures();
 		m_ButtonAddEditCancel.ReloadTextures();
+
+		m_LabelDeleteWarning.ReloadTextures();
+		m_LabelDeleteDetails.ReloadTextures();
+		m_ButtonDeleteConfirm.ReloadTextures();
+		m_ButtonDeleteCancel.ReloadTextures();
 	}
 
 	void MultiplayerPanel::SubscribeToNetworkClientEvents()
@@ -348,7 +374,75 @@ namespace onion::voxel
 		m_Button_Back.Render();
 	}
 
-	void MultiplayerPanel::RenderDeleteConfirmation() {}
+	void MultiplayerPanel::RenderDeleteConfirmation()
+	{
+		// ---- Retreve Selected Server Tile ----
+		ServerTile* selectedServerTile = nullptr;
+		for (const auto& serverTile : m_ServerTiles)
+		{
+			if (serverTile->IsSelected())
+			{
+				selectedServerTile = serverTile.get();
+				break;
+			}
+		}
+
+		if (s_IsBackPressed || selectedServerTile == nullptr)
+		{
+			m_CurrentRenderModule = eRenderModule::ServerTiles;
+			return;
+		}
+
+		ServerInfos infos = selectedServerTile->GetServerInfos();
+
+		int centerX = s_ScreenWidth / 2;
+		float textHeight = s_ScreenHeight * (28.f / 1009.f);
+
+		// ---- Render Warning Text ----
+		const std::string warningText = "Are you sure you want to remove this server?";
+		float warningTextYOffsetRatio = (400.f - 23.f) / 1009.f;
+		glm::ivec2 warningTextPos{centerX, static_cast<int>(s_ScreenHeight * warningTextYOffsetRatio)};
+		m_LabelDeleteWarning.SetPosition(warningTextPos);
+		m_LabelDeleteWarning.SetText(warningText);
+		m_LabelDeleteWarning.SetTextHeight(textHeight);
+		m_LabelDeleteWarning.Render();
+
+		// ---- Render Details Text ----
+		const std::string detailsText = "'" + infos.Name + "' will be lost forever! (A long time!)";
+		float detailsTextYOffsetRatio = (475.f - 23.f) / 1009.f;
+		glm::ivec2 detailsTextPos{centerX, static_cast<int>(s_ScreenHeight * detailsTextYOffsetRatio)};
+		m_LabelDeleteDetails.SetPosition(detailsTextPos);
+		m_LabelDeleteDetails.SetText(detailsText);
+		m_LabelDeleteDetails.SetTextHeight(textHeight);
+		m_LabelDeleteDetails.Render();
+
+		// Create Layout for buttons
+		float tableWidthRatio = 1216.f / 1920.f;
+		float tableHeightRatio = 82.f / 1009.f;
+		float horizontalSpacingRatio = 20.f / 1920.f;
+		int horizontalSpacing = static_cast<int>(std::round(horizontalSpacingRatio * s_ScreenWidth));
+		glm::ivec2 tableSize{static_cast<int>(s_ScreenWidth * tableWidthRatio),
+							 static_cast<int>(s_ScreenHeight * tableHeightRatio)};
+		TableLayout layoutButtons = LayoutHelper::CreateTableLayout(1, 2, tableSize, horizontalSpacing, 0);
+
+		float tableYOffsetRatio = 625.f / 1009.f;
+		int tableY = static_cast<int>(s_ScreenHeight * tableYOffsetRatio);
+		glm::ivec2 tableTopLeftCorner{centerX - (tableSize.x / 2), tableY - (tableSize.y / 2)};
+
+		// ---- Render Delete Confirm Button ----
+		glm::ivec2 buttonPos = tableTopLeftCorner + layoutButtons.GetElementPosition(0, 0);
+		glm::ivec2 buttonSize = layoutButtons.GetCellSize();
+		m_ButtonDeleteConfirm.SetPosition(buttonPos);
+		m_ButtonDeleteConfirm.SetSize(buttonSize);
+		m_ButtonDeleteConfirm.Render();
+
+		// ---- Render Delete Cancel Button ----
+		buttonPos = tableTopLeftCorner + layoutButtons.GetElementPosition(0, 1);
+		buttonSize = layoutButtons.GetCellSize();
+		m_ButtonDeleteCancel.SetPosition(buttonPos);
+		m_ButtonDeleteCancel.SetSize(buttonSize);
+		m_ButtonDeleteCancel.Render();
+	}
 
 	void MultiplayerPanel::RenderAddEditServer()
 	{
@@ -357,6 +451,8 @@ namespace onion::voxel
 			m_CurrentRenderModule = eRenderModule::ServerTiles;
 			return;
 		}
+
+		bool validInputs = !m_TextFieldAddEditName.GetText().empty() && !m_TextFieldAddEditAddress.GetText().empty();
 
 		// ---- Layout Constants ----
 		int centerX = static_cast<int>(std::round(s_ScreenWidth / 2.f));
@@ -397,13 +493,15 @@ namespace onion::voxel
 		m_TextFieldAddEditAddress.SetSize({controlWidth, s_ControlHeight});
 		m_TextFieldAddEditAddress.Render();
 
-		// ----- Render Done and Cancel Buttons ----
+		// ----- Render Done Button ----
 		float buttonDoneYOffsetRatio = (770.f - 23.f) / 1009.f;
 		int buttonDoneY = static_cast<int>(std::round(s_ScreenHeight * buttonDoneYOffsetRatio));
 		m_ButtonAddEditDone.SetPosition({centerX, buttonDoneY});
 		m_ButtonAddEditDone.SetSize({controlWidth, s_ControlHeight});
+		m_ButtonAddEditDone.SetEnabled(validInputs);
 		m_ButtonAddEditDone.Render();
 
+		// ----- Render Cancel Button ----
 		float buttonCancelYOffsetRatio = (865.f - 23.f) / 1009.f;
 		int buttonCancelY = static_cast<int>(std::round(s_ScreenHeight * buttonCancelYOffsetRatio));
 		m_ButtonAddEditCancel.SetPosition({centerX, buttonCancelY});
@@ -519,6 +617,12 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_ButtonAddEditCancel.OnClick.Subscribe([this](const Button& button)
 																		 { Handle_AddEditCancel_Clicked(button); }));
+
+		m_EventHandles.push_back(m_ButtonDeleteConfirm.OnClick.Subscribe([this](const Button& button)
+																		 { Handle_DeleteConfirm_Clicked(button); }));
+
+		m_EventHandles.push_back(m_ButtonDeleteCancel.OnClick.Subscribe([this](const Button& button)
+																		{ Handle_DeleteCancel_Clicked(button); }));
 	}
 
 	void MultiplayerPanel::Handle_ServerTileSelected(const ServerTile& serverTile)
@@ -606,15 +710,7 @@ namespace onion::voxel
 	{
 		(void) button;
 
-		for (int i = 0; i < m_ServerTiles.size(); i++)
-		{
-			if (m_ServerTiles[i]->IsSelected())
-			{
-				m_ServerTiles[i]->Delete();
-				m_ServerTiles.erase(m_ServerTiles.begin() + i);
-				break;
-			}
-		}
+		m_CurrentRenderModule = eRenderModule::DeleteConfirmation;
 	}
 
 	void MultiplayerPanel::Handle_ButtonRefreshServerTiles_Clicked(const Button& button)
@@ -791,6 +887,30 @@ namespace onion::voxel
 	}
 
 	void MultiplayerPanel::Handle_AddEditCancel_Clicked(const Button& button)
+	{
+		(void) button;
+		m_CurrentRenderModule = eRenderModule::ServerTiles;
+	}
+
+	void MultiplayerPanel::Handle_DeleteConfirm_Clicked(const Button& button)
+	{
+		(void) button;
+
+		// Retreves and Deletes the selected tile
+		for (int i = 0; i < m_ServerTiles.size(); i++)
+		{
+			if (m_ServerTiles[i]->IsSelected())
+			{
+				m_ServerTiles[i]->Delete();
+				m_ServerTiles.erase(m_ServerTiles.begin() + i);
+				break;
+			}
+		}
+
+		RefreshServerTilesAsync();
+	}
+
+	void MultiplayerPanel::Handle_DeleteCancel_Clicked(const Button& button)
 	{
 		(void) button;
 		m_CurrentRenderModule = eRenderModule::ServerTiles;
