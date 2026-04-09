@@ -140,10 +140,10 @@ namespace onion::voxel
 		m_NetworkClient.Send(std::move(clientInfoMsg), true);
 	}
 
-	void Client::Handle_StartMultiplayerRequest(const Gui::MultiplayerGameStartInfo& multiplayerGameStartInfo)
+	void Client::Handle_StartMultiplayerRequest(const ServerInfos& serverInfos)
 	{
-		m_NetworkClient.SetRemoteHost(multiplayerGameStartInfo.ServerAddress);
-		m_NetworkClient.SetRemotePort(multiplayerGameStartInfo.ServerPort);
+		m_NetworkClient.SetRemoteHost(serverInfos.Address);
+		m_NetworkClient.SetRemotePort(serverInfos.Port);
 
 		if (!m_NetworkClient.IsRunning())
 		{
@@ -245,8 +245,7 @@ namespace onion::voxel
 			}));
 
 		m_RendererEventHandles.push_back(m_Renderer.RequestStartMultiplayerGame.Subscribe(
-			[this](const Gui::MultiplayerGameStartInfo& multiplayerGameStartInfo)
-			{ Handle_StartMultiplayerRequest(multiplayerGameStartInfo); }));
+			[this](const ServerInfos& serverInfos) { Handle_StartMultiplayerRequest(serverInfos); }));
 
 		m_RendererEventHandles.push_back(m_Renderer.EvtRenderDistanceChanged.Subscribe(
 			[this](uint8_t renderDistance) { Handle_RenderDistanceChanged(renderDistance); }));

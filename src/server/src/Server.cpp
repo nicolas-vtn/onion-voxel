@@ -5,24 +5,6 @@
 #include <shared/data_transfer_objects/Serializer/SerializerDTO.hpp>
 #include <shared/utils/Utils.hpp>
 
-#include <windows.h>
-namespace
-{
-	inline std::filesystem::path GetExecutableDirectory()
-	{
-		wchar_t buffer[MAX_PATH];
-		DWORD length = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
-
-		if (length == 0 || length == MAX_PATH)
-		{
-			throw std::runtime_error("Failed to get executable path");
-		}
-
-		std::filesystem::path exePath(buffer);
-		return exePath.parent_path();
-	}
-} // namespace
-
 namespace onion::voxel
 {
 	Server::Server()
@@ -30,7 +12,7 @@ namespace onion::voxel
 		LoadConfiguration();
 
 		// Create world if it doesn't exist
-		m_Config.serverData.WorldDirectory = GetExecutableDirectory() / "world";
+		m_Config.serverData.WorldDirectory = Utils::GetExecutableDirectory() / "world";
 		const std::filesystem::path& worldDir = m_Config.serverData.WorldDirectory;
 		if (!std::filesystem::exists(worldDir))
 		{
@@ -43,10 +25,10 @@ namespace onion::voxel
 			WorldSave::CreateWorld(worldDir, infos);
 		}
 
+		Initialize();
+
 		// ---- Set MOTD Data ----
 		UpdateMOTD();
-
-		Initialize();
 	}
 
 	Server::Server(const ServerConfiguration& config) : m_Config(config)
@@ -147,7 +129,7 @@ namespace onion::voxel
 		}
 
 		// Load Icon png data
-		std::filesystem::path iconPath = GetExecutableDirectory() / "icon.png";
+		std::filesystem::path iconPath = Utils::GetExecutableDirectory() / "ServerThumbnail.png";
 		if (std::filesystem::exists(iconPath))
 		{
 			std::ifstream file(iconPath, std::ios::binary);

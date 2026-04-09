@@ -107,6 +107,7 @@ target_link_libraries(OnionVoxel
 		enet::enet
 		winmm
 		ws2_32
+		cereal::cereal
 
 		onion::event
 		onion::logger

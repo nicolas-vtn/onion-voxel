@@ -1,24 +1,14 @@
 #include "AssetsManager.hpp"
 
-#include <Windows.h>
+#include <shared/utils/Utils.hpp>
 
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
 
-namespace
-{
-	std::filesystem::path GetExecutableDirectory()
-	{
-		char buffer[MAX_PATH];
-		GetModuleFileNameA(nullptr, buffer, MAX_PATH);
-		return std::filesystem::path(buffer).parent_path();
-	}
-} // namespace
-
 namespace onion::voxel
 {
-	std::filesystem::path AssetsManager::s_ExecutableDirectory = GetExecutableDirectory();
+	std::filesystem::path AssetsManager::s_ExecutableDirectory = Utils::GetExecutableDirectory();
 
 	AssetsManager::AssetsManager()
 	{

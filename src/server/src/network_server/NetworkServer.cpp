@@ -207,7 +207,8 @@ namespace onion::voxel
 
 									handle = it->second.handle;
 
-									if (!it->second.authenticated && header.Type != MessageHeader::eType::ClientInfo)
+									if (!it->second.authenticated && header.Type != MessageHeader::eType::ClientInfo &&
+										header.Type != MessageHeader::eType::RequestMotd)
 										break;
 
 									if (header.Type == MessageHeader::eType::ClientInfo)

@@ -28,12 +28,6 @@ namespace onion::voxel
 	class Gui
 	{
 	  public:
-		struct MultiplayerGameStartInfo
-		{
-			std::string ServerAddress;
-			uint16_t ServerPort;
-		};
-
 		// ----- Static Initialization / Shutdown -----
 	  public:
 		static void StaticInitialize();
@@ -65,7 +59,7 @@ namespace onion::voxel
 	  public:
 		Event<const CursorStyle&> RequestCursorStyleChange;
 		Event<const WorldInfos&> RequestStartSingleplayerGame;
-		Event<const MultiplayerGameStartInfo&> RequestStartMultiplayerGame;
+		Event<const ServerInfos&> RequestStartMultiplayerGame;
 		Event<bool> RequestQuitToMainMenu;
 		Event<bool> RequestBackToGame;
 		Event<bool> RequestBack;

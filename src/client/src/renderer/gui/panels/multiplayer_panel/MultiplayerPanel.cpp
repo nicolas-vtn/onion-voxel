@@ -11,6 +11,7 @@ namespace onion::voxel
 		  m_Button_RefreshServerTiles("Refresh Server Tiles"), m_Button_Back("Back")
 	{
 		SubscribeToControlEvents();
+		SubscribeToNetworkClientEvents();
 
 		// ---- Initialize Controls World Tiles ----
 		{
@@ -34,7 +35,17 @@ namespace onion::voxel
 		m_EventHandles.clear();
 	}
 
-	void MultiplayerPanel::RefreshServerTiles() {}
+	void MultiplayerPanel::RefreshServerTilesAsync()
+	{
+		if (m_RefreshServerTilesThread.joinable())
+		{
+			m_RefreshServerTilesThread.request_stop();
+			m_RefreshServerTilesThread.join();
+		}
+
+		m_RefreshServerTilesThread =
+			std::jthread([this](std::stop_token stopToken) { RefreshServerTilesAsync(stopToken); });
+	}
 
 	void MultiplayerPanel::Render()
 	{
@@ -72,35 +83,7 @@ namespace onion::voxel
 		m_Button_RefreshServerTiles.Initialize();
 		m_Button_Back.Initialize();
 
-		// DEBUG / DEMO PURPOSE: Add some dummy server tiles
-		for (int i = 0; i < 10; i++)
-		{
-			ServerInfos serverInfos;
-			serverInfos.Name = "Server " + std::to_string(i + 1);
-			serverInfos.Description = "This is a description for server " + std::to_string(i + 1);
-			serverInfos.PlayerCount = i * 2;
-			serverInfos.MaxPlayerCount = 20;
-			serverInfos.Ping = 10 + i * 100;
-
-			if (i == 1)
-			{
-				serverInfos.Ping = -1;
-			}
-
-			serverInfos.Address = "127.0.0." + std::to_string(i + 1);
-
-			m_ServerTiles.push_back(std::make_unique<ServerTile>("ServerTile" + std::to_string(i), serverInfos));
-
-			// Subscribe to server tile events
-			m_EventHandles.push_back(m_ServerTiles.back()->EvtTileSelected.Subscribe(
-				[this](const ServerTile& serverTile) { Handle_ServerTileSelected(serverTile); }));
-
-			m_EventHandles.push_back(m_ServerTiles.back()->EvtTileDoubleClicked.Subscribe(
-				[this](const ServerTile& serverTile) { Handle_ServerTileDoubleClicked(serverTile); }));
-		}
-
-		for (const auto& serverTile : m_ServerTiles)
-			serverTile->Initialize();
+		InitializeServerTiles();
 
 		SetInitState(true);
 	}
@@ -139,6 +122,66 @@ namespace onion::voxel
 			serverTile->ReloadTextures();
 	}
 
+	void MultiplayerPanel::SubscribeToNetworkClientEvents()
+	{
+		m_EventHandles.push_back(m_NetworkClient.Connected.Subscribe(
+			[this](const ServerInfoMsg& serverInfoMsg) { Handle_NetworkClient_Connected(serverInfoMsg); }));
+
+		m_EventHandles.push_back(m_NetworkClient.Disconnected.Subscribe([this](const bool& val)
+																		{ Handle_NetworkClient_Disconnected(val); }));
+
+		m_EventHandles.push_back(m_NetworkClient.MessageReceived.Subscribe(
+			[this](const NetworkMessage& message) { Handle_NetworkClient_MessageReceived(message); }));
+	}
+
+	void MultiplayerPanel::RefreshServerTilesAsync(std::stop_token stopToken)
+	{
+		for (auto& serverTile : m_ServerTiles)
+		{
+			if (stopToken.stop_requested())
+				return;
+
+			auto serverInfos = serverTile->GetServerInfos();
+			UpdateServerInfos(serverInfos, stopToken);
+		}
+
+		// Save Tiles
+		std::vector<ServerInfos> serversInfos;
+		for (const auto& serverTile : m_ServerTiles)
+			serversInfos.push_back(serverTile->GetServerInfos());
+
+		SaveServers(serversInfos, s_ServersListFilePath.string());
+	}
+
+	void MultiplayerPanel::InitializeServerTiles()
+	{
+		// Delete existing tiles
+		for (const auto& serverTile : m_ServerTiles)
+			serverTile->Delete();
+
+		m_ServerTiles.clear();
+
+		// Retreves server list.
+		std::vector<ServerInfos> serversList;
+		LoadServers(serversList, s_ServersListFilePath.string());
+
+		// Create new tiles
+		for (const auto& serverInfos : serversList)
+		{
+			m_ServerTiles.push_back(std::make_unique<ServerTile>("ServerTile_" + serverInfos.Name, serverInfos));
+
+			// Subscribe to server tile events
+			m_EventHandles.push_back(m_ServerTiles.back()->EvtTileSelected.Subscribe(
+				[this](const ServerTile& serverTile) { Handle_ServerTileSelected(serverTile); }));
+			m_EventHandles.push_back(m_ServerTiles.back()->EvtTileDoubleClicked.Subscribe(
+				[this](const ServerTile& serverTile) { Handle_ServerTileDoubleClicked(serverTile); }));
+		}
+
+		// Initialize new tiles
+		for (const auto& serverTile : m_ServerTiles)
+			serverTile->Initialize();
+	}
+
 	void MultiplayerPanel::RenderServerTiles()
 	{
 		if (s_IsBackPressed)
@@ -146,6 +189,8 @@ namespace onion::voxel
 			Handle_ButtonBack_Clicked(m_Button_Back);
 			return;
 		}
+
+		bool isAnyTileSelected = IsAnyServerTileSelected();
 
 		// ---- Layout Constants ----
 		int centerX = static_cast<int>(std::round(s_ScreenWidth / 2.f));
@@ -219,6 +264,7 @@ namespace onion::voxel
 		glm::ivec2 buttonPos = tableTopLeftCorner + layerTopButtons.GetElementPosition(0, 0);
 		m_Button_JoinServer.SetPosition(buttonPos);
 		m_Button_JoinServer.SetSize(cellSize);
+		m_Button_JoinServer.SetEnabled(isAnyTileSelected);
 		m_Button_JoinServer.Render();
 
 		// ---- Render Direct Connect Button ----
@@ -245,12 +291,14 @@ namespace onion::voxel
 		buttonPos = table2TopLeftCorner + layerBottomButtons.GetElementPosition(0, 0);
 		m_Button_EditServer.SetPosition(buttonPos);
 		m_Button_EditServer.SetSize(cellSize);
+		m_Button_EditServer.SetEnabled(isAnyTileSelected);
 		m_Button_EditServer.Render();
 
 		// ---- Render Delete Server Button ----
 		buttonPos = table2TopLeftCorner + layerBottomButtons.GetElementPosition(0, 1);
 		m_Button_DeleteServer.SetPosition(buttonPos);
 		m_Button_DeleteServer.SetSize(cellSize);
+		m_Button_DeleteServer.SetEnabled(isAnyTileSelected);
 		m_Button_DeleteServer.Render();
 
 		// ---- Render Refresh Server Tiles Button ----
@@ -274,6 +322,17 @@ namespace onion::voxel
 
 	void MultiplayerPanel::RenderDirectConnect() {}
 
+	bool MultiplayerPanel::IsAnyServerTileSelected() const
+	{
+		for (auto& serverTile : m_ServerTiles)
+		{
+			if (serverTile->IsSelected())
+				return true;
+		}
+
+		return false;
+	}
+
 	void MultiplayerPanel::ClearServerTiles()
 	{
 		for (const auto& serverTile : m_ServerTiles)
@@ -282,10 +341,56 @@ namespace onion::voxel
 		m_ServerTiles.clear();
 	}
 
+	void MultiplayerPanel::UpdateServerInfos(ServerInfos& serverInfos, std::stop_token& stopToken)
+	{
+		m_NetworkClient.Stop();
+		m_NetworkClient.SetRemoteHost(serverInfos.Address);
+		m_NetworkClient.SetRemotePort(serverInfos.Port);
+		m_NetworkClient.Start();
+		std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait a bit for the connection to establish
+		RequestMotdMsg requestMotdMsg;
+		m_NetworkClient.Send(requestMotdMsg);
+
+		// Get current time to measure ping
+		m_MotdRequestTime = std::chrono::steady_clock::now();
+
+		m_AckMotdReceived = false;
+		for (int i = 0; i < 100; i++)
+		{
+			if (stopToken.stop_requested() || m_AckMotdReceived)
+			{
+				break;
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+
+		if (!m_AckMotdReceived)
+		{
+			// Retreve the tile and set ping to -1
+			for (auto& serverTile : m_ServerTiles)
+			{
+				ServerInfos infos = serverTile->GetServerInfos();
+				if (infos.Address == serverInfos.Address && infos.Port == serverInfos.Port)
+				{
+					infos.Ping = -1;
+					serverTile->SetServerInfos(infos);
+					break;
+				}
+			}
+		}
+
+		m_NetworkClient.Stop();
+	}
+
 	void MultiplayerPanel::SubscribeToControlEvents()
 	{
-		m_EventHandles.push_back(
-			m_Button_Back.OnClick.Subscribe([this](const Button& button) { EvtRequestBackNavigation.Trigger(this); }));
+		m_EventHandles.push_back(m_Button_Back.OnClick.Subscribe(
+			[this](const Button& button)
+			{
+				(void) button;
+				EvtRequestBackNavigation.Trigger(this);
+			}));
 
 		m_EventHandles.push_back(m_Button_JoinServer.OnClick.Subscribe([this](const Button& button)
 																	   { Handle_ButtonJoinServer_Clicked(button); }));
@@ -324,38 +429,117 @@ namespace onion::voxel
 
 	void MultiplayerPanel::Handle_ButtonJoinServer_Clicked(const Button& button)
 	{
-		throw std::logic_error("Not implemented");
+		(void) button;
+
+		for (const auto& serverTile : m_ServerTiles)
+		{
+			if (serverTile->IsSelected())
+			{
+				EvtConnectToServer.Trigger(serverTile->GetServerInfos());
+				break;
+			}
+		}
 	}
 
 	void MultiplayerPanel::Handle_ButtonDirectConnect_Clicked(const Button& button)
 	{
+		(void) button;
 		throw std::logic_error("Not implemented");
 	}
 
 	void MultiplayerPanel::Handle_ButtonAddServer_Clicked(const Button& button)
 	{
+		(void) button;
 		throw std::logic_error("Not implemented");
 	}
 
 	void MultiplayerPanel::Handle_ButtonEditServer_Clicked(const Button& button)
 	{
+		(void) button;
 		throw std::logic_error("Not implemented");
 	}
 
 	void MultiplayerPanel::Handle_ButtonDeleteServer_Clicked(const Button& button)
 	{
-		throw std::logic_error("Not implemented");
+		(void) button;
+
+		for (int i = 0; i < m_ServerTiles.size(); i++)
+		{
+			if (m_ServerTiles[i]->IsSelected())
+			{
+				m_ServerTiles[i]->Delete();
+				m_ServerTiles.erase(m_ServerTiles.begin() + i);
+				break;
+			}
+		}
 	}
 
 	void MultiplayerPanel::Handle_ButtonRefreshServerTiles_Clicked(const Button& button)
 	{
-		throw std::logic_error("Not implemented");
+		(void) button;
+		RefreshServerTilesAsync();
 	}
 
 	void MultiplayerPanel::Handle_ButtonBack_Clicked(const Button& button)
 	{
 		(void) button;
 		EvtRequestBackNavigation.Trigger(this);
+	}
+
+	void MultiplayerPanel::Handle_NetworkClient_Connected(const ServerInfoMsg& serverInfoMsg)
+	{
+		(void) serverInfoMsg;
+		std::cout << " MultiplayerPanel - Connected to server: " << serverInfoMsg.ServerName << std::endl;
+	}
+
+	void MultiplayerPanel::Handle_NetworkClient_Disconnected(const bool& val)
+	{
+		(void) val;
+		std::cout << " MultiplayerPanel - Disconnected from server." << std::endl;
+	}
+
+	void MultiplayerPanel::Handle_NetworkClient_MessageReceived(const NetworkMessage& message)
+	{
+		std::visit(
+			[this](const auto& msg)
+			{
+				using T = std::decay_t<decltype(msg)>;
+				if constexpr (std::is_same_v<T, ServerMotdMsg>)
+				{
+					Handle_NetworkClient_ServerMOTDReceived(msg);
+				}
+			},
+			message);
+	}
+
+	void MultiplayerPanel::Handle_NetworkClient_ServerMOTDReceived(const ServerMotdMsg& motdMsg)
+	{
+		std::string networkHost = m_NetworkClient.GetRemoteHost();
+		uint16_t networkPort = m_NetworkClient.GetRemotePort();
+
+		for (auto& serverTile : m_ServerTiles)
+		{
+			ServerInfos serverInfos = serverTile->GetServerInfos();
+			if (networkHost == serverInfos.Address && networkPort == serverInfos.Port)
+			{
+				serverInfos.Description = motdMsg.ServerMotd;
+				serverInfos.PlayerCount = motdMsg.PlayerCount;
+				serverInfos.MaxPlayerCount = motdMsg.MaxPlayers;
+				serverInfos.PlayerNames = motdMsg.PlayerNames;
+				serverInfos.IconPngData = motdMsg.ServerIconPngData;
+
+				// Measure Ping
+				auto now = std::chrono::steady_clock::now();
+				auto pingDuration = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_MotdRequestTime);
+				serverInfos.Ping = static_cast<int>(pingDuration.count());
+
+				std::cout << "MultiplayerPanel - Received MOTD from server: " << serverInfos.Name
+						  << " | Ping: " << serverInfos.Ping << "ms" << std::endl;
+
+				serverTile->SetServerInfos(serverInfos);
+				m_AckMotdReceived = true;
+			}
+		}
 	}
 
 } // namespace onion::voxel

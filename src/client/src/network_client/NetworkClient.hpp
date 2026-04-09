@@ -5,6 +5,7 @@
 #include <string>
 #include <thread>
 
+#define NOMINMAX
 #include <enet/enet.h>
 
 #include <onion/Event.hpp>
@@ -50,7 +51,7 @@ namespace onion::voxel
 		struct OutgoingMessage
 		{
 			NetworkMessage Message;
-			bool Reliable;
+			bool Reliable = true;
 		};
 
 		// ------ Private Members ------

@@ -2,6 +2,17 @@ cmake_minimum_required(VERSION 3.20)
 
 project(onion_voxel_server LANGUAGES CXX)
 
+# Copy assets to build directory
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../../assets/textures/ServerThumbnail.png" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+
+set(ICON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../assets/app_icons/Vox_Server_Icon.ico")
+
+configure_file(
+    app_icon.rc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc
+    @ONLY
+)
+
 # ---- Library ----
 add_library(onion_voxel_server
     "src/Server.cpp"
@@ -53,3 +64,7 @@ target_link_libraries(OnionVoxelServer
     PRIVATE
         onion_voxel_server
 )
+
+if (WIN32)
+    target_sources(OnionVoxelServer PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)
+endif()

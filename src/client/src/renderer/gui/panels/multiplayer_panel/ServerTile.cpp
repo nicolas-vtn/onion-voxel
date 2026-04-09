@@ -4,7 +4,7 @@
 
 namespace onion::voxel
 {
-	ServerTile::ServerTile(const std::string& name, const ServerInfos& serverInfos, Texture texture)
+	ServerTile::ServerTile(const std::string& name, const ServerInfos& serverInfos)
 		: GuiElement(name), m_ServerInfos(serverInfos), m_LabelName(name + "_LabelTitle"),
 		  m_LabelDescription(name + "_LabelDescription"), m_LabelPlayerCount(name + "_LabelPlayerCount"),
 		  m_UnreachableSprite(name + "_UnreachableSprite", s_UnreachableSpritePath, Sprite::eOrigin::ResourcePack),
@@ -18,17 +18,22 @@ namespace onion::voxel
 						   Sprite(name + "_PingingSprite3", s_PingingSpritesPaths[2], Sprite::eOrigin::ResourcePack),
 						   Sprite(name + "_PingingSprite4", s_PingingSpritesPaths[3], Sprite::eOrigin::ResourcePack),
 						   Sprite(name + "_PingingSprite5", s_PingingSpritesPaths[4], Sprite::eOrigin::ResourcePack)},
-		  m_ThumbnailSprite(name + "_ThumbnailSprite", std::move(texture))
+		  m_ThumbnailSprite(name + "_ThumbnailSprite", Texture())
 	{
 		m_LabelName.SetTextAlignment(Font::eTextAlignment::Left);
 		m_LabelDescription.SetTextAlignment(Font::eTextAlignment::Left);
 		m_LabelPlayerCount.SetTextAlignment(Font::eTextAlignment::Right);
 
-		// Load default texture if none provided
-		if (m_ThumbnailSprite.GetTextureHeight() <= 0 || m_ThumbnailSprite.GetTextureWidth() <= 0)
+		// Load texture if provided
+		if (m_ServerInfos.IconPngData.size() > 0)
+		{
+			Texture thumbnailTexture("ThumbnailServer_" + m_ServerInfos.Name, m_ServerInfos.IconPngData);
+			m_ThumbnailSprite.SwapTexture(std::move(thumbnailTexture));
+		}
+		else // Load default texture if none provided
 		{
 			std::filesystem::path defaultThumbnailPath =
-				EngineContext::Get().Assets->GetTexturesDirectory() / "Vox_Server_Thumbnail.png";
+				EngineContext::Get().Assets->GetTexturesDirectory() / "ServerThumbnail.png";
 			m_ThumbnailSprite.SwapTexture(Texture(defaultThumbnailPath));
 		}
 	}
@@ -248,6 +253,9 @@ namespace onion::voxel
 	void ServerTile::SetServerInfos(const ServerInfos& serverInfos)
 	{
 		m_ServerInfos = serverInfos;
+
+		Texture thumbnailTexture("ThumbnailServer_" + m_ServerInfos.Name, m_ServerInfos.IconPngData);
+		m_ThumbnailSprite.SwapTexture(std::move(thumbnailTexture));
 	}
 
 	const ServerInfos ServerTile::GetServerInfos() const

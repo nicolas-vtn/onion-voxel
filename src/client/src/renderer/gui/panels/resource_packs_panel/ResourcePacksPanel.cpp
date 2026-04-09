@@ -4,6 +4,7 @@
 
 #include <unordered_set>
 
+#include <shared/utils/Utils.hpp>
 #include <shared/zip_archive/ZipArchive.hpp>
 
 #include <renderer/gui/LayoutHelper.hpp>
@@ -404,8 +405,7 @@ namespace onion::voxel
 	{
 		(void) sender; // Unused parameter)
 		std::filesystem::path resourcePacksFolderPath = EngineContext::Get().Assets->GetResourcePacksDirectory();
-		ShellExecuteA(
-			nullptr, "open", "explorer.exe", resourcePacksFolderPath.string().c_str(), nullptr, SW_SHOWNORMAL);
+		Utils::OpenDirectoryInFileExplorer(resourcePacksFolderPath);
 	}
 
 	void ResourcePacksPanel::Handle_Done_Click(const Button& sender)

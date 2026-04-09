@@ -19,7 +19,7 @@ namespace onion::voxel
 	{
 		// ----- Constructor / Destructor -----
 	  public:
-		ServerTile(const std::string& name, const ServerInfos& serverInfos, Texture texture = Texture());
+		ServerTile(const std::string& name, const ServerInfos& serverInfos);
 		~ServerTile();
 
 		// ----- Public API -----

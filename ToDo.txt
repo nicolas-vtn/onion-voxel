@@ -2,14 +2,6 @@
 		----- ONION - VOXEL -----
 
 - Multiplayer Menu (UI + Add Server + List of servers)
-	- Add a Way to Ping Servers to retreve Infos (Players, Sprite, etc)
-	- Refresh list button
-	- Save Server List in a file (Name + Motd + IP + Port + Sprite)
 	- Implement : Add / Remove / Edit Server in the List
 
-- Server App Icon (Cpy Cmake icon.rc)
-- Copy default icon.png to Server Root
-- Server : When load MOTD, throw if icon.png is invalid (size, missing, ...)
-
-		
 - BUGFIX : Z-Ordering issue in GUI (Fix TestField Background)

@@ -14,6 +14,6 @@ namespace onion::voxel
 	{
 		static constexpr MessageHeader::eType StaticType = MessageHeader::eType::RequestMotd;
 
-		template <class Archive> void serialize(Archive& ar) {}
+		template <class Archive> void serialize(Archive& ar) { (void) ar; }
 	};
 } // namespace onion::voxel

@@ -1037,7 +1037,7 @@ namespace onion::voxel
 			[this](const WorldInfos& worldInfos) { Handle_StartSingleplayerGameRequest(worldInfos); }));
 
 		m_EventHandles.push_back(m_Gui.RequestStartMultiplayerGame.Subscribe(
-			[this](const Gui::MultiplayerGameStartInfo& startInfo) { Handle_StartMultiplayerGameRequest(startInfo); }));
+			[this](const ServerInfos& serverInfos) { Handle_StartMultiplayerGameRequest(serverInfos); }));
 
 		m_EventHandles.push_back(m_Gui.RequestBackToGame.Subscribe([this](bool) { Handle_BackToGameRequest(); }));
 
@@ -1065,12 +1065,14 @@ namespace onion::voxel
 		m_IsPaused = false;
 	}
 
-	void Renderer::Handle_StartMultiplayerGameRequest(const Gui::MultiplayerGameStartInfo& startInfo)
+	void Renderer::Handle_StartMultiplayerGameRequest(const ServerInfos& serverInfos)
 	{
-		RequestStartMultiplayerGame.Trigger(startInfo);
+		RequestStartMultiplayerGame.Trigger(serverInfos);
 
 		// Enable mouse capture for gameplay
 		m_InputsManager.SetMouseCaptureEnabled(true);
+
+		m_Gui.SetIsInGame(true);
 
 		m_IsPaused = false;
 	}

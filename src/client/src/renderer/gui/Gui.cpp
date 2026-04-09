@@ -208,6 +208,8 @@ namespace onion::voxel
 	{
 		std::cout << "Connect to server requested: " << serverInfos.Name << " at " << serverInfos.Address << ":"
 				  << serverInfos.Port << std::endl;
+
+		RequestStartMultiplayerGame.Trigger(serverInfos);
 	}
 
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)
@@ -295,6 +297,11 @@ namespace onion::voxel
 		if (m_ActiveMenu == eMenu::Singleplayer)
 		{
 			m_SingleplayerPanel.RefreshWorldTiles();
+		}
+
+		if (m_ActiveMenu == eMenu::Multiplayer)
+		{
+			m_MultiplayerPanel.RefreshServerTilesAsync();
 		}
 	}
 
