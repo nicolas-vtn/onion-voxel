@@ -694,7 +694,7 @@ namespace onion::voxel
 
 			for (char32_t c : text)
 			{
-				// Ignore newline characters
+				// Move Down on newline characters
 				if (c == '\n')
 				{
 					cursorX = position.x;

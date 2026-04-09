@@ -105,6 +105,12 @@ namespace onion::voxel
 
 		// ---- Controls Direct Connect -----
 	  private:
+		Label m_LabelDirectConnectTitle;
+		Label m_LabelDirectConnectAddress;
+		TextField m_TextFieldDirectConnectAddress;
+		Button m_ButtonDirectConnectJoin;
+		Button m_ButtonDirectConnectCancel;
+
 		// ----- Internal Methods -----
 	  private:
 		void InitializeServerTiles();
@@ -150,5 +156,8 @@ namespace onion::voxel
 
 		void Handle_DeleteConfirm_Clicked(const Button& button);
 		void Handle_DeleteCancel_Clicked(const Button& button);
+
+		void Handle_DirectConnectJoin_Clicked(const Button& button);
+		void Handle_DirectConnectCancel_Clicked(const Button& button);
 	};
 } // namespace onion::voxel

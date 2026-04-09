@@ -13,7 +13,10 @@ namespace onion::voxel
 		  m_LabelAddEditAddress("AddEditAddress"), m_TextFieldAddEditAddress("AddEditAddress"),
 		  m_ButtonAddEditDone("AddEditDone"), m_ButtonAddEditCancel("AddEditCancel"),
 		  m_LabelDeleteWarning("Delete Warning"), m_LabelDeleteDetails("Delete Details"),
-		  m_ButtonDeleteConfirm("Delete Confirm"), m_ButtonDeleteCancel("Delete Cancel")
+		  m_ButtonDeleteConfirm("Delete Confirm"), m_ButtonDeleteCancel("Delete Cancel"),
+		  m_LabelDirectConnectTitle("DirectConnectTitle"), m_LabelDirectConnectAddress("DirectConnectAddress"),
+		  m_TextFieldDirectConnectAddress("DirectConnectAddress"), m_ButtonDirectConnectJoin("DirectConnectJoin"),
+		  m_ButtonDirectConnectCancel("DirectConnectCancel")
 	{
 		SubscribeToControlEvents();
 		SubscribeToNetworkClientEvents();
@@ -57,6 +60,18 @@ namespace onion::voxel
 
 			m_ButtonDeleteConfirm.SetText("Delete");
 			m_ButtonDeleteCancel.SetText("Cancel");
+		}
+
+		// ---- Initialize Controls Direct Connect -----
+		{
+			m_LabelDirectConnectTitle.SetText("Direct Connection");
+			m_LabelDirectConnectTitle.SetTextAlignment(Font::eTextAlignment::Center);
+			m_LabelDirectConnectAddress.SetText("Server Address");
+			m_LabelDirectConnectAddress.SetTextColor(Font::eColor::Gray);
+			m_LabelDirectConnectAddress.SetTextAlignment(Font::eTextAlignment::Left);
+			m_TextFieldDirectConnectAddress.SetPlaceholderText("IP:Port");
+			m_ButtonDirectConnectJoin.SetText("Join Server");
+			m_ButtonDirectConnectCancel.SetText("Cancel");
 		}
 	}
 
@@ -125,6 +140,12 @@ namespace onion::voxel
 		m_ButtonDeleteConfirm.Initialize();
 		m_ButtonDeleteCancel.Initialize();
 
+		m_LabelDirectConnectTitle.Initialize();
+		m_LabelDirectConnectAddress.Initialize();
+		m_TextFieldDirectConnectAddress.Initialize();
+		m_ButtonDirectConnectJoin.Initialize();
+		m_ButtonDirectConnectCancel.Initialize();
+
 		SetInitState(true);
 	}
 
@@ -156,6 +177,12 @@ namespace onion::voxel
 		m_ButtonDeleteConfirm.Delete();
 		m_ButtonDeleteCancel.Delete();
 
+		m_LabelDirectConnectTitle.Delete();
+		m_LabelDirectConnectAddress.Delete();
+		m_TextFieldDirectConnectAddress.Delete();
+		m_ButtonDirectConnectJoin.Delete();
+		m_ButtonDirectConnectCancel.Delete();
+
 		SetDeletedState(true);
 	}
 
@@ -186,6 +213,12 @@ namespace onion::voxel
 		m_LabelDeleteDetails.ReloadTextures();
 		m_ButtonDeleteConfirm.ReloadTextures();
 		m_ButtonDeleteCancel.ReloadTextures();
+
+		m_LabelDirectConnectTitle.ReloadTextures();
+		m_LabelDirectConnectAddress.ReloadTextures();
+		m_TextFieldDirectConnectAddress.ReloadTextures();
+		m_ButtonDirectConnectJoin.ReloadTextures();
+		m_ButtonDirectConnectCancel.ReloadTextures();
 	}
 
 	void MultiplayerPanel::SubscribeToNetworkClientEvents()
@@ -509,7 +542,56 @@ namespace onion::voxel
 		m_ButtonAddEditCancel.Render();
 	}
 
-	void MultiplayerPanel::RenderDirectConnect() {}
+	void MultiplayerPanel::RenderDirectConnect()
+	{
+		if (s_IsBackPressed)
+		{
+			m_CurrentRenderModule = eRenderModule::ServerTiles;
+			return;
+		}
+
+		// ---- Layout Constants ----
+		int centerX = static_cast<int>(std::round(s_ScreenWidth / 2.f));
+		float controlWidthRatio = 800.f / 1920.f;
+		int controlWidth = static_cast<int>(std::round(s_ScreenWidth * controlWidthRatio));
+		int textX = centerX - controlWidth / 2;
+		bool validInputs = !m_TextFieldDirectConnectAddress.GetText().empty();
+
+		// ---- Render Title ----
+		float titleYOffsetRatio = (87.f - 23.f) / 1009.f;
+		int titleY = static_cast<int>(std::round(s_ScreenHeight * titleYOffsetRatio));
+		m_LabelDirectConnectTitle.SetPosition({centerX, titleY});
+		m_LabelDirectConnectTitle.SetTextHeight(s_TextHeight);
+		m_LabelDirectConnectTitle.Render();
+
+		// ----- Render Name Label and TextField ----
+		float nameYOffsetRatio = (435.f - 23.f) / 1009.f;
+		int nameY = static_cast<int>(std::round(s_ScreenHeight * nameYOffsetRatio));
+		m_LabelDirectConnectAddress.SetPosition({textX, nameY});
+		m_LabelDirectConnectAddress.SetTextHeight(s_TextHeight);
+		m_LabelDirectConnectAddress.Render();
+
+		float nameFieldYOffsetRatio = (527.f - 23.f) / 1009.f;
+		int nameFieldY = static_cast<int>(std::round(s_ScreenHeight * nameFieldYOffsetRatio));
+		m_TextFieldDirectConnectAddress.SetPosition({centerX, nameFieldY});
+		m_TextFieldDirectConnectAddress.SetSize({controlWidth, s_ControlHeight});
+		m_TextFieldDirectConnectAddress.Render();
+
+		// ----- Render Done Button ----
+		float buttonDoneYOffsetRatio = (770.f - 23.f) / 1009.f;
+		int buttonDoneY = static_cast<int>(std::round(s_ScreenHeight * buttonDoneYOffsetRatio));
+		m_ButtonDirectConnectJoin.SetPosition({centerX, buttonDoneY});
+		m_ButtonDirectConnectJoin.SetSize({controlWidth, s_ControlHeight});
+		m_ButtonDirectConnectJoin.SetEnabled(validInputs);
+		m_ButtonDirectConnectJoin.Render();
+
+		// ----- Render Cancel Button ----
+		float buttonCancelYOffsetRatio = (865.f - 23.f) / 1009.f;
+		int buttonCancelY = static_cast<int>(std::round(s_ScreenHeight * buttonCancelYOffsetRatio));
+		m_ButtonDirectConnectCancel.SetPosition({centerX, buttonCancelY});
+		m_ButtonDirectConnectCancel.SetSize({controlWidth, s_ControlHeight});
+		m_ButtonDirectConnectCancel.Render();
+	}
 
 	bool MultiplayerPanel::IsAnyServerTileSelected() const
 	{
@@ -623,6 +705,12 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_ButtonDeleteCancel.OnClick.Subscribe([this](const Button& button)
 																		{ Handle_DeleteCancel_Clicked(button); }));
+
+		m_EventHandles.push_back(m_ButtonDirectConnectJoin.OnClick.Subscribe(
+			[this](const Button& button) { Handle_DirectConnectJoin_Clicked(button); }));
+
+		m_EventHandles.push_back(m_ButtonDirectConnectCancel.OnClick.Subscribe(
+			[this](const Button& button) { Handle_DirectConnectCancel_Clicked(button); }));
 	}
 
 	void MultiplayerPanel::Handle_ServerTileSelected(const ServerTile& serverTile)
@@ -658,7 +746,7 @@ namespace onion::voxel
 	void MultiplayerPanel::Handle_ButtonDirectConnect_Clicked(const Button& button)
 	{
 		(void) button;
-		throw std::logic_error("Not implemented");
+		m_CurrentRenderModule = eRenderModule::DirectConnect;
 	}
 
 	void MultiplayerPanel::Handle_ButtonAddServer_Clicked(const Button& button)
@@ -911,6 +999,39 @@ namespace onion::voxel
 	}
 
 	void MultiplayerPanel::Handle_DeleteCancel_Clicked(const Button& button)
+	{
+		(void) button;
+		m_CurrentRenderModule = eRenderModule::ServerTiles;
+	}
+
+	void MultiplayerPanel::Handle_DirectConnectJoin_Clicked(const Button& button)
+	{
+		(void) button;
+
+		// Retreve infos from field
+		ServerInfos serverInfos;
+		std::string addressPort = m_TextFieldDirectConnectAddress.GetText();
+
+		// Validate address format
+		size_t colonPos = addressPort.find(':');
+		if (colonPos == std::string::npos)
+		{
+			std::cerr << "Invalid address format. Expected format: IP:Port" << std::endl;
+			return;
+		}
+
+		// Split address and port
+		serverInfos.Address = addressPort.substr(0, colonPos);
+		serverInfos.Port = static_cast<uint16_t>(std::stoi(addressPort.substr(colonPos + 1)));
+
+		// Go back to server tiles for later
+		m_CurrentRenderModule = eRenderModule::ServerTiles;
+
+		// Trigger event to connect to the server
+		EvtConnectToServer.Trigger(serverInfos);
+	}
+
+	void MultiplayerPanel::Handle_DirectConnectCancel_Clicked(const Button& button)
 	{
 		(void) button;
 		m_CurrentRenderModule = eRenderModule::ServerTiles;

@@ -313,6 +313,8 @@ namespace onion::voxel
 		std::cout << "Client disconnected: " << args.Client << " ( " << args.UUID << ", " << args.IpAddress << ")\n";
 
 		RemovePlayer(args.UUID);
+
+		UpdateMOTD();
 	}
 
 	void Server::Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk)
