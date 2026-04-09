@@ -136,6 +136,12 @@ namespace onion::voxel
 		}
 	}
 
+	void NetworkServer::SetMOTD(const ServerMotdMsg& motd)
+	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+		m_MOTD = motd;
+	}
+
 	void NetworkServer::ListenForEvents(std::stop_token stopToken)
 	{
 		ENetEvent event;
@@ -226,6 +232,12 @@ namespace onion::voxel
 										args.PlayerName = clientInfo.PlayerName;
 
 										ClientConnected.Trigger(args);
+									}
+
+									if (header.Type == MessageHeader::eType::RequestMotd)
+									{
+										// Send MOTD to the client
+										Send(handle, m_MOTD);
 									}
 								}
 

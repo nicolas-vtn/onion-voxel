@@ -10,7 +10,9 @@
 #include "entity_snapshot_msg/EntitySnapshotMsg.hpp"
 #include "player_infos_msg/PlayerInfosMsg.hpp"
 #include "request_chunks_msg/RequestChunksMsg.hpp"
+#include "request_motd_msg/RequestMotdMsg.hpp"
 #include "server_info_msg/ServerInfoMsg.hpp"
+#include "server_motd_msg/ServerMotdMsg.hpp"
 
 #include <shared/data_transfer_objects/DTOs/DTOs.hpp>
 
@@ -22,7 +24,9 @@ namespace onion::voxel
 										PlayerInfoMsg,
 										BlocksChangedMsg,
 										RequestChunksMsg,
-										EntitySnapshotMsg>;
+										EntitySnapshotMsg,
+										ServerMotdMsg,
+										RequestMotdMsg>;
 
 	inline NetworkMessage DeserializeMessage(cereal::BinaryInputArchive& archive, MessageHeader::eType type)
 	{
@@ -73,6 +77,20 @@ namespace onion::voxel
 			case MessageHeader::eType::EntitySnapshot:
 				{
 					EntitySnapshotMsg msg;
+					archive(msg);
+					return msg;
+				}
+
+			case MessageHeader::eType::ServerMOTD:
+				{
+					ServerMotdMsg msg;
+					archive(msg);
+					return msg;
+				}
+
+			case MessageHeader::eType::RequestMotd:
+				{
+					RequestMotdMsg msg;
 					archive(msg);
 					return msg;
 				}

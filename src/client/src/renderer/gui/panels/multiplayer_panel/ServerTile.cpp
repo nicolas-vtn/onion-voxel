@@ -6,11 +6,31 @@ namespace onion::voxel
 {
 	ServerTile::ServerTile(const std::string& name, const ServerInfos& serverInfos, Texture texture)
 		: GuiElement(name), m_ServerInfos(serverInfos), m_LabelName(name + "_LabelTitle"),
-		  m_LabelDescription(name + "_LabelDescription"), m_LabelPlayerCount(name + "_LabelPlayerCount")
+		  m_LabelDescription(name + "_LabelDescription"), m_LabelPlayerCount(name + "_LabelPlayerCount"),
+		  m_UnreachableSprite(name + "_UnreachableSprite", s_UnreachableSpritePath, Sprite::eOrigin::ResourcePack),
+		  m_PingSprites{Sprite(name + "_PingSprite1", s_PingSpritesPaths[0], Sprite::eOrigin::ResourcePack),
+						Sprite(name + "_PingSprite2", s_PingSpritesPaths[1], Sprite::eOrigin::ResourcePack),
+						Sprite(name + "_PingSprite3", s_PingSpritesPaths[2], Sprite::eOrigin::ResourcePack),
+						Sprite(name + "_PingSprite4", s_PingSpritesPaths[3], Sprite::eOrigin::ResourcePack),
+						Sprite(name + "_PingSprite5", s_PingSpritesPaths[4], Sprite::eOrigin::ResourcePack)},
+		  m_PingingSprites{Sprite(name + "_PingingSprite1", s_PingingSpritesPaths[0], Sprite::eOrigin::ResourcePack),
+						   Sprite(name + "_PingingSprite2", s_PingingSpritesPaths[1], Sprite::eOrigin::ResourcePack),
+						   Sprite(name + "_PingingSprite3", s_PingingSpritesPaths[2], Sprite::eOrigin::ResourcePack),
+						   Sprite(name + "_PingingSprite4", s_PingingSpritesPaths[3], Sprite::eOrigin::ResourcePack),
+						   Sprite(name + "_PingingSprite5", s_PingingSpritesPaths[4], Sprite::eOrigin::ResourcePack)},
+		  m_ThumbnailSprite(name + "_ThumbnailSprite", std::move(texture))
 	{
 		m_LabelName.SetTextAlignment(Font::eTextAlignment::Left);
 		m_LabelDescription.SetTextAlignment(Font::eTextAlignment::Left);
-		m_LabelPlayerCount.SetTextAlignment(Font::eTextAlignment::Center);
+		m_LabelPlayerCount.SetTextAlignment(Font::eTextAlignment::Right);
+
+		// Load default texture if none provided
+		if (m_ThumbnailSprite.GetTextureHeight() <= 0 || m_ThumbnailSprite.GetTextureWidth() <= 0)
+		{
+			std::filesystem::path defaultThumbnailPath =
+				EngineContext::Get().Assets->GetTexturesDirectory() / "Vox_Server_Thumbnail.png";
+			m_ThumbnailSprite.SwapTexture(Texture(defaultThumbnailPath));
+		}
 	}
 
 	ServerTile::~ServerTile()
@@ -56,12 +76,8 @@ namespace onion::voxel
 		const int borderThickness = static_cast<int>(round(4.f / 1009.f * s_ScreenHeight));
 		const glm::ivec2 thumbnailSize{static_cast<int>(round(m_Size.y - (4 * borderThickness)))};
 		const int posBorderLeft = static_cast<int>(round(m_Position.x - (m_Size.x / 2)));
-		const int posBorderTop = static_cast<int>(round(m_Position.y - (m_Size.y / 2)));
 		const glm::ivec2 thumbnailPos{
 			posBorderLeft + (2 * borderThickness) + static_cast<int>(round(thumbnailSize.x / 2)), m_Position.y};
-
-		const int startTextPosX = thumbnailPos.x + static_cast<int>(round(thumbnailSize.x / 2)) + (3 * borderThickness);
-		const float textSpacingY = m_Size.y / 4.f;
 
 		const int topPosY = static_cast<int>(round(m_Position.y - (m_Size.y / 2)));
 
@@ -89,7 +105,9 @@ namespace onion::voxel
 		}
 
 		// ---- Render Thumbnail ----
-		// TODO : Render thumbnail when implemented
+		m_ThumbnailSprite.SetPosition(thumbnailPos);
+		m_ThumbnailSprite.SetSize(thumbnailSize);
+		m_ThumbnailSprite.Render();
 
 		// ---- Render Server Name ----
 		float textNamePosYratio = 28.f / 134.f;
@@ -109,13 +127,36 @@ namespace onion::voxel
 		m_LabelDescription.SetText(m_ServerInfos.Description);
 		m_LabelDescription.Render();
 
+		// ---- Render Ping ----
+		// Select ping sprite based on ping value (0-1000ms mapped to 5 sprites)
+		Sprite* pingSprite = nullptr;
+
+		if (m_ServerInfos.Ping < 0)
+		{
+			pingSprite = &m_UnreachableSprite;
+		}
+		else
+		{
+			int pingIndex = 4 - std::clamp(m_ServerInfos.Ping / 200, 0, 4);
+			pingSprite = &m_PingSprites[pingIndex];
+		}
+		float pingSpritePosXratio = (1172.f) / 1211.f;
+		int pingSpritePosX = static_cast<int>(round(posBorderLeft + (pingSpritePosXratio * m_Size.x)));
+		float pingSizeRatio = 32.f / 1009.f;
+		int pingSize = static_cast<int>(round(pingSizeRatio * s_ScreenHeight));
+		glm::ivec2 pingSpritePos{pingSpritePosX, textNamePosY};
+		pingSprite->SetPosition(pingSpritePos);
+		pingSprite->SetSize({pingSize, pingSize});
+		pingSprite->Render();
+
 		// ---- Render Player Count ----
 		textPosXratio = 1040.f / 1211.f;
-		const int playerCountTextPosX = static_cast<int>(round(posBorderLeft + (textPosXratio * m_Size.x)));
+		const int playerCountTextPosX = pingSpritePosX - pingSize;
 		m_LabelPlayerCount.SetPosition({playerCountTextPosX, textNamePosY});
 		m_LabelPlayerCount.SetTextHeight(s_TextHeight);
-		std::string playerCountText =
-			std::to_string(m_ServerInfos.PlayerCount) + " / " + std::to_string(m_ServerInfos.MaxPlayerCount);
+		std::u32string playerCountText = U"\u00A77" + Utf8ToUtf32(std::to_string(m_ServerInfos.PlayerCount));
+		playerCountText += U"\u00A78/";
+		playerCountText += U"\u00A77" + Utf8ToUtf32(std::to_string(m_ServerInfos.MaxPlayerCount));
 		m_LabelPlayerCount.SetText(playerCountText);
 		m_LabelPlayerCount.Render();
 
@@ -129,6 +170,18 @@ namespace onion::voxel
 		m_LabelName.Initialize();
 		m_LabelDescription.Initialize();
 		m_LabelPlayerCount.Initialize();
+		m_ThumbnailSprite.Initialize();
+		m_UnreachableSprite.Initialize();
+
+		for (auto& pingSprite : m_PingSprites)
+		{
+			pingSprite.Initialize();
+		}
+
+		for (auto& pingingSprite : m_PingingSprites)
+		{
+			pingingSprite.Initialize();
+		}
 
 		SetInitState(true);
 	}
@@ -138,6 +191,18 @@ namespace onion::voxel
 		m_LabelName.Delete();
 		m_LabelDescription.Delete();
 		m_LabelPlayerCount.Delete();
+		m_ThumbnailSprite.Delete();
+		m_UnreachableSprite.Delete();
+
+		for (auto& pingSprite : m_PingSprites)
+		{
+			pingSprite.Delete();
+		}
+
+		for (auto& pingingSprite : m_PingingSprites)
+		{
+			pingingSprite.Delete();
+		}
 
 		SetDeletedState(true);
 	}
@@ -147,6 +212,17 @@ namespace onion::voxel
 		m_LabelName.ReloadTextures();
 		m_LabelDescription.ReloadTextures();
 		m_LabelPlayerCount.ReloadTextures();
+		m_UnreachableSprite.ReloadTextures();
+
+		for (auto& pingSprite : m_PingSprites)
+		{
+			pingSprite.ReloadTextures();
+		}
+
+		for (auto& pingingSprite : m_PingingSprites)
+		{
+			pingingSprite.ReloadTextures();
+		}
 	}
 
 	void ServerTile::SetSize(const glm::vec2& size)

@@ -50,6 +50,7 @@ namespace onion::voxel
 		// ----- Network Server -----
 	  private:
 		NetworkServer m_NetworkServer;
+		void UpdateMOTD();
 		std::vector<EventHandle> m_NetworkServerEventHandles;
 		void SubscribeToNetworkServerEvents();
 

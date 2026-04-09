@@ -43,6 +43,9 @@ namespace onion::voxel
 			WorldSave::CreateWorld(worldDir, infos);
 		}
 
+		// ---- Set MOTD Data ----
+		UpdateMOTD();
+
 		Initialize();
 	}
 
@@ -128,6 +131,34 @@ namespace onion::voxel
 	void Server::SaveConfiguration()
 	{
 		m_Config.Save(m_ConfigFilePath);
+	}
+
+	void Server::UpdateMOTD()
+	{
+		ServerMotdMsg motdMsg;
+		motdMsg.ServerMotd = m_Config.serverData.MOTD;
+		motdMsg.PlayerCount = static_cast<int>(m_ClientHandleToPlayerInfo.size());
+		motdMsg.MaxPlayers = 20;
+
+		auto players = m_WorldManager->GetAllPlayers();
+		for (auto& [clientHandle, playerInfo] : players)
+		{
+			motdMsg.PlayerNames.push_back(playerInfo->GetName());
+		}
+
+		// Load Icon png data
+		std::filesystem::path iconPath = GetExecutableDirectory() / "icon.png";
+		if (std::filesystem::exists(iconPath))
+		{
+			std::ifstream file(iconPath, std::ios::binary);
+			if (!file.is_open())
+			{
+				std::cerr << "Failed to open icon file for reading: " << iconPath << "\n";
+				throw std::runtime_error("Failed to open icon file for reading: " + iconPath.string());
+			}
+			motdMsg.ServerIconPngData = std::vector<uint8_t>(std::istreambuf_iterator<char>(file), {});
+		}
+		m_NetworkServer.SetMOTD(motdMsg);
 	}
 
 	void Server::SubscribeToNetworkServerEvents()
@@ -290,6 +321,8 @@ namespace onion::voxel
 
 		// Sends the Entity snapshot to all clients
 		Handle_TimerSendEvents();
+
+		UpdateMOTD();
 	}
 
 	void Server::Handle_ClientDisconnected(const NetworkServer::ClientDisconnectedEventArgs& args)

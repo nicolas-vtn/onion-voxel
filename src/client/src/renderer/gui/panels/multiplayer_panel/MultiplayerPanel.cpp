@@ -80,7 +80,13 @@ namespace onion::voxel
 			serverInfos.Description = "This is a description for server " + std::to_string(i + 1);
 			serverInfos.PlayerCount = i * 2;
 			serverInfos.MaxPlayerCount = 20;
-			serverInfos.Ping = 50 + i * 10;
+			serverInfos.Ping = 10 + i * 100;
+
+			if (i == 1)
+			{
+				serverInfos.Ping = -1;
+			}
+
 			serverInfos.Address = "127.0.0." + std::to_string(i + 1);
 
 			m_ServerTiles.push_back(std::make_unique<ServerTile>("ServerTile" + std::to_string(i), serverInfos));
@@ -176,10 +182,11 @@ namespace onion::voxel
 		glm::ivec2 tilePosition{centerX, scrollerTopY + tileHeight / 2 + verticalSpacing / 2};
 
 		// ---- Update Scroller Height ----
-		int totalTilesHeight = m_ServerTiles.size() * tileHeight + m_ServerTiles.size() * verticalSpacing;
+		int tilesCount = static_cast<int>(m_ServerTiles.size());
+		int totalTilesHeight = tilesCount * tileHeight + tilesCount * verticalSpacing;
 		m_Scroller.SetScrollAreaHeight(totalTilesHeight);
 
-		for (int i = 0; i < m_ServerTiles.size(); i++)
+		for (int i = 0; i < tilesCount; i++)
 		{
 			auto& serverTile = m_ServerTiles[i];
 			serverTile->SetSize({tileWidth, tileHeight});

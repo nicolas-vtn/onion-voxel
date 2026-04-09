@@ -65,11 +65,22 @@ namespace onion::voxel
 		bool m_WasMouseDown = false;
 		float m_LastClickTime = 0.f;
 
-		//static inline std::filesystem::path s_SpriteJoinPathFromRessourcePack =
-		//	GuiElement::s_BasePathGuiAssets / "sprites" / "world_list" / "join.png";
+		static inline std::filesystem::path s_BaseSpritesPath =
+			GuiElement::s_BasePathGuiAssets / "sprites" / "server_list";
 
-		//static inline std::filesystem::path s_SpriteJoinHighlightedPathFromRessourcePack =
-		//	GuiElement::s_BasePathGuiAssets / "sprites" / "world_list" / "join_highlighted.png";
+		static inline std::vector<std::filesystem::path> s_PingSpritesPaths = {s_BaseSpritesPath / "ping_1.png",
+																			   s_BaseSpritesPath / "ping_2.png",
+																			   s_BaseSpritesPath / "ping_3.png",
+																			   s_BaseSpritesPath / "ping_4.png",
+																			   s_BaseSpritesPath / "ping_5.png"};
+
+		static inline std::vector<std::filesystem::path> s_PingingSpritesPaths = {s_BaseSpritesPath / "pinging_1.png",
+																				  s_BaseSpritesPath / "pinging_2.png",
+																				  s_BaseSpritesPath / "pinging_3.png",
+																				  s_BaseSpritesPath / "pinging_4.png",
+																				  s_BaseSpritesPath / "pinging_5.png"};
+
+		static inline std::filesystem::path s_UnreachableSpritePath = s_BaseSpritesPath / "unreachable.png";
 
 		// ----- Private Helpers -----
 	  private:
@@ -85,9 +96,11 @@ namespace onion::voxel
 		Label m_LabelName;
 		Label m_LabelDescription;
 		Label m_LabelPlayerCount;
-		//Label m_LabelDetails;
-		//Sprite m_SpriteThumbnail;
-		//Sprite m_SpriteJoin;
-		//Sprite m_SpriteJoinHighlighted;
+
+		Sprite m_ThumbnailSprite;
+
+		std::array<Sprite, 5> m_PingSprites;
+		std::array<Sprite, 5> m_PingingSprites;
+		Sprite m_UnreachableSprite;
 	};
 }; // namespace onion::voxel
