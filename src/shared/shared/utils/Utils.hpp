@@ -50,4 +50,6 @@ namespace onion::voxel::Utils
 
 	std::string GenerateUUID();
 
+	void OpenDirectoryInFileExplorer(const std::filesystem::path& directory);
+
 }; // namespace onion::voxel::Utils

@@ -283,6 +283,7 @@ namespace onion::voxel
 		if (m_Client)
 			enet_host_flush(m_Client);
 	}
+
 	void NetworkClient::DispatchIncomingMessages(std::stop_token stopToken)
 	{
 		NetworkMessage msg;

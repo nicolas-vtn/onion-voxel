@@ -84,6 +84,8 @@ namespace onion::voxel
 		uint16_t GetServerPort() const;
 		void SetServerPort(uint16_t port);
 
+		void SetMOTD(const ServerMotdMsg& motd);
+
 		// ----- Events -----
 	  public:
 		Event<const ClientConnectedEventArgs&> ClientConnected;
@@ -123,5 +125,6 @@ namespace onion::voxel
 		mutable std::mutex m_Mutex;
 		uint16_t m_Port{7777};
 		std::atomic_bool m_IsRunning{false};
+		ServerMotdMsg m_MOTD;
 	};
 } // namespace onion::voxel

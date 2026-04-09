@@ -136,6 +136,12 @@ namespace onion::voxel
 		}
 	}
 
+	void NetworkServer::SetMOTD(const ServerMotdMsg& motd)
+	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+		m_MOTD = motd;
+	}
+
 	void NetworkServer::ListenForEvents(std::stop_token stopToken)
 	{
 		ENetEvent event;
@@ -194,14 +200,15 @@ namespace onion::voxel
 								ClientHandle handle;
 
 								{
-									std::lock_guard<std::mutex> lock(m_ClientMutex);
+									std::unique_lock<std::mutex> lock(m_ClientMutex);
 									auto it = m_PeerToSession.find(event.peer);
 									if (it == m_PeerToSession.end())
 										break;
 
 									handle = it->second.handle;
 
-									if (!it->second.authenticated && header.Type != MessageHeader::eType::ClientInfo)
+									if (!it->second.authenticated && header.Type != MessageHeader::eType::ClientInfo &&
+										header.Type != MessageHeader::eType::RequestMotd)
 										break;
 
 									if (header.Type == MessageHeader::eType::ClientInfo)
@@ -225,7 +232,16 @@ namespace onion::voxel
 										args.IpAddress = ip;
 										args.PlayerName = clientInfo.PlayerName;
 
+										// Unlock before triggering event to avoid potential deadlocks if event handlers interact with NetworkServer
+										lock.unlock();
 										ClientConnected.Trigger(args);
+										lock.lock();
+									}
+
+									if (header.Type == MessageHeader::eType::RequestMotd)
+									{
+										// Send MOTD to the client
+										Send(handle, m_MOTD);
 									}
 								}
 

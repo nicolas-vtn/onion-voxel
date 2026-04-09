@@ -74,7 +74,7 @@ namespace onion::voxel
 		// ----- Events -----
 	  public:
 		Event<const WorldInfos&> RequestStartSingleplayerGame;
-		Event<const Gui::MultiplayerGameStartInfo&> RequestStartMultiplayerGame;
+		Event<const ServerInfos&> RequestStartMultiplayerGame;
 		Event<uint8_t> EvtRenderDistanceChanged;
 		Event<bool> RequestQuitToMainMenu;
 
@@ -193,7 +193,7 @@ namespace onion::voxel
 
 		void Handle_CursorStyleChangeRequest(const CursorStyle& style);
 		void Handle_StartSingleplayerGameRequest(const WorldInfos& worldInfos);
-		void Handle_StartMultiplayerGameRequest(const Gui::MultiplayerGameStartInfo& startInfo);
+		void Handle_StartMultiplayerGameRequest(const ServerInfos& serverInfos);
 		void Handle_BackToGameRequest();
 		void Handle_QuitToMainMenuRequest(bool quit);
 		void Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& args);

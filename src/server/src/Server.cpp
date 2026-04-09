@@ -5,24 +5,6 @@
 #include <shared/data_transfer_objects/Serializer/SerializerDTO.hpp>
 #include <shared/utils/Utils.hpp>
 
-#include <windows.h>
-namespace
-{
-	inline std::filesystem::path GetExecutableDirectory()
-	{
-		wchar_t buffer[MAX_PATH];
-		DWORD length = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
-
-		if (length == 0 || length == MAX_PATH)
-		{
-			throw std::runtime_error("Failed to get executable path");
-		}
-
-		std::filesystem::path exePath(buffer);
-		return exePath.parent_path();
-	}
-} // namespace
-
 namespace onion::voxel
 {
 	Server::Server()
@@ -30,7 +12,7 @@ namespace onion::voxel
 		LoadConfiguration();
 
 		// Create world if it doesn't exist
-		m_Config.serverData.WorldDirectory = GetExecutableDirectory() / "world";
+		m_Config.serverData.WorldDirectory = Utils::GetExecutableDirectory() / "world";
 		const std::filesystem::path& worldDir = m_Config.serverData.WorldDirectory;
 		if (!std::filesystem::exists(worldDir))
 		{
@@ -44,6 +26,9 @@ namespace onion::voxel
 		}
 
 		Initialize();
+
+		// ---- Set MOTD Data ----
+		UpdateMOTD();
 	}
 
 	Server::Server(const ServerConfiguration& config) : m_Config(config)
@@ -128,6 +113,35 @@ namespace onion::voxel
 	void Server::SaveConfiguration()
 	{
 		m_Config.Save(m_ConfigFilePath);
+	}
+
+	void Server::UpdateMOTD()
+	{
+		ServerMotdMsg motdMsg;
+		motdMsg.ServerMotd = m_Config.serverData.MOTD;
+		motdMsg.MaxPlayers = 20;
+
+		auto players = m_WorldManager->GetAllPlayers();
+		for (auto& [clientHandle, playerInfo] : players)
+		{
+			motdMsg.PlayerNames.push_back(playerInfo->GetName());
+		}
+
+		motdMsg.PlayerCount = static_cast<int>(motdMsg.PlayerNames.size());
+
+		// Load Icon png data
+		std::filesystem::path iconPath = Utils::GetExecutableDirectory() / "ServerThumbnail.png";
+		if (std::filesystem::exists(iconPath))
+		{
+			std::ifstream file(iconPath, std::ios::binary);
+			if (!file.is_open())
+			{
+				std::cerr << "Failed to open icon file for reading: " << iconPath << "\n";
+				throw std::runtime_error("Failed to open icon file for reading: " + iconPath.string());
+			}
+			motdMsg.ServerIconPngData = std::vector<uint8_t>(std::istreambuf_iterator<char>(file), {});
+		}
+		m_NetworkServer.SetMOTD(motdMsg);
 	}
 
 	void Server::SubscribeToNetworkServerEvents()
@@ -290,6 +304,8 @@ namespace onion::voxel
 
 		// Sends the Entity snapshot to all clients
 		Handle_TimerSendEvents();
+
+		UpdateMOTD();
 	}
 
 	void Server::Handle_ClientDisconnected(const NetworkServer::ClientDisconnectedEventArgs& args)
@@ -297,6 +313,8 @@ namespace onion::voxel
 		std::cout << "Client disconnected: " << args.Client << " ( " << args.UUID << ", " << args.IpAddress << ")\n";
 
 		RemovePlayer(args.UUID);
+
+		UpdateMOTD();
 	}
 
 	void Server::Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk)

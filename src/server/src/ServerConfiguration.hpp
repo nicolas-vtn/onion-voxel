@@ -19,6 +19,7 @@ namespace onion::voxel
 		uint8_t SimulationDistance = 8;
 		uint32_t Seed = 1;
 		uint8_t WorldGenerationType = 1;
+		std::string MOTD = "Welcome to the server!";
 	};
 
 	struct ServerConfiguration
@@ -67,6 +68,7 @@ namespace onion::voxel
 			serverData.ServerName = json.value("ServerName", serverData.ServerName);
 			serverData.UUID = json.value("UUID", serverData.UUID);
 			serverData.Port = json.value("Port", serverData.Port);
+			serverData.MOTD = json.value("MOTD", serverData.MOTD);
 			serverData.Seed = json.value("Seed", serverData.Seed);
 			serverData.SimulationDistance = json.value("SimulationDistance", serverData.SimulationDistance);
 			serverData.WorldGenerationType = json.value("WorldGenerationType", serverData.WorldGenerationType);
@@ -82,6 +84,7 @@ namespace onion::voxel
 			json["ServerName"] = serverData.ServerName;
 			json["UUID"] = serverData.UUID;
 			json["Port"] = serverData.Port;
+			json["MOTD"] = serverData.MOTD;
 			json["Seed"] = serverData.Seed;
 			json["SimulationDistance"] = serverData.SimulationDistance;
 			json["WorldGenerationType"] = serverData.WorldGenerationType;

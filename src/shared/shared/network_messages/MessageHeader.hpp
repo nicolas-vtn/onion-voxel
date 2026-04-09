@@ -21,6 +21,8 @@ namespace onion::voxel
 			BlocksChanged,
 			RequestChunks,
 			EntitySnapshot,
+			ServerMOTD,
+			RequestMotd
 		};
 
 		eType Type = eType::None;

@@ -16,6 +16,7 @@
 #include "panels/key_binds_panel/KeyBindsPanel.hpp"
 #include "panels/main_menu_panel/MainMenuPanel.hpp"
 #include "panels/mouse_settings_panel/MouseSettingsPanel.hpp"
+#include "panels/multiplayer_panel/MultiplayerPanel.hpp"
 #include "panels/options_panel/OptionsPanel.hpp"
 #include "panels/pause_panel/PausePanel.hpp"
 #include "panels/resource_packs_panel/ResourcePacksPanel.hpp"
@@ -27,12 +28,6 @@ namespace onion::voxel
 	class Gui
 	{
 	  public:
-		struct MultiplayerGameStartInfo
-		{
-			std::string ServerAddress;
-			uint16_t ServerPort;
-		};
-
 		// ----- Static Initialization / Shutdown -----
 	  public:
 		static void StaticInitialize();
@@ -64,7 +59,7 @@ namespace onion::voxel
 	  public:
 		Event<const CursorStyle&> RequestCursorStyleChange;
 		Event<const WorldInfos&> RequestStartSingleplayerGame;
-		Event<const MultiplayerGameStartInfo&> RequestStartMultiplayerGame;
+		Event<const ServerInfos&> RequestStartMultiplayerGame;
 		Event<bool> RequestQuitToMainMenu;
 		Event<bool> RequestBackToGame;
 		Event<bool> RequestBack;
@@ -81,6 +76,7 @@ namespace onion::voxel
 		VideoSettingsPanel m_VideoSettingsPanel;
 		ResourcePacksPanel m_ResourcePacksPanel;
 		SingleplayerPanel m_SingleplayerPanel;
+		MultiplayerPanel m_MultiplayerPanel;
 		ControlsPanel m_ControlsPanel;
 		MouseSettingsPanel m_MouseSettingsPanel;
 		KeyBindsPanel m_KeyBindsPanel;
@@ -106,6 +102,7 @@ namespace onion::voxel
 		void Handle_QuitToMainMenuRequest(const GuiElement* sender);
 		void Handle_BackRequest(const GuiElement* sender);
 		void Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& eventArgs);
+		void Handle_ConnectToServerRequest(const ServerInfos& serverInfos);
 
 		// ----- Set Static States -----
 	  public:

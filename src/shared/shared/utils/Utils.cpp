@@ -1,5 +1,7 @@
 #include "Utils.hpp"
 
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <Windows.h>
 
 #include <algorithm>
@@ -16,6 +18,12 @@ namespace onion::voxel::Utils
 		GetModuleFileNameA(NULL, buffer, MAX_PATH);
 		std::filesystem::path executablePath(buffer);
 		return executablePath.parent_path();
+	}
+
+	void OpenDirectoryInFileExplorer(const std::filesystem::path& directory)
+	{
+		std::string command = "explorer \"" + directory.string() + "\"";
+		system(command.c_str());
 	}
 
 	std::string SanitizeFileName(const std::string& name)
