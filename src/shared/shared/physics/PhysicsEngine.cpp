@@ -289,8 +289,51 @@ namespace onion::voxel
 		transform.Position = pos;
 		physics.Velocity = vel;
 
+		// Teleport to surface if still colliding after resolution (prevents getting stuck in blocks)
+		int safety = 0;
+		while (IsCollidingWithTerrain(transform.Position, half, physics.Offset) && safety++ < 20)
+		{
+			transform.Position.y += 1.0f; // Move up by 1 block until no longer colliding
+		}
+
 		entity->SetTransform(transform);
 		entity->SetPhysicsBody(physics);
+	}
+
+	bool
+	PhysicsEngine::IsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset)
+	{
+		glm::vec3 center = position + offset;
+		glm::vec3 min = center - halfSize;
+		glm::vec3 max = center + halfSize;
+
+		int minX = static_cast<int>(std::floor(min.x));
+		int maxX = static_cast<int>(std::floor(max.x));
+		int minY = static_cast<int>(std::floor(min.y));
+		int maxY = static_cast<int>(std::floor(max.y));
+		int minZ = static_cast<int>(std::floor(min.z));
+		int maxZ = static_cast<int>(std::floor(max.z));
+
+		for (int x = minX; x <= maxX; ++x)
+		{
+			for (int y = minY; y <= maxY; ++y)
+			{
+				for (int z = minZ; z <= maxZ; ++z)
+				{
+					const BlockState& block = m_WorldManager.GetBlock({x, y, z});
+					if (!BlockState::IsSolid(block.ID))
+						continue;
+
+					// AABB vs block test (block = [x,x+1])
+					if (max.x > x && min.x < x + 1.0f && max.y > y && min.y < y + 1.0f && max.z > z && min.z < z + 1.0f)
+					{
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
 	}
 
 } // namespace onion::voxel

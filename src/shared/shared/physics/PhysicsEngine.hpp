@@ -37,6 +37,8 @@ namespace onion::voxel
 		void ApplyFriction(glm::vec3& velocity, float deltaTime);
 		void ResolveTerrainCollisions(std::shared_ptr<Entity> entity, float deltaTime);
 
+		bool IsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset);
+
 		// ----- Private Constants -----
 	  private:
 		mutable std::shared_mutex m_MutexPhysics;
