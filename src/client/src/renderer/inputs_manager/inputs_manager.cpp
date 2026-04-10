@@ -269,7 +269,7 @@ void InputsManager::FramebufferSizeCallback(int width, int height)
 		m_FramebufferState.Height = height;
 	}
 
-	EventFramebufferResized.Trigger(m_FramebufferState);
+	EvtFramebufferResized.Trigger(m_FramebufferState);
 }
 
 void InputsManager::MouseScrollCallback(double xoffset, double yoffset)
@@ -282,7 +282,7 @@ void InputsManager::MouseScrollCallback(double xoffset, double yoffset)
 
 void onion::voxel::InputsManager::CharCallback(unsigned int codepoint)
 {
-	EventCharInput.Trigger(codepoint);
+	EvtCharInput.Trigger(codepoint);
 }
 
 void onion::voxel::InputsManager::KeyCallback(int key, int scancode, int action, int mods)

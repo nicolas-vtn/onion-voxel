@@ -223,13 +223,13 @@ namespace onion::voxel
 
 	void MultiplayerPanel::SubscribeToNetworkClientEvents()
 	{
-		m_EventHandles.push_back(m_NetworkClient.Connected.Subscribe(
+		m_EventHandles.push_back(m_NetworkClient.EvtConnected.Subscribe(
 			[this](const ServerInfoMsg& serverInfoMsg) { Handle_NetworkClient_Connected(serverInfoMsg); }));
 
-		m_EventHandles.push_back(m_NetworkClient.Disconnected.Subscribe([this](const bool& val)
+		m_EventHandles.push_back(m_NetworkClient.EvtDisconnected.Subscribe([this](const bool& val)
 																		{ Handle_NetworkClient_Disconnected(val); }));
 
-		m_EventHandles.push_back(m_NetworkClient.MessageReceived.Subscribe(
+		m_EventHandles.push_back(m_NetworkClient.EvtMessageReceived.Subscribe(
 			[this](const NetworkMessage& message) { Handle_NetworkClient_MessageReceived(message); }));
 	}
 
@@ -669,47 +669,47 @@ namespace onion::voxel
 
 	void MultiplayerPanel::SubscribeToControlEvents()
 	{
-		m_EventHandles.push_back(m_Button_Back.OnClick.Subscribe(
+		m_EventHandles.push_back(m_Button_Back.EvtClick.Subscribe(
 			[this](const Button& button)
 			{
 				(void) button;
 				EvtRequestBackNavigation.Trigger(this);
 			}));
 
-		m_EventHandles.push_back(m_Button_JoinServer.OnClick.Subscribe([this](const Button& button)
+		m_EventHandles.push_back(m_Button_JoinServer.EvtClick.Subscribe([this](const Button& button)
 																	   { Handle_ButtonJoinServer_Clicked(button); }));
 
-		m_EventHandles.push_back(m_Button_DirectConnect.OnClick.Subscribe(
+		m_EventHandles.push_back(m_Button_DirectConnect.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_ButtonDirectConnect_Clicked(button); }));
 
-		m_EventHandles.push_back(m_Button_AddServer.OnClick.Subscribe([this](const Button& button)
+		m_EventHandles.push_back(m_Button_AddServer.EvtClick.Subscribe([this](const Button& button)
 																	  { Handle_ButtonAddServer_Clicked(button); }));
 
-		m_EventHandles.push_back(m_Button_EditServer.OnClick.Subscribe([this](const Button& button)
+		m_EventHandles.push_back(m_Button_EditServer.EvtClick.Subscribe([this](const Button& button)
 																	   { Handle_ButtonEditServer_Clicked(button); }));
 
-		m_EventHandles.push_back(m_Button_DeleteServer.OnClick.Subscribe(
+		m_EventHandles.push_back(m_Button_DeleteServer.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_ButtonDeleteServer_Clicked(button); }));
 
-		m_EventHandles.push_back(m_Button_RefreshServerTiles.OnClick.Subscribe(
+		m_EventHandles.push_back(m_Button_RefreshServerTiles.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_ButtonRefreshServerTiles_Clicked(button); }));
 
-		m_EventHandles.push_back(m_ButtonAddEditDone.OnClick.Subscribe([this](const Button& button)
+		m_EventHandles.push_back(m_ButtonAddEditDone.EvtClick.Subscribe([this](const Button& button)
 																	   { Handle_AddEditDone_Clicked(button); }));
 
-		m_EventHandles.push_back(m_ButtonAddEditCancel.OnClick.Subscribe([this](const Button& button)
+		m_EventHandles.push_back(m_ButtonAddEditCancel.EvtClick.Subscribe([this](const Button& button)
 																		 { Handle_AddEditCancel_Clicked(button); }));
 
-		m_EventHandles.push_back(m_ButtonDeleteConfirm.OnClick.Subscribe([this](const Button& button)
+		m_EventHandles.push_back(m_ButtonDeleteConfirm.EvtClick.Subscribe([this](const Button& button)
 																		 { Handle_DeleteConfirm_Clicked(button); }));
 
-		m_EventHandles.push_back(m_ButtonDeleteCancel.OnClick.Subscribe([this](const Button& button)
+		m_EventHandles.push_back(m_ButtonDeleteCancel.EvtClick.Subscribe([this](const Button& button)
 																		{ Handle_DeleteCancel_Clicked(button); }));
 
-		m_EventHandles.push_back(m_ButtonDirectConnectJoin.OnClick.Subscribe(
+		m_EventHandles.push_back(m_ButtonDirectConnectJoin.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_DirectConnectJoin_Clicked(button); }));
 
-		m_EventHandles.push_back(m_ButtonDirectConnectCancel.OnClick.Subscribe(
+		m_EventHandles.push_back(m_ButtonDirectConnectCancel.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_DirectConnectCancel_Clicked(button); }));
 	}
 

@@ -97,7 +97,7 @@ namespace onion::voxel
 		lock.unlock();
 
 		// Trigger event
-		ChunkAdded.Trigger(chunk);
+		EvtChunkAdded.Trigger(chunk);
 	}
 
 	void WorldManager::AddChunk(const std::shared_ptr<Chunk> chunk, const std::vector<Block>& outOfBoundsBlocks)
@@ -140,7 +140,7 @@ namespace onion::voxel
 			lock.unlock();
 
 			// Trigger event
-			ChunkRemoved.Trigger(chunk);
+			EvtChunkRemoved.Trigger(chunk);
 		}
 	}
 
@@ -160,7 +160,7 @@ namespace onion::voxel
 
 		for (const auto& chunk : chunksToRemove)
 		{
-			ChunkRemoved.Trigger(chunk);
+			EvtChunkRemoved.Trigger(chunk);
 		}
 	}
 
@@ -252,7 +252,7 @@ namespace onion::voxel
 			args.PlayerUUID = playerUUID;
 			args.OldChunkPosition = oldChunkPos;
 			args.NewChunkPosition = newChunkPos;
-			PlayerChangedChunk.Trigger(args);
+			EvtPlayerChangedChunk.Trigger(args);
 		}
 	}
 
@@ -291,7 +291,7 @@ namespace onion::voxel
 			args.PlayerUUID = updatedPlayer->UUID;
 			args.OldChunkPosition = oldChunkPos;
 			args.NewChunkPosition = newChunkPos;
-			PlayerChangedChunk.Trigger(args);
+			EvtPlayerChangedChunk.Trigger(args);
 		}
 	}
 
@@ -324,16 +324,16 @@ namespace onion::voxel
 
 	void WorldManager::SubscribeToInternalEvents()
 	{
-		m_InternalEventHandles.push_back(PlayerChangedChunk.Subscribe([this](const PlayerChangedChunkEventArgs& args)
+		m_InternalEventHandles.push_back(EvtPlayerChangedChunk.Subscribe([this](const PlayerChangedChunkEventArgs& args)
 																	  { Handle_PlayerChangedChunk(args); }));
 
 		m_InternalEventHandles.push_back(
-			ChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkAdded(chunk); }));
+			EvtChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkAdded(chunk); }));
 
 		if (m_WorldSave)
 		{
 			m_InternalEventHandles.push_back(
-				ChunkRemoved.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkRemoved(chunk); }));
+				EvtChunkRemoved.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkRemoved(chunk); }));
 
 			m_InternalEventHandles.push_back(m_EntityManager->EvtPlayerAdded.Subscribe(
 				[this](const std::shared_ptr<Player>& player) { Handle_PlayerAdded(player); }));
@@ -440,7 +440,7 @@ namespace onion::voxel
 			BlocksChangedEventArgs args;
 			args.ChangedBlocks = std::move(blocksToNotify);
 			args.Origin = origin;
-			BlocksChanged.Trigger(args);
+			EvtBlocksChanged.Trigger(args);
 		}
 
 		return numBlocksSet;
@@ -451,7 +451,7 @@ namespace onion::voxel
 		// If in SinglePlayer : Trigger the event, and missing Chunks will be requested to Server.
 		if (!m_WorldGenerator || !m_WorldSave)
 		{
-			MissingChunksRequested.Trigger(chunkPositions);
+			EvtMissingChunksRequested.Trigger(chunkPositions);
 			return;
 		}
 
@@ -546,7 +546,7 @@ namespace onion::voxel
 			BlocksChangedEventArgs args;
 			args.ChangedBlocks = std::move(blocksPlaced);
 			args.Origin = BlocksChangedEventArgs::eOrigin::OutOfBoundsPlaced;
-			BlocksChanged.Trigger(args);
+			EvtBlocksChanged.Trigger(args);
 		}
 	}
 

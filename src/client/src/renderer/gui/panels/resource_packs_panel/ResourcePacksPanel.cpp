@@ -58,7 +58,7 @@ namespace onion::voxel
 		if (s_IsBackPressed)
 		{
 			m_TimerScanResourcePacksFolder.Stop();
-			RequestBackNavigation.Trigger(this);
+			EvtRequestBackNavigation.Trigger(this);
 			return;
 		}
 
@@ -361,11 +361,11 @@ namespace onion::voxel
 
 	void ResourcePacksPanel::SubscribeToControlEvents()
 	{
-		m_EventHandles.push_back(m_OpenPackFolder_Button.OnClick.Subscribe([this](const Button& sender)
+		m_EventHandles.push_back(m_OpenPackFolder_Button.EvtClick.Subscribe([this](const Button& sender)
 																		   { Handle_OpenPackFolder_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_Done_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
+			m_Done_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
 
 		m_EventHandles.push_back(m_DefaultResourcePack_Tile.EvtCheckedChanged.Subscribe(
 			[this](const ResourcePackTile& tile) { Handle_ResourcePackTileCheckedChanged(tile); }));
@@ -428,7 +428,7 @@ namespace onion::voxel
 			EvtUserSettingsChanged.Trigger(args);
 		}
 
-		RequestBackNavigation.Trigger(this);
+		EvtRequestBackNavigation.Trigger(this);
 	}
 
 	bool ResourcePacksPanel::ContainsResourcePack(const std::string& resourcePackName) const

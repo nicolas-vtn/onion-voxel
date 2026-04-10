@@ -13,7 +13,7 @@ namespace onion::voxel
 		GuiElement::Load();
 
 		const auto& inputsManager = EngineContext::Get().Inputs;
-		s_HandleFramebufferResized = inputsManager->EventFramebufferResized.Subscribe(
+		s_HandleFramebufferResized = inputsManager->EvtFramebufferResized.Subscribe(
 			[](const FramebufferState& framebufferState) { Handle_FramebufferResized(framebufferState); });
 
 		// Initialize the framebuffer size based on the current state of the InputsManager
@@ -74,50 +74,50 @@ namespace onion::voxel
 
 	void Gui::SubscribeToPanelsEvents()
 	{
-		m_EventHandles.push_back(GuiElement::RequestCursorStyleChange.Subscribe(
+		m_EventHandles.push_back(GuiElement::EvtRequestCursorStyleChange.Subscribe(
 			[this](const CursorStyle& style) { Handle_CursorStyleChangeRequest(style); }));
 
-		m_EventHandles.push_back(m_MainMenuPanel.RequestMenuNavigation.Subscribe(
+		m_EventHandles.push_back(m_MainMenuPanel.EvtRequestMenuNavigation.Subscribe(
 			[this](const std::pair<const GuiElement*, eMenu>& request) { Handle_MenuNavigationRequest(request); }));
 
-		m_EventHandles.push_back(m_DemoPanel.RequestMenuNavigation.Subscribe(
+		m_EventHandles.push_back(m_DemoPanel.EvtRequestMenuNavigation.Subscribe(
 			[this](const std::pair<const GuiElement*, eMenu>& request) { Handle_MenuNavigationRequest(request); }));
 
-		m_EventHandles.push_back(m_MainMenuPanel.RequestQuitGame.Subscribe([this](const GuiElement* sender)
+		m_EventHandles.push_back(m_MainMenuPanel.EvtRequestQuitGame.Subscribe([this](const GuiElement* sender)
 																		   { Handle_QuitGameRequest(sender); }));
 
-		m_EventHandles.push_back(m_PausePanel.RequestMenuNavigation.Subscribe(
+		m_EventHandles.push_back(m_PausePanel.EvtRequestMenuNavigation.Subscribe(
 			[this](const std::pair<const GuiElement*, eMenu>& request) { Handle_MenuNavigationRequest(request); }));
 
-		m_EventHandles.push_back(m_PausePanel.RequestQuitToMainMenu.Subscribe(
+		m_EventHandles.push_back(m_PausePanel.EvtRequestQuitToMainMenu.Subscribe(
 			[this](const GuiElement* sender) { Handle_QuitToMainMenuRequest(sender); }));
 
-		m_EventHandles.push_back(m_PausePanel.RequestBackToGame.Subscribe([this](const GuiElement* sender)
+		m_EventHandles.push_back(m_PausePanel.EvtRequestBackToGame.Subscribe([this](const GuiElement* sender)
 																		  { Handle_BackToGameRequest(sender); }));
 
-		m_EventHandles.push_back(m_OptionsPanel.RequestMenuNavigation.Subscribe(
+		m_EventHandles.push_back(m_OptionsPanel.EvtRequestMenuNavigation.Subscribe(
 			[this](const std::pair<const GuiElement*, eMenu>& request) { Handle_MenuNavigationRequest(request); }));
 
-		m_EventHandles.push_back(m_OptionsPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
+		m_EventHandles.push_back(m_OptionsPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																				{ Handle_BackRequest(sender); }));
 
 		m_EventHandles.push_back(m_OptionsPanel.EvtUserSettingsChanged.Subscribe(
 			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
 
-		m_EventHandles.push_back(m_ResourcePacksPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
+		m_EventHandles.push_back(m_ResourcePacksPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																					  { Handle_BackRequest(sender); }));
 
 		m_EventHandles.push_back(m_ResourcePacksPanel.EvtUserSettingsChanged.Subscribe(
 			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
 
-		m_EventHandles.push_back(m_DemoScrollingPanel.RequestBackNavigation.Subscribe([this](const GuiElement* sender)
+		m_EventHandles.push_back(m_DemoScrollingPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																					  { Handle_BackRequest(sender); }));
 
 		m_EventHandles.push_back(m_SingleplayerPanel.EvtRequestBackNavigation.Subscribe(
 			[this](const GuiElement* sender) { Handle_BackRequest(sender); }));
 
 		m_EventHandles.push_back(m_SingleplayerPanel.EvtPlayWorld.Subscribe(
-			[this](const WorldInfos& worldInfos) { RequestStartSingleplayerGame.Trigger(worldInfos); }));
+			[this](const WorldInfos& worldInfos) { EvtRequestStartSingleplayerGame.Trigger(worldInfos); }));
 
 		m_EventHandles.push_back(m_VideoSettingsPanel.EvtRequestBackNavigation.Subscribe(
 			[this](const GuiElement* sender) { Handle_BackRequest(sender); }));
@@ -180,17 +180,17 @@ namespace onion::voxel
 
 	void Gui::Handle_CursorStyleChangeRequest(const CursorStyle& style)
 	{
-		RequestCursorStyleChange.Trigger(style);
+		EvtRequestCursorStyleChange.Trigger(style);
 	}
 
 	void Gui::Handle_BackToGameRequest(const GuiElement* sender)
 	{
-		RequestBackToGame.Trigger(sender);
+		EvtRequestBackToGame.Trigger(sender);
 	}
 
 	void Gui::Handle_QuitToMainMenuRequest(const GuiElement* sender)
 	{
-		RequestQuitToMainMenu.Trigger(sender);
+		EvtRequestQuitToMainMenu.Trigger(sender);
 	}
 
 	void Gui::Handle_BackRequest(const GuiElement* sender)
@@ -201,7 +201,7 @@ namespace onion::voxel
 
 	void Gui::Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& eventArgs)
 	{
-		UserSettingsChanged.Trigger(eventArgs);
+		EvtUserSettingsChanged.Trigger(eventArgs);
 	}
 
 	void Gui::Handle_ConnectToServerRequest(const ServerInfos& serverInfos)
@@ -209,7 +209,7 @@ namespace onion::voxel
 		std::cout << "Connect to server requested: " << serverInfos.Name << " at " << serverInfos.Address << ":"
 				  << serverInfos.Port << std::endl;
 
-		RequestStartMultiplayerGame.Trigger(serverInfos);
+		EvtRequestStartMultiplayerGame.Trigger(serverInfos);
 	}
 
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)

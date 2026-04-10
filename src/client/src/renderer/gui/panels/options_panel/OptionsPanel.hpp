@@ -23,8 +23,8 @@ namespace onion::voxel
 
 		// ----- Public Events -----
 	  public:
-		Event<const GuiElement*> RequestBackNavigation;
-		Event<const std::pair<const GuiElement*, eMenu>&> RequestMenuNavigation;
+		Event<const GuiElement*> EvtRequestBackNavigation;
+		Event<const std::pair<const GuiElement*, eMenu>&> EvtRequestMenuNavigation;
 		Event<const UserSettingsChangedEventArgs&> EvtUserSettingsChanged;
 
 		// ----- Controls -----

@@ -321,10 +321,10 @@ namespace onion::voxel
 	void KeyBindsPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(
-			m_Done_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
+			m_Done_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_ResetAll_Button.OnClick.Subscribe([this](const Button& sender) { Handle_ResetAll_Click(sender); }));
+			m_ResetAll_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_ResetAll_Click(sender); }));
 	}
 
 	void KeyBindsPanel::Handle_KeyBindChanged(const KeyBindsTile& sender)

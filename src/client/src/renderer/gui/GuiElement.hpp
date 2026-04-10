@@ -124,7 +124,7 @@ namespace onion::voxel
 
 		// ----- Static Events ----- (for shared resources)
 	  public:
-		static Event<const CursorStyle&> RequestCursorStyleChange;
+		static Event<const CursorStyle&> EvtRequestCursorStyleChange;
 
 		// ----- State Management -----
 	  protected:

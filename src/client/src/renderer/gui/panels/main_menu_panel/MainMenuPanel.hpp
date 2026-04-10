@@ -26,8 +26,8 @@ namespace onion::voxel
 
 		// ----- Public Events -----
 	  public:
-		Event<const std::pair<const GuiElement*, eMenu>&> RequestMenuNavigation;
-		Event<const GuiElement*> RequestQuitGame;
+		Event<const std::pair<const GuiElement*, eMenu>&> EvtRequestMenuNavigation;
+		Event<const GuiElement*> EvtRequestQuitGame;
 
 		// ----- Properties -----
 	  private:

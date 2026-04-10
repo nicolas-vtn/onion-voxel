@@ -186,7 +186,6 @@ namespace onion::voxel
 		// ---- Render Player Count ----
 		if (!IsPinging() && m_ServerInfos.Ping > 0)
 		{
-			float textPosXratio = 1040.f / 1211.f;
 			const int playerCountTextPosX = pingSpritePosX - pingSize;
 			m_LabelPlayerCount.SetPosition({playerCountTextPosX, textNamePosY});
 			m_LabelPlayerCount.SetTextHeight(s_TextHeight);

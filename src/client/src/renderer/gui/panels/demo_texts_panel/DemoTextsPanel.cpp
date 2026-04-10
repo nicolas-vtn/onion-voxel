@@ -234,7 +234,7 @@ namespace onion::voxel
 	void DemoTextsPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(
-			m_BackButton.OnClick.Subscribe([this](const Button& button) { Handle_BackButtonClick(button); }));
+			m_BackButton.EvtClick.Subscribe([this](const Button& button) { Handle_BackButtonClick(button); }));
 	}
 
 	void DemoTextsPanel::Handle_BackButtonClick(const Button& button)

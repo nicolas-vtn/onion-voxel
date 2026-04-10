@@ -52,9 +52,9 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<const Button&> OnClick;
-		Event<const Button&> OnHoverEnter;
-		Event<const Button&> OnHoverLeave;
+		Event<const Button&> EvtClick;
+		Event<const Button&> EvtHoverEnter;
+		Event<const Button&> EvtHoverLeave;
 
 	  private:
 		void SubscribeToSpriteEvents();

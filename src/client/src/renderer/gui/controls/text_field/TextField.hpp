@@ -55,7 +55,7 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<const TextField&> OnTextChanged;
+		Event<const TextField&> EvtTextChanged;
 
 	  private:
 		void SubscribeToSpriteEvents();

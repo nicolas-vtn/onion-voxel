@@ -258,19 +258,19 @@ namespace onion::voxel
 	void DemoScrollingPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(
-			m_ButtonBack.OnClick.Subscribe([this](const Button& button) { Handle_ButtonBackClick(button); }));
+			m_ButtonBack.EvtClick.Subscribe([this](const Button& button) { Handle_ButtonBackClick(button); }));
 
-		m_EventHandles.push_back(m_SliderButtonCount.OnValueChanged.Subscribe(
+		m_EventHandles.push_back(m_SliderButtonCount.EvtValueChanged.Subscribe(
 			[this](const Slider& slider) { Handle_SliderButtonCountValueChanged(slider); }));
 
-		m_EventHandles.push_back(m_Scroller.OnScrollRatioChanged.Subscribe(
+		m_EventHandles.push_back(m_Scroller.EvtScrollRatioChanged.Subscribe(
 			[this](const Scroller& scroller) { Handle_ScrollerScrollRatioChanged(scroller); }));
 	}
 
 	void DemoScrollingPanel::Handle_ButtonBackClick(const Button& button)
 	{
 		(void) button; // Unused parameter
-		RequestBackNavigation.Trigger(this);
+		EvtRequestBackNavigation.Trigger(this);
 	}
 
 	void DemoScrollingPanel::Handle_SliderButtonCountValueChanged(const Slider& slider)

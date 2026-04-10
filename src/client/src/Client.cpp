@@ -193,10 +193,10 @@ namespace onion::voxel
 
 	void Client::SubscribeToWorldManagerEvents()
 	{
-		m_WorldManagerEventHandles.push_back(m_WorldManager->MissingChunksRequested.Subscribe(
+		m_WorldManagerEventHandles.push_back(m_WorldManager->EvtMissingChunksRequested.Subscribe(
 			[this](const std::vector<glm::ivec2>& chunkPositions) { Handle_MissingChunksRequested(chunkPositions); }));
 
-		m_WorldManagerEventHandles.push_back(m_WorldManager->BlocksChanged.Subscribe(
+		m_WorldManagerEventHandles.push_back(m_WorldManager->EvtBlocksChanged.Subscribe(
 			[this](const WorldManager::BlocksChangedEventArgs& args) { Handle_BlocksChanged(args); }));
 	}
 
@@ -234,17 +234,17 @@ namespace onion::voxel
 
 	void Client::SubscribeToRendererEvents()
 	{
-		m_RendererEventHandles.push_back(m_Renderer.RequestStartSingleplayerGame.Subscribe(
+		m_RendererEventHandles.push_back(m_Renderer.EvtRequestStartSingleplayerGame.Subscribe(
 			[this](const WorldInfos& worldInfos) { Handle_StartSingleplayerRequest(worldInfos); }));
 
-		m_RendererEventHandles.push_back(m_Renderer.RequestQuitToMainMenu.Subscribe(
+		m_RendererEventHandles.push_back(m_Renderer.EvtRequestQuitToMainMenu.Subscribe(
 			[this](bool quit)
 			{
 				(void) quit;
 				Handle_StopPlayingRequest("");
 			}));
 
-		m_RendererEventHandles.push_back(m_Renderer.RequestStartMultiplayerGame.Subscribe(
+		m_RendererEventHandles.push_back(m_Renderer.EvtRequestStartMultiplayerGame.Subscribe(
 			[this](const ServerInfos& serverInfos) { Handle_StartMultiplayerRequest(serverInfos); }));
 
 		m_RendererEventHandles.push_back(m_Renderer.EvtRenderDistanceChanged.Subscribe(
@@ -261,13 +261,13 @@ namespace onion::voxel
 
 	void Client::SubscribeToNetworkClientEvents()
 	{
-		m_NetworkClientEventHandles.push_back(m_NetworkClient.Connected.Subscribe(
+		m_NetworkClientEventHandles.push_back(m_NetworkClient.EvtConnected.Subscribe(
 			[this](const ServerInfoMsg& message) { Handle_ClientConnected(message); }));
 
-		m_NetworkClientEventHandles.push_back(m_NetworkClient.Disconnected.Subscribe(
+		m_NetworkClientEventHandles.push_back(m_NetworkClient.EvtDisconnected.Subscribe(
 			[this](bool disconnectedByServer) { Handle_ClientDisconnected(disconnectedByServer); }));
 
-		m_NetworkClientEventHandles.push_back(m_NetworkClient.MessageReceived.Subscribe(
+		m_NetworkClientEventHandles.push_back(m_NetworkClient.EvtMessageReceived.Subscribe(
 			[this](const NetworkMessage& message) { Handle_NetworkMessageReceived(message); }));
 	}
 

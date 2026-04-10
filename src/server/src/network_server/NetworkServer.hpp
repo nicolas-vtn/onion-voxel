@@ -88,9 +88,9 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<const ClientConnectedEventArgs&> ClientConnected;
-		Event<const ClientDisconnectedEventArgs&> ClientDisconnected;
-		Event<const MessageReceivedEventArgs&> MessageReceived;
+		Event<const ClientConnectedEventArgs&> EvtClientConnected;
+		Event<const ClientDisconnectedEventArgs&> EvtClientDisconnected;
+		Event<const MessageReceivedEventArgs&> EvtMessageReceived;
 
 		// ---- Enet -----
 	  private:

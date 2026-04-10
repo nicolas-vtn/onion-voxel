@@ -1,7 +1,14 @@
 
 		----- ONION - VOXEL -----
 
-- Multiplayer Menu (UI + Add Server + List of servers)
-	- Implement : Add / Remove / Edit Server in the List
+		----- ENHANCEMENTS -----
+- Add Sounds / Musics
+- Render non-full blocks (water surface, cactus, ...)
+- Animated textures (water, lava, ...)
+- Better collision system (swept AABB)
+- Update GitHub README.md
 
-- BUGFIX : Z-Ordering issue in GUI (Fix TestField Background)
+
+		----- KNOWN ISSUES -----
+- Z-Ordering issue in GUI (Fix TestField Background)
+- On server close, client does not go back to main menu.

@@ -46,7 +46,7 @@ namespace onion::voxel
 												AssetsManager::GetShadersDirectory() / "nine_slice_sprite.frag");
 	Font GuiElement::s_TextFont;
 
-	Event<const CursorStyle&> GuiElement::RequestCursorStyleChange;
+	Event<const CursorStyle&> GuiElement::EvtRequestCursorStyleChange;
 
 	glm::mat4 GuiElement::s_ProjectionMatrix{1.0f};
 	int GuiElement::s_ScreenWidth = 800;

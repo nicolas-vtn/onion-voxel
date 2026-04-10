@@ -63,7 +63,7 @@ namespace onion::voxel
 			m_ScrollRatio = GetScrollRatioFromMousePosition(mousePosition);
 			if (m_ScrollRatio != previousScrollRatio)
 			{
-				OnScrollRatioChanged.Trigger(*this);
+				EvtScrollRatioChanged.Trigger(*this);
 			}
 
 			if (m_ScrollRatio == 0.0f)
@@ -288,16 +288,16 @@ namespace onion::voxel
 
 	void Scroller::SubscribeToSpriteEvents()
 	{
-		m_EventHandles.push_back(m_NineSliceSprite_Scroller.OnMouseDown.Subscribe([this](const NineSliceSprite& sprite)
+		m_EventHandles.push_back(m_NineSliceSprite_Scroller.EvtMouseDown.Subscribe([this](const NineSliceSprite& sprite)
 																				  { Handle_MouseDown(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_Scroller.OnMouseUp.Subscribe([this](const NineSliceSprite& sprite)
+		m_EventHandles.push_back(m_NineSliceSprite_Scroller.EvtMouseUp.Subscribe([this](const NineSliceSprite& sprite)
 																				{ Handle_MouseUp(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_ScrollerBackground.OnHoverEnter.Subscribe(
+		m_EventHandles.push_back(m_NineSliceSprite_ScrollerBackground.EvtHoverEnter.Subscribe(
 			[this](const NineSliceSprite& sprite) { Handle_HoverEnter(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_ScrollerBackground.OnHoverLeave.Subscribe(
+		m_EventHandles.push_back(m_NineSliceSprite_ScrollerBackground.EvtHoverLeave.Subscribe(
 			[this](const NineSliceSprite& sprite) { Handle_HoverLeave(sprite); }));
 	}
 
@@ -419,7 +419,7 @@ namespace onion::voxel
 
 				if (m_ScrollRatio != previousScrollRatio)
 				{
-					OnScrollRatioChanged.Trigger(*this);
+					EvtScrollRatioChanged.Trigger(*this);
 				}
 			}
 		}

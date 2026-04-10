@@ -234,7 +234,7 @@ namespace onion::voxel
 
 										// Unlock before triggering event to avoid potential deadlocks if event handlers interact with NetworkServer
 										lock.unlock();
-										ClientConnected.Trigger(args);
+										EvtClientConnected.Trigger(args);
 										lock.lock();
 									}
 
@@ -277,7 +277,7 @@ namespace onion::voxel
 							lock.unlock();
 
 							// Trigger ClientDisconnected event
-							ClientDisconnected.Trigger(disconnectArgs);
+							EvtClientDisconnected.Trigger(disconnectArgs);
 						}
 
 						break;
@@ -356,7 +356,7 @@ namespace onion::voxel
 		{
 			args.Sender = msg.Sender;
 			args.Message = std::move(msg.Message);
-			MessageReceived.Trigger(args);
+			EvtMessageReceived.Trigger(args);
 		}
 	}
 } // namespace onion::voxel

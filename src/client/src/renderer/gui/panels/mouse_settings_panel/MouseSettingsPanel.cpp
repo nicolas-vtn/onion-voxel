@@ -271,12 +271,12 @@ namespace onion::voxel
 	void MouseSettingsPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(
-			m_Done_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
+			m_Done_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
 
-		m_EventHandles.push_back(m_MouseSensitivity_Slider.OnValueChanged.Subscribe(
+		m_EventHandles.push_back(m_MouseSensitivity_Slider.EvtValueChanged.Subscribe(
 			[this](const Slider& sender) { Handle_MouseSensitivity_Changed(sender); }));
 
-		m_EventHandles.push_back(m_MouseScrollSensitivity_Slider.OnValueChanged.Subscribe(
+		m_EventHandles.push_back(m_MouseScrollSensitivity_Slider.EvtValueChanged.Subscribe(
 			[this](const Slider& sender) { Handle_MouseScrollSensitivity_Changed(sender); }));
 	}
 

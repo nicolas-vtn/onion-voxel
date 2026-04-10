@@ -581,36 +581,36 @@ namespace onion::voxel
 	void SingleplayerPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(
-			m_ButtonBack.OnClick.Subscribe([this](const Button& button) { Handle_ButtonBackClick(button); }));
+			m_ButtonBack.EvtClick.Subscribe([this](const Button& button) { Handle_ButtonBackClick(button); }));
 
-		m_EventHandles.push_back(m_ButtonCreateNewWorld.OnClick.Subscribe(
+		m_EventHandles.push_back(m_ButtonCreateNewWorld.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_ButtonCreateNewWorldClick(button); }));
 
-		m_EventHandles.push_back(m_ButtonPlaySelectedWorld.OnClick.Subscribe(
+		m_EventHandles.push_back(m_ButtonPlaySelectedWorld.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_PlaySelectedWorldClick(button); }));
 
-		m_EventHandles.push_back(m_ButtonDeleteSelectedWorld.OnClick.Subscribe(
+		m_EventHandles.push_back(m_ButtonDeleteSelectedWorld.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_ButtonDeleteSelectedWorldClick(button); }));
 
 		m_EventHandles.push_back(
-			m_ButtonEdit.OnClick.Subscribe([this](const Button& button) { Handle_ButtonEditClick(button); }));
+			m_ButtonEdit.EvtClick.Subscribe([this](const Button& button) { Handle_ButtonEditClick(button); }));
 
-		m_EventHandles.push_back(m_ButtonRefreshWorldTiles.OnClick.Subscribe(
+		m_EventHandles.push_back(m_ButtonRefreshWorldTiles.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_ButtonRefreshWorldTilesClick(button); }));
 
-		m_EventHandles.push_back(m_ButtonDeleteConfirm.OnClick.Subscribe([this](const Button& button)
+		m_EventHandles.push_back(m_ButtonDeleteConfirm.EvtClick.Subscribe([this](const Button& button)
 																		 { Handle_DeleteConfirmClick(button); }));
 
 		m_EventHandles.push_back(
-			m_ButtonDeleteCancel.OnClick.Subscribe([this](const Button& button) { Handle_DeleteCancelClick(button); }));
+			m_ButtonDeleteCancel.EvtClick.Subscribe([this](const Button& button) { Handle_DeleteCancelClick(button); }));
 
-		m_EventHandles.push_back(m_ButtonCreateNewWorldSelectType.OnClick.Subscribe(
+		m_EventHandles.push_back(m_ButtonCreateNewWorldSelectType.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_CreateNewWorldSelectTypeClick(button); }));
 
-		m_EventHandles.push_back(m_ButtonCreateNewWorldConfirm.OnClick.Subscribe(
+		m_EventHandles.push_back(m_ButtonCreateNewWorldConfirm.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_CreateNewWorldConfirmClick(button); }));
 
-		m_EventHandles.push_back(m_ButtonCreateNewWorldCancel.OnClick.Subscribe(
+		m_EventHandles.push_back(m_ButtonCreateNewWorldCancel.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_CreateNewWorldCancelClick(button); }));
 	}
 

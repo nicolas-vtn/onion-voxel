@@ -176,19 +176,19 @@ namespace onion::voxel
 
 		// We subscribe to only ONE sprite, since they all share the same position and size, so their hovered state will always be the same.
 
-		m_EventHandles.push_back(m_NineSliceSprite_Basic.OnMouseDown.Subscribe([this](const NineSliceSprite& sprite)
+		m_EventHandles.push_back(m_NineSliceSprite_Basic.EvtMouseDown.Subscribe([this](const NineSliceSprite& sprite)
 																			   { HandleMouseDown(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_Basic.OnMouseUp.Subscribe([this](const NineSliceSprite& sprite)
+		m_EventHandles.push_back(m_NineSliceSprite_Basic.EvtMouseUp.Subscribe([this](const NineSliceSprite& sprite)
 																			 { HandleMouseUp(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_Basic.OnClick.Subscribe([this](const NineSliceSprite& sprite)
+		m_EventHandles.push_back(m_NineSliceSprite_Basic.EvtClick.Subscribe([this](const NineSliceSprite& sprite)
 																		   { HandleSpriteClick(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_Basic.OnHoverEnter.Subscribe([this](const NineSliceSprite& sprite)
+		m_EventHandles.push_back(m_NineSliceSprite_Basic.EvtHoverEnter.Subscribe([this](const NineSliceSprite& sprite)
 																				{ HandleSpriteHoverEnter(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_Basic.OnHoverLeave.Subscribe([this](const NineSliceSprite& sprite)
+		m_EventHandles.push_back(m_NineSliceSprite_Basic.EvtHoverLeave.Subscribe([this](const NineSliceSprite& sprite)
 																				{ HandleSpriteHoverLeave(sprite); }));
 	}
 
@@ -219,7 +219,7 @@ namespace onion::voxel
 	{
 		(void) sprite; // Unused parameter
 		if (m_IsEnabled)
-			OnClick.Trigger(*this);
+			EvtClick.Trigger(*this);
 	}
 
 	void Button::HandleSpriteHoverEnter(const NineSliceSprite& sprite)
@@ -227,9 +227,9 @@ namespace onion::voxel
 		(void) sprite; // Unused parameter
 		if (m_IsEnabled)
 		{
-			GuiElement::RequestCursorStyleChange.Trigger(CursorStyle::Hand);
+			GuiElement::EvtRequestCursorStyleChange.Trigger(CursorStyle::Hand);
 		}
-		OnHoverEnter.Trigger(*this);
+		EvtHoverEnter.Trigger(*this);
 	}
 
 	void Button::HandleSpriteHoverLeave(const NineSliceSprite& sprite)
@@ -237,9 +237,9 @@ namespace onion::voxel
 		(void) sprite; // Unused parameter
 		if (m_IsEnabled)
 		{
-			GuiElement::RequestCursorStyleChange.Trigger(CursorStyle::Arrow);
+			GuiElement::EvtRequestCursorStyleChange.Trigger(CursorStyle::Arrow);
 		}
-		OnHoverLeave.Trigger(*this);
+		EvtHoverLeave.Trigger(*this);
 	}
 
 	void Button::RenderImGuiDebug()

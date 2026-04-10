@@ -56,12 +56,12 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<const NineSliceSprite&> OnMouseDown;
-		Event<const NineSliceSprite&> OnMouseUp;
-		Event<const NineSliceSprite&> OnClick;
+		Event<const NineSliceSprite&> EvtMouseDown;
+		Event<const NineSliceSprite&> EvtMouseUp;
+		Event<const NineSliceSprite&> EvtClick;
 
-		Event<const NineSliceSprite&> OnHoverEnter;
-		Event<const NineSliceSprite&> OnHoverLeave;
+		Event<const NineSliceSprite&> EvtHoverEnter;
+		Event<const NineSliceSprite&> EvtHoverLeave;
 
 		// ----- Getters / Setters -----
 	  public:

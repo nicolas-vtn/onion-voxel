@@ -472,7 +472,7 @@ namespace onion::voxel
 
 	void Renderer::SubscribeToInputsManagerEvents()
 	{
-		m_InputsManagerEventHandles.push_back(m_InputsManager.EventFramebufferResized.Subscribe(
+		m_InputsManagerEventHandles.push_back(m_InputsManager.EvtFramebufferResized.Subscribe(
 			[this](const FramebufferState& framebufferState) { Handle_FramebufferResized(framebufferState); }));
 	}
 
@@ -1030,21 +1030,21 @@ namespace onion::voxel
 
 	void Renderer::SubscribeToGuiEvents()
 	{
-		m_EventHandles.push_back(m_Gui.RequestCursorStyleChange.Subscribe([this](const CursorStyle& style)
+		m_EventHandles.push_back(m_Gui.EvtRequestCursorStyleChange.Subscribe([this](const CursorStyle& style)
 																		  { Handle_CursorStyleChangeRequest(style); }));
 
-		m_EventHandles.push_back(m_Gui.RequestStartSingleplayerGame.Subscribe(
+		m_EventHandles.push_back(m_Gui.EvtRequestStartSingleplayerGame.Subscribe(
 			[this](const WorldInfos& worldInfos) { Handle_StartSingleplayerGameRequest(worldInfos); }));
 
-		m_EventHandles.push_back(m_Gui.RequestStartMultiplayerGame.Subscribe(
+		m_EventHandles.push_back(m_Gui.EvtRequestStartMultiplayerGame.Subscribe(
 			[this](const ServerInfos& serverInfos) { Handle_StartMultiplayerGameRequest(serverInfos); }));
 
-		m_EventHandles.push_back(m_Gui.RequestBackToGame.Subscribe([this](bool) { Handle_BackToGameRequest(); }));
+		m_EventHandles.push_back(m_Gui.EvtRequestBackToGame.Subscribe([this](bool) { Handle_BackToGameRequest(); }));
 
 		m_EventHandles.push_back(
-			m_Gui.RequestQuitToMainMenu.Subscribe([this](bool quit) { Handle_QuitToMainMenuRequest(quit); }));
+			m_Gui.EvtRequestQuitToMainMenu.Subscribe([this](bool quit) { Handle_QuitToMainMenuRequest(quit); }));
 
-		m_EventHandles.push_back(m_Gui.UserSettingsChanged.Subscribe([this](const UserSettingsChangedEventArgs& args)
+		m_EventHandles.push_back(m_Gui.EvtUserSettingsChanged.Subscribe([this](const UserSettingsChangedEventArgs& args)
 																	 { Handle_UserSettingsChanged(args); }));
 	}
 
@@ -1055,7 +1055,7 @@ namespace onion::voxel
 
 	void Renderer::Handle_StartSingleplayerGameRequest(const WorldInfos& worldInfos)
 	{
-		RequestStartSingleplayerGame.Trigger(worldInfos);
+		EvtRequestStartSingleplayerGame.Trigger(worldInfos);
 
 		// Enable mouse capture for gameplay
 		m_InputsManager.SetMouseCaptureEnabled(true);
@@ -1067,7 +1067,7 @@ namespace onion::voxel
 
 	void Renderer::Handle_StartMultiplayerGameRequest(const ServerInfos& serverInfos)
 	{
-		RequestStartMultiplayerGame.Trigger(serverInfos);
+		EvtRequestStartMultiplayerGame.Trigger(serverInfos);
 
 		// Enable mouse capture for gameplay
 		m_InputsManager.SetMouseCaptureEnabled(true);
@@ -1087,7 +1087,7 @@ namespace onion::voxel
 		if (GetRenderState() == eRenderState::InGame)
 		{
 			// Stops the Client Game
-			RequestQuitToMainMenu.Trigger(quit);
+			EvtRequestQuitToMainMenu.Trigger(quit);
 
 			m_WorldManager->RemoveAllChunks();
 			m_WorldRenderer.DeleteChunkMeshes();

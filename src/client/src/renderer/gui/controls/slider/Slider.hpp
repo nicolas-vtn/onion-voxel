@@ -54,7 +54,7 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<const Slider&> OnValueChanged;
+		Event<const Slider&> EvtValueChanged;
 
 	  private:
 		void SubscribeToSpriteEvents();

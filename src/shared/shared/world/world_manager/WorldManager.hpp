@@ -104,16 +104,16 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<std::shared_ptr<Chunk>> ChunkAdded;
-		Event<std::shared_ptr<Chunk>> ChunkRemoved;
-		Event<const BlocksChangedEventArgs&> BlocksChanged;
-		Event<const std::vector<glm::ivec2>&> MissingChunksRequested;
+		Event<std::shared_ptr<Chunk>> EvtChunkAdded;
+		Event<std::shared_ptr<Chunk>> EvtChunkRemoved;
+		Event<const BlocksChangedEventArgs&> EvtBlocksChanged;
+		Event<const std::vector<glm::ivec2>&> EvtMissingChunksRequested;
 
 	  private:
 		std::vector<EventHandle> m_InternalEventHandles;
 		void SubscribeToInternalEvents();
 
-		Event<const PlayerChangedChunkEventArgs&> PlayerChangedChunk;
+		Event<const PlayerChangedChunkEventArgs&> EvtPlayerChangedChunk;
 
 		void Handle_PlayerChangedChunk(const PlayerChangedChunkEventArgs& args);
 		void Handle_ChunkAdded(const std::shared_ptr<Chunk>& chunk);

@@ -223,13 +223,13 @@ namespace onion::voxel
 
 	void WorldRenderer::SubscribeToWorldManagerEvents()
 	{
-		m_EventHandles.push_back(m_WorldManager->ChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk)
+		m_EventHandles.push_back(m_WorldManager->EvtChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk)
 																	  { Handle_ChunkAdded(chunk); }));
 
-		m_EventHandles.push_back(m_WorldManager->ChunkRemoved.Subscribe([this](const std::shared_ptr<Chunk>& chunk)
+		m_EventHandles.push_back(m_WorldManager->EvtChunkRemoved.Subscribe([this](const std::shared_ptr<Chunk>& chunk)
 																		{ Handle_ChunkRemoved(chunk); }));
 
-		m_EventHandles.push_back(m_WorldManager->BlocksChanged.Subscribe(
+		m_EventHandles.push_back(m_WorldManager->EvtBlocksChanged.Subscribe(
 			[this](const WorldManager::BlocksChangedEventArgs& args) { Handle_BlocksChanged(args); }));
 	}
 

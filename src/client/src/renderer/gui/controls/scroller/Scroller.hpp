@@ -55,7 +55,7 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<const Scroller&> OnScrollRatioChanged;
+		Event<const Scroller&> EvtScrollRatioChanged;
 
 	  private:
 		void SubscribeToSpriteEvents();

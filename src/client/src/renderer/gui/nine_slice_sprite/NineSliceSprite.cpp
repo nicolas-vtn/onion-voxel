@@ -283,11 +283,11 @@ namespace onion::voxel
 		// ------------------- Hover Events ------------------
 		if (hovered && !m_WasHovered)
 		{
-			OnHoverEnter.Trigger(*this);
+			EvtHoverEnter.Trigger(*this);
 		}
 		else if (!hovered && m_WasHovered)
 		{
-			OnHoverLeave.Trigger(*this);
+			EvtHoverLeave.Trigger(*this);
 		}
 
 		// ------------------- Mouse Down ------------------
@@ -296,7 +296,7 @@ namespace onion::voxel
 			if (hovered)
 			{
 				m_MouseDownStartedInside = true;
-				OnMouseDown.Trigger(*this);
+				EvtMouseDown.Trigger(*this);
 			}
 			else
 			{
@@ -309,11 +309,11 @@ namespace onion::voxel
 		// ------------------- Mouse Up ------------------
 		if (!mouseDown && m_WasMouseDown)
 		{
-			OnMouseUp.Trigger(*this);
+			EvtMouseUp.Trigger(*this);
 
 			if (m_MouseDownStartedInside && hovered)
 			{
-				OnClick.Trigger(*this);
+				EvtClick.Trigger(*this);
 			}
 
 			m_WasMouseDown = false;

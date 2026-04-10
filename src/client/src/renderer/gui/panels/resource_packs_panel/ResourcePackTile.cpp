@@ -207,7 +207,7 @@ namespace onion::voxel
 
 	void ResourcePackTile::SubscribeToControlEvents()
 	{
-		m_EventHandles.push_back(m_Checkbox.OnCheckedChanged.Subscribe([this](const Checkbox& sender)
+		m_EventHandles.push_back(m_Checkbox.EvtCheckedChanged.Subscribe([this](const Checkbox& sender)
 																	   { Handle_CheckboxCheckedChanged(sender); }));
 	}
 

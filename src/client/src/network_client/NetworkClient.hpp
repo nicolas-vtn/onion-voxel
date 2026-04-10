@@ -42,9 +42,9 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<const NetworkMessage&> MessageReceived;
-		Event<const ServerInfoMsg&> Connected;
-		Event<bool> Disconnected;
+		Event<const NetworkMessage&> EvtMessageReceived;
+		Event<const ServerInfoMsg&> EvtConnected;
+		Event<bool> EvtDisconnected;
 
 		// ----- Private Structs -----
 	  private:

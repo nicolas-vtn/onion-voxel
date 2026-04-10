@@ -124,13 +124,13 @@ namespace onion::voxel
 	void Checkbox::SubscribeToSpriteEvents()
 	{
 		m_EventHandles.push_back(
-			m_Checkbox_Sprite.OnClick.Subscribe([this](const Sprite& sprite) { Handle_Click(sprite); }));
+			m_Checkbox_Sprite.EvtClick.Subscribe([this](const Sprite& sprite) { Handle_Click(sprite); }));
 
 		m_EventHandles.push_back(
-			m_Checkbox_Sprite.OnHoverEnter.Subscribe([this](const Sprite& sprite) { Handle_HoverEnter(sprite); }));
+			m_Checkbox_Sprite.EvtHoverEnter.Subscribe([this](const Sprite& sprite) { Handle_HoverEnter(sprite); }));
 
 		m_EventHandles.push_back(
-			m_Checkbox_Sprite.OnHoverLeave.Subscribe([this](const Sprite& sprite) { Handle_HoverLeave(sprite); }));
+			m_Checkbox_Sprite.EvtHoverLeave.Subscribe([this](const Sprite& sprite) { Handle_HoverLeave(sprite); }));
 	}
 
 	void Checkbox::Handle_Click(const Sprite& sprite)
@@ -138,7 +138,7 @@ namespace onion::voxel
 		(void) sprite; // Unused parameter
 
 		m_Checked = !m_Checked;
-		OnCheckedChanged.Trigger(*this);
+		EvtCheckedChanged.Trigger(*this);
 	}
 
 	void Checkbox::Handle_HoverEnter(const Sprite& sprite)

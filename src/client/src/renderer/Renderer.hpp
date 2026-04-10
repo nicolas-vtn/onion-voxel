@@ -73,10 +73,10 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<const WorldInfos&> RequestStartSingleplayerGame;
-		Event<const ServerInfos&> RequestStartMultiplayerGame;
+		Event<const WorldInfos&> EvtRequestStartSingleplayerGame;
+		Event<const ServerInfos&> EvtRequestStartMultiplayerGame;
 		Event<uint8_t> EvtRenderDistanceChanged;
-		Event<bool> RequestQuitToMainMenu;
+		Event<bool> EvtRequestQuitToMainMenu;
 
 		// ----- Internal Methods -----
 	  private:

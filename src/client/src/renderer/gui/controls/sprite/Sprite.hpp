@@ -61,9 +61,9 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<const Sprite&> OnClick;
-		Event<const Sprite&> OnHoverEnter;
-		Event<const Sprite&> OnHoverLeave;
+		Event<const Sprite&> EvtClick;
+		Event<const Sprite&> EvtHoverEnter;
+		Event<const Sprite&> EvtHoverLeave;
 
 		// ----- Properties -----
 	  private:

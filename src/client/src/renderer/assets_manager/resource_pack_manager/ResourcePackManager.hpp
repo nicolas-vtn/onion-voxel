@@ -28,7 +28,7 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<const std::string&> OnResourcePackChanged;
+		Event<const std::string&> EvtResourcePackChanged;
 
 		// ----- Getters / Setters -----
 	  public:

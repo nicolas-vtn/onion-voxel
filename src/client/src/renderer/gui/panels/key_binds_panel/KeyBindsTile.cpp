@@ -160,10 +160,10 @@ namespace onion::voxel
 	void KeyBindsTile::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(
-			m_ButtonKey.OnClick.Subscribe([this](const Button& sender) { Handle_ButtonKey_Click(sender); }));
+			m_ButtonKey.EvtClick.Subscribe([this](const Button& sender) { Handle_ButtonKey_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_ButtonReset.OnClick.Subscribe([this](const Button& sender) { Handle_ButtonReset_Click(sender); }));
+			m_ButtonReset.EvtClick.Subscribe([this](const Button& sender) { Handle_ButtonReset_Click(sender); }));
 	}
 
 	void KeyBindsTile::Handle_ButtonKey_Click(const Button& sender)

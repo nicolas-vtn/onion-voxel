@@ -212,26 +212,26 @@ namespace onion::voxel
 	void DemoPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(
-			m_Button.OnClick.Subscribe([this](const Button& button) { Handle_ButtonClick(button); }));
+			m_Button.EvtClick.Subscribe([this](const Button& button) { Handle_ButtonClick(button); }));
 
 		m_EventHandles.push_back(
-			m_Button.OnHoverEnter.Subscribe([this](const Button& button) { Handle_ButtonHoverEnter(button); }));
+			m_Button.EvtHoverEnter.Subscribe([this](const Button& button) { Handle_ButtonHoverEnter(button); }));
 
 		m_EventHandles.push_back(
-			m_Button.OnHoverLeave.Subscribe([this](const Button& button) { Handle_ButtonHoverLeave(button); }));
+			m_Button.EvtHoverLeave.Subscribe([this](const Button& button) { Handle_ButtonHoverLeave(button); }));
 
 		m_EventHandles.push_back(
-			m_ButtonMainMenu.OnClick.Subscribe([this](const Button& button) { Handle_ButtonMainMenuClick(button); }));
+			m_ButtonMainMenu.EvtClick.Subscribe([this](const Button& button) { Handle_ButtonMainMenuClick(button); }));
 
-		m_EventHandles.push_back(m_Checkbox.OnCheckedChanged.Subscribe([this](const Checkbox& checkbox)
+		m_EventHandles.push_back(m_Checkbox.EvtCheckedChanged.Subscribe([this](const Checkbox& checkbox)
 																	   { Handle_CheckboxCheckedChanged(checkbox); }));
 		m_EventHandles.push_back(
-			m_Slider.OnValueChanged.Subscribe([this](const Slider& slider) { Handle_SliderValueChanged(slider); }));
+			m_Slider.EvtValueChanged.Subscribe([this](const Slider& slider) { Handle_SliderValueChanged(slider); }));
 
-		m_EventHandles.push_back(m_ButtonScrollingPanel.OnClick.Subscribe(
+		m_EventHandles.push_back(m_ButtonScrollingPanel.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_ButtonScrollingPanelClick(button); }));
 
-		m_EventHandles.push_back(m_ButtonTextsPanel.OnClick.Subscribe([this](const Button& button)
+		m_EventHandles.push_back(m_ButtonTextsPanel.EvtClick.Subscribe([this](const Button& button)
 																	  { Handle_ButtonTextsPanelClick(button); }));
 	}
 
@@ -251,13 +251,13 @@ namespace onion::voxel
 	void DemoPanel::Handle_ButtonScrollingPanelClick(const Button& button)
 	{
 		(void) button; // Unused parameter
-		RequestMenuNavigation.Trigger({this, eMenu::DemoScrollingPanel});
+		EvtRequestMenuNavigation.Trigger({this, eMenu::DemoScrollingPanel});
 	}
 
 	void DemoPanel::Handle_ButtonTextsPanelClick(const Button& button)
 	{
 		(void) button; // Unused parameter
-		RequestMenuNavigation.Trigger({this, eMenu::DemoTextsPanel});
+		EvtRequestMenuNavigation.Trigger({this, eMenu::DemoTextsPanel});
 	}
 
 	void DemoPanel::Handle_ButtonClick(const Button& button)
@@ -278,7 +278,7 @@ namespace onion::voxel
 	void DemoPanel::Handle_ButtonMainMenuClick(const Button& button)
 	{
 		std::cerr << "Button '" + button.GetName() + "' Clicked." << std::endl;
-		RequestMenuNavigation.Trigger({this, eMenu::MainMenu});
+		EvtRequestMenuNavigation.Trigger({this, eMenu::MainMenu});
 	}
 
 } // namespace onion::voxel

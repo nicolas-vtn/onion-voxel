@@ -47,7 +47,7 @@ namespace onion::voxel
 	{
 		if (s_IsBackPressed)
 		{
-			RequestBackToGame.Trigger(this);
+			EvtRequestBackToGame.Trigger(this);
 			return;
 		}
 
@@ -179,31 +179,31 @@ namespace onion::voxel
 	void PausePanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(
-			m_BackToGame_Button.OnClick.Subscribe([this](const Button& sender) { Handle_BackToGame_Click(sender); }));
+			m_BackToGame_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_BackToGame_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_Options_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Options_Click(sender); }));
+			m_Options_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Options_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_MainMenu_Button.OnClick.Subscribe([this](const Button& sender) { Handle_MainMenu_Click(sender); }));
+			m_MainMenu_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_MainMenu_Click(sender); }));
 	}
 
 	void PausePanel::Handle_BackToGame_Click(const Button& sender)
 	{
 		(void) sender; // Unused Parameter
-		RequestBackToGame.Trigger(this);
+		EvtRequestBackToGame.Trigger(this);
 	}
 
 	void PausePanel::Handle_Options_Click(const Button& sender)
 	{
 		(void) sender; // Unused Parameter
-		RequestMenuNavigation.Trigger({this, eMenu::Options});
+		EvtRequestMenuNavigation.Trigger({this, eMenu::Options});
 	}
 
 	void PausePanel::Handle_MainMenu_Click(const Button& sender)
 	{
 		(void) sender; // Unused Parameter
-		RequestQuitToMainMenu.Trigger({this});
+		EvtRequestQuitToMainMenu.Trigger({this});
 	}
 
 } // namespace onion::voxel

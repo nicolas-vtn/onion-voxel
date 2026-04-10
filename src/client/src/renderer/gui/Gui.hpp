@@ -57,13 +57,13 @@ namespace onion::voxel
 
 		// ----- Events -----
 	  public:
-		Event<const CursorStyle&> RequestCursorStyleChange;
-		Event<const WorldInfos&> RequestStartSingleplayerGame;
-		Event<const ServerInfos&> RequestStartMultiplayerGame;
-		Event<bool> RequestQuitToMainMenu;
-		Event<bool> RequestBackToGame;
-		Event<bool> RequestBack;
-		Event<const UserSettingsChangedEventArgs&> UserSettingsChanged;
+		Event<const CursorStyle&> EvtRequestCursorStyleChange;
+		Event<const WorldInfos&> EvtRequestStartSingleplayerGame;
+		Event<const ServerInfos&> EvtRequestStartMultiplayerGame;
+		Event<bool> EvtRequestQuitToMainMenu;
+		Event<bool> EvtRequestBackToGame;
+		Event<bool> EvtRequestBack;
+		Event<const UserSettingsChangedEventArgs&> EvtUserSettingsChanged;
 
 		// ----- Panels -----
 	  private:

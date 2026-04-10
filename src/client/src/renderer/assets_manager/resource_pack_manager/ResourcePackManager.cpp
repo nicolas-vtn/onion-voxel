@@ -81,7 +81,7 @@ namespace onion::voxel
 
 		if (changed)
 		{
-			OnResourcePackChanged.Trigger(m_CurrentResourcePack);
+			EvtResourcePackChanged.Trigger(m_CurrentResourcePack);
 		}
 	}
 

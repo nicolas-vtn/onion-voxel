@@ -64,7 +64,7 @@ namespace onion::voxel
 			if (m_Value != m_PrevValue)
 			{
 				m_PrevValue = m_Value;
-				OnValueChanged.Trigger(*this);
+				EvtValueChanged.Trigger(*this);
 
 				//std::cout << "Slider Value Changed: " << m_Value << std::endl;
 			}
@@ -195,16 +195,16 @@ namespace onion::voxel
 
 	void Slider::SubscribeToSpriteEvents()
 	{
-		m_EventHandles.push_back(m_NineSliceSprite_SliderBasic.OnMouseDown.Subscribe(
+		m_EventHandles.push_back(m_NineSliceSprite_SliderBasic.EvtMouseDown.Subscribe(
 			[this](const NineSliceSprite& sprite) { Handle_MouseDown(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_SliderBasic.OnMouseUp.Subscribe([this](const NineSliceSprite& sprite)
+		m_EventHandles.push_back(m_NineSliceSprite_SliderBasic.EvtMouseUp.Subscribe([this](const NineSliceSprite& sprite)
 																				   { Handle_MouseUp(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_SliderBasic.OnHoverEnter.Subscribe(
+		m_EventHandles.push_back(m_NineSliceSprite_SliderBasic.EvtHoverEnter.Subscribe(
 			[this](const NineSliceSprite& sprite) { Handle_HoverEnter(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_SliderBasic.OnHoverLeave.Subscribe(
+		m_EventHandles.push_back(m_NineSliceSprite_SliderBasic.EvtHoverLeave.Subscribe(
 			[this](const NineSliceSprite& sprite) { Handle_HoverLeave(sprite); }));
 	}
 

@@ -259,14 +259,14 @@ namespace onion::voxel
 
 	void ControlsPanel::SubscribeToControlEvents()
 	{
-		m_EventHandles.push_back(m_MouseSettings_Button.OnClick.Subscribe([this](const Button& sender)
+		m_EventHandles.push_back(m_MouseSettings_Button.EvtClick.Subscribe([this](const Button& sender)
 																		  { Handle_MouseSettings_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_KeyBinds_Button.OnClick.Subscribe([this](const Button& sender) { Handle_KeyBinds_Click(sender); }));
+			m_KeyBinds_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_KeyBinds_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_Done_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
+			m_Done_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
 	}
 
 	void ControlsPanel::Handle_Done_Click(const Button& sender)

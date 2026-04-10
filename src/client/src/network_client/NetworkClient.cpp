@@ -65,7 +65,7 @@ namespace onion::voxel
 			m_EventThread.join();
 		}
 
-		Disconnected.Trigger(true);
+		EvtDisconnected.Trigger(true);
 
 		std::lock_guard<std::mutex> lock(m_Mutex);
 
@@ -204,7 +204,7 @@ namespace onion::voxel
 
 									std::cout << "Assigned ClientHandle: " << m_ClientHandle.load() << "\n";
 
-									Connected.Trigger(serverInfo);
+									EvtConnected.Trigger(serverInfo);
 								}
 
 								m_IncomingMessages.Push(std::move(msg));
@@ -221,7 +221,7 @@ namespace onion::voxel
 
 					case ENET_EVENT_TYPE_DISCONNECT:
 						std::cout << "Disconnected from server.\n";
-						Disconnected.Trigger(true);
+						EvtDisconnected.Trigger(true);
 						m_Peer = nullptr;
 						return;
 
@@ -290,7 +290,7 @@ namespace onion::voxel
 
 		while (m_IncomingMessages.WaitPop(msg, stopToken))
 		{
-			MessageReceived.Trigger(msg);
+			EvtMessageReceived.Trigger(msg);
 		}
 	}
 } // namespace onion::voxel

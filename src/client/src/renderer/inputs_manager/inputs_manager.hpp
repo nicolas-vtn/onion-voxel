@@ -173,10 +173,10 @@ namespace onion::voxel
 		// ------------ Events ------------
 	  public:
 		/// @brief Event triggered when the framebuffer is resized. Triggered functions will be called on Render Thread.
-		Event<const FramebufferState&> EventFramebufferResized;
+		Event<const FramebufferState&> EvtFramebufferResized;
 		/// @brief Event triggered when the user inputs a character (e.g., for text input). The event provides the Unicode code point of the character that was input. Triggered functions will be called on Render Thread.
-		Event<const unsigned int&> EventCharInput;
-
+		Event<const unsigned int&> EvtCharInput;
+		/// @brief Event triggered on next key pressed (any key). It will then be unsubscibed. Ideal for key binds.
 		Event<const Key&> EvtIntercptedKeyPressed;
 
 		// ------------ INPUTS SNAPSHOT MANAGEMENT ------------

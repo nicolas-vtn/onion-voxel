@@ -28,7 +28,7 @@ namespace onion::voxel
 
 		// ----- Public Events -----
 	  public:
-		Event<const Checkbox&> OnCheckedChanged;
+		Event<const Checkbox&> EvtCheckedChanged;
 
 		// ----- Getters / Setters -----
 	  public:

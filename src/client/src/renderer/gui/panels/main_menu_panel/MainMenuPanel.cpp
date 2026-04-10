@@ -238,49 +238,49 @@ namespace onion::voxel
 
 	void MainMenuPanel::SubscribeToControlEvents()
 	{
-		m_EventHandles.push_back(m_Singleplayer_Button.OnClick.Subscribe([this](const Button& sender)
+		m_EventHandles.push_back(m_Singleplayer_Button.EvtClick.Subscribe([this](const Button& sender)
 																		 { Handle_Singleplayer_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_Multiplayer_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Multiplayer_Click(sender); }));
+			m_Multiplayer_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Multiplayer_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_DemoPanel_Button.OnClick.Subscribe([this](const Button& sender) { Handle_DemoButton_Click(sender); }));
+			m_DemoPanel_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_DemoButton_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_Options_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Options_Click(sender); }));
+			m_Options_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Options_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_QuitGame_Button.OnClick.Subscribe([this](const Button& sender) { Handle_QuitGame_Click(sender); }));
+			m_QuitGame_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_QuitGame_Click(sender); }));
 	}
 
 	void MainMenuPanel::Handle_Singleplayer_Click(const Button& sender)
 	{
 		(void) sender; // Unused Parameter
-		RequestMenuNavigation.Trigger({this, eMenu::Singleplayer});
+		EvtRequestMenuNavigation.Trigger({this, eMenu::Singleplayer});
 	}
 
 	void MainMenuPanel::Handle_Multiplayer_Click(const Button& sender)
 	{
 		(void) sender; // Unused Parameter
-		RequestMenuNavigation.Trigger({this, eMenu::Multiplayer});
+		EvtRequestMenuNavigation.Trigger({this, eMenu::Multiplayer});
 	}
 
 	void MainMenuPanel::Handle_DemoButton_Click(const Button& sender)
 	{
 		(void) sender; // Unused Parameter
-		RequestMenuNavigation.Trigger({this, eMenu::DemoPanel});
+		EvtRequestMenuNavigation.Trigger({this, eMenu::DemoPanel});
 	}
 
 	void MainMenuPanel::Handle_Options_Click(const Button& sender)
 	{
 		(void) sender; // Unused Parameter
-		RequestMenuNavigation.Trigger({this, eMenu::Options});
+		EvtRequestMenuNavigation.Trigger({this, eMenu::Options});
 	}
 
 	void MainMenuPanel::Handle_QuitGame_Click(const Button& sender)
 	{
 		(void) sender; // Unused Parameter
-		RequestQuitGame.Trigger(this);
+		EvtRequestQuitGame.Trigger(this);
 	}
 }; // namespace onion::voxel

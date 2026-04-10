@@ -322,26 +322,26 @@ namespace onion::voxel
 
 	void TextField::SubscribeToSpriteEvents()
 	{
-		m_EventHandles.push_back(m_NineSliceSprite_TextField.OnMouseDown.Subscribe([this](const NineSliceSprite& sprite)
+		m_EventHandles.push_back(m_NineSliceSprite_TextField.EvtMouseDown.Subscribe([this](const NineSliceSprite& sprite)
 																				   { Handle_MouseDown(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_TextField.OnMouseUp.Subscribe([this](const NineSliceSprite& sprite)
+		m_EventHandles.push_back(m_NineSliceSprite_TextField.EvtMouseUp.Subscribe([this](const NineSliceSprite& sprite)
 																				 { Handle_MouseUp(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_TextField.OnClick.Subscribe([this](const NineSliceSprite& sprite)
+		m_EventHandles.push_back(m_NineSliceSprite_TextField.EvtClick.Subscribe([this](const NineSliceSprite& sprite)
 																			   { Handle_SpriteClick(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_TextField.OnHoverEnter.Subscribe(
+		m_EventHandles.push_back(m_NineSliceSprite_TextField.EvtHoverEnter.Subscribe(
 			[this](const NineSliceSprite& sprite) { Handle_SpriteHoverEnter(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_TextField.OnHoverLeave.Subscribe(
+		m_EventHandles.push_back(m_NineSliceSprite_TextField.EvtHoverLeave.Subscribe(
 			[this](const NineSliceSprite& sprite) { Handle_SpriteHoverLeave(sprite); }));
 	}
 
 	void TextField::SubscribeToInputsManagerEvents()
 	{
 		const auto& InputsManager = EngineContext::Get().Inputs;
-		m_HandleCharInput = InputsManager->EventCharInput.Subscribe([this](const unsigned int& codepoint)
+		m_HandleCharInput = InputsManager->EvtCharInput.Subscribe([this](const unsigned int& codepoint)
 																	{ Handle_CharInput(codepoint); });
 	}
 
@@ -409,13 +409,13 @@ namespace onion::voxel
 	void TextField::Handle_SpriteHoverEnter(const NineSliceSprite& sprite)
 	{
 		(void) sprite;
-		GuiElement::RequestCursorStyleChange.Trigger(CursorStyle::IBeam);
+		GuiElement::EvtRequestCursorStyleChange.Trigger(CursorStyle::IBeam);
 	}
 
 	void TextField::Handle_SpriteHoverLeave(const NineSliceSprite& sprite)
 	{
 		(void) sprite;
-		GuiElement::RequestCursorStyleChange.Trigger(CursorStyle::Arrow);
+		GuiElement::EvtRequestCursorStyleChange.Trigger(CursorStyle::Arrow);
 	}
 
 	void TextField::Handle_CharInput(const unsigned int& codepoint)
@@ -688,7 +688,7 @@ namespace onion::voxel
 	{
 		m_IsActive = false;
 		ResetSelection();
-		OnTextChanged.Trigger(*this);
+		EvtTextChanged.Trigger(*this);
 	}
 
 	bool TextField::HasSelection() const

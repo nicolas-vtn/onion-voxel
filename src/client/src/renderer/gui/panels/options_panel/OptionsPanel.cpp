@@ -62,7 +62,7 @@ namespace onion::voxel
 	{
 		if (s_IsBackPressed)
 		{
-			RequestBackNavigation.Trigger(this);
+			EvtRequestBackNavigation.Trigger(this);
 			return;
 		}
 
@@ -255,47 +255,47 @@ namespace onion::voxel
 
 	void OptionsPanel::SubscribeToControlEvents()
 	{
-		m_EventHandles.push_back(m_MusicAndSounds_Button.OnClick.Subscribe([this](const Button& sender)
+		m_EventHandles.push_back(m_MusicAndSounds_Button.EvtClick.Subscribe([this](const Button& sender)
 																		   { Handle_MusicAndSounds_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_Controls_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Controls_Click(sender); }));
+			m_Controls_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Controls_Click(sender); }));
 
-		m_EventHandles.push_back(m_ResourcePacks_Button.OnClick.Subscribe([this](const Button& sender)
+		m_EventHandles.push_back(m_ResourcePacks_Button.EvtClick.Subscribe([this](const Button& sender)
 																		  { Handle_ResourcePacks_Click(sender); }));
 
 		m_EventHandles.push_back(
-			m_Done_Button.OnClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
+			m_Done_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
 
-		m_EventHandles.push_back(m_Fov_Slider.OnValueChanged.Subscribe([this](const Slider& sender)
+		m_EventHandles.push_back(m_Fov_Slider.EvtValueChanged.Subscribe([this](const Slider& sender)
 																	   { Handle_Fov_Slider_ValueChanged(sender); }));
 
-		m_EventHandles.push_back(m_VideoSettings_Button.OnClick.Subscribe([this](const Button& sender)
+		m_EventHandles.push_back(m_VideoSettings_Button.EvtClick.Subscribe([this](const Button& sender)
 																		  { Handle_VideoSettings_Click(sender); }));
 	}
 
 	void OptionsPanel::Handle_MusicAndSounds_Click(const Button& sender)
 	{
 		(void) sender; // Unused
-		RequestMenuNavigation.Trigger({this, eMenu::MusicAndSounds});
+		EvtRequestMenuNavigation.Trigger({this, eMenu::MusicAndSounds});
 	}
 
 	void OptionsPanel::Handle_Controls_Click(const Button& sender)
 	{
 		(void) sender; // Unused
-		RequestMenuNavigation.Trigger({this, eMenu::Controls});
+		EvtRequestMenuNavigation.Trigger({this, eMenu::Controls});
 	}
 
 	void OptionsPanel::Handle_ResourcePacks_Click(const Button& sender)
 	{
 		(void) sender; // Unused
-		RequestMenuNavigation.Trigger({this, eMenu::ResourcePacks});
+		EvtRequestMenuNavigation.Trigger({this, eMenu::ResourcePacks});
 	}
 
 	void OptionsPanel::Handle_Done_Click(const Button& sender)
 	{
 		(void) sender; // Unused
-		RequestBackNavigation.Trigger(this);
+		EvtRequestBackNavigation.Trigger(this);
 	}
 
 	void OptionsPanel::Handle_Fov_Slider_ValueChanged(const Slider& sender)
@@ -314,7 +314,7 @@ namespace onion::voxel
 	void OptionsPanel::Handle_VideoSettings_Click(const Button& sender)
 	{
 		(void) sender; // Unused
-		RequestMenuNavigation.Trigger({this, eMenu::VideoSettings});
+		EvtRequestMenuNavigation.Trigger({this, eMenu::VideoSettings});
 	}
 
 } // namespace onion::voxel

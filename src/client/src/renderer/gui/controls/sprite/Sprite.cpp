@@ -93,11 +93,11 @@ void onion::voxel::Sprite::PullEvents()
 	bool isHovered = IsHovered();
 	if (isHovered && !m_WasHovered)
 	{
-		OnHoverEnter.Trigger(*this);
+		EvtHoverEnter.Trigger(*this);
 	}
 	else if (!isHovered && m_WasHovered)
 	{
-		OnHoverLeave.Trigger(*this);
+		EvtHoverLeave.Trigger(*this);
 	}
 	m_WasHovered = isHovered;
 
@@ -105,7 +105,7 @@ void onion::voxel::Sprite::PullEvents()
 	bool isMouseDown = s_InputsSnapshot->Mouse.LeftButtonPressed;
 	if (isHovered && isMouseDown && !m_WasMouseDown)
 	{
-		OnClick.Trigger(*this);
+		EvtClick.Trigger(*this);
 	}
 	m_WasMouseDown = isMouseDown;
 }

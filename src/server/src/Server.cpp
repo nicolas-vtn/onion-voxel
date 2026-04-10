@@ -146,13 +146,13 @@ namespace onion::voxel
 
 	void Server::SubscribeToNetworkServerEvents()
 	{
-		m_NetworkServerEventHandles.push_back(m_NetworkServer.ClientConnected.Subscribe(
+		m_NetworkServerEventHandles.push_back(m_NetworkServer.EvtClientConnected.Subscribe(
 			[this](const NetworkServer::ClientConnectedEventArgs& args) { Handle_ClientConnected(args); }));
 
-		m_NetworkServerEventHandles.push_back(m_NetworkServer.ClientDisconnected.Subscribe(
+		m_NetworkServerEventHandles.push_back(m_NetworkServer.EvtClientDisconnected.Subscribe(
 			[this](const NetworkServer::ClientDisconnectedEventArgs& args) { Handle_ClientDisconnected(args); }));
 
-		m_NetworkServerEventHandles.push_back(m_NetworkServer.MessageReceived.Subscribe(
+		m_NetworkServerEventHandles.push_back(m_NetworkServer.EvtMessageReceived.Subscribe(
 			[this](const NetworkServer::MessageReceivedEventArgs& args) { Handle_NetworkMessageReceived(args); }));
 	}
 
@@ -422,13 +422,13 @@ namespace onion::voxel
 
 	void Server::SubscribeToWorldManagerEvents()
 	{
-		m_WorldManagerEventHandles.push_back(m_WorldManager->ChunkAdded.Subscribe(
+		m_WorldManagerEventHandles.push_back(m_WorldManager->EvtChunkAdded.Subscribe(
 			[this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkAdded(chunk); }));
 
-		m_WorldManagerEventHandles.push_back(m_WorldManager->ChunkRemoved.Subscribe(
+		m_WorldManagerEventHandles.push_back(m_WorldManager->EvtChunkRemoved.Subscribe(
 			[this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkRemoved(chunk); }));
 
-		m_WorldManagerEventHandles.push_back(m_WorldManager->BlocksChanged.Subscribe(
+		m_WorldManagerEventHandles.push_back(m_WorldManager->EvtBlocksChanged.Subscribe(
 			[this](const WorldManager::BlocksChangedEventArgs& args) { Handle_BlocksChanged(args); }));
 	}
 
