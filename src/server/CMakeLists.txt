@@ -23,8 +23,6 @@ add_library(onion_voxel_server
 target_link_libraries(onion_voxel_server
     PUBLIC
         enet::enet
-		winmm
-		ws2_32
 		nlohmann_json::nlohmann_json
 
 		onion::event
@@ -32,6 +30,14 @@ target_link_libraries(onion_voxel_server
 		onion::logger
 		onion_voxel_shared
 )
+
+if (WIN32)
+    target_link_libraries(onion_voxel_server
+        PUBLIC
+            winmm
+            ws2_32
+    )
+endif()
 
 target_compile_options(onion_voxel_server PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>

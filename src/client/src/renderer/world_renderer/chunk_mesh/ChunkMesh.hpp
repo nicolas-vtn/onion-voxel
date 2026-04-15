@@ -6,6 +6,7 @@
 #include <memory>
 #include <shared_mutex>
 #include <vector>
+#include <stop_token>
 
 #include <shared/world/chunk/Chunk.hpp>
 

@@ -105,8 +105,6 @@ target_link_libraries(OnionVoxel
 		nlohmann_json::nlohmann_json
 		imgui::imgui
 		enet::enet
-		winmm
-		ws2_32
 		cereal::cereal
 
 		onion::event
@@ -118,6 +116,23 @@ target_link_libraries(OnionVoxel
         onion_voxel_server
 		onion_voxel_shared
 )
+
+if (WIN32)
+    target_link_libraries(OnionVoxel
+        PUBLIC
+            winmm
+            ws2_32
+    )
+endif()
+
+if (UNIX AND NOT APPLE)
+    find_package(CURL REQUIRED)
+
+    target_link_libraries(onion_voxel_shared
+        PUBLIC
+            CURL::libcurl
+    )
+endif()
 
 target_compile_options(OnionVoxel PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>
