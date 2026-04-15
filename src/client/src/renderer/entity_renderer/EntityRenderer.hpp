@@ -17,7 +17,7 @@
 #include <shared/entities/entity_manager/EntityManager.hpp>
 #include <shared/http_file_downloader/HttpFileDownloader.hpp>
 
-#include "Cuboid.hpp"
+#include "cuboid.hpp"
 #include "TextureTileMapper.hpp"
 #include "skeleton/SkeletonPlayer.hpp"
 

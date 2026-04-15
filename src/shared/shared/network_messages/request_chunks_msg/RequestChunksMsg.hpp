@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 
-#include <shared/data_transfer_objects/Serializer/GlmSerialization.hpp>
+#include <shared/data_transfer_objects/serializer/GlmSerialization.hpp>
 #include <shared/network_messages/MessageHeader.hpp>
 
 namespace onion::voxel

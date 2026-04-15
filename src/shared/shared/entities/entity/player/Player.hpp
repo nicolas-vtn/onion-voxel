@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mutex>
+
 #include <shared/entities/entity/Entity.hpp>
 
 namespace onion::voxel

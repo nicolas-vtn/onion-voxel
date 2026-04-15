@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 
 #include <shared_mutex>
+#include <mutex>
 #include <vector>
 
 #include <shared/world/block/Block.hpp>

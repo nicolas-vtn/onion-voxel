@@ -4,7 +4,6 @@
 
 #include <atomic>
 #include <chrono>
-#include <conio.h>
 #include <csignal>
 #include <filesystem>
 #include <iostream>
@@ -43,11 +42,8 @@ int main()
 
 	std::cout << "\n --- Server Destroyed Successfully --- \n";
 
-	std::cout << "Press any key to exit..." << std::endl;
-	while (!_kbhit())
-	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
-	}
+	std::cout << "Press ENTER to exit..." << std::endl;
+	std::cin.get();
 
 	return 0;
 }

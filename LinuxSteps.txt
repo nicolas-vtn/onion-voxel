@@ -1,0 +1,8 @@
+Install Ubuntu
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install -y build-essential cmake gdb git pkg-config
+    sudo apt install -y clang lldb ninja-build
+    sudo apt update && sudo apt install -y build-essential cmake ninja-build pkg-config libwayland-dev libwayland-bin wayland-protocols libxkbcommon-dev xorg-dev
+
+Install curl
+    sudo apt install libcurl4-openssl-dev

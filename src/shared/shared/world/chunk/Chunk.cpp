@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <algorithm>
 
 namespace onion::voxel
 {

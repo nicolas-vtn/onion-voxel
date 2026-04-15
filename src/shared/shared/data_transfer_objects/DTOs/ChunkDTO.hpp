@@ -5,7 +5,7 @@
 #include <sstream>
 #include <string>
 
-#include <shared/data_transfer_objects/Serializer/GlmSerialization.hpp>
+#include <shared/data_transfer_objects/serializer/GlmSerialization.hpp>
 
 #include "BlockStateDTO.hpp"
 #include "SubChunkDTO.hpp"

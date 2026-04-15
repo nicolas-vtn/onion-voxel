@@ -1,5 +1,7 @@
 #include "ColoredBackground.hpp"
 
+#include <vector>
+
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <shared/utils/Utils.hpp>

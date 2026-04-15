@@ -138,7 +138,7 @@ namespace onion::voxel
 						const glm::vec3& textColor,
 						const glm::vec3& shadowColor,
 						float textHeightPx,
-						const Font::TextFormat& format = {},
+						const Font::TextFormat& format,
 						float zOffset = 0.0f,
 						float rotationDegrees = 0.0f,
 						bool renderShadow = true);
@@ -175,7 +175,7 @@ namespace onion::voxel
 						const glm::vec3& textColor,
 						const glm::vec3& shadowColor,
 						float textHeightPx,
-						const Font::TextFormat& format = {},
+						const Font::TextFormat& format,
 						float zOffset = 0.0f,
 						float rotationDegrees = 0.0f,
 						bool renderShadow = true);

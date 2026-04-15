@@ -1,4 +1,4 @@
-#include "font.hpp"
+#include "Font.hpp"
 
 #include <fstream>
 

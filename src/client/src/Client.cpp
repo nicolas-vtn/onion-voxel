@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include <shared/data_transfer_objects/Serializer/SerializerDTO.hpp>
+#include <shared/data_transfer_objects/serializer/SerializerDTO.hpp>
 #include <shared/utils/Utils.hpp>
 
 namespace onion::voxel

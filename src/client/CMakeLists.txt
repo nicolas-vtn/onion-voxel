@@ -22,7 +22,7 @@ add_executable(OnionVoxel
 
 	"src/renderer/Renderer.cpp"
 
-	"src/renderer/texture/Texture.cpp"
+	"src/renderer/texture/texture.cpp"
 	"src/renderer/texture/stb_image.cpp"
 
 	"src/renderer/shader/shader.cpp"
@@ -83,9 +83,9 @@ add_executable(OnionVoxel
 	"src/renderer/key_binds/KeyBinds.cpp"
 
 	"src/renderer/entity_renderer/EntityRenderer.cpp"
-	"src/renderer/entity_renderer/Cuboid.cpp"
+	"src/renderer/entity_renderer/cuboid.cpp"
 	"src/renderer/entity_renderer/skeleton/SkeletonPlayer.cpp"
-	"src/renderer/entity_renderer/skeleton/Skeleton.cpp"
+	"src/renderer/entity_renderer/skeleton/skeleton.cpp"
 	"src/renderer/entity_renderer/TextureTileMapper.cpp"
 
 	"src/user_settings/UserSettings.cpp"

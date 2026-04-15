@@ -72,7 +72,7 @@ namespace onion::voxel
 		for (auto it = j.begin(); it != j.end(); ++it)
 		{
 			eAction action = StringToAction(it.key());
-			Key key = StringToKey(it.value().get<std::string>());
+			Key key = StringToKey(it.value().template get<std::string>());
 			s.ActionToKey[action] = key;
 		}
 	}
