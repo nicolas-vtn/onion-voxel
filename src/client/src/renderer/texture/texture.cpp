@@ -1,6 +1,7 @@
 #include "texture.hpp"
 
 #include <iostream>
+#include <cstring>
 
 #include <renderer/OpenGL.hpp>
 

@@ -403,9 +403,9 @@ namespace onion::voxel
 			const bool solid = BlockState::IsOpaque(mono.ID);
 			if (solid)
 			{
-				constexpr Row FULL_X = Row((1ull << SX) - 1ull);
-				constexpr Row FULL_Z = Row((1ull << SZ) - 1ull);
-				constexpr Row FULL_Y = Row((1ull << SY) - 1ull);
+				const Row FULL_X = Row((1ull << SX) - 1ull);
+				const Row FULL_Z = Row((1ull << SZ) - 1ull);
+				const Row FULL_Y = Row((1ull << SY) - 1ull);
 
 				for (int y = 0; y < SY; y++)
 				{

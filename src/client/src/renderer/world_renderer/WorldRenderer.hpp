@@ -8,7 +8,7 @@
 
 #include <shared/world/world_manager/WorldManager.hpp>
 
-#include <renderer/camera/camera.hpp>
+#include <renderer/camera/Camera.hpp>
 #include <renderer/skybox/Skybox.hpp>
 #include <renderer/texture_atlas/TextureAtlas.hpp>
 #include <renderer/world_renderer/chunk_mesh/ChunkMesh.hpp>

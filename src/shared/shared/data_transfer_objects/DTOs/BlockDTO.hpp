@@ -3,7 +3,7 @@
 #include <cereal/archives/binary.hpp>
 #include <cereal/cereal.hpp>
 
-#include <shared/data_transfer_objects/Serializer/GlmSerialization.hpp>
+#include <shared/data_transfer_objects/serializer/GlmSerialization.hpp>
 
 #include "BlockStateDTO.hpp"
 

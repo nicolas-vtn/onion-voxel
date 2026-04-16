@@ -1,6 +1,7 @@
 #include "Entity.hpp"
 
 #include <cassert>
+#include <mutex>
 
 namespace onion::voxel
 {
