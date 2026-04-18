@@ -329,7 +329,6 @@ cmake --build build --config Release
 #### Rendering Improvements
 - Non-full block rendering (water surface, cactus, slabs, stairs)
 - Animated textures (water, lava, portal)
-- View frustum culling for better performance
 - First-person arm/hand rendering with held item
 - Walking animation for first-person view
 - Particle effects (breaking blocks, footsteps)
@@ -354,6 +353,7 @@ cmake --build build --config Release
 
 #### Completed
 - ~~Update GitHub README.md~~
+- ~~View frustum culling for better performance~~
 
 ### Known Issues
 - Z-ordering issue in GUI (temporary workaround in TextField)

@@ -39,6 +39,52 @@ namespace onion::voxel
 		m_Skybox.ReloadTextures(cubeMapTextures);
 	}
 
+	inline std::array<WorldRenderer::FrustumPlane, 6> ExtractFrustumPlanes(const glm::mat4& vp)
+	{
+		std::array<WorldRenderer::FrustumPlane, 6> planes;
+
+		// Left
+		planes[0].normal.x = vp[0][3] + vp[0][0];
+		planes[0].normal.y = vp[1][3] + vp[1][0];
+		planes[0].normal.z = vp[2][3] + vp[2][0];
+		planes[0].distance = vp[3][3] + vp[3][0];
+
+		// Right
+		planes[1].normal.x = vp[0][3] - vp[0][0];
+		planes[1].normal.y = vp[1][3] - vp[1][0];
+		planes[1].normal.z = vp[2][3] - vp[2][0];
+		planes[1].distance = vp[3][3] - vp[3][0];
+
+		// Bottom
+		planes[2].normal.x = vp[0][3] + vp[0][1];
+		planes[2].normal.y = vp[1][3] + vp[1][1];
+		planes[2].normal.z = vp[2][3] + vp[2][1];
+		planes[2].distance = vp[3][3] + vp[3][1];
+
+		// Top
+		planes[3].normal.x = vp[0][3] - vp[0][1];
+		planes[3].normal.y = vp[1][3] - vp[1][1];
+		planes[3].normal.z = vp[2][3] - vp[2][1];
+		planes[3].distance = vp[3][3] - vp[3][1];
+
+		// Near
+		planes[4].normal.x = vp[0][3] + vp[0][2];
+		planes[4].normal.y = vp[1][3] + vp[1][2];
+		planes[4].normal.z = vp[2][3] + vp[2][2];
+		planes[4].distance = vp[3][3] + vp[3][2];
+
+		// Far
+		planes[5].normal.x = vp[0][3] - vp[0][2];
+		planes[5].normal.y = vp[1][3] - vp[1][2];
+		planes[5].normal.z = vp[2][3] - vp[2][2];
+		planes[5].distance = vp[3][3] - vp[3][2];
+
+		for (auto& p : planes)
+			p.Normalize();
+
+		return planes;
+	}
+
 	void WorldRenderer::PrepareForRendering()
 	{
 		// Get Camera projection, view and ProjView Matix
@@ -153,13 +199,44 @@ namespace onion::voxel
 
 		PrepareForRenderingOpaque();
 
-		// Render chunks
-
+		// Retreve all chunks in a Snapshot
 		std::unordered_map<glm::ivec2, std::shared_ptr<ChunkMesh>> chunkMeshesSnapshot;
 		{
 			std::shared_lock lock(m_MutexChunkMeshes);
 			chunkMeshesSnapshot = m_ChunkMeshes;
 		}
+
+		// Frustum Culling: Determine which chunks are in the camera's view frustum and only render those chunks
+		if (m_UpdateFrustumCulling)
+		{
+			auto planes = ExtractFrustumPlanes(m_Camera->GetViewProjectionMatrix());
+			m_ChunksInFrustum.clear();
+			for (const auto& [chunkPos, chunkMesh] : chunkMeshesSnapshot)
+			{
+				if (IsChunkInFrustum(chunkPos, planes) || !m_UseFrustumCulling)
+				{
+					m_ChunksInFrustum.insert(chunkPos);
+				}
+			}
+		}
+
+		// Clears up non-frustum chunks from the snapshot so they won't be rendered
+		if (m_UseFrustumCulling)
+		{
+			for (auto it = chunkMeshesSnapshot.begin(); it != chunkMeshesSnapshot.end();)
+			{
+				if (m_ChunksInFrustum.find(it->first) == m_ChunksInFrustum.end())
+				{
+					it = chunkMeshesSnapshot.erase(it);
+				}
+				else
+				{
+					++it;
+				}
+			}
+		}
+
+		// Render chunks
 
 		for (const auto& [chunkPos, chunkMesh] : chunkMeshesSnapshot)
 		{
@@ -224,10 +301,10 @@ namespace onion::voxel
 	void WorldRenderer::SubscribeToWorldManagerEvents()
 	{
 		m_EventHandles.push_back(m_WorldManager->EvtChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk)
-																	  { Handle_ChunkAdded(chunk); }));
+																		 { Handle_ChunkAdded(chunk); }));
 
 		m_EventHandles.push_back(m_WorldManager->EvtChunkRemoved.Subscribe([this](const std::shared_ptr<Chunk>& chunk)
-																		{ Handle_ChunkRemoved(chunk); }));
+																		   { Handle_ChunkRemoved(chunk); }));
 
 		m_EventHandles.push_back(m_WorldManager->EvtBlocksChanged.Subscribe(
 			[this](const WorldManager::BlocksChangedEventArgs& args) { Handle_BlocksChanged(args); }));
@@ -463,6 +540,37 @@ namespace onion::voxel
 		}
 	}
 
+	inline bool IsAABBInFrustum(const std::array<WorldRenderer::FrustumPlane, 6>& planes,
+								const glm::vec3& min,
+								const glm::vec3& max)
+	{
+		for (const auto& plane : planes)
+		{
+			// Compute positive vertex (farthest in direction of plane normal)
+			glm::vec3 positive;
+
+			positive.x = (plane.normal.x >= 0) ? max.x : min.x;
+			positive.y = (plane.normal.y >= 0) ? max.y : min.y;
+			positive.z = (plane.normal.z >= 0) ? max.z : min.z;
+
+			if (plane.GetSignedDistanceToPlane(positive) < 0)
+				return false; // completely outside
+		}
+
+		return true;
+	}
+
+	bool WorldRenderer::IsChunkInFrustum(const glm::ivec2& chunkPos, const std::array<FrustumPlane, 6>& planes)
+	{
+		// Compute AABB in world space
+		int chunkHeight = 256;
+		glm::vec3 min =
+			glm::vec3(chunkPos.x * WorldConstants::CHUNK_SIZE, 0.0f, chunkPos.y * WorldConstants::CHUNK_SIZE);
+		glm::vec3 max = min + glm::vec3(WorldConstants::CHUNK_SIZE, chunkHeight, WorldConstants::CHUNK_SIZE);
+
+		return IsAABBInFrustum(planes, min, max);
+	}
+
 	void WorldRenderer::RebuildDirtyChunkMeshesAsync()
 	{
 		std::shared_lock lock(m_MutexChunkMeshes);
@@ -499,6 +607,7 @@ namespace onion::voxel
 		const double avgMeshBuildTime_ms = m_MeshBuilder.GetAverageChunkMeshUpdateTime();
 		ImGui::Text("Average Mesh Build Time: %.2f ms", avgMeshBuildTime_ms);
 		ImGui::Text("Chunk Mesh Updates per Second: %.2f", m_MeshBuilder.GetChunkMeshUpdatesPerSecond());
+		ImGui::Text("Chunks in Frustum: %s", FormatThousands(m_ChunksInFrustum.size()).c_str());
 
 		// ----- Render Distance -----
 		ImGui::Separator();
@@ -525,6 +634,8 @@ namespace onion::voxel
 		ImGui::Separator();
 		ImGui::Checkbox("Render Chunk Borders", &m_RenderChunkBorders);
 		ImGui::Checkbox("Use Face Culling", &m_UseFaceCulling);
+		ImGui::Checkbox("Use Frustum Culling", &m_UseFrustumCulling);
+		ImGui::Checkbox("Update Frustum Culling", &m_UpdateFrustumCulling);
 
 		// ----- Performance Options -----
 		ImGui::Separator();

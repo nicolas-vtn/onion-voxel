@@ -1033,8 +1033,8 @@ namespace onion::voxel
 
 	void Renderer::SubscribeToGuiEvents()
 	{
-		m_EventHandles.push_back(m_Gui.EvtRequestCursorStyleChange.Subscribe([this](const CursorStyle& style)
-																		  { Handle_CursorStyleChangeRequest(style); }));
+		m_EventHandles.push_back(m_Gui.EvtRequestCursorStyleChange.Subscribe(
+			[this](const CursorStyle& style) { Handle_CursorStyleChangeRequest(style); }));
 
 		m_EventHandles.push_back(m_Gui.EvtRequestStartSingleplayerGame.Subscribe(
 			[this](const WorldInfos& worldInfos) { Handle_StartSingleplayerGameRequest(worldInfos); }));
@@ -1048,7 +1048,7 @@ namespace onion::voxel
 			m_Gui.EvtRequestQuitToMainMenu.Subscribe([this](bool quit) { Handle_QuitToMainMenuRequest(quit); }));
 
 		m_EventHandles.push_back(m_Gui.EvtUserSettingsChanged.Subscribe([this](const UserSettingsChangedEventArgs& args)
-																	 { Handle_UserSettingsChanged(args); }));
+																		{ Handle_UserSettingsChanged(args); }));
 	}
 
 	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)

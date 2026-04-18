@@ -18,6 +18,10 @@ namespace onion::voxel
 {
 	class WorldRenderer
 	{
+		// ----- Structs Declarations -----
+	  public:
+		struct FrustumPlane;
+
 		// ----- Constructor / Destructor -----
 	  public:
 		WorldRenderer(std::shared_ptr<WorldManager> worldManager, std::shared_ptr<Camera> camera);
@@ -76,9 +80,14 @@ namespace onion::voxel
 		void InitializeShaderVariables();
 		void MarkNeighboringSubChunkMeshesDirty(const glm::ivec3& blockPosition);
 
+		bool IsChunkInFrustum(const glm::ivec2& chunkPos, const std::array<FrustumPlane, 6>& planes);
+
 		// ----- Camera -----
 	  private:
 		std::shared_ptr<Camera> m_Camera;
+		std::unordered_set<glm::ivec2> m_ChunksInFrustum;
+		bool m_UseFrustumCulling = true;
+		bool m_UpdateFrustumCulling = true;
 
 		// ----- Skybox -----
 	  private:
@@ -106,5 +115,22 @@ namespace onion::voxel
 	  private:
 		void RenderDebugPanel();
 		bool m_UseFaceCulling{true};
+
+		// ----- Structs -----
+	  public:
+		struct FrustumPlane
+		{
+			glm::vec3 normal;
+			float distance;
+
+			void Normalize()
+			{
+				float length = glm::length(normal);
+				normal /= length;
+				distance /= length;
+			}
+
+			float GetSignedDistanceToPlane(const glm::vec3& point) const { return glm::dot(normal, point) + distance; }
+		};
 	};
 } // namespace onion::voxel
