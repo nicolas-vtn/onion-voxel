@@ -127,6 +127,8 @@ namespace onion::voxel
 
 	void Renderer::InitWindow()
 	{
+		auto settings = EngineContext::Get().Settings();
+
 		glfwSetErrorCallback(error_callback);
 
 		if (!glfwInit())
@@ -149,7 +151,8 @@ namespace onion::voxel
 
 		glfwMakeContextCurrent(m_Window);
 
-		glfwSwapInterval(1); // vsync
+		bool vsyncEnabled = settings.Video.VSyncEnabled;
+		glfwSwapInterval(vsyncEnabled ? 1 : 0);
 
 		// Load OpenGL function pointers with glad
 		if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
