@@ -4,6 +4,7 @@ project(onion_voxel_server LANGUAGES CXX)
 
 # Copy assets to build directory
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../../assets/textures/ServerThumbnail.png" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/config_server.json" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
 set(ICON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../assets/app_icons/Vox_Server_Icon.ico")
 

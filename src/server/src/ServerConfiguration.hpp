@@ -16,7 +16,7 @@ namespace onion::voxel
 		std::string UUID;
 		uint16_t Port = 7777;
 		std::filesystem::path WorldDirectory{};
-		uint8_t SimulationDistance = 8;
+		uint8_t SimulationDistance = 4;
 		uint32_t Seed = 1;
 		uint8_t WorldGenerationType = 1;
 		std::string MOTD = "Welcome to the server!";
@@ -64,6 +64,8 @@ namespace onion::voxel
 			nlohmann::ordered_json json;
 
 			file >> json;
+
+			file.close();
 
 			serverData.ServerName = json.value("ServerName", serverData.ServerName);
 			serverData.UUID = json.value("UUID", serverData.UUID);

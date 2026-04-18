@@ -1,0 +1,9 @@
+{
+  "ServerName": "Brand New Server !",
+  "UUID": "e02f475cf9578b9290887848287658d0",
+  "Port": 7777,
+  "MOTD": "§oWelcome §rto the §2§lOnion::Voxel§4 Server !",
+  "Seed": 2,
+  "SimulationDistance": 4,
+  "WorldGenerationType": 1
+}
