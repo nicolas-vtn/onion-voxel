@@ -6,6 +6,11 @@ project(onion_voxel
     LANGUAGES C CXX
 )
 
+# Standalone executable (static MSVC runtime)
+if (MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 set(ONION_BUILD_DEMO OFF CACHE BOOL "Compile Dependencies Demos" FORCE)
 
 # Modules

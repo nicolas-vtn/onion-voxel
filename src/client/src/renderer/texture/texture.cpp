@@ -1,7 +1,7 @@
 #include "texture.hpp"
 
-#include <iostream>
 #include <cstring>
+#include <iostream>
 
 #include <renderer/OpenGL.hpp>
 
@@ -186,11 +186,17 @@ namespace onion::voxel
 		{
 			srcFormat = GL_RGB;
 			internalFormat = GL_RGB8;
+
+			GLint swizzleMask[] = {GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
+			glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
 		}
 		else if (m_NbrChannels == 4)
 		{
 			srcFormat = GL_RGBA;
 			internalFormat = GL_RGBA8;
+
+			GLint swizzleMask[] = {GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
+			glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
 		}
 		else
 		{
