@@ -29,10 +29,10 @@ namespace onion::voxel
 		enum class eWorldGenerationType : uint8_t
 		{
 			DemoBlocks = 0,
-			Superflat,
-			ClassicNoBiomes,
-			Classic,
-			BiomeVisualizer,
+			Superflat = 1,
+			ClassicNoBiomes = 2,
+			Classic = 3,
+			BiomeVisualizer = 4,
 
 			Count,
 		};

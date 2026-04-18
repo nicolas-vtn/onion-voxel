@@ -6,6 +6,27 @@ project(onion_voxel
     LANGUAGES C CXX
 )
 
+# Deploy Build
+if(DEPLOY_BUILD)
+    # Compiler
+    add_compile_options(
+        $<$<CONFIG:Release>:/O2>
+        $<$<CONFIG:Release>:/DNDEBUG>
+    )
+
+    # Remove debug info
+    string(REPLACE "/Zi" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+    string(REPLACE "/ZI" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+
+    # Linker
+    add_link_options(
+        $<$<CONFIG:Release>:/INCREMENTAL:NO>  # removes .ilk
+        $<$<CONFIG:Release>:/DEBUG:NONE>      # no pdb
+        $<$<CONFIG:Release>:/OPT:REF>
+        $<$<CONFIG:Release>:/OPT:ICF>
+    )
+endif()
+
 # Standalone executable (static MSVC runtime)
 if (MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
