@@ -1,0 +1,70 @@
+name: Build and Package
+
+on:
+  push:
+    tags:
+      - "v*"   # or "*" if you want all tags
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Setup Ninja
+      uses: seanmiddleditch/gha-setup-ninja@v4
+
+    - name: Configure CMake
+      run: >
+        cmake -S . -B build
+        -G Ninja
+        -DCMAKE_BUILD_TYPE=Release
+        -DDEPLOY_BUILD=ON
+
+    - name: Build
+      run: cmake --build build
+
+    - name: Install
+      run: cmake --install build --prefix install
+
+    # ---------------------------
+    # Prepare package structure
+    # ---------------------------
+    - name: Prepare package
+      shell: pwsh
+      run: |
+        # Clean previous (important for CI reruns)
+        Remove-Item -Recurse -Force package -ErrorAction SilentlyContinue
+
+        # Create final structure
+        New-Item -ItemType Directory -Force -Path package/OnionVoxel
+
+        # Copy only what's needed (no third-party pollution)
+        Copy-Item -Recurse -Force install/client package/OnionVoxel/
+        Copy-Item -Recurse -Force install/server package/OnionVoxel/
+
+    # ---------------------------
+    # Zip
+    # ---------------------------
+    - name: Create ZIP
+      shell: pwsh
+      run: |
+        Compress-Archive -Path package/OnionVoxel -DestinationPath OnionVoxel-${{ github.ref_name }}.zip
+
+    # ---------------------------
+    # Create GitHub Release
+    # ---------------------------
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: OnionVoxel-${{ github.ref_name }}.zip
