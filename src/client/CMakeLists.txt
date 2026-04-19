@@ -1,18 +1,20 @@
+# Minimum CMake version requirement
 cmake_minimum_required(VERSION 3.20)
 
+# Project declaration and language setup
 project(onion_voxel_client LANGUAGES CXX)
 
-# Copy assets to build directory
-file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../../assets" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-
+# Path to application icon
 set(ICON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../assets/app_icons/Vox_Client_Title.ico")
 
+# Generate Windows resource file from template
 configure_file(
     app_icon.rc.in
     ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc
     @ONLY
 )
 
+# Define executable and all source files
 add_executable(OnionVoxel
 
     "main.cpp"
@@ -90,12 +92,14 @@ add_executable(OnionVoxel
 
 	"src/user_settings/UserSettings.cpp"
 
-   )
+)
 
+# Add Windows-specific resource file (icon)
 if (WIN32)
     target_sources(OnionVoxel PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc)
 endif()
 
+# Link external and internal libraries
 target_link_libraries(OnionVoxel
     PUBLIC
         glfw
@@ -117,6 +121,7 @@ target_link_libraries(OnionVoxel
 		onion_voxel_shared
 )
 
+# Link additional Windows system libraries
 if (WIN32)
     target_link_libraries(OnionVoxel
         PUBLIC
@@ -125,6 +130,7 @@ if (WIN32)
     )
 endif()
 
+# Link CURL on Linux systems
 if (UNIX AND NOT APPLE)
     find_package(CURL REQUIRED)
 
@@ -134,19 +140,33 @@ if (UNIX AND NOT APPLE)
     )
 endif()
 
+# Ensure correct __cplusplus macro behavior on MSVC
 target_compile_options(OnionVoxel PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>
 )
 
+# Require C++20 standard
 target_compile_features(OnionVoxel PRIVATE cxx_std_20)
 
+# Enable compiler warnings
 target_compile_options(OnionVoxel
     PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W4>
         $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wpedantic>
 )
 
+# Add include directories
 target_include_directories(OnionVoxel
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# Install executable to client folder
+install(TARGETS OnionVoxel
+    RUNTIME DESTINATION client
+)
+
+# Install assets directory
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/assets/"
+    DESTINATION client/assets
 )
