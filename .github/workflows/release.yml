@@ -1,0 +1,65 @@
+name: Build and Package on Tag
+
+on:
+  push:
+    tags:
+      - "v*"   # or "*" if you want all tags
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Setup Ninja
+      uses: seanmiddleditch/gha-setup-ninja@v4
+
+    - name: Configure CMake
+      run: >
+        cmake -S . -B build
+        -G Ninja
+        -DCMAKE_BUILD_TYPE=Release
+        -DDEPLOY_BUILD=ON
+
+    - name: Build
+      run: cmake --build build
+
+    - name: Install
+      run: cmake --install build --prefix install
+
+    # ---------------------------
+    # Prepare package structure
+    # ---------------------------
+    - name: Prepare package
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path package
+
+        # Copy client
+        Copy-Item -Recurse -Force install/client
+
+        # Copy server
+        Copy-Item -Recurse -Force install/server
+
+    # ---------------------------
+    # Zip
+    # ---------------------------
+    - name: Create ZIP
+      shell: pwsh
+      run: |
+        Compress-Archive -Path package/* -DestinationPath OnionVoxel-${{ github.ref_name }}.zip
+
+    # ---------------------------
+    # Create GitHub Release
+    # ---------------------------
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: OnionVoxel-${{ github.ref_name }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
