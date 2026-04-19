@@ -1,9 +1,12 @@
-name: Build and Package on Tag
+name: Build and Package
 
 on:
   push:
     tags:
       - "v*"   # or "*" if you want all tags
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -40,13 +43,15 @@ jobs:
     - name: Prepare package
       shell: pwsh
       run: |
-        New-Item -ItemType Directory -Force -Path package
+        # Clean previous (important for CI reruns)
+        Remove-Item -Recurse -Force package -ErrorAction SilentlyContinue
 
-        # Copy client
-        Copy-Item -Recurse -Force install/client
+        # Create final structure
+        New-Item -ItemType Directory -Force -Path package/OnionVoxel
 
-        # Copy server
-        Copy-Item -Recurse -Force install/server
+        # Copy only what's needed (no third-party pollution)
+        Copy-Item -Recurse -Force install/client package/OnionVoxel/
+        Copy-Item -Recurse -Force install/server package/OnionVoxel/
 
     # ---------------------------
     # Zip
@@ -54,7 +59,7 @@ jobs:
     - name: Create ZIP
       shell: pwsh
       run: |
-        Compress-Archive -Path package/* -DestinationPath OnionVoxel-${{ github.ref_name }}.zip
+        Compress-Archive -Path package/OnionVoxel -DestinationPath OnionVoxel-${{ github.ref_name }}.zip
 
     # ---------------------------
     # Create GitHub Release
@@ -63,5 +68,3 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: OnionVoxel-${{ github.ref_name }}.zip
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
