@@ -45,6 +45,10 @@ namespace
 			return ResolveTexture(t.East, t);
 		if (key == "end")
 			return ResolveTexture(t.End, t);
+		if (key == "front")
+			return ResolveTexture(t.Front, t);
+		if (key == "back")
+			return ResolveTexture(t.Back, t);
 
 		return "";
 	}
@@ -54,13 +58,13 @@ namespace
 		using namespace onion::voxel;
 
 		if (name == "up")
-			return Face::Front;
-		if (name == "down")
-			return Face::Back;
-		if (name == "north")
 			return Face::Top;
-		if (name == "south")
+		if (name == "down")
 			return Face::Bottom;
+		if (name == "north")
+			return Face::Front;
+		if (name == "south")
+			return Face::Back;
 		if (name == "west")
 			return Face::Left;
 		if (name == "east")
@@ -107,34 +111,18 @@ namespace onion::voxel
 		PreRegisterModel(BlockId::OakLog, blockModelDir / "oak_log.json");
 		PreRegisterModel(BlockId::BirchLog, blockModelDir / "birch_log.json");
 		PreRegisterModel(BlockId::SpruceLog, blockModelDir / "spruce_log.json");
-
-		PreRegister(BlockId::OakLeaves, TextureInfo{"oak_leaves.png", Tint::Foliage, Transparency::Cutout});
-
-		PreRegister(BlockId::Furnace,
-					{TextureInfo{"furnace_top.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"furnace_top.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"furnace_front.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"furnace_side.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"furnace_side.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"furnace_side.png", Tint::None, Transparency::Opaque}});
-
 		PreRegisterModel(BlockId::Bedrock, blockModelDir / "bedrock.json");
-
-		PreRegister(BlockId::Water, TextureInfo{"water_still.png", Tint::Water, Transparency::Transparent});
-
 		PreRegisterModel(BlockId::Sand, blockModelDir / "sand.json");
-
-		PreRegister(BlockId::Sandstone,
-					{TextureInfo{"sandstone_top.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"sandstone_bottom.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"sandstone.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"sandstone.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"sandstone.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"sandstone.png", Tint::None, Transparency::Opaque}});
-
 		PreRegisterModel(BlockId::Gravel, blockModelDir / "gravel.json");
-
 		PreRegisterModel(BlockId::Cobblestone, blockModelDir / "cobblestone.json");
+		PreRegisterModel(BlockId::SnowBlock, blockModelDir / "snow_block.json");
+		PreRegisterModel(BlockId::OakLeaves, blockModelDir / "oak_leaves.json");
+		PreRegisterModel(BlockId::BirchLeaves, blockModelDir / "birch_leaves.json");
+		PreRegisterModel(BlockId::SpruceLeaves, blockModelDir / "spruce_leaves.json");
+		PreRegisterModel(BlockId::Ice, blockModelDir / "ice.json");
+		PreRegisterModel(BlockId::Furnace, blockModelDir / "furnace.json");
+		PreRegisterModel(BlockId::Water, blockModelDir / "water.json");
+		PreRegisterModel(BlockId::Sandstone, blockModelDir / "sandstone.json");
 
 		PreRegister(BlockId::Poppy, TextureInfo{"poppy.png", Tint::None, Transparency::Cutout}, Model::Cross);
 		PreRegister(BlockId::Dandelion, TextureInfo{"dandelion.png", Tint::None, Transparency::Cutout}, Model::Cross);
@@ -164,14 +152,6 @@ namespace onion::voxel
 					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
 					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
 					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque}});
-
-		PreRegisterModel(BlockId::SnowBlock, blockModelDir / "snow_block.json");
-
-		PreRegister(BlockId::BirchLeaves, TextureInfo{"birch_leaves.png", Tint::Foliage, Transparency::Cutout});
-
-		PreRegister(BlockId::Ice, TextureInfo{"ice.png", Tint::None, Transparency::Transparent});
-
-		PreRegister(BlockId::SpruceLeaves, TextureInfo{"spruce_leaves.png", Tint::Foliage, Transparency::Cutout});
 
 		PreRegister(BlockId::Cactus,
 					{TextureInfo{"cactus_top.png", Tint::None, Transparency::Cutout},
@@ -224,6 +204,25 @@ namespace onion::voxel
 	{
 		BlockModel blockModel = BlockModel::FromFile(model);
 
+		// Magic Tricks
+		if (id == BlockId::Water)
+		{
+			// Load stone.json as base model to get the geometry, but use water texture
+			BlockModel stoneModel =
+				BlockModel::FromFile(AssetsManager::GetAssetsDirectory() / "models" / "block" / "stone.json");
+			stoneModel.ModelTextures.All = blockModel.ModelTextures.Particle; // Use water texture
+			blockModel = stoneModel;
+
+			// Set Tint to Water for all faces
+			for (auto& elem : blockModel.Elements)
+			{
+				for (auto& [faceName, face] : elem.Faces)
+				{
+					face.TintIndex = 1; // Corresponds to Tint::Water
+				}
+			}
+		}
+
 		std::array<TextureInfo, 6> baseTextures{};
 		bool baseInitialized = false;
 
@@ -246,6 +245,8 @@ namespace onion::voxel
 				Tint tint = Tint::None;
 				if (face.TintIndex.has_value() && face.TintIndex.value() == 0)
 					tint = Tint::Grass;
+				else if (face.TintIndex.has_value() && face.TintIndex.value() == 1)
+					tint = Tint::Water;
 
 				if (!isOverlay)
 				{

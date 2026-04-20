@@ -31,6 +31,8 @@ namespace onion::voxel
 			std::string Side;
 			std::string End;
 			std::string Overlay;
+			std::string Front;
+			std::string Back;
 		};
 
 		struct Face

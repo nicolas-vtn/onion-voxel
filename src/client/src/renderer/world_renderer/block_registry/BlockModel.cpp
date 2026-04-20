@@ -52,6 +52,8 @@ namespace onion::voxel
 			get("side", textures.Side);
 			get("end", textures.End);
 			get("overlay", textures.Overlay);
+			get("front", textures.Front);
+			get("back", textures.Back);
 		}
 
 		static BlockModel::Face ParseFace(const nlohmann::json& faceJson)
@@ -132,6 +134,8 @@ namespace onion::voxel
 		mergeTex(parent.ModelTextures.Side, child.ModelTextures.Side);
 		mergeTex(parent.ModelTextures.End, child.ModelTextures.End);
 		mergeTex(parent.ModelTextures.Overlay, child.ModelTextures.Overlay);
+		mergeTex(parent.ModelTextures.Front, child.ModelTextures.Front);
+		mergeTex(parent.ModelTextures.Back, child.ModelTextures.Back);
 
 		// ---- Elements ----
 		if (!child.Elements.empty())
