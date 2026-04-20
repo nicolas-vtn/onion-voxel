@@ -54,6 +54,7 @@ namespace onion::voxel
 			get("overlay", textures.Overlay);
 			get("front", textures.Front);
 			get("back", textures.Back);
+			get("cross", textures.Cross);
 		}
 
 		static BlockModel::Face ParseFace(const nlohmann::json& faceJson)
@@ -109,7 +110,12 @@ namespace onion::voxel
 	{
 		std::string clean = StripNamespace(parentPath);
 
-		return AssetsManager::GetAssetsDirectory() / "models" / (clean + ".json");
+		// Return the name after "/" if it exists, otherwise return the whole name
+		size_t pos = clean.find('/');
+		if (pos != std::string::npos)
+			clean = clean.substr(pos + 1);
+
+		return std::filesystem::path(clean + ".json");
 	}
 
 	void BlockModel::MergeModels(BlockModel& parent, const BlockModel& child)
@@ -136,6 +142,7 @@ namespace onion::voxel
 		mergeTex(parent.ModelTextures.Overlay, child.ModelTextures.Overlay);
 		mergeTex(parent.ModelTextures.Front, child.ModelTextures.Front);
 		mergeTex(parent.ModelTextures.Back, child.ModelTextures.Back);
+		mergeTex(parent.ModelTextures.Cross, child.ModelTextures.Cross);
 
 		// ---- Elements ----
 		if (!child.Elements.empty())
@@ -146,14 +153,12 @@ namespace onion::voxel
 
 	BlockModel BlockModel::LoadRawModel(const std::filesystem::path& modelPath)
 	{
-		// ---- Open file ----
-		std::ifstream file(modelPath);
-		if (!file.is_open())
-			throw std::runtime_error("Failed to open model file: " + modelPath.string());
+		// ---- Read file from ZIP ----
+		static const std::filesystem::path blocksModelDirectory = std::filesystem::path("block");
+		const std::string jsonText = s_ModelsArchive.GetFileText(blocksModelDirectory / modelPath);
 
 		// ---- Parse JSON ----
-		nlohmann::json json;
-		file >> json;
+		nlohmann::json json = nlohmann::json::parse(jsonText);
 
 		BlockModel model;
 

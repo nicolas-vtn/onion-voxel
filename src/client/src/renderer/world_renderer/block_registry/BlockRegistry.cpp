@@ -49,6 +49,8 @@ namespace
 			return ResolveTexture(t.Front, t);
 		if (key == "back")
 			return ResolveTexture(t.Back, t);
+		if (key == "cross")
+			return ResolveTexture(t.Cross, t);
 
 		return "";
 	}
@@ -86,72 +88,55 @@ namespace onion::voxel
 		// Left
 		// Right
 
-		const std::filesystem::path blockModelDir = AssetsManager::GetAssetsDirectory() / "models" / "block";
-
-		PreRegisterModel(BlockId::Stone, blockModelDir / "stone.json");
-		PreRegisterModel(BlockId::Dirt, blockModelDir / "dirt.json");
-		PreRegisterModel(BlockId::Grass, blockModelDir / "grass_block.json");
-		PreRegisterModel(BlockId::Glass, blockModelDir / "glass.json");
-		PreRegisterModel(BlockId::BlackStainedGlass, blockModelDir / "black_stained_glass.json");
-		PreRegisterModel(BlockId::BlueStainedGlass, blockModelDir / "blue_stained_glass.json");
-		PreRegisterModel(BlockId::BrownStainedGlass, blockModelDir / "brown_stained_glass.json");
-		PreRegisterModel(BlockId::CyanStainedGlass, blockModelDir / "cyan_stained_glass.json");
-		PreRegisterModel(BlockId::GrayStainedGlass, blockModelDir / "gray_stained_glass.json");
-		PreRegisterModel(BlockId::GreenStainedGlass, blockModelDir / "green_stained_glass.json");
-		PreRegisterModel(BlockId::LightBlueStainedGlass, blockModelDir / "light_blue_stained_glass.json");
-		PreRegisterModel(BlockId::LightGrayStainedGlass, blockModelDir / "light_gray_stained_glass.json");
-		PreRegisterModel(BlockId::LimeStainedGlass, blockModelDir / "lime_stained_glass.json");
-		PreRegisterModel(BlockId::MagentaStainedGlass, blockModelDir / "magenta_stained_glass.json");
-		PreRegisterModel(BlockId::OrangeStainedGlass, blockModelDir / "orange_stained_glass.json");
-		PreRegisterModel(BlockId::PinkStainedGlass, blockModelDir / "pink_stained_glass.json");
-		PreRegisterModel(BlockId::PurpleStainedGlass, blockModelDir / "purple_stained_glass.json");
-		PreRegisterModel(BlockId::RedStainedGlass, blockModelDir / "red_stained_glass.json");
-		PreRegisterModel(BlockId::WhiteStainedGlass, blockModelDir / "white_stained_glass.json");
-		PreRegisterModel(BlockId::YellowStainedGlass, blockModelDir / "yellow_stained_glass.json");
-		PreRegisterModel(BlockId::OakLog, blockModelDir / "oak_log.json");
-		PreRegisterModel(BlockId::BirchLog, blockModelDir / "birch_log.json");
-		PreRegisterModel(BlockId::SpruceLog, blockModelDir / "spruce_log.json");
-		PreRegisterModel(BlockId::Bedrock, blockModelDir / "bedrock.json");
-		PreRegisterModel(BlockId::Sand, blockModelDir / "sand.json");
-		PreRegisterModel(BlockId::Gravel, blockModelDir / "gravel.json");
-		PreRegisterModel(BlockId::Cobblestone, blockModelDir / "cobblestone.json");
-		PreRegisterModel(BlockId::SnowBlock, blockModelDir / "snow_block.json");
-		PreRegisterModel(BlockId::OakLeaves, blockModelDir / "oak_leaves.json");
-		PreRegisterModel(BlockId::BirchLeaves, blockModelDir / "birch_leaves.json");
-		PreRegisterModel(BlockId::SpruceLeaves, blockModelDir / "spruce_leaves.json");
-		PreRegisterModel(BlockId::Ice, blockModelDir / "ice.json");
-		PreRegisterModel(BlockId::Furnace, blockModelDir / "furnace.json");
-		PreRegisterModel(BlockId::Water, blockModelDir / "water.json");
-		PreRegisterModel(BlockId::Sandstone, blockModelDir / "sandstone.json");
-
-		PreRegister(BlockId::Poppy, TextureInfo{"poppy.png", Tint::None, Transparency::Cutout}, Model::Cross);
-		PreRegister(BlockId::Dandelion, TextureInfo{"dandelion.png", Tint::None, Transparency::Cutout}, Model::Cross);
-
-		PreRegister(
-			BlockId::BrownMushroom, TextureInfo{"brown_mushroom.png", Tint::None, Transparency::Cutout}, Model::Cross);
-		PreRegister(
-			BlockId::RedMushroom, TextureInfo{"red_mushroom.png", Tint::None, Transparency::Cutout}, Model::Cross);
-		PreRegister(BlockId::Cobweb, TextureInfo{"cobweb.png", Tint::None, Transparency::Cutout}, Model::Cross);
-		PreRegister(BlockId::Kelp, TextureInfo{"kelp.png", Tint::Foliage, Transparency::Cutout}, Model::Cross);
-		PreRegister(BlockId::DeadBush, TextureInfo{"dead_bush.png", Tint::None, Transparency::Cutout}, Model::Cross);
-		PreRegister(
-			BlockId::OakSapling, TextureInfo{"oak_sapling.png", Tint::None, Transparency::Cutout}, Model::Cross);
-		PreRegister(BlockId::RedTulip, TextureInfo{"red_tulip.png", Tint::None, Transparency::Cutout}, Model::Cross);
-		PreRegister(
-			BlockId::OrangeTulip, TextureInfo{"orange_tulip.png", Tint::None, Transparency::Cutout}, Model::Cross);
-		PreRegister(
-			BlockId::WhiteTulip, TextureInfo{"white_tulip.png", Tint::None, Transparency::Cutout}, Model::Cross);
-		PreRegister(BlockId::PinkTulip, TextureInfo{"pink_tulip.png", Tint::None, Transparency::Cutout}, Model::Cross);
-		PreRegister(
-			BlockId::ShortGrass, TextureInfo{"short_grass.png", Tint::Foliage, Transparency::Cutout}, Model::Cross);
-
-		PreRegister(BlockId::SnowGrass,
-					{TextureInfo{"snow.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"dirt.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque}});
+		PreRegisterModel(BlockId::Stone, "stone.json");
+		PreRegisterModel(BlockId::Dirt, "dirt.json");
+		PreRegisterModel(BlockId::Grass, "grass_block.json");
+		PreRegisterModel(BlockId::Glass, "glass.json");
+		PreRegisterModel(BlockId::BlackStainedGlass, "black_stained_glass.json");
+		PreRegisterModel(BlockId::BlueStainedGlass, "blue_stained_glass.json");
+		PreRegisterModel(BlockId::BrownStainedGlass, "brown_stained_glass.json");
+		PreRegisterModel(BlockId::CyanStainedGlass, "cyan_stained_glass.json");
+		PreRegisterModel(BlockId::GrayStainedGlass, "gray_stained_glass.json");
+		PreRegisterModel(BlockId::GreenStainedGlass, "green_stained_glass.json");
+		PreRegisterModel(BlockId::LightBlueStainedGlass, "light_blue_stained_glass.json");
+		PreRegisterModel(BlockId::LightGrayStainedGlass, "light_gray_stained_glass.json");
+		PreRegisterModel(BlockId::LimeStainedGlass, "lime_stained_glass.json");
+		PreRegisterModel(BlockId::MagentaStainedGlass, "magenta_stained_glass.json");
+		PreRegisterModel(BlockId::OrangeStainedGlass, "orange_stained_glass.json");
+		PreRegisterModel(BlockId::PinkStainedGlass, "pink_stained_glass.json");
+		PreRegisterModel(BlockId::PurpleStainedGlass, "purple_stained_glass.json");
+		PreRegisterModel(BlockId::RedStainedGlass, "red_stained_glass.json");
+		PreRegisterModel(BlockId::WhiteStainedGlass, "white_stained_glass.json");
+		PreRegisterModel(BlockId::YellowStainedGlass, "yellow_stained_glass.json");
+		PreRegisterModel(BlockId::OakLog, "oak_log.json");
+		PreRegisterModel(BlockId::BirchLog, "birch_log.json");
+		PreRegisterModel(BlockId::SpruceLog, "spruce_log.json");
+		PreRegisterModel(BlockId::Bedrock, "bedrock.json");
+		PreRegisterModel(BlockId::Sand, "sand.json");
+		PreRegisterModel(BlockId::Gravel, "gravel.json");
+		PreRegisterModel(BlockId::Cobblestone, "cobblestone.json");
+		PreRegisterModel(BlockId::SnowBlock, "snow_block.json");
+		PreRegisterModel(BlockId::OakLeaves, "oak_leaves.json");
+		PreRegisterModel(BlockId::BirchLeaves, "birch_leaves.json");
+		PreRegisterModel(BlockId::SpruceLeaves, "spruce_leaves.json");
+		PreRegisterModel(BlockId::Ice, "ice.json");
+		PreRegisterModel(BlockId::Furnace, "furnace.json");
+		PreRegisterModel(BlockId::Water, "water.json");
+		PreRegisterModel(BlockId::Sandstone, "sandstone.json");
+		PreRegisterModel(BlockId::Poppy, "poppy.json");
+		PreRegisterModel(BlockId::Dandelion, "dandelion.json");
+		PreRegisterModel(BlockId::BrownMushroom, "brown_mushroom.json");
+		PreRegisterModel(BlockId::RedMushroom, "red_mushroom.json");
+		PreRegisterModel(BlockId::Cobweb, "cobweb.json");
+		PreRegisterModel(BlockId::Kelp, "kelp.json");
+		PreRegisterModel(BlockId::DeadBush, "dead_bush.json");
+		PreRegisterModel(BlockId::OakSapling, "oak_sapling.json");
+		PreRegisterModel(BlockId::RedTulip, "red_tulip.json");
+		PreRegisterModel(BlockId::OrangeTulip, "orange_tulip.json");
+		PreRegisterModel(BlockId::WhiteTulip, "white_tulip.json");
+		PreRegisterModel(BlockId::PinkTulip, "pink_tulip.json");
+		PreRegisterModel(BlockId::ShortGrass, "short_grass.json");
+		PreRegisterModel(BlockId::CactusFlower, "cactus_flower.json");
 
 		PreRegister(BlockId::Cactus,
 					{TextureInfo{"cactus_top.png", Tint::None, Transparency::Cutout},
@@ -161,8 +146,14 @@ namespace onion::voxel
 					 TextureInfo{"cactus_side.png", Tint::None, Transparency::Cutout},
 					 TextureInfo{"cactus_side.png", Tint::None, Transparency::Cutout}});
 
-		PreRegister(
-			BlockId::CactusFlower, TextureInfo{"cactus_flower.png", Tint::None, Transparency::Cutout}, Model::Cross);
+		// ---- Custom Blocks that do not exist in Minecraft, or have special texture requirements ----
+		PreRegister(BlockId::SnowGrass,
+					{TextureInfo{"snow.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"dirt.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
+					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque}});
 	}
 
 	void BlockRegistry::PreRegister(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel)
@@ -208,8 +199,7 @@ namespace onion::voxel
 		if (id == BlockId::Water)
 		{
 			// Load stone.json as base model to get the geometry, but use water texture
-			BlockModel stoneModel =
-				BlockModel::FromFile(AssetsManager::GetAssetsDirectory() / "models" / "block" / "stone.json");
+			BlockModel stoneModel = BlockModel::FromFile("stone.json");
 			stoneModel.ModelTextures.All = blockModel.ModelTextures.Particle; // Use water texture
 			blockModel = stoneModel;
 
@@ -225,6 +215,28 @@ namespace onion::voxel
 
 		std::array<TextureInfo, 6> baseTextures{};
 		bool baseInitialized = false;
+
+		Model textureModel = Model::Block;
+		if (!blockModel.ModelTextures.Cross.empty())
+		{
+			textureModel = Model::Cross;
+			// Load stone.json as base model to get the geometry, but use cross texture
+			BlockModel stoneModel = BlockModel::FromFile("stone.json");
+			stoneModel.ModelTextures.All = blockModel.ModelTextures.Cross; // Use cross texture
+			blockModel = stoneModel;
+
+			// Set Tint to ShortGrass for all faces
+			if (id == BlockId::ShortGrass)
+			{
+				for (auto& elem : blockModel.Elements)
+				{
+					for (auto& [faceName, face] : elem.Faces)
+					{
+						face.TintIndex = 0; // Corresponds to Tint::Grass
+					}
+				}
+			}
+		}
 
 		for (size_t elemIndex = 0; elemIndex < blockModel.Elements.size(); elemIndex++)
 		{
@@ -252,6 +264,15 @@ namespace onion::voxel
 				{
 					bool transparent = BlockState::IsTransparent(id);
 					Transparency texTransparency = transparent ? Transparency::Transparent : Transparency::Opaque;
+
+					// Force Cutout for Cross models
+					if (textureModel == Model::Cross)
+						texTransparency = Transparency::Cutout;
+
+					// Force Cutout for Leaves
+					if (id == BlockId::OakLeaves || id == BlockId::BirchLeaves || id == BlockId::SpruceLeaves)
+						texTransparency = Transparency::Cutout;
+
 					baseTextures[(int) f] = TextureInfo{resolved, tint, texTransparency};
 					baseInitialized = true;
 				}
@@ -264,7 +285,7 @@ namespace onion::voxel
 
 		if (baseInitialized)
 		{
-			PreRegister(id, baseTextures);
+			PreRegister(id, baseTextures, textureModel);
 		}
 
 		return;

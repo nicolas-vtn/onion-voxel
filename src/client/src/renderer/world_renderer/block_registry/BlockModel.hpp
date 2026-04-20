@@ -7,6 +7,8 @@
 #include <string>
 #include <unordered_map>
 
+#include <shared/zip_archive/ZipArchive.hpp>
+
 #include <renderer/assets_manager/AssetsManager.hpp>
 
 namespace onion::voxel
@@ -33,6 +35,7 @@ namespace onion::voxel
 			std::string Overlay;
 			std::string Front;
 			std::string Back;
+			std::string Cross;
 		};
 
 		struct Face
@@ -79,6 +82,8 @@ namespace onion::voxel
 
 		// ----- Static Private Members -----
 	  private:
+		static inline ZipArchive s_ModelsArchive{AssetsManager::GetAssetsDirectory() / "models" / "models.zip"};
+
 		static inline std::unordered_map<std::filesystem::path, BlockModel> s_ModelCache;
 		static inline std::recursive_mutex s_CacheMutex;
 		static const BlockModel& GetModel(const std::filesystem::path& path);
