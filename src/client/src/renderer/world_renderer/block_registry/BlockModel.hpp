@@ -2,9 +2,12 @@
 
 #include <array>
 #include <filesystem>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <unordered_map>
+
+#include <renderer/assets_manager/AssetsManager.hpp>
 
 namespace onion::voxel
 {
@@ -12,20 +15,21 @@ namespace onion::voxel
 	{
 		// ----- Enums -----
 	  public:
-		enum class eParent
-		{
-			CubeAll,
-			Block
-		};
-
 		class Textures
 		{
 		  public:
 			std::string All;
 			std::string Particle;
+			std::string Down;
+			std::string Up;
+			std::string North;
+			std::string East;
+			std::string South;
+			std::string West;
 			std::string Bottom;
 			std::string Top;
 			std::string Side;
+			std::string End;
 			std::string Overlay;
 		};
 
@@ -57,8 +61,24 @@ namespace onion::voxel
 
 		// ----- Members -----
 	  public:
-		eParent Parent = eParent::CubeAll;
 		Textures ModelTextures;
 		std::vector<Element> Elements;
+
+		// ----- Private Members -----
+	  private:
+		std::string ParentPath; // raw parent path from JSON, resolved to actual model later
+
+		// ----- Private Methods -----
+	  private:
+		static std::filesystem::path ResolveModelPath(const std::string& parentPath);
+		static void MergeModels(BlockModel& parent, const BlockModel& child);
+		static BlockModel LoadRawModel(const std::filesystem::path& modelPath);
+		static BlockModel LoadModelRecursive(const std::filesystem::path& modelPath);
+
+		// ----- Static Private Members -----
+	  private:
+		static inline std::unordered_map<std::filesystem::path, BlockModel> s_ModelCache;
+		static inline std::recursive_mutex s_CacheMutex;
+		static const BlockModel& GetModel(const std::filesystem::path& path);
 	};
 } // namespace onion::voxel

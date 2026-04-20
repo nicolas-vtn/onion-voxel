@@ -52,6 +52,7 @@ namespace onion::voxel
 		table[static_cast<size_t>(BlockId::Furnace)] = RotationType::Horizontal;
 		table[static_cast<size_t>(BlockId::OakLog)] = RotationType::Pillar;
 		table[static_cast<size_t>(BlockId::BirchLog)] = RotationType::Pillar;
+		table[static_cast<size_t>(BlockId::SpruceLog)] = RotationType::Pillar;
 		table[static_cast<size_t>(BlockId::Sandstone)] = RotationType::Horizontal;
 		return table;
 	}();

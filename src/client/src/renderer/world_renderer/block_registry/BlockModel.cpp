@@ -27,17 +27,6 @@ namespace onion::voxel
 			return {j[0].get<float>(), j[1].get<float>(), j[2].get<float>(), j[3].get<float>()};
 		}
 
-		BlockModel::eParent ParseParent(const std::string& parentStr)
-		{
-			if (parentStr == "block/cube_all")
-				return BlockModel::eParent::CubeAll;
-
-			if (parentStr == "block/block")
-				return BlockModel::eParent::Block;
-
-			throw std::runtime_error("Unknown parent: " + parentStr);
-		}
-
 		void ParseTextures(const nlohmann::json& texturesJson, BlockModel::Textures& textures)
 		{
 			// Flexible parsing: only read known fields, ignore others
@@ -52,9 +41,16 @@ namespace onion::voxel
 
 			get("all", textures.All);
 			get("particle", textures.Particle);
+			get("down", textures.Down);
+			get("up", textures.Up);
+			get("north", textures.North);
+			get("south", textures.South);
+			get("west", textures.West);
+			get("east", textures.East);
 			get("bottom", textures.Bottom);
 			get("top", textures.Top);
 			get("side", textures.Side);
+			get("end", textures.End);
 			get("overlay", textures.Overlay);
 		}
 
@@ -104,6 +100,48 @@ namespace onion::voxel
 
 	BlockModel BlockModel::FromFile(const std::filesystem::path& modelPath)
 	{
+		return LoadModelRecursive(modelPath);
+	}
+
+	std::filesystem::path BlockModel::ResolveModelPath(const std::string& parentPath)
+	{
+		std::string clean = StripNamespace(parentPath);
+
+		return AssetsManager::GetAssetsDirectory() / "models" / (clean + ".json");
+	}
+
+	void BlockModel::MergeModels(BlockModel& parent, const BlockModel& child)
+	{
+		// ---- Textures (merge) ----
+		auto mergeTex = [](std::string& dst, const std::string& src)
+		{
+			if (!src.empty())
+				dst = src;
+		};
+
+		mergeTex(parent.ModelTextures.All, child.ModelTextures.All);
+		mergeTex(parent.ModelTextures.Particle, child.ModelTextures.Particle);
+		mergeTex(parent.ModelTextures.Down, child.ModelTextures.Down);
+		mergeTex(parent.ModelTextures.Up, child.ModelTextures.Up);
+		mergeTex(parent.ModelTextures.North, child.ModelTextures.North);
+		mergeTex(parent.ModelTextures.South, child.ModelTextures.South);
+		mergeTex(parent.ModelTextures.West, child.ModelTextures.West);
+		mergeTex(parent.ModelTextures.East, child.ModelTextures.East);
+		mergeTex(parent.ModelTextures.Bottom, child.ModelTextures.Bottom);
+		mergeTex(parent.ModelTextures.Top, child.ModelTextures.Top);
+		mergeTex(parent.ModelTextures.Side, child.ModelTextures.Side);
+		mergeTex(parent.ModelTextures.End, child.ModelTextures.End);
+		mergeTex(parent.ModelTextures.Overlay, child.ModelTextures.Overlay);
+
+		// ---- Elements ----
+		if (!child.Elements.empty())
+		{
+			parent.Elements = child.Elements; // override completely
+		}
+	}
+
+	BlockModel BlockModel::LoadRawModel(const std::filesystem::path& modelPath)
+	{
 		// ---- Open file ----
 		std::ifstream file(modelPath);
 		if (!file.is_open())
@@ -116,11 +154,9 @@ namespace onion::voxel
 		BlockModel model;
 
 		// ---- Parent ----
-		if (json.contains("parent"))
+		if (json.contains("parent") && json.at("parent").is_string())
 		{
-			const std::string parentStrRaw = json.at("parent").get<std::string>();
-			const std::string parentStr = StripNamespace(parentStrRaw);
-			model.Parent = ParseParent(parentStr);
+			model.ParentPath = json.at("parent").get<std::string>();
 		}
 
 		// ---- Textures ----
@@ -136,5 +172,37 @@ namespace onion::voxel
 		}
 
 		return model;
+	}
+
+	BlockModel BlockModel::LoadModelRecursive(const std::filesystem::path& modelPath)
+	{
+		BlockModel model = LoadRawModel(modelPath);
+
+		if (!model.ParentPath.empty())
+		{
+			std::filesystem::path parentPath = ResolveModelPath(model.ParentPath);
+
+			BlockModel parent = LoadModelRecursive(parentPath);
+
+			MergeModels(parent, model);
+			return parent; // merged result stored in parent
+		}
+
+		return model;
+	}
+
+	const BlockModel& BlockModel::GetModel(const std::filesystem::path& path)
+	{
+		std::unique_lock lock(s_CacheMutex);
+
+		auto it = s_ModelCache.find(path);
+		if (it != s_ModelCache.end())
+			return it->second;
+
+		BlockModel model = BlockModel::FromFile(path);
+
+		auto [insertedIt, _] = s_ModelCache.emplace(path, std::move(model));
+
+		return insertedIt->second;
 	}
 } // namespace onion::voxel

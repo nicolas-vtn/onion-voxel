@@ -22,15 +22,29 @@ namespace
 		std::string key = ref.substr(1);
 
 		if (key == "top")
-			return ToFilename(t.Top);
+			return ResolveTexture(t.Top, t);
 		if (key == "bottom")
-			return ToFilename(t.Bottom);
+			return ResolveTexture(t.Bottom, t);
 		if (key == "side")
-			return ToFilename(t.Side);
+			return ResolveTexture(t.Side, t);
 		if (key == "overlay")
-			return ToFilename(t.Overlay);
+			return ResolveTexture(t.Overlay, t);
 		if (key == "all")
-			return ToFilename(t.All);
+			return ResolveTexture(t.All, t);
+		if (key == "down")
+			return ResolveTexture(t.Down, t);
+		if (key == "up")
+			return ResolveTexture(t.Up, t);
+		if (key == "north")
+			return ResolveTexture(t.North, t);
+		if (key == "south")
+			return ResolveTexture(t.South, t);
+		if (key == "west")
+			return ResolveTexture(t.West, t);
+		if (key == "east")
+			return ResolveTexture(t.East, t);
+		if (key == "end")
+			return ResolveTexture(t.End, t);
 
 		return "";
 	}
@@ -40,13 +54,13 @@ namespace
 		using namespace onion::voxel;
 
 		if (name == "up")
-			return Face::Top;
-		if (name == "down")
-			return Face::Bottom;
-		if (name == "north")
 			return Face::Front;
-		if (name == "south")
+		if (name == "down")
 			return Face::Back;
+		if (name == "north")
+			return Face::Top;
+		if (name == "south")
+			return Face::Bottom;
 		if (name == "west")
 			return Face::Left;
 		if (name == "east")
@@ -68,14 +82,11 @@ namespace onion::voxel
 		// Left
 		// Right
 
-		//PreRegister(BlockId::Stone, "stone.png");
-
 		const std::filesystem::path blockModelDir = AssetsManager::GetAssetsDirectory() / "models" / "block";
 
 		PreRegisterModel(BlockId::Stone, blockModelDir / "stone.json");
 		PreRegisterModel(BlockId::Dirt, blockModelDir / "dirt.json");
 		PreRegisterModel(BlockId::Grass, blockModelDir / "grass_block.json");
-
 		PreRegisterModel(BlockId::Glass, blockModelDir / "glass.json");
 		PreRegisterModel(BlockId::BlackStainedGlass, blockModelDir / "black_stained_glass.json");
 		PreRegisterModel(BlockId::BlueStainedGlass, blockModelDir / "blue_stained_glass.json");
@@ -93,14 +104,9 @@ namespace onion::voxel
 		PreRegisterModel(BlockId::RedStainedGlass, blockModelDir / "red_stained_glass.json");
 		PreRegisterModel(BlockId::WhiteStainedGlass, blockModelDir / "white_stained_glass.json");
 		PreRegisterModel(BlockId::YellowStainedGlass, blockModelDir / "yellow_stained_glass.json");
-
-		PreRegister(BlockId::OakLog,
-					{TextureInfo{"oak_log.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"oak_log.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"oak_log_top.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"oak_log_top.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"oak_log.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"oak_log.png", Tint::None, Transparency::Opaque}});
+		PreRegisterModel(BlockId::OakLog, blockModelDir / "oak_log.json");
+		PreRegisterModel(BlockId::BirchLog, blockModelDir / "birch_log.json");
+		PreRegisterModel(BlockId::SpruceLog, blockModelDir / "spruce_log.json");
 
 		PreRegister(BlockId::OakLeaves, TextureInfo{"oak_leaves.png", Tint::Foliage, Transparency::Cutout});
 
@@ -161,25 +167,9 @@ namespace onion::voxel
 
 		PreRegisterModel(BlockId::SnowBlock, blockModelDir / "snow_block.json");
 
-		PreRegister(BlockId::BirchLog,
-					{TextureInfo{"birch_log.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"birch_log.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"birch_log_top.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"birch_log_top.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"birch_log.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"birch_log.png", Tint::None, Transparency::Opaque}});
-
 		PreRegister(BlockId::BirchLeaves, TextureInfo{"birch_leaves.png", Tint::Foliage, Transparency::Cutout});
 
 		PreRegister(BlockId::Ice, TextureInfo{"ice.png", Tint::None, Transparency::Transparent});
-
-		PreRegister(BlockId::SpruceLog,
-					{TextureInfo{"spruce_log.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"spruce_log.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"spruce_log_top.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"spruce_log_top.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"spruce_log.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"spruce_log.png", Tint::None, Transparency::Opaque}});
 
 		PreRegister(BlockId::SpruceLeaves, TextureInfo{"spruce_leaves.png", Tint::Foliage, Transparency::Cutout});
 
@@ -234,68 +224,49 @@ namespace onion::voxel
 	{
 		BlockModel blockModel = BlockModel::FromFile(model);
 
-		if (blockModel.Parent == BlockModel::eParent::CubeAll)
+		std::array<TextureInfo, 6> baseTextures{};
+		bool baseInitialized = false;
+
+		for (size_t elemIndex = 0; elemIndex < blockModel.Elements.size(); elemIndex++)
 		{
-			bool transparent = BlockState::IsTransparent(id);
+			const auto& elem = blockModel.Elements[elemIndex];
+			bool isOverlay = (elemIndex > 0);
 
-			if (transparent)
+			for (const auto& [faceName, face] : elem.Faces)
 			{
-				PreRegister(
-					id,
-					TextureInfo{ToFilename(blockModel.ModelTextures.All), Tint::None, Transparency::Transparent},
-					Model::Block);
-			}
-			else
-			{
-				PreRegister(id, ToFilename(blockModel.ModelTextures.All), Model::Block);
-			}
+				Face f = ToFace(faceName);
 
-			return;
-		}
+				std::string resolved = ResolveTexture(face.Texture, blockModel.ModelTextures);
 
-		if (blockModel.Parent == BlockModel::eParent::Block)
-		{
-			std::array<TextureInfo, 6> baseTextures{};
-			bool baseInitialized = false;
-
-			for (size_t elemIndex = 0; elemIndex < blockModel.Elements.size(); elemIndex++)
-			{
-				const auto& elem = blockModel.Elements[elemIndex];
-				bool isOverlay = (elemIndex > 0);
-
-				for (const auto& [faceName, face] : elem.Faces)
+				if (resolved.empty())
 				{
-					Face f = ToFace(faceName);
+					throw std::runtime_error("Failed to resolve texture reference: " + face.Texture);
+				}
 
-					std::string resolved = ResolveTexture(face.Texture, blockModel.ModelTextures);
+				Tint tint = Tint::None;
+				if (face.TintIndex.has_value() && face.TintIndex.value() == 0)
+					tint = Tint::Grass;
 
-					Tint tint = Tint::None;
-					if (face.TintIndex.has_value() && face.TintIndex.value() == 0)
-						tint = Tint::Grass;
-
-					if (!isOverlay)
-					{
-						baseTextures[(int) f] = TextureInfo{resolved, tint, Transparency::Opaque};
-						baseInitialized = true;
-					}
-					else
-					{
-						PreSetOverlay(id, f, TextureInfo{resolved, tint, Transparency::Cutout});
-					}
+				if (!isOverlay)
+				{
+					bool transparent = BlockState::IsTransparent(id);
+					Transparency texTransparency = transparent ? Transparency::Transparent : Transparency::Opaque;
+					baseTextures[(int) f] = TextureInfo{resolved, tint, texTransparency};
+					baseInitialized = true;
+				}
+				else
+				{
+					PreSetOverlay(id, f, TextureInfo{resolved, tint, Transparency::Cutout});
 				}
 			}
-
-			if (baseInitialized)
-			{
-				PreRegister(id, baseTextures);
-			}
-
-			return;
 		}
 
-		// If we reach here, the block model parent is unsupported
-		throw std::runtime_error("Unsupported block model parent: " +
-								 std::to_string(static_cast<uint8_t>(blockModel.Parent)));
+		if (baseInitialized)
+		{
+			PreRegister(id, baseTextures);
+		}
+
+		return;
 	}
 
 	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel)
