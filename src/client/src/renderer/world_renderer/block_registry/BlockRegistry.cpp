@@ -76,7 +76,23 @@ namespace onion::voxel
 		PreRegisterModel(BlockId::Dirt, blockModelDir / "dirt.json");
 		PreRegisterModel(BlockId::Grass, blockModelDir / "grass_block.json");
 
-		PreRegister(BlockId::Glass, TextureInfo{"light_blue_stained_glass.png", Tint::None, Transparency::Transparent});
+		PreRegisterModel(BlockId::Glass, blockModelDir / "glass.json");
+		PreRegisterModel(BlockId::BlackStainedGlass, blockModelDir / "black_stained_glass.json");
+		PreRegisterModel(BlockId::BlueStainedGlass, blockModelDir / "blue_stained_glass.json");
+		PreRegisterModel(BlockId::BrownStainedGlass, blockModelDir / "brown_stained_glass.json");
+		PreRegisterModel(BlockId::CyanStainedGlass, blockModelDir / "cyan_stained_glass.json");
+		PreRegisterModel(BlockId::GrayStainedGlass, blockModelDir / "gray_stained_glass.json");
+		PreRegisterModel(BlockId::GreenStainedGlass, blockModelDir / "green_stained_glass.json");
+		PreRegisterModel(BlockId::LightBlueStainedGlass, blockModelDir / "light_blue_stained_glass.json");
+		PreRegisterModel(BlockId::LightGrayStainedGlass, blockModelDir / "light_gray_stained_glass.json");
+		PreRegisterModel(BlockId::LimeStainedGlass, blockModelDir / "lime_stained_glass.json");
+		PreRegisterModel(BlockId::MagentaStainedGlass, blockModelDir / "magenta_stained_glass.json");
+		PreRegisterModel(BlockId::OrangeStainedGlass, blockModelDir / "orange_stained_glass.json");
+		PreRegisterModel(BlockId::PinkStainedGlass, blockModelDir / "pink_stained_glass.json");
+		PreRegisterModel(BlockId::PurpleStainedGlass, blockModelDir / "purple_stained_glass.json");
+		PreRegisterModel(BlockId::RedStainedGlass, blockModelDir / "red_stained_glass.json");
+		PreRegisterModel(BlockId::WhiteStainedGlass, blockModelDir / "white_stained_glass.json");
+		PreRegisterModel(BlockId::YellowStainedGlass, blockModelDir / "yellow_stained_glass.json");
 
 		PreRegister(BlockId::OakLog,
 					{TextureInfo{"oak_log.png", Tint::None, Transparency::Opaque},
@@ -220,7 +236,20 @@ namespace onion::voxel
 
 		if (blockModel.Parent == BlockModel::eParent::CubeAll)
 		{
-			PreRegister(id, ToFilename(blockModel.ModelTextures.All), Model::Block);
+			bool transparent = BlockState::IsTransparent(id);
+
+			if (transparent)
+			{
+				PreRegister(
+					id,
+					TextureInfo{ToFilename(blockModel.ModelTextures.All), Tint::None, Transparency::Transparent},
+					Model::Block);
+			}
+			else
+			{
+				PreRegister(id, ToFilename(blockModel.ModelTextures.All), Model::Block);
+			}
+
 			return;
 		}
 
