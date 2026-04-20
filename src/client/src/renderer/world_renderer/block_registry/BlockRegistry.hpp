@@ -87,6 +87,9 @@ namespace onion::voxel
 
 		void PreSetOverlay(BlockId id, Face face, const TextureInfo& texture);
 
+		// DEV
+		void PreRegisterModel(BlockId id, const std::filesystem::path& model);
+
 		// ----- Real Registrations -----
 	  private:
 		void Register(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel = Model::Block);

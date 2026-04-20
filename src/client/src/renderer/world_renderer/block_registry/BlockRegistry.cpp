@@ -1,5 +1,20 @@
 #include "BlockRegistry.hpp"
 
+#include "BlockModel.hpp"
+
+namespace
+{
+	static std::string ToFilename(const std::string& texturePath)
+	{
+		// Remove folders
+		size_t slashPos = texturePath.find_last_of('/');
+		std::string name = (slashPos != std::string::npos) ? texturePath.substr(slashPos + 1) : texturePath;
+
+		// Add extension
+		return name + ".png";
+	}
+} // namespace
+
 namespace onion::voxel
 {
 	BlockRegistry::BlockRegistry(std::shared_ptr<TextureAtlas> atlas) : m_Atlas(atlas)
@@ -12,9 +27,12 @@ namespace onion::voxel
 		// Left
 		// Right
 
-		PreRegister(BlockId::Stone, "stone.png");
+		//PreRegister(BlockId::Stone, "stone.png");
 
-		PreRegister(BlockId::Dirt, "dirt.png");
+		const std::filesystem::path blockModelDir = AssetsManager::GetAssetsDirectory() / "models" / "block";
+
+		PreRegisterModel(BlockId::Stone, blockModelDir / "stone.json");
+		PreRegisterModel(BlockId::Dirt, blockModelDir / "dirt.json");
 
 		std::array<TextureInfo, 6> grassTextures = {
 			TextureInfo{"grass_block_top.png", Tint::Grass, Transparency::Opaque},
@@ -54,11 +72,12 @@ namespace onion::voxel
 					 TextureInfo{"furnace_side.png", Tint::None, Transparency::Opaque},
 					 TextureInfo{"furnace_side.png", Tint::None, Transparency::Opaque}});
 
-		PreRegister(BlockId::Bedrock, "bedrock.png");
+		PreRegisterModel(BlockId::Bedrock, blockModelDir / "bedrock.json");
 
 		PreRegister(BlockId::Water, TextureInfo{"water_still.png", Tint::Water, Transparency::Transparent});
 
-		PreRegister(BlockId::Sand, "sand.png");
+		PreRegisterModel(BlockId::Sand, blockModelDir / "sand.json");
+
 		PreRegister(BlockId::Sandstone,
 					{TextureInfo{"sandstone_top.png", Tint::None, Transparency::Opaque},
 					 TextureInfo{"sandstone_bottom.png", Tint::None, Transparency::Opaque},
@@ -67,9 +86,9 @@ namespace onion::voxel
 					 TextureInfo{"sandstone.png", Tint::None, Transparency::Opaque},
 					 TextureInfo{"sandstone.png", Tint::None, Transparency::Opaque}});
 
-		PreRegister(BlockId::Gravel, "gravel.png");
+		PreRegisterModel(BlockId::Gravel, blockModelDir / "gravel.json");
 
-		PreRegister(BlockId::Cobblestone, "cobblestone.png");
+		PreRegisterModel(BlockId::Cobblestone, blockModelDir / "cobblestone.json");
 
 		PreRegister(BlockId::Poppy, TextureInfo{"poppy.png", Tint::None, Transparency::Cutout}, Model::Cross);
 		PreRegister(BlockId::Dandelion, TextureInfo{"dandelion.png", Tint::None, Transparency::Cutout}, Model::Cross);
@@ -100,7 +119,7 @@ namespace onion::voxel
 					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
 					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque}});
 
-		PreRegister(BlockId::SnowBlock, "snow.png");
+		PreRegisterModel(BlockId::SnowBlock, blockModelDir / "snow_block.json");
 
 		PreRegister(BlockId::BirchLog,
 					{TextureInfo{"birch_log.png", Tint::None, Transparency::Opaque},
@@ -169,6 +188,21 @@ namespace onion::voxel
 	{
 		m_AllTextureNames.insert(texture.name);
 		m_RegistrationsOverlays.emplace_back(id, face, texture);
+	}
+
+	void BlockRegistry::PreRegisterModel(BlockId id, const std::filesystem::path& model)
+	{
+		BlockModel blockModel = BlockModel::FromFile(model);
+
+		if (blockModel.Parent == BlockModel::eParent::CubeAll)
+		{
+			PreRegister(id, ToFilename(blockModel.ModelTextures.All), Model::Block);
+		}
+		else
+		{
+			throw std::runtime_error("Unsupported block model parent: " +
+									 std::to_string(static_cast<uint8_t>(blockModel.Parent)));
+		}
 	}
 
 	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel)
