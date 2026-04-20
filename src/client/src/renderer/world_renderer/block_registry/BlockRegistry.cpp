@@ -13,6 +13,47 @@ namespace
 		// Add extension
 		return name + ".png";
 	}
+
+	std::string ResolveTexture(const std::string& ref, const onion::voxel::BlockModel::Textures& t)
+	{
+		if (!ref.starts_with('#'))
+			return ToFilename(ref);
+
+		std::string key = ref.substr(1);
+
+		if (key == "top")
+			return ToFilename(t.Top);
+		if (key == "bottom")
+			return ToFilename(t.Bottom);
+		if (key == "side")
+			return ToFilename(t.Side);
+		if (key == "overlay")
+			return ToFilename(t.Overlay);
+		if (key == "all")
+			return ToFilename(t.All);
+
+		return "";
+	}
+
+	onion::voxel::Face ToFace(const std::string& name)
+	{
+		using namespace onion::voxel;
+
+		if (name == "up")
+			return Face::Top;
+		if (name == "down")
+			return Face::Bottom;
+		if (name == "north")
+			return Face::Front;
+		if (name == "south")
+			return Face::Back;
+		if (name == "west")
+			return Face::Left;
+		if (name == "east")
+			return Face::Right;
+
+		throw std::runtime_error("Unknown face: " + name);
+	}
 } // namespace
 
 namespace onion::voxel
@@ -33,27 +74,10 @@ namespace onion::voxel
 
 		PreRegisterModel(BlockId::Stone, blockModelDir / "stone.json");
 		PreRegisterModel(BlockId::Dirt, blockModelDir / "dirt.json");
-
-		std::array<TextureInfo, 6> grassTextures = {
-			TextureInfo{"grass_block_top.png", Tint::Grass, Transparency::Opaque},
-			TextureInfo{"dirt.png", Tint::None, Transparency::Opaque},
-			TextureInfo{"grass_block_side.png", Tint::None, Transparency::Opaque},
-			TextureInfo{"grass_block_side.png", Tint::None, Transparency::Opaque},
-			TextureInfo{"grass_block_side.png", Tint::None, Transparency::Opaque},
-			TextureInfo{"grass_block_side.png", Tint::None, Transparency::Opaque}};
-		PreRegister(BlockId::Grass, grassTextures);
-		PreSetOverlay(BlockId::Grass,
-					  Face::Front,
-					  TextureInfo{"grass_block_side_overlay.png", Tint::Grass, Transparency::Cutout});
-		PreSetOverlay(
-			BlockId::Grass, Face::Back, TextureInfo{"grass_block_side_overlay.png", Tint::Grass, Transparency::Cutout});
-		PreSetOverlay(
-			BlockId::Grass, Face::Left, TextureInfo{"grass_block_side_overlay.png", Tint::Grass, Transparency::Cutout});
-		PreSetOverlay(BlockId::Grass,
-					  Face::Right,
-					  TextureInfo{"grass_block_side_overlay.png", Tint::Grass, Transparency::Cutout});
+		PreRegisterModel(BlockId::Grass, blockModelDir / "grass_block.json");
 
 		PreRegister(BlockId::Glass, TextureInfo{"light_blue_stained_glass.png", Tint::None, Transparency::Transparent});
+
 		PreRegister(BlockId::OakLog,
 					{TextureInfo{"oak_log.png", Tint::None, Transparency::Opaque},
 					 TextureInfo{"oak_log.png", Tint::None, Transparency::Opaque},
@@ -197,12 +221,52 @@ namespace onion::voxel
 		if (blockModel.Parent == BlockModel::eParent::CubeAll)
 		{
 			PreRegister(id, ToFilename(blockModel.ModelTextures.All), Model::Block);
+			return;
 		}
-		else
+
+		if (blockModel.Parent == BlockModel::eParent::Block)
 		{
-			throw std::runtime_error("Unsupported block model parent: " +
-									 std::to_string(static_cast<uint8_t>(blockModel.Parent)));
+			std::array<TextureInfo, 6> baseTextures{};
+			bool baseInitialized = false;
+
+			for (size_t elemIndex = 0; elemIndex < blockModel.Elements.size(); elemIndex++)
+			{
+				const auto& elem = blockModel.Elements[elemIndex];
+				bool isOverlay = (elemIndex > 0);
+
+				for (const auto& [faceName, face] : elem.Faces)
+				{
+					Face f = ToFace(faceName);
+
+					std::string resolved = ResolveTexture(face.Texture, blockModel.ModelTextures);
+
+					Tint tint = Tint::None;
+					if (face.TintIndex.has_value() && face.TintIndex.value() == 0)
+						tint = Tint::Grass;
+
+					if (!isOverlay)
+					{
+						baseTextures[(int) f] = TextureInfo{resolved, tint, Transparency::Opaque};
+						baseInitialized = true;
+					}
+					else
+					{
+						PreSetOverlay(id, f, TextureInfo{resolved, tint, Transparency::Cutout});
+					}
+				}
+			}
+
+			if (baseInitialized)
+			{
+				PreRegister(id, baseTextures);
+			}
+
+			return;
 		}
+
+		// If we reach here, the block model parent is unsupported
+		throw std::runtime_error("Unsupported block model parent: " +
+								 std::to_string(static_cast<uint8_t>(blockModel.Parent)));
 	}
 
 	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel)
