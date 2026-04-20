@@ -6,7 +6,6 @@
 - Render non-full blocks (water surface, cactus, ...)
 - Animated textures (water, lava, ...)
 - Better collision system (swept AABB)
-- Add Fov change when sprinting
 - Add a "sneaking" state
 - Add a "Creative" UI with Block selection and inventory management
 - Add Player position interpolation in multiplayer

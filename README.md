@@ -336,7 +336,6 @@ cmake --build build --config Release
 #### Gameplay Features
 - Creative mode with block selection UI and inventory management
 - Sneaking state
-- FOV change when sprinting
 - Chat system for multiplayer
 - Player list display (Tab key)
 
@@ -354,6 +353,7 @@ cmake --build build --config Release
 #### Completed
 - ~~Update GitHub README.md~~
 - ~~View frustum culling for better performance~~
+- ~~FOV change when sprinting~~
 
 ### Known Issues
 - Z-ordering issue in GUI (temporary workaround in TextField)

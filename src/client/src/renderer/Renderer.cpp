@@ -24,7 +24,7 @@ namespace onion::voxel
 	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager)
 		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), 800, 600)),
 		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager),
-		  m_EntityRenderer(m_Camera)
+		  m_EntityRenderer(m_Camera), m_FovSmoother(m_Camera)
 	{
 		// Setup Timer Save UserSettings
 		m_TimerDelayedSaveUserSettings.setTimeoutFunction([this]() { SaveUserSettings(); });
@@ -423,7 +423,7 @@ namespace onion::voxel
 		const auto& controls = settings.Controls;
 		if (args.FOV_Changed)
 		{
-			m_Camera->SetFovY(controls.FOV);
+			m_Camera->SetFov(controls.FOV);
 		}
 
 		if (args.MouseSensitivity_Changed)
@@ -590,6 +590,9 @@ namespace onion::voxel
 				m_Camera->SetFront(player->GetFacing());
 			}
 		}
+
+		// Update FOV Smoother
+		m_FovSmoother.Update(static_cast<float>(m_DeltaTime));
 	}
 
 	void Renderer::ProcessGameplayInputs()
@@ -951,6 +954,18 @@ namespace onion::voxel
 		}
 
 		player->SetPhysicsBody(physics);
+
+		// Update Player FOV based on state
+		Entity::State currentState = player->GetState();
+		const float configFov = EngineContext::Get().Settings().Controls.FOV;
+		if (currentState == Entity::State::Running)
+		{
+			m_FovSmoother.SetTargetFov(configFov * m_FovRunningRatio);
+		}
+		else
+		{
+			m_FovSmoother.SetTargetFov(configFov);
+		}
 	}
 
 	void Renderer::UpdateCameraFromInputs()
@@ -1029,6 +1044,17 @@ namespace onion::voxel
 			m_Camera->SetPosition(m_Camera->GetPosition() + Up * velocity);
 		if (moveDownKeyState.IsPressed)
 			m_Camera->SetPosition(m_Camera->GetPosition() - Up * velocity);
+
+		// Update Camera FOV based on state
+		const float configFov = EngineContext::Get().Settings().Controls.FOV;
+		if (speedUpKeyState.IsPressed)
+		{
+			m_FovSmoother.SetTargetFov(configFov * m_FovRunningRatio);
+		}
+		else
+		{
+			m_FovSmoother.SetTargetFov(configFov);
+		}
 	}
 
 	void Renderer::SubscribeToGuiEvents()
@@ -1159,7 +1185,7 @@ namespace onion::voxel
 			glm::vec3 front = m_Camera->GetFront();
 			float yaw = m_Camera->GetYaw();
 			float pitch = m_Camera->GetPitch();
-			float fov = m_Camera->GetFovY();
+			float fov = m_Camera->GetFov();
 			float aspect = m_Camera->GetAspectRatio();
 
 			ImGui::Checkbox("Free Camera", &m_IsFreeCamera);
@@ -1177,7 +1203,7 @@ namespace onion::voxel
 				m_Camera->SetPitch(pitch);
 
 			if (ImGui::DragFloat("FOV", &fov, 0.1f, 1.f, 120.f))
-				m_Camera->SetFovY(fov);
+				m_Camera->SetFov(fov);
 
 			if (ImGui::DragFloat("Aspect Ratio", &aspect, 0.01f))
 				m_Camera->SetAspectRatio(aspect);

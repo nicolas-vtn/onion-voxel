@@ -17,6 +17,7 @@
 #include <shared/physics/PhysicsEngine.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
+#include "camera/FovSmoother.hpp"
 #include "entity_renderer/EntityRenderer.hpp"
 #include "gui/Gui.hpp"
 #include "inputs_manager/inputs_manager.hpp"
@@ -167,6 +168,8 @@ namespace onion::voxel
 		// ------ World Renderer ------
 	  private:
 		std::shared_ptr<Camera> m_Camera;
+		FovSmoother m_FovSmoother;
+		float m_FovRunningRatio = 1.15f;
 		Block m_HitBlock;
 		float m_CameraSpeed = 5.0f;
 		WorldRenderer m_WorldRenderer;

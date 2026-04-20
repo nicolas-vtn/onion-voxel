@@ -104,7 +104,7 @@ namespace onion::voxel
 
 	void Camera::UpdateProjectionMatrix()
 	{
-		m_Projection = glm::perspective(glm::radians(m_FovY), m_AspectRatio, m_NearPlane, m_FarPlane);
+		m_Projection = glm::perspective(glm::radians(m_Fov), m_AspectRatio, m_NearPlane, m_FarPlane);
 	}
 
 	void Camera::SetAspectRatio(float aspectRatio)
@@ -114,9 +114,9 @@ namespace onion::voxel
 		UpdateProjectionMatrix();
 	}
 
-	void Camera::SetFovY(float fovY)
+	void Camera::SetFov(float fov)
 	{
-		m_FovY = fovY;
+		m_Fov = fov;
 		m_UpdatedProjectionMatrix = true;
 		UpdateProjectionMatrix();
 	}
@@ -136,9 +136,9 @@ namespace onion::voxel
 		m_UpdatedProjectionMatrix = false;
 	}
 
-	float Camera::GetFovY() const
+	float Camera::GetFov() const
 	{
-		return m_FovY;
+		return m_Fov;
 	}
 
 } // namespace onion::voxel

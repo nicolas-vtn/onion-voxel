@@ -84,7 +84,7 @@ namespace onion::voxel
 			[this](const std::pair<const GuiElement*, eMenu>& request) { Handle_MenuNavigationRequest(request); }));
 
 		m_EventHandles.push_back(m_MainMenuPanel.EvtRequestQuitGame.Subscribe([this](const GuiElement* sender)
-																		   { Handle_QuitGameRequest(sender); }));
+																			  { Handle_QuitGameRequest(sender); }));
 
 		m_EventHandles.push_back(m_PausePanel.EvtRequestMenuNavigation.Subscribe(
 			[this](const std::pair<const GuiElement*, eMenu>& request) { Handle_MenuNavigationRequest(request); }));
@@ -93,25 +93,25 @@ namespace onion::voxel
 			[this](const GuiElement* sender) { Handle_QuitToMainMenuRequest(sender); }));
 
 		m_EventHandles.push_back(m_PausePanel.EvtRequestBackToGame.Subscribe([this](const GuiElement* sender)
-																		  { Handle_BackToGameRequest(sender); }));
+																			 { Handle_BackToGameRequest(sender); }));
 
 		m_EventHandles.push_back(m_OptionsPanel.EvtRequestMenuNavigation.Subscribe(
 			[this](const std::pair<const GuiElement*, eMenu>& request) { Handle_MenuNavigationRequest(request); }));
 
 		m_EventHandles.push_back(m_OptionsPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
-																				{ Handle_BackRequest(sender); }));
+																				   { Handle_BackRequest(sender); }));
 
 		m_EventHandles.push_back(m_OptionsPanel.EvtUserSettingsChanged.Subscribe(
 			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
 
-		m_EventHandles.push_back(m_ResourcePacksPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
-																					  { Handle_BackRequest(sender); }));
+		m_EventHandles.push_back(m_ResourcePacksPanel.EvtRequestBackNavigation.Subscribe(
+			[this](const GuiElement* sender) { Handle_BackRequest(sender); }));
 
 		m_EventHandles.push_back(m_ResourcePacksPanel.EvtUserSettingsChanged.Subscribe(
 			[this](const UserSettingsChangedEventArgs& eventArgs) { Handle_UserSettingsChanged(eventArgs); }));
 
-		m_EventHandles.push_back(m_DemoScrollingPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
-																					  { Handle_BackRequest(sender); }));
+		m_EventHandles.push_back(m_DemoScrollingPanel.EvtRequestBackNavigation.Subscribe(
+			[this](const GuiElement* sender) { Handle_BackRequest(sender); }));
 
 		m_EventHandles.push_back(m_SingleplayerPanel.EvtRequestBackNavigation.Subscribe(
 			[this](const GuiElement* sender) { Handle_BackRequest(sender); }));
@@ -447,7 +447,7 @@ namespace onion::voxel
 			// Sets the camera position and orientation
 			s_Camera.SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 			s_Camera.SetFront(facingDirection);
-			s_Camera.SetFovY(s_CameraFov);
+			s_Camera.SetFov(s_CameraFov);
 
 			glm::mat4 view = s_Camera.GetViewMatrix();
 			glm::mat4 projection = s_Camera.GetProjectionMatrix();

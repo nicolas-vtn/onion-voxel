@@ -26,7 +26,7 @@ namespace onion::voxel
 
 		// ----- Projection Parameters -----
 	  private:
-		float m_FovY = 75.0f;				// Field of view in degrees
+		float m_Fov = 75.0f;				// Field of view in degrees
 		float m_AspectRatio = 16.0f / 9.0f; // Aspect ratio
 		float m_NearPlane = 0.1f;			// Near clipping plane
 		float m_FarPlane = 2000.f;			// Far clipping plane
@@ -36,7 +36,7 @@ namespace onion::voxel
 		void UpdateFrontFromYawPitch();
 		void UpdateYawPitchFromFront();
 
-		glm::mat4 m_Projection = glm::perspective(glm::radians(m_FovY), m_AspectRatio, m_NearPlane, m_FarPlane);
+		glm::mat4 m_Projection = glm::perspective(glm::radians(m_Fov), m_AspectRatio, m_NearPlane, m_FarPlane);
 		bool m_UpdatedProjectionMatrix = false;
 
 		// ----- Getters / Setters -----
@@ -55,6 +55,9 @@ namespace onion::voxel
 		float GetPitch() const;
 		void SetPitch(float pitch);
 
+		float GetFov() const;
+		void SetFov(float fov);
+
 		glm::mat4 GetProjectionMatrix() const;
 		glm::mat4 GetViewProjectionMatrix() const;
 		glm::mat4 GetUntranslatedViewProjectionMatrix() const;
@@ -63,14 +66,10 @@ namespace onion::voxel
 
 		void SetAspectRatio(float aspectRatio);
 
-		void SetFovY(float fovY);
-
 		float GetAspectRatio() const;
 
 		bool IsProjectionMatrixUpdated() const;
 
 		void ResetProjectionMatrixUpdateFlag();
-
-		float GetFovY() const;
 	};
 } // namespace onion::voxel
