@@ -156,7 +156,7 @@ namespace onion::voxel
 				{
 					glm::u8vec3 from = {elem.From[0], elem.From[1], elem.From[2]};
 					glm::u8vec3 to = {elem.To[0], elem.To[1], elem.To[2]};
-					baseTextures[(int) f] = TextureInfo{resolved, tint, from, to};
+					baseTextures[(int) f] = TextureInfo{resolved, tint, from, to, face.UV};
 					baseInitialized = true;
 				}
 				else
@@ -193,6 +193,7 @@ namespace onion::voxel
 			tex.faces[i].textureType = m_Atlas->GetTextureTransparency(textureName);
 			tex.faces[i].from = textures[i].from;
 			tex.faces[i].to = textures[i].to;
+			tex.faces[i].uv = textures[i].uv;
 
 			m_AllTextureNames.insert(textureName);
 		}
