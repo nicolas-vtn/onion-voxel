@@ -22,7 +22,7 @@ namespace onion::voxel
 
 		struct Face
 		{
-			std::array<float, 4> UV{0, 0, 0, 0};
+			std::array<uint8_t, 4> UV{0, 0, 16, 16};
 			std::string Texture; // "#side" or resolved later
 			std::optional<std::string> CullFace;
 			std::optional<int> TintIndex;

@@ -58,16 +58,7 @@ namespace onion::voxel
 		Cactus,
 		CactusFlower,
 
-		AcaciaLeaves,
-		AcaciaLog,
-		AcaciaLogHorizontal,
-		AcaciaPlanks,
-		AcaciaSapling,
-		AcaciaWood,
-		Allium,
-		AmethystBlock,
-		AmethystCluster,
-		AncientDebris,
+		OakFence,
 
 		Count,
 	};

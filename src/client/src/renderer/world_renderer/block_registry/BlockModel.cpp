@@ -21,9 +21,9 @@ namespace onion::voxel
 			return {j[0].get<uint8_t>(), j[1].get<uint8_t>(), j[2].get<uint8_t>()};
 		}
 
-		std::array<float, 4> ParseVec4(const nlohmann::json& j)
+		std::array<uint8_t, 4> ParseiVec4(const nlohmann::json& j)
 		{
-			return {j[0].get<float>(), j[1].get<float>(), j[2].get<float>(), j[3].get<float>()};
+			return {j[0].get<uint8_t>(), j[1].get<uint8_t>(), j[2].get<uint8_t>(), j[3].get<uint8_t>()};
 		}
 
 		void ParseTextures(const nlohmann::json& texturesJson, BlockModel::Textures& textures)
@@ -40,7 +40,7 @@ namespace onion::voxel
 			BlockModel::Face face;
 
 			if (faceJson.contains("uv"))
-				face.UV = ParseVec4(faceJson.at("uv"));
+				face.UV = ParseiVec4(faceJson.at("uv"));
 
 			if (faceJson.contains("texture"))
 				face.Texture = faceJson.at("texture").get<std::string>();

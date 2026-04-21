@@ -99,7 +99,14 @@ namespace onion::voxel
 
 			auto it = textureNames.begin();
 			std::advance(it, i);
-			std::filesystem::path texturePath = s_TexturesDirectory / *it;
+			const std::string& textureName = *it;
+
+			if (textureName.empty())
+			{
+				continue;
+			}
+
+			std::filesystem::path texturePath = s_TexturesDirectory / textureName;
 			std::vector<unsigned char> data = EngineContext::Get().Assets->GetResourcePackFileBinary(texturePath);
 
 			unsigned char* pixels = stbi_load_from_memory(data.data(), (int) data.size(), &w, &h, &channels, 4);

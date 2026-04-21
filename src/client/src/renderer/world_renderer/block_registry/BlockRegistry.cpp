@@ -318,16 +318,7 @@ namespace onion::voxel
 		RegisterModel(BlockId::CactusFlower, "cactus_flower.json");
 		RegisterModel(BlockId::Cactus, "cactus.json");
 
-		RegisterModel(BlockId::AcaciaLeaves, "acacia_leaves.json");
-		RegisterModel(BlockId::AcaciaLog, "acacia_log.json");
-		RegisterModel(BlockId::AcaciaLogHorizontal, "acacia_log_horizontal.json");
-		RegisterModel(BlockId::AcaciaPlanks, "acacia_planks.json");
-		RegisterModel(BlockId::AcaciaSapling, "acacia_sapling.json");
-		RegisterModel(BlockId::AcaciaWood, "acacia_wood.json");
-		RegisterModel(BlockId::Allium, "allium.json");
-		RegisterModel(BlockId::AmethystBlock, "amethyst_block.json");
-		RegisterModel(BlockId::AmethystCluster, "amethyst_cluster.json");
-		RegisterModel(BlockId::AncientDebris, "ancient_debris.json");
+		RegisterModel(BlockId::OakFence, "oak_fence_post.json");
 
 		// ---- Custom Blocks that do not exist in Minecraft, or have special texture requirements ----
 		RegisterModel(BlockId::SnowGrass,
