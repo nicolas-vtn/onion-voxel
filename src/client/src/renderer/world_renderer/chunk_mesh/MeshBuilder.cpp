@@ -749,9 +749,9 @@ namespace onion::voxel
 		{
 			SubChunkMesh::Vertex vert;
 
-			vert.x = static_cast<uint8_t>(p.x);
+			vert.x = static_cast<uint16_t>(p.x);
 			vert.y = static_cast<uint16_t>(p.y);
-			vert.z = static_cast<uint8_t>(p.z);
+			vert.z = static_cast<uint16_t>(p.z);
 
 			vert.texX = uv.x;
 			vert.texY = uv.y;
@@ -815,15 +815,26 @@ namespace onion::voxel
 	{
 		PointsAndOcclusion result;
 
-		result.p000 = glm::vec3(lx, wy, lz);
-		result.p001 = glm::vec3(lx, wy, lz + 1);
-		result.p010 = glm::vec3(lx, wy + 1, lz);
-		result.p011 = glm::vec3(lx, wy + 1, lz + 1);
+		constexpr uint16_t subBlockSize = 16; // Assuming a sub-block is 16 units in size
 
-		result.p100 = glm::vec3(lx + 1, wy, lz);
-		result.p101 = glm::vec3(lx + 1, wy, lz + 1);
-		result.p110 = glm::vec3(lx + 1, wy + 1, lz);
-		result.p111 = glm::vec3(lx + 1, wy + 1, lz + 1);
+		uint16_t ofnx = 0 * subBlockSize;
+		uint16_t ofpx = 1 * subBlockSize;
+
+		uint16_t ofny = 0 * subBlockSize;
+		uint16_t ofpy = 1 * subBlockSize;
+
+		uint16_t ofnz = 0 * subBlockSize;
+		uint16_t ofpz = 1 * subBlockSize;
+
+		result.p000 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofnz);
+		result.p001 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofpz);
+		result.p010 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofpy, lz * subBlockSize + ofnz);
+		result.p011 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofpy, lz * subBlockSize + ofpz);
+
+		result.p100 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofny, lz * subBlockSize + ofnz);
+		result.p101 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofny, lz * subBlockSize + ofpz);
+		result.p110 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofpy, lz * subBlockSize + ofnz);
+		result.p111 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofpy, lz * subBlockSize + ofpz);
 
 		constexpr int SIZE = WorldConstants::CHUNK_SIZE;
 		const int ly = wy % SIZE;
@@ -856,15 +867,26 @@ namespace onion::voxel
 	{
 		(void) mesh; // Cross model does not use occlusion values
 
+		constexpr uint16_t subBlockSize = 16; // Assuming a sub-block is 16 units in size
+
+		uint16_t ofnx = 0 * 16;
+		uint16_t ofpx = 1 * 16;
+
+		uint16_t ofny = 0 * 16;
+		uint16_t ofpy = 1 * 16;
+
+		uint16_t ofnz = 0 * 16;
+		uint16_t ofpz = 1 * 16;
+
 		PointsAndOcclusion result;
-		result.p000 = glm::vec3(lx, wy, lz);
-		result.p001 = glm::vec3(lx, wy, lz + 1);
-		result.p010 = glm::vec3(lx, wy + 1, lz);
-		result.p011 = glm::vec3(lx, wy + 1, lz + 1);
-		result.p100 = glm::vec3(lx + 1, wy, lz);
-		result.p101 = glm::vec3(lx + 1, wy, lz + 1);
-		result.p110 = glm::vec3(lx + 1, wy + 1, lz);
-		result.p111 = glm::vec3(lx + 1, wy + 1, lz + 1);
+		result.p000 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofnz);
+		result.p001 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofpz);
+		result.p010 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofpy, lz * subBlockSize + ofnz);
+		result.p011 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofpy, lz * subBlockSize + ofpz);
+		result.p100 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofny, lz * subBlockSize + ofnz);
+		result.p101 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofny, lz * subBlockSize + ofpz);
+		result.p110 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofpy, lz * subBlockSize + ofnz);
+		result.p111 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofpy, lz * subBlockSize + ofpz);
 		result.o000 = 0;
 		result.o001 = 0;
 		result.o010 = 0;

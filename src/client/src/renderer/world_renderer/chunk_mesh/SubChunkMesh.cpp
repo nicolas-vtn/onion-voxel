@@ -172,23 +172,20 @@ namespace onion::voxel
 			}
 
 			// vertex attrib
-			glEnableVertexAttribArray(0); // Position x z
-			glVertexAttribIPointer(0, 2, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glEnableVertexAttribArray(0); // Position x y z
+			glVertexAttribIPointer(0, 3, GL_UNSIGNED_SHORT, sizeof(Vertex), (void*) offsetof(Vertex, x));
 
-			glEnableVertexAttribArray(1); // Position y
-			glVertexAttribIPointer(1, 1, GL_UNSIGNED_SHORT, sizeof(Vertex), (void*) offsetof(Vertex, y));
+			glEnableVertexAttribArray(1); // Texture
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
 
-			glEnableVertexAttribArray(2); // Texture
-			glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
+			glEnableVertexAttribArray(2); // Facing direction
+			glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, facing));
 
-			glEnableVertexAttribArray(3); // Facing direction
-			glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, facing));
+			glEnableVertexAttribArray(3); // Occlusion
+			glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, occlusion));
 
-			glEnableVertexAttribArray(4); // Occlusion
-			glVertexAttribIPointer(4, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, occlusion));
-
-			glEnableVertexAttribArray(5); // Tint color
-			glVertexAttribPointer(5, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*) offsetof(Vertex, tintR));
+			glEnableVertexAttribArray(4); // Tint color
+			glVertexAttribPointer(4, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*) offsetof(Vertex, tintR));
 		}
 
 		m_IndicesCutoutCount = static_cast<unsigned int>(m_IndicesCutout.size());
@@ -213,23 +210,20 @@ namespace onion::voxel
 			}
 
 			// vertex attrib
-			glEnableVertexAttribArray(0); // Position x z
-			glVertexAttribIPointer(0, 2, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glEnableVertexAttribArray(0); // Position x y z
+			glVertexAttribIPointer(0, 3, GL_UNSIGNED_SHORT, sizeof(Vertex), (void*) offsetof(Vertex, x));
 
-			glEnableVertexAttribArray(1); // Position y
-			glVertexAttribIPointer(1, 1, GL_UNSIGNED_SHORT, sizeof(Vertex), (void*) offsetof(Vertex, y));
+			glEnableVertexAttribArray(1); // Texture
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
 
-			glEnableVertexAttribArray(2); // Texture
-			glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
+			glEnableVertexAttribArray(2); // Facing direction
+			glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, facing));
 
-			glEnableVertexAttribArray(3); // Facing direction
-			glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, facing));
+			glEnableVertexAttribArray(3); // Occlusion
+			glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, occlusion));
 
-			glEnableVertexAttribArray(4); // Occlusion
-			glVertexAttribIPointer(4, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, occlusion));
-
-			glEnableVertexAttribArray(5); // Tint color
-			glVertexAttribPointer(5, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*) offsetof(Vertex, tintR));
+			glEnableVertexAttribArray(4); // Tint color
+			glVertexAttribPointer(4, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*) offsetof(Vertex, tintR));
 		}
 
 		m_IndicesTransparentCount = static_cast<unsigned int>(m_IndicesTransparent.size());
@@ -256,23 +250,20 @@ namespace onion::voxel
 			}
 
 			// vertex attrib
-			glEnableVertexAttribArray(0); // Position x z
-			glVertexAttribIPointer(0, 2, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glEnableVertexAttribArray(0); // Position x y z
+			glVertexAttribIPointer(0, 3, GL_UNSIGNED_SHORT, sizeof(Vertex), (void*) offsetof(Vertex, x));
 
-			glEnableVertexAttribArray(1); // Position y
-			glVertexAttribIPointer(1, 1, GL_UNSIGNED_SHORT, sizeof(Vertex), (void*) offsetof(Vertex, y));
+			glEnableVertexAttribArray(1); // Texture
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
 
-			glEnableVertexAttribArray(2); // Texture
-			glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
+			glEnableVertexAttribArray(2); // Facing direction
+			glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, facing));
 
-			glEnableVertexAttribArray(3); // Facing direction
-			glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, facing));
+			glEnableVertexAttribArray(3); // Occlusion
+			glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, occlusion));
 
-			glEnableVertexAttribArray(4); // Occlusion
-			glVertexAttribIPointer(4, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), (void*) offsetof(Vertex, occlusion));
-
-			glEnableVertexAttribArray(5); // Tint color
-			glVertexAttribPointer(5, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*) offsetof(Vertex, tintR));
+			glEnableVertexAttribArray(4); // Tint color
+			glVertexAttribPointer(4, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*) offsetof(Vertex, tintR));
 		}
 
 		// unbind

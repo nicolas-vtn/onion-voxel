@@ -106,9 +106,9 @@ namespace onion::voxel
 	  public:
 		struct Vertex
 		{
-			uint8_t x;
-			uint8_t z;
+			uint16_t x;
 			uint16_t y;
+			uint16_t z;
 
 			float texX, texY; // Texture coordinates
 
