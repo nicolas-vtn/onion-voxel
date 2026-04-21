@@ -1,8 +1,8 @@
 #include "Chunk.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <stdexcept>
-#include <algorithm>
 
 namespace onion::voxel
 {
@@ -59,7 +59,7 @@ namespace onion::voxel
 
 		const glm::ivec3 local{localPosition.x, localPosition.y % WorldConstants::CHUNK_SIZE, localPosition.z};
 
-		const uint8_t blockIndex = subChunk.GetBlockIndexInPalette(local);
+		const uint16_t blockIndex = subChunk.GetBlockIndexInPalette(local);
 
 		return m_BlocksPalette[blockIndex];
 	}
@@ -137,14 +137,14 @@ namespace onion::voxel
 		if (it != m_BlocksPalette.end())
 		{
 			size_t index = std::distance(m_BlocksPalette.begin(), it);
-			assert(std::distance(m_BlocksPalette.begin(), it) <= UINT8_MAX); // Ensure the index can fit in a uint8_t
+			assert(std::distance(m_BlocksPalette.begin(), it) <= UINT16_MAX); // Ensure the index can fit in a uint8_t
 			indexInPalette = static_cast<uint8_t>(index);
 		}
 		else
 		{
 			m_BlocksPalette.push_back(block);
 			size_t index = m_BlocksPalette.size() - 1;
-			assert(index <= UINT8_MAX); // Ensure the index can fit in a uint8_t
+			assert(index <= UINT16_MAX); // Ensure the index can fit in a uint8_t
 			indexInPalette = static_cast<uint8_t>(index);
 		}
 

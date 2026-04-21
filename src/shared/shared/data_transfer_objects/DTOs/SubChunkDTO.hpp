@@ -17,10 +17,11 @@ namespace onion::voxel
 
 		eCompressionType compressionType = eCompressionType::MonoIndex;
 
-		uint8_t monoIndex{0};
+		uint16_t monoIndex{0};
 
-		std::vector<uint8_t> indices; // Raw block indices in palette (compressionType is None)
-		std::vector<uint8_t> rleData; // Run-Length Encoding (compressionType is RLE) (pairs of [count, indexInPalette])
+		std::vector<uint16_t> indices; // Raw block indices in palette (compressionType is None)
+		std::vector<uint16_t>
+			rleData; // Run-Length Encoding (compressionType is RLE) (pairs of [count, indexInPalette])
 
 		template <class Archive> void serialize(Archive& ar) { ar(compressionType, monoIndex, indices, rleData); }
 	};

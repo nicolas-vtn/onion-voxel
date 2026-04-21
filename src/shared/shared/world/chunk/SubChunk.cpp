@@ -21,7 +21,7 @@ namespace onion::voxel
 		}
 
 		// Check if all blocks are the same
-		uint8_t firstBlockIndex = (*m_BlockIndexInPalette)[0];
+		uint16_t firstBlockIndex = (*m_BlockIndexInPalette)[0];
 
 		for (const auto& blockIndex : *m_BlockIndexInPalette)
 		{
@@ -49,7 +49,7 @@ namespace onion::voxel
 		return m_IsMonoBlock;
 	}
 
-	uint8_t SubChunk::GetBlockIndexInPalette(const glm::ivec3& localPosition) const
+	uint16_t SubChunk::GetBlockIndexInPalette(const glm::ivec3& localPosition) const
 	{
 		// Check if the local position is within bounds
 		assert(localPosition.x >= 0 && localPosition.x < WorldConstants::CHUNK_SIZE);
@@ -69,7 +69,7 @@ namespace onion::voxel
 		return (*m_BlockIndexInPalette)[index];
 	}
 
-	void SubChunk::SetBlockIndexInPalette(const glm::ivec3& localPosition, uint8_t blockIndex)
+	void SubChunk::SetBlockIndexInPalette(const glm::ivec3& localPosition, uint16_t blockIndex)
 	{
 		// Check if the local position is within bounds
 		assert(localPosition.x >= 0 && localPosition.x < WorldConstants::CHUNK_SIZE);
@@ -85,7 +85,7 @@ namespace onion::voxel
 
 			// Need to convert to non-mono block data
 			m_BlockIndexInPalette = std::make_shared<
-				std::array<uint8_t,
+				std::array<uint16_t,
 						   WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE>>();
 
 			m_BlockIndexInPalette->fill(m_MonoBlockIndexInPalette); // Fill with the mono block index
@@ -103,7 +103,7 @@ namespace onion::voxel
 	void voxel::SubChunk::SetBlockIndexInPalette_Unsafe(const uint8_t x,
 														const uint8_t y,
 														const uint8_t z,
-														const uint8_t blockIndex)
+														const uint16_t blockIndex)
 	{
 		if (m_IsMonoBlock)
 		{
@@ -114,7 +114,7 @@ namespace onion::voxel
 
 			// Need to convert to non-mono block data
 			m_BlockIndexInPalette = std::make_shared<
-				std::array<uint8_t,
+				std::array<uint16_t,
 						   WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE>>();
 
 			m_BlockIndexInPalette->fill(m_MonoBlockIndexInPalette); // Fill with the mono block index

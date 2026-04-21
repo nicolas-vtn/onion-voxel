@@ -17,14 +17,14 @@ namespace onion::voxel
 		const size_t SIZE = arr.size();
 
 		// --------- RAW ---------
-		std::vector<uint8_t> raw(arr.begin(), arr.end());
+		std::vector<uint16_t> raw(arr.begin(), arr.end());
 
 		// --------- RLE ---------
-		std::vector<uint8_t> rle;
+		std::vector<uint16_t> rle;
 		rle.reserve(SIZE);
 
-		uint8_t current = arr[0];
-		uint8_t count = 1;
+		uint16_t current = arr[0];
+		uint16_t count = 1;
 
 		for (size_t i = 1; i < SIZE; i++)
 		{
@@ -71,7 +71,7 @@ namespace onion::voxel
 			return sc;
 
 		sc.m_BlockIndexInPalette = std::make_shared<
-			std::array<uint8_t,
+			std::array<uint16_t,
 					   WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE>>();
 
 		auto& arr = *sc.m_BlockIndexInPalette;
@@ -86,10 +86,10 @@ namespace onion::voxel
 
 			for (size_t i = 0; i < dto.rleData.size(); i += 2)
 			{
-				uint8_t count = dto.rleData[i];
-				uint8_t value = dto.rleData[i + 1];
+				uint16_t count = dto.rleData[i];
+				uint16_t value = dto.rleData[i + 1];
 
-				for (uint8_t c = 0; c < count; c++)
+				for (uint16_t c = 0; c < count; c++)
 				{
 					arr[writeIndex++] = value;
 				}

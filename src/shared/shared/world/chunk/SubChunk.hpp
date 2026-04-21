@@ -34,22 +34,23 @@ namespace onion::voxel
 		/// @brief Get the block index in the palette at the given local position within the subchunk
 		/// @param localPosition The local position within the subchunk (0 to CHUNK_SIZE-1 in each axis)
 		/// @return The block index in the palette at the given local position
-		uint8_t GetBlockIndexInPalette(const glm::ivec3& localPosition) const;
+		uint16_t GetBlockIndexInPalette(const glm::ivec3& localPosition) const;
 
 		/// @brief Set the block index in the palette at the given local position within the subchunk
 		/// @param localPosition The local position within the subchunk (0 to CHUNK_SIZE-1 in each axis)
 		/// @param blockIndex The block index in the palette to set at the given local position
-		void SetBlockIndexInPalette(const glm::ivec3& localPosition, uint8_t blockIndex);
+		void SetBlockIndexInPalette(const glm::ivec3& localPosition, uint16_t blockIndex);
 
-		void SetBlockIndexInPalette_Unsafe(const uint8_t x, const uint8_t y, const uint8_t z, const uint8_t blockIndex);
+		void
+		SetBlockIndexInPalette_Unsafe(const uint8_t x, const uint8_t y, const uint8_t z, const uint16_t blockIndex);
 
 		// ----- Members -----
 	  protected:
-		bool m_IsMonoBlock = true;			   // Whether the subchunk is made of a single block
-		uint8_t m_MonoBlockIndexInPalette = 0; // The block data for the mono block (if m_IsMonoBlock is true)
+		bool m_IsMonoBlock = true;				// Whether the subchunk is made of a single block
+		uint16_t m_MonoBlockIndexInPalette = 0; // The block data for the mono block (if m_IsMonoBlock is true)
 
 		std::shared_ptr<
-			std::array<uint8_t, WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE>>
+			std::array<uint16_t, WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE>>
 			m_BlockIndexInPalette;
 	};
 } // namespace onion::voxel
