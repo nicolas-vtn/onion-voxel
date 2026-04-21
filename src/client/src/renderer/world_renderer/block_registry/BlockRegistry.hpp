@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <glm/glm.hpp>
+
 #include <renderer/texture_atlas/TextureAtlas.hpp>
 
 #include <shared/world/block/Block.hpp>
@@ -42,12 +44,16 @@ namespace onion::voxel
 		TextureAtlas::TextureID texture = 0;
 		Tint tintType = Tint::None;
 		Transparency textureType = Transparency::Opaque;
+		glm::u8vec3 from = {0, 0, 0};   // element start corner in MC units (0-16)
+		glm::u8vec3 to   = {16, 16, 16}; // element end corner in MC units (0-16)
 	};
 
 	struct TextureInfo
 	{
 		std::string name;
 		Tint tintType = Tint::None;
+		glm::u8vec3 from = {0, 0, 0};
+		glm::u8vec3 to   = {16, 16, 16};
 	};
 
 	struct BlockTextures

@@ -182,7 +182,9 @@ namespace onion::voxel
 
 				if (!isOverlay)
 				{
-					baseTextures[(int) f] = TextureInfo{resolved, tint};
+					glm::u8vec3 from = {elem.From[0], elem.From[1], elem.From[2]};
+					glm::u8vec3 to   = {elem.To[0],   elem.To[1],   elem.To[2]};
+					baseTextures[(int) f] = TextureInfo{resolved, tint, from, to};
 					baseInitialized = true;
 				}
 				else
@@ -217,6 +219,8 @@ namespace onion::voxel
 			tex.faces[i].texture = m_Atlas->GetTextureID(textureName);
 			tex.faces[i].tintType = textures[i].tintType;
 			tex.faces[i].textureType = m_Atlas->GetTextureTransparency(textureName);
+			tex.faces[i].from = textures[i].from;
+			tex.faces[i].to   = textures[i].to;
 
 			m_AllTextureNames.insert(textureName);
 		}

@@ -338,20 +338,44 @@ namespace onion::voxel
 						// ------ Get Block Textures ------
 						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.ID);
 
-						// ------ Prepare Poins / OA ------
-						PointsAndOcclusion pao = GetPointsAndOcclusion(blockTextures, mesh.get(), x, wy, z);
-
 						// ------ Build Mesh ------
-						std::vector<FaceBuildDesc> faces = GetFaceBuildDescs(blockTextures, pao);
-
-						for (const auto& f : faces)
+						if (blockTextures.textureModel == Model::Block)
 						{
-							int idx = (int) f.face;
+							// Build each face individually using its own element geometry (from/to)
+							for (int faceIdx = 0; faceIdx < (int) Face::Count; faceIdx++)
+							{
+								if (!faceVisible[faceIdx])
+									continue;
 
-							if (!faceVisible[idx])
-								continue;
+								const FaceTexture& faceTexture = blockTextures.faces[faceIdx];
+								PointsAndOcclusion pao = GetPointsAndOcclusionForBlock(
+									mesh.get(), x, wy, z, faceTexture.from, faceTexture.to);
 
-							BuildFace(*m_TextureAtlas, *mesh, block, blockTextures, f);
+								std::vector<FaceBuildDesc> faceDescs = GetBlockFaceBuildDescs(pao);
+								// Only emit the descriptor matching this face index
+								for (const auto& f : faceDescs)
+								{
+									if ((int) f.face != faceIdx)
+										continue;
+									BuildFace(*m_TextureAtlas, *mesh, block, blockTextures, f);
+								}
+							}
+						}
+						else
+						{
+							// Non-block models (Cross etc.) use a single shared pao
+							PointsAndOcclusion pao = GetPointsAndOcclusion(blockTextures, mesh.get(), x, wy, z);
+							std::vector<FaceBuildDesc> faces = GetFaceBuildDescs(blockTextures, pao);
+
+							for (const auto& f : faces)
+							{
+								int idx = (int) f.face;
+
+								if (!faceVisible[idx])
+									continue;
+
+								BuildFace(*m_TextureAtlas, *mesh, block, blockTextures, f);
+							}
 						}
 					}
 
@@ -816,20 +840,21 @@ namespace onion::voxel
 	}
 
 	MeshBuilder::PointsAndOcclusion
-	MeshBuilder::GetPointsAndOcclusionForBlock(SubChunkMesh* mesh, const int lx, const int wy, const int lz)
+	MeshBuilder::GetPointsAndOcclusionForBlock(SubChunkMesh* mesh, const int lx, const int wy, const int lz,
+		const glm::u8vec3& from, const glm::u8vec3& to)
 	{
 		PointsAndOcclusion result;
 
 		constexpr uint16_t subBlockSize = 16; // Assuming a sub-block is 16 units in size
 
-		uint16_t ofnx = 0 * subBlockSize;
-		uint16_t ofpx = 1 * subBlockSize;
+		uint16_t ofnx = from.x;
+		uint16_t ofpx = to.x;
 
-		uint16_t ofny = 0 * subBlockSize;
-		uint16_t ofpy = 1 * subBlockSize;
+		uint16_t ofny = from.y;
+		uint16_t ofpy = to.y;
 
-		uint16_t ofnz = 0 * subBlockSize;
-		uint16_t ofpz = 1 * subBlockSize;
+		uint16_t ofnz = from.z;
+		uint16_t ofpz = to.z;
 
 		result.p000 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofnz);
 		result.p001 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofpz);
