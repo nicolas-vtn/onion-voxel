@@ -624,6 +624,11 @@ namespace onion::voxel
 		m_BlockRegistry.Initialize();
 	}
 
+	void MeshBuilder::ReloadTextures()
+	{
+		m_BlockRegistry.ReloadTextures();
+	}
+
 	void MeshBuilder::UpdateChunkMeshAsync(const std::shared_ptr<ChunkMesh> chunkMesh)
 	{
 		m_ThreadPool.Dispatch([this, chunkMesh]() { UpdateChunkMesh(chunkMesh); });

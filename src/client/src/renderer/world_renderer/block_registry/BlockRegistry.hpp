@@ -73,14 +73,12 @@ namespace onion::voxel
 
 		// ----- Private Methods -----
 	  private:
-		void PreRegister(BlockId id, const TextureInfo& texture, Model textureModel = Model::Block);
-		void PreRegister(BlockId id, const std::string& texture, Model textureModel = Model::Block);
-		void PreRegister(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel = Model::Block);
+		void ReloadModels();
+
+		void RegisterModel(BlockId id, const std::filesystem::path& model);
+		void RegisterModel(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel);
 
 		void PreSetOverlay(BlockId id, Face face, const TextureInfo& texture);
-
-		// DEV
-		void PreRegisterModel(BlockId id, const std::filesystem::path& model);
 
 		// ----- Real Registrations -----
 	  private:

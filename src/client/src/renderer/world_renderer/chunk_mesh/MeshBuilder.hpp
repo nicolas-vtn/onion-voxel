@@ -27,6 +27,7 @@ namespace onion::voxel
 		// ----- Public API -----
 	  public:
 		void Initialize();
+		void ReloadTextures();
 
 		void UpdateChunkMeshAsync(const std::shared_ptr<ChunkMesh> chunkMesh);
 		double GetAverageChunkMeshUpdateTime() const; // Returns the average time taken for chunk mesh updates in ms

@@ -23,7 +23,6 @@ namespace onion::voxel
 
 	void WorldRenderer::Initialize()
 	{
-		m_TextureAtlas->Initialize(m_MeshBuilder.GetAllRegisteredTextureNames());
 		m_MeshBuilder.Initialize();
 
 		// Initialize Skybox
@@ -97,7 +96,6 @@ namespace onion::voxel
 
 		// Sets Uniforms
 		SubChunkMesh::s_Shader.Use();
-		//SubChunkMesh::s_Shader.setMat4("u_ViewProjMatrix", viewProjMatrix);
 		SubChunkMesh::s_Shader.setMat4("u_ViewProjMatrix", m_Camera->GetUntranslatedViewProjectionMatrix());
 		SubChunkMesh::s_Shader.setVec3("u_CameraPosition", m_Camera->GetPosition());
 		SubChunkMesh::s_Shader.setBool("u_RenderCutout", false);
@@ -262,10 +260,7 @@ namespace onion::voxel
 
 	void WorldRenderer::ReloadTextures()
 	{
-		m_TextureAtlas->ReloadTextures(m_MeshBuilder.GetAllRegisteredTextureNames());
-
-		// Mark all chunk meshes as dirty so they will be rebuilt with the new texture atlas UVs
-		// MarkAllChunkMeshesDirty();
+		m_MeshBuilder.ReloadTextures();
 	}
 
 	void WorldRenderer::MarkAllChunkMeshesDirty()

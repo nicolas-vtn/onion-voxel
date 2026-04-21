@@ -21,4 +21,3 @@
 - Z-Ordering issue in GUI (Fix TextField Background drawn in wrong order to bypass this issue )
 - On server close, client does not go back to main menu.
 - Random crashes when loading worlds (probably due to server port)
-- Use ResourcePack Block Models instead of default vanilla ones

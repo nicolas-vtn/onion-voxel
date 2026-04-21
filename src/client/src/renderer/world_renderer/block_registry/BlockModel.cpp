@@ -5,6 +5,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include <renderer/EngineContext.hpp>
+
 namespace onion::voxel
 {
 	namespace
@@ -55,6 +57,7 @@ namespace onion::voxel
 			get("front", textures.Front);
 			get("back", textures.Back);
 			get("cross", textures.Cross);
+			get("texture", textures.Texture);
 		}
 
 		static BlockModel::Face ParseFace(const nlohmann::json& faceJson)
@@ -103,18 +106,12 @@ namespace onion::voxel
 
 	BlockModel BlockModel::FromFile(const std::filesystem::path& modelPath)
 	{
-		return LoadModelRecursive(modelPath);
+		return LoadModelRecursive(std::filesystem::path("block") / modelPath);
 	}
 
 	std::filesystem::path BlockModel::ResolveModelPath(const std::string& parentPath)
 	{
-		std::string clean = StripNamespace(parentPath);
-
-		// Return the name after "/" if it exists, otherwise return the whole name
-		size_t pos = clean.find('/');
-		if (pos != std::string::npos)
-			clean = clean.substr(pos + 1);
-
+		const std::string clean = StripNamespace(parentPath);
 		return std::filesystem::path(clean + ".json");
 	}
 
@@ -143,6 +140,7 @@ namespace onion::voxel
 		mergeTex(parent.ModelTextures.Front, child.ModelTextures.Front);
 		mergeTex(parent.ModelTextures.Back, child.ModelTextures.Back);
 		mergeTex(parent.ModelTextures.Cross, child.ModelTextures.Cross);
+		mergeTex(parent.ModelTextures.Texture, child.ModelTextures.Texture);
 
 		// ---- Elements ----
 		if (!child.Elements.empty())
@@ -153,9 +151,9 @@ namespace onion::voxel
 
 	BlockModel BlockModel::LoadRawModel(const std::filesystem::path& modelPath)
 	{
-		// ---- Read file from ZIP ----
-		static const std::filesystem::path blocksModelDirectory = std::filesystem::path("block");
-		const std::string jsonText = s_ModelsArchive.GetFileText(blocksModelDirectory / modelPath);
+		// ---- Read file from ResourcePack ----
+		static const std::filesystem::path modelsDirectory = std::filesystem::path("assets") / "minecraft" / "models";
+		const std::string jsonText = EngineContext::Get().Assets->GetResourcePackFileText(modelsDirectory / modelPath);
 
 		// ---- Parse JSON ----
 		nlohmann::json json = nlohmann::json::parse(jsonText);

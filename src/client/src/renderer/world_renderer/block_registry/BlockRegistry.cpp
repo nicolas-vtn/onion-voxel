@@ -6,12 +6,8 @@ namespace
 {
 	static std::string ToFilename(const std::string& texturePath)
 	{
-		// Remove folders
-		size_t slashPos = texturePath.find_last_of('/');
-		std::string name = (slashPos != std::string::npos) ? texturePath.substr(slashPos + 1) : texturePath;
-
 		// Add extension
-		return name + ".png";
+		return texturePath + ".png";
 	}
 
 	std::string ResolveTexture(const std::string& ref, const onion::voxel::BlockModel::Textures& t)
@@ -19,38 +15,38 @@ namespace
 		if (!ref.starts_with('#'))
 			return ToFilename(ref);
 
-		std::string key = ref.substr(1);
-
-		if (key == "top")
+		if (ref == "#top")
 			return ResolveTexture(t.Top, t);
-		if (key == "bottom")
+		if (ref == "#bottom")
 			return ResolveTexture(t.Bottom, t);
-		if (key == "side")
+		if (ref == "#side")
 			return ResolveTexture(t.Side, t);
-		if (key == "overlay")
+		if (ref == "#overlay")
 			return ResolveTexture(t.Overlay, t);
-		if (key == "all")
+		if (ref == "#all")
 			return ResolveTexture(t.All, t);
-		if (key == "down")
+		if (ref == "#down")
 			return ResolveTexture(t.Down, t);
-		if (key == "up")
+		if (ref == "#up")
 			return ResolveTexture(t.Up, t);
-		if (key == "north")
+		if (ref == "#north")
 			return ResolveTexture(t.North, t);
-		if (key == "south")
+		if (ref == "#south")
 			return ResolveTexture(t.South, t);
-		if (key == "west")
+		if (ref == "#west")
 			return ResolveTexture(t.West, t);
-		if (key == "east")
+		if (ref == "#east")
 			return ResolveTexture(t.East, t);
-		if (key == "end")
+		if (ref == "#end")
 			return ResolveTexture(t.End, t);
-		if (key == "front")
+		if (ref == "#front")
 			return ResolveTexture(t.Front, t);
-		if (key == "back")
+		if (ref == "#back")
 			return ResolveTexture(t.Back, t);
-		if (key == "cross")
+		if (ref == "#cross")
 			return ResolveTexture(t.Cross, t);
+		if (ref == "#texture")
+			return ResolveTexture(t.Texture, t);
 
 		return "";
 	}
@@ -89,78 +85,9 @@ namespace
 
 namespace onion::voxel
 {
-	BlockRegistry::BlockRegistry(std::shared_ptr<TextureAtlas> atlas) : m_Atlas(atlas)
-	{
+	BlockRegistry::BlockRegistry(std::shared_ptr<TextureAtlas> atlas) : m_Atlas(atlas) {}
 
-		// Top
-		// Bottom
-		// Front
-		// Back
-		// Left
-		// Right
-
-		PreRegisterModel(BlockId::Stone, "stone.json");
-		PreRegisterModel(BlockId::Dirt, "dirt.json");
-		PreRegisterModel(BlockId::Grass, "grass_block.json");
-		PreRegisterModel(BlockId::Glass, "glass.json");
-		PreRegisterModel(BlockId::BlackStainedGlass, "black_stained_glass.json");
-		PreRegisterModel(BlockId::BlueStainedGlass, "blue_stained_glass.json");
-		PreRegisterModel(BlockId::BrownStainedGlass, "brown_stained_glass.json");
-		PreRegisterModel(BlockId::CyanStainedGlass, "cyan_stained_glass.json");
-		PreRegisterModel(BlockId::GrayStainedGlass, "gray_stained_glass.json");
-		PreRegisterModel(BlockId::GreenStainedGlass, "green_stained_glass.json");
-		PreRegisterModel(BlockId::LightBlueStainedGlass, "light_blue_stained_glass.json");
-		PreRegisterModel(BlockId::LightGrayStainedGlass, "light_gray_stained_glass.json");
-		PreRegisterModel(BlockId::LimeStainedGlass, "lime_stained_glass.json");
-		PreRegisterModel(BlockId::MagentaStainedGlass, "magenta_stained_glass.json");
-		PreRegisterModel(BlockId::OrangeStainedGlass, "orange_stained_glass.json");
-		PreRegisterModel(BlockId::PinkStainedGlass, "pink_stained_glass.json");
-		PreRegisterModel(BlockId::PurpleStainedGlass, "purple_stained_glass.json");
-		PreRegisterModel(BlockId::RedStainedGlass, "red_stained_glass.json");
-		PreRegisterModel(BlockId::WhiteStainedGlass, "white_stained_glass.json");
-		PreRegisterModel(BlockId::YellowStainedGlass, "yellow_stained_glass.json");
-		PreRegisterModel(BlockId::OakLog, "oak_log.json");
-		PreRegisterModel(BlockId::BirchLog, "birch_log.json");
-		PreRegisterModel(BlockId::SpruceLog, "spruce_log.json");
-		PreRegisterModel(BlockId::Bedrock, "bedrock.json");
-		PreRegisterModel(BlockId::Sand, "sand.json");
-		PreRegisterModel(BlockId::Gravel, "gravel.json");
-		PreRegisterModel(BlockId::Cobblestone, "cobblestone.json");
-		PreRegisterModel(BlockId::SnowBlock, "snow_block.json");
-		PreRegisterModel(BlockId::OakLeaves, "oak_leaves.json");
-		PreRegisterModel(BlockId::BirchLeaves, "birch_leaves.json");
-		PreRegisterModel(BlockId::SpruceLeaves, "spruce_leaves.json");
-		PreRegisterModel(BlockId::Ice, "ice.json");
-		PreRegisterModel(BlockId::Furnace, "furnace.json");
-		PreRegisterModel(BlockId::Water, "water.json");
-		PreRegisterModel(BlockId::Sandstone, "sandstone.json");
-		PreRegisterModel(BlockId::Poppy, "poppy.json");
-		PreRegisterModel(BlockId::Dandelion, "dandelion.json");
-		PreRegisterModel(BlockId::BrownMushroom, "brown_mushroom.json");
-		PreRegisterModel(BlockId::RedMushroom, "red_mushroom.json");
-		PreRegisterModel(BlockId::Cobweb, "cobweb.json");
-		PreRegisterModel(BlockId::Kelp, "kelp.json");
-		PreRegisterModel(BlockId::DeadBush, "dead_bush.json");
-		PreRegisterModel(BlockId::OakSapling, "oak_sapling.json");
-		PreRegisterModel(BlockId::RedTulip, "red_tulip.json");
-		PreRegisterModel(BlockId::OrangeTulip, "orange_tulip.json");
-		PreRegisterModel(BlockId::WhiteTulip, "white_tulip.json");
-		PreRegisterModel(BlockId::PinkTulip, "pink_tulip.json");
-		PreRegisterModel(BlockId::ShortGrass, "short_grass.json");
-		PreRegisterModel(BlockId::CactusFlower, "cactus_flower.json");
-		PreRegisterModel(BlockId::Cactus, "cactus.json");
-
-		// ---- Custom Blocks that do not exist in Minecraft, or have special texture requirements ----
-		PreRegister(BlockId::SnowGrass,
-					{TextureInfo{"snow.png", Tint::None},
-					 TextureInfo{"dirt.png", Tint::None},
-					 TextureInfo{"grass_block_snow.png", Tint::None},
-					 TextureInfo{"grass_block_snow.png", Tint::None},
-					 TextureInfo{"grass_block_snow.png", Tint::None},
-					 TextureInfo{"grass_block_snow.png", Tint::None}});
-	}
-
-	void BlockRegistry::PreRegister(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel)
+	void BlockRegistry::RegisterModel(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel)
 	{
 		for (const auto& texture : textures)
 		{
@@ -175,27 +102,13 @@ namespace onion::voxel
 		m_Registrations.emplace_back(registration);
 	}
 
-	void BlockRegistry::PreRegister(BlockId id, const TextureInfo& texture, Model textureModel)
-	{
-		std::array<TextureInfo, 6> textures;
-		textures.fill(texture);
-		PreRegister(id, textures, textureModel);
-	}
-
-	void BlockRegistry::PreRegister(BlockId id, const std::string& texture, Model textureModel)
-	{
-		std::array<TextureInfo, 6> textures;
-		textures.fill({texture});
-		PreRegister(id, textures, textureModel);
-	}
-
 	void BlockRegistry::PreSetOverlay(BlockId id, Face face, const TextureInfo& texture)
 	{
 		m_AllTextureNames.insert(texture.name);
 		m_RegistrationsOverlays.emplace_back(id, face, texture);
 	}
 
-	void BlockRegistry::PreRegisterModel(BlockId id, const std::filesystem::path& model)
+	void BlockRegistry::RegisterModel(BlockId id, const std::filesystem::path& model)
 	{
 		BlockModel blockModel = BlockModel::FromFile(model);
 
@@ -281,7 +194,7 @@ namespace onion::voxel
 
 		if (baseInitialized)
 		{
-			PreRegister(id, baseTextures, textureModel);
+			RegisterModel(id, baseTextures, textureModel);
 		}
 
 		return;
@@ -334,6 +247,9 @@ namespace onion::voxel
 
 	void BlockRegistry::ReloadTextures()
 	{
+		// Reload Models
+		ReloadModels();
+
 		// Clear existing data
 		m_Blocks.clear();
 
@@ -365,5 +281,76 @@ namespace onion::voxel
 		}
 
 		return it->second;
+	}
+
+	void BlockRegistry::ReloadModels()
+	{
+		m_AllTextureNames.clear();
+		m_Registrations.clear();
+		m_RegistrationsOverlays.clear();
+
+		RegisterModel(BlockId::Stone, "stone.json");
+		RegisterModel(BlockId::Dirt, "dirt.json");
+		RegisterModel(BlockId::Grass, "grass_block.json");
+		RegisterModel(BlockId::Glass, "glass.json");
+		RegisterModel(BlockId::BlackStainedGlass, "black_stained_glass.json");
+		RegisterModel(BlockId::BlueStainedGlass, "blue_stained_glass.json");
+		RegisterModel(BlockId::BrownStainedGlass, "brown_stained_glass.json");
+		RegisterModel(BlockId::CyanStainedGlass, "cyan_stained_glass.json");
+		RegisterModel(BlockId::GrayStainedGlass, "gray_stained_glass.json");
+		RegisterModel(BlockId::GreenStainedGlass, "green_stained_glass.json");
+		RegisterModel(BlockId::LightBlueStainedGlass, "light_blue_stained_glass.json");
+		RegisterModel(BlockId::LightGrayStainedGlass, "light_gray_stained_glass.json");
+		RegisterModel(BlockId::LimeStainedGlass, "lime_stained_glass.json");
+		RegisterModel(BlockId::MagentaStainedGlass, "magenta_stained_glass.json");
+		RegisterModel(BlockId::OrangeStainedGlass, "orange_stained_glass.json");
+		RegisterModel(BlockId::PinkStainedGlass, "pink_stained_glass.json");
+		RegisterModel(BlockId::PurpleStainedGlass, "purple_stained_glass.json");
+		RegisterModel(BlockId::RedStainedGlass, "red_stained_glass.json");
+		RegisterModel(BlockId::WhiteStainedGlass, "white_stained_glass.json");
+		RegisterModel(BlockId::YellowStainedGlass, "yellow_stained_glass.json");
+		RegisterModel(BlockId::OakLog, "oak_log.json");
+		RegisterModel(BlockId::BirchLog, "birch_log.json");
+		RegisterModel(BlockId::SpruceLog, "spruce_log.json");
+		RegisterModel(BlockId::Bedrock, "bedrock.json");
+		RegisterModel(BlockId::Sand, "sand.json");
+		RegisterModel(BlockId::Gravel, "gravel.json");
+		RegisterModel(BlockId::Cobblestone, "cobblestone.json");
+		RegisterModel(BlockId::SnowBlock, "snow_block.json");
+		RegisterModel(BlockId::OakLeaves, "oak_leaves.json");
+		RegisterModel(BlockId::BirchLeaves, "birch_leaves.json");
+		RegisterModel(BlockId::SpruceLeaves, "spruce_leaves.json");
+		RegisterModel(BlockId::Ice, "ice.json");
+		RegisterModel(BlockId::Furnace, "furnace.json");
+		RegisterModel(BlockId::Water, "water.json");
+		RegisterModel(BlockId::Sandstone, "sandstone.json");
+		RegisterModel(BlockId::Poppy, "poppy.json");
+		RegisterModel(BlockId::Dandelion, "dandelion.json");
+		RegisterModel(BlockId::BrownMushroom, "brown_mushroom.json");
+		RegisterModel(BlockId::RedMushroom, "red_mushroom.json");
+		RegisterModel(BlockId::Cobweb, "cobweb.json");
+		RegisterModel(BlockId::Kelp, "kelp.json");
+		RegisterModel(BlockId::DeadBush, "dead_bush.json");
+		RegisterModel(BlockId::OakSapling, "oak_sapling.json");
+		RegisterModel(BlockId::RedTulip, "red_tulip.json");
+		RegisterModel(BlockId::OrangeTulip, "orange_tulip.json");
+		RegisterModel(BlockId::WhiteTulip, "white_tulip.json");
+		RegisterModel(BlockId::PinkTulip, "pink_tulip.json");
+		RegisterModel(BlockId::ShortGrass, "short_grass.json");
+		RegisterModel(BlockId::CactusFlower, "cactus_flower.json");
+		RegisterModel(BlockId::Cactus, "cactus.json");
+
+		// ---- Custom Blocks that do not exist in Minecraft, or have special texture requirements ----
+		RegisterModel(BlockId::SnowGrass,
+					  {TextureInfo{"block/snow.png", Tint::None},
+					   TextureInfo{"block/dirt.png", Tint::None},
+					   TextureInfo{"block/grass_block_snow.png", Tint::None},
+					   TextureInfo{"block/grass_block_snow.png", Tint::None},
+					   TextureInfo{"block/grass_block_snow.png", Tint::None},
+					   TextureInfo{"block/grass_block_snow.png", Tint::None}},
+					  Model::Block);
+
+		// ---- Reload Atlas Textures ----
+		m_Atlas->ReloadTextures(m_AllTextureNames);
 	}
 } // namespace onion::voxel

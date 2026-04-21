@@ -39,7 +39,6 @@ namespace onion::voxel
 	  public:
 		void Bind() const;
 
-		void Initialize(const std::unordered_set<std::string>& textureNames);
 		void ReloadTextures(const std::unordered_set<std::string>& textureNames);
 
 		void Unload();
@@ -73,8 +72,8 @@ namespace onion::voxel
 
 		// ----- Constants -----
 	  private:
-		static inline const std::filesystem::path s_BlockDirectory =
-			std::filesystem::path("assets") / "minecraft" / "textures" / "block";
+		static inline const std::filesystem::path s_TexturesDirectory =
+			std::filesystem::path("assets") / "minecraft" / "textures";
 	};
 
 } // namespace onion::voxel

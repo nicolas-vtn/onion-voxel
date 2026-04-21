@@ -362,7 +362,7 @@ namespace onion::voxel
 	void ResourcePacksPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(m_OpenPackFolder_Button.EvtClick.Subscribe([this](const Button& sender)
-																		   { Handle_OpenPackFolder_Click(sender); }));
+																			{ Handle_OpenPackFolder_Click(sender); }));
 
 		m_EventHandles.push_back(
 			m_Done_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));

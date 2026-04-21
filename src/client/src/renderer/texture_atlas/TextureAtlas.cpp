@@ -14,11 +14,6 @@ namespace onion::voxel
 		m_Texture.Bind();
 	}
 
-	void TextureAtlas::Initialize(const std::unordered_set<std::string>& textureNames)
-	{
-		BuildAtlas(textureNames);
-	}
-
 	void TextureAtlas::ReloadTextures(const std::unordered_set<std::string>& textureNames)
 	{
 		BuildAtlas(textureNames);
@@ -71,7 +66,7 @@ namespace onion::voxel
 
 			stbi_set_flip_vertically_on_load(true);
 
-			std::filesystem::path texturePath = s_BlockDirectory / *textureNames.begin();
+			std::filesystem::path texturePath = s_TexturesDirectory / *textureNames.begin();
 			std::vector<unsigned char> pixels = EngineContext::Get().Assets->GetResourcePackFileBinary(texturePath);
 
 			unsigned char* data = stbi_load_from_memory(pixels.data(), (int) pixels.size(), &w, &h, &channels, 4);
@@ -104,7 +99,7 @@ namespace onion::voxel
 
 			auto it = textureNames.begin();
 			std::advance(it, i);
-			std::filesystem::path texturePath = s_BlockDirectory / *it;
+			std::filesystem::path texturePath = s_TexturesDirectory / *it;
 			std::vector<unsigned char> data = EngineContext::Get().Assets->GetResourcePackFileBinary(texturePath);
 
 			unsigned char* pixels = stbi_load_from_memory(data.data(), (int) data.size(), &w, &h, &channels, 4);

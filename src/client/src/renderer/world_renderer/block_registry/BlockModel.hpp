@@ -36,6 +36,7 @@ namespace onion::voxel
 			std::string Front;
 			std::string Back;
 			std::string Cross;
+			std::string Texture;
 		};
 
 		struct Face
