@@ -5,7 +5,7 @@ namespace onion::voxel
 	// ----- Static Initialization -----
 	const std::vector<bool> BlockState::s_TransparencyLookupTable = []()
 	{
-		std::vector<bool> table(static_cast<size_t>(GetBlockIdCount()), false);
+		std::vector<bool> table(static_cast<size_t>(BlockIds::GetBlockIdCount()), false);
 		table[static_cast<size_t>(BlockId::Air)] = true;
 		table[static_cast<size_t>(BlockId::Glass)] = true;
 		table[static_cast<size_t>(BlockId::BlackStainedGlass)] = true;
@@ -48,8 +48,8 @@ namespace onion::voxel
 
 	const std::vector<BlockState::RotationType> BlockState::s_RotationTypeLookupTable = []()
 	{
-		std::vector<RotationType> table(static_cast<size_t>(GetBlockIdCount()), RotationType::None);
-		table[static_cast<size_t>(BlockId::Furnace)] = RotationType::Horizontal;
+		std::vector<RotationType> table(static_cast<size_t>(BlockIds::GetBlockIdCount()), RotationType::None);
+		//table[static_cast<size_t>(BlockId::Furnace)] = RotationType::Horizontal;
 		table[static_cast<size_t>(BlockId::OakLog)] = RotationType::Pillar;
 		table[static_cast<size_t>(BlockId::BirchLog)] = RotationType::Pillar;
 		table[static_cast<size_t>(BlockId::SpruceLog)] = RotationType::Pillar;
@@ -59,7 +59,7 @@ namespace onion::voxel
 
 	const std::vector<bool> BlockState::s_SolidLookupTable = []()
 	{
-		std::vector<bool> table(static_cast<size_t>(GetBlockIdCount()), true);
+		std::vector<bool> table(static_cast<size_t>(BlockIds::GetBlockIdCount()), true);
 		table[static_cast<size_t>(BlockId::Air)] = false;
 		table[static_cast<size_t>(BlockId::Water)] = false;
 		table[static_cast<size_t>(BlockId::Kelp)] = false;

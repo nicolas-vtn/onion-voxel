@@ -63,8 +63,8 @@ namespace onion::voxel
 		}
 	}
 
-	static inline Face GetTextureFaceForWorldFace(Face worldFace, const BlockState& block,
-		BlockState::RotationType rotationType)
+	static inline Face
+	GetTextureFaceForWorldFace(Face worldFace, const BlockState& block, BlockState::RotationType rotationType)
 	{
 		if (block.Facing == BlockState::Orientation::None || block.Top == BlockState::Orientation::None)
 		{
@@ -124,9 +124,15 @@ namespace onion::voxel
 		glm::ivec3 uvUp;
 		switch (worldFace)
 		{
-			case Face::Top:    uvUp = {0, 0, -1}; break;
-			case Face::Bottom: uvUp = {0, 0,  1}; break;
-			default:           uvUp = {0, 1,  0}; break;
+			case Face::Top:
+				uvUp = {0, 0, -1};
+				break;
+			case Face::Bottom:
+				uvUp = {0, 0, 1};
+				break;
+			default:
+				uvUp = {0, 1, 0};
+				break;
 		}
 
 		// If the log's grain axis is already parallel to UV-up, no rotation is needed.
@@ -372,6 +378,12 @@ namespace onion::voxel
 									continue;
 
 								const FaceTexture& faceTexture = blockTextures.faces[faceIdx];
+
+								if (faceTexture.texture == UINT16_MAX)
+								{
+									continue;
+								}
+
 								PointsAndOcclusion pao = GetPointsAndOcclusionForBlock(
 									mesh.get(), x, wy, z, faceTexture.from, faceTexture.to);
 
@@ -645,7 +657,7 @@ namespace onion::voxel
 		// Overlay pass
 		const FaceTexture& overlay = blockTextures.overlay[(size_t) f.face];
 
-		if (overlay.texture != 0)
+		if (overlay.texture != UINT16_MAX)
 		{
 			auto uvOverlay = textureAtlas.GetAtlasEntry(overlay.texture);
 
@@ -786,32 +798,47 @@ namespace onion::voxel
 
 			switch (f.face)
 			{
-				case Face::Top:    // up:    u=X, v=Z
-					s0 = fr.x / 16.0f; t0 = fr.z / 16.0f;
-					s1 = to.x / 16.0f; t1 = to.z / 16.0f;
+				case Face::Top: // up:    u=X, v=Z
+					s0 = fr.x / 16.0f;
+					t0 = fr.z / 16.0f;
+					s1 = to.x / 16.0f;
+					t1 = to.z / 16.0f;
 					break;
 				case Face::Bottom: // down:  u=X, v=Z (Z flipped)
-					s0 = fr.x / 16.0f; t0 = to.z / 16.0f;
-					s1 = to.x / 16.0f; t1 = fr.z / 16.0f;
+					s0 = fr.x / 16.0f;
+					t0 = to.z / 16.0f;
+					s1 = to.x / 16.0f;
+					t1 = fr.z / 16.0f;
 					break;
-				case Face::Front:  // north: u=X (right-to-left), v=Y (top-to-bottom = 16-Y)
-					s0 = to.x / 16.0f; t0 = (16 - to.y) / 16.0f;
-					s1 = fr.x / 16.0f; t1 = (16 - fr.y) / 16.0f;
+				case Face::Front: // north: u=X (right-to-left), v=Y (top-to-bottom = 16-Y)
+					s0 = to.x / 16.0f;
+					t0 = (16 - to.y) / 16.0f;
+					s1 = fr.x / 16.0f;
+					t1 = (16 - fr.y) / 16.0f;
 					break;
-				case Face::Back:   // south: u=X (left-to-right), v=Y
-					s0 = fr.x / 16.0f; t0 = (16 - to.y) / 16.0f;
-					s1 = to.x / 16.0f; t1 = (16 - fr.y) / 16.0f;
+				case Face::Back: // south: u=X (left-to-right), v=Y
+					s0 = fr.x / 16.0f;
+					t0 = (16 - to.y) / 16.0f;
+					s1 = to.x / 16.0f;
+					t1 = (16 - fr.y) / 16.0f;
 					break;
-				case Face::Left:   // west:  u=Z (left-to-right), v=Y
-					s0 = fr.z / 16.0f; t0 = (16 - to.y) / 16.0f;
-					s1 = to.z / 16.0f; t1 = (16 - fr.y) / 16.0f;
+				case Face::Left: // west:  u=Z (left-to-right), v=Y
+					s0 = fr.z / 16.0f;
+					t0 = (16 - to.y) / 16.0f;
+					s1 = to.z / 16.0f;
+					t1 = (16 - fr.y) / 16.0f;
 					break;
-				case Face::Right:  // east:  u=Z (right-to-left), v=Y
-					s0 = to.z / 16.0f; t0 = (16 - to.y) / 16.0f;
-					s1 = fr.z / 16.0f; t1 = (16 - fr.y) / 16.0f;
+				case Face::Right: // east:  u=Z (right-to-left), v=Y
+					s0 = to.z / 16.0f;
+					t0 = (16 - to.y) / 16.0f;
+					s1 = fr.z / 16.0f;
+					t1 = (16 - fr.y) / 16.0f;
 					break;
 				default:
-					s0 = 0.0f; t0 = 0.0f; s1 = 1.0f; t1 = 1.0f;
+					s0 = 0.0f;
+					t0 = 0.0f;
+					s1 = 1.0f;
+					t1 = 1.0f;
 					break;
 			}
 		}
@@ -918,9 +945,8 @@ namespace onion::voxel
 		}
 	}
 
-	MeshBuilder::PointsAndOcclusion
-	MeshBuilder::GetPointsAndOcclusionForBlock(SubChunkMesh* mesh, const int lx, const int wy, const int lz,
-		const glm::u8vec3& from, const glm::u8vec3& to)
+	MeshBuilder::PointsAndOcclusion MeshBuilder::GetPointsAndOcclusionForBlock(
+		SubChunkMesh* mesh, const int lx, const int wy, const int lz, const glm::u8vec3& from, const glm::u8vec3& to)
 	{
 		PointsAndOcclusion result;
 

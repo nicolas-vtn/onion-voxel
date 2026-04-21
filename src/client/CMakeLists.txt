@@ -73,6 +73,7 @@ add_executable(OnionVoxel
 	"src/renderer/texture_atlas/TextureAtlas.cpp"
 	"src/renderer/world_renderer/block_registry/BlockRegistry.cpp"
 	"src/renderer/world_renderer/block_registry/BlockModel.cpp"
+	"src/renderer/world_renderer/block_registry/BlockStateJson.cpp"
 
 	"src/renderer/world_renderer/chunk_mesh/MeshBuilder.cpp"
 

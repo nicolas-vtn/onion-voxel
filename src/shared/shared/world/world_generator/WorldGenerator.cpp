@@ -77,11 +77,11 @@ namespace onion::voxel
 		lookup[static_cast<size_t>(Biome::Ocean)].fillBlock = BlockId::Stone;
 
 		// Plains
-		lookup[static_cast<size_t>(Biome::Plains)].layers = {{1, BlockId::Grass}, {2, BlockId::Dirt}};
+		lookup[static_cast<size_t>(Biome::Plains)].layers = {{1, BlockId::GrassBlock}, {2, BlockId::Dirt}};
 		lookup[static_cast<size_t>(Biome::Plains)].fillBlock = BlockId::Stone;
 
 		// Forest
-		lookup[static_cast<size_t>(Biome::Forest)].layers = {{1, BlockId::Grass}, {2, BlockId::Dirt}};
+		lookup[static_cast<size_t>(Biome::Forest)].layers = {{1, BlockId::GrassBlock}, {2, BlockId::Dirt}};
 		lookup[static_cast<size_t>(Biome::Forest)].fillBlock = BlockId::Stone;
 
 		// Desert
@@ -89,11 +89,11 @@ namespace onion::voxel
 		lookup[static_cast<size_t>(Biome::Desert)].fillBlock = BlockId::Stone;
 
 		// Mountain
-		lookup[static_cast<size_t>(Biome::Mountain)].layers = {{1, BlockId::Grass}};
+		lookup[static_cast<size_t>(Biome::Mountain)].layers = {{1, BlockId::GrassBlock}};
 		lookup[static_cast<size_t>(Biome::Mountain)].fillBlock = BlockId::Stone;
 
 		// Snow
-		lookup[static_cast<size_t>(Biome::Snow)].layers = {{1, BlockId::SnowGrass}, {2, BlockId::Dirt}};
+		lookup[static_cast<size_t>(Biome::Snow)].layers = {{1, BlockId::SnowGrassBlock}, {2, BlockId::Dirt}};
 		lookup[static_cast<size_t>(Biome::Snow)].fillBlock = BlockId::Stone;
 		return lookup;
 	}();
@@ -328,7 +328,7 @@ namespace onion::voxel
 		const int max = WorldConstants::CHUNK_SIZE - 1;
 
 		// ---- Iterate all blocks ----
-		const int blockIdCount = GetBlockIdCount();
+		const int blockIdCount = BlockIds::GetBlockIdCount();
 		for (int blockId = 0; blockId < blockIdCount; blockId++)
 		{
 			BlockId id = static_cast<BlockId>(blockId);
@@ -407,7 +407,7 @@ namespace onion::voxel
 		}
 
 		// Grass layer
-		BlockState grass{BlockId::Grass};
+		BlockState grass{BlockId::GrassBlock};
 		for (y = 4; y <= 4; y++)
 		{
 			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
@@ -563,7 +563,8 @@ namespace onion::voxel
 							chunk->SetBlock(glm::ivec3(x, y, z), BlockState(BlockId::Water));
 							block.ID = BlockId::Water; // Update block variable for the next condition
 						}
-						else if ((block.ID == BlockId::Grass || block.ID == BlockId::SnowGrass) && y < m_SeaLevel)
+						else if ((block.ID == BlockId::GrassBlock || block.ID == BlockId::SnowGrassBlock) &&
+								 y < m_SeaLevel)
 						{
 							chunk->SetBlock(glm::ivec3(x, y, z), BlockState(BlockId::Dirt));
 							block.ID = BlockId::Dirt; // Update block variable for the next condition
@@ -677,7 +678,7 @@ namespace onion::voxel
 				// Higher than sea level
 				if (height >= m_SeaLevel)
 				{
-					BlockId topBlockId = (height >= adjustedSnowLevel) ? BlockId::SnowGrass : BlockId::Grass;
+					BlockId topBlockId = (height >= adjustedSnowLevel) ? BlockId::SnowGrassBlock : BlockId::GrassBlock;
 					for (uint16_t y = 0; y <= height + 1; y++)
 					{
 						// Bedrock
@@ -784,7 +785,7 @@ namespace onion::voxel
 				switch (biomeBlend.seeds[0].biome)
 				{
 					case Biome::Plains:
-						blockId = BlockId::Grass;
+						blockId = BlockId::GrassBlock;
 						break;
 					case Biome::Desert:
 						blockId = BlockId::Sand;
@@ -796,7 +797,7 @@ namespace onion::voxel
 						blockId = BlockId::OakLog;
 						break;
 					case Biome::Snow:
-						blockId = BlockId::SnowGrass;
+						blockId = BlockId::SnowGrassBlock;
 						break;
 					case Biome::Ocean:
 						blockId = BlockId::Water;

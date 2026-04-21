@@ -41,11 +41,11 @@ namespace onion::voxel
 
 	struct FaceTexture
 	{
-		TextureAtlas::TextureID texture = 0;
+		TextureAtlas::TextureID texture = UINT16_MAX;
 		Tint tintType = Tint::None;
 		Transparency textureType = Transparency::Opaque;
-		glm::u8vec3 from = {0, 0, 0};        // element start corner in MC units (0-16)
-		glm::u8vec3 to   = {16, 16, 16};     // element end corner in MC units (0-16)
+		glm::u8vec3 from = {0, 0, 0};				// element start corner in MC units (0-16)
+		glm::u8vec3 to = {16, 16, 16};				// element end corner in MC units (0-16)
 		std::array<uint8_t, 4> uv = {0, 0, 16, 16}; // per-face UV override [u1,v1,u2,v2] in MC units (0-16)
 	};
 
@@ -54,7 +54,7 @@ namespace onion::voxel
 		std::string name;
 		Tint tintType = Tint::None;
 		glm::u8vec3 from = {0, 0, 0};
-		glm::u8vec3 to   = {16, 16, 16};
+		glm::u8vec3 to = {16, 16, 16};
 		std::array<uint8_t, 4> uv = {0, 0, 16, 16}; // per-face UV override [u1,v1,u2,v2] in MC units (0-16)
 	};
 
@@ -83,7 +83,7 @@ namespace onion::voxel
 	  private:
 		void ReloadModels();
 
-		void RegisterModel(BlockId id, const std::filesystem::path& model);
+		void RegisterModel(BlockId id, const std::string& blockstate);
 		void RegisterModel(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel);
 
 		void PreSetOverlay(BlockId id, Face face, const TextureInfo& texture);
