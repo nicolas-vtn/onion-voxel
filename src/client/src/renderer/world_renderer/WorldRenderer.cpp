@@ -144,6 +144,8 @@ namespace onion::voxel
 		SubChunkMesh::s_Shader.setBool("u_RenderCutout", false);
 
 		// ----- OpenGL State Setup -----
+		glDisable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 		glDepthMask(GL_FALSE);
