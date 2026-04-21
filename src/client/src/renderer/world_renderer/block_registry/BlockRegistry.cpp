@@ -15,38 +15,10 @@ namespace
 		if (!ref.starts_with('#'))
 			return ToFilename(ref);
 
-		if (ref == "#top")
-			return ResolveTexture(t.Top, t);
-		if (ref == "#bottom")
-			return ResolveTexture(t.Bottom, t);
-		if (ref == "#side")
-			return ResolveTexture(t.Side, t);
-		if (ref == "#overlay")
-			return ResolveTexture(t.Overlay, t);
-		if (ref == "#all")
-			return ResolveTexture(t.All, t);
-		if (ref == "#down")
-			return ResolveTexture(t.Down, t);
-		if (ref == "#up")
-			return ResolveTexture(t.Up, t);
-		if (ref == "#north")
-			return ResolveTexture(t.North, t);
-		if (ref == "#south")
-			return ResolveTexture(t.South, t);
-		if (ref == "#west")
-			return ResolveTexture(t.West, t);
-		if (ref == "#east")
-			return ResolveTexture(t.East, t);
-		if (ref == "#end")
-			return ResolveTexture(t.End, t);
-		if (ref == "#front")
-			return ResolveTexture(t.Front, t);
-		if (ref == "#back")
-			return ResolveTexture(t.Back, t);
-		if (ref == "#cross")
-			return ResolveTexture(t.Cross, t);
-		if (ref == "#texture")
-			return ResolveTexture(t.Texture, t);
+		const std::string key = ref.substr(1);
+		auto it = t.find(key);
+		if (it != t.end())
+			return ResolveTexture(it->second, t);
 
 		return "";
 	}
@@ -117,7 +89,7 @@ namespace onion::voxel
 		{
 			// Load stone.json as base model to get the geometry, but use water texture
 			BlockModel stoneModel = BlockModel::FromFile("stone.json");
-			stoneModel.ModelTextures.All = blockModel.ModelTextures.Particle; // Use water texture
+			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"]; // Use water texture
 			blockModel = stoneModel;
 
 			// Set Tint to Water for all faces
@@ -136,12 +108,12 @@ namespace onion::voxel
 		Model textureModel = Model::Block;
 
 		// ----- Magic trick for blocks with cross textures -----
-		if (!blockModel.ModelTextures.Cross.empty())
+		if (!blockModel.ModelTextures["cross"].empty())
 		{
 			textureModel = Model::Cross;
 			// Load stone.json as base model to get the geometry, but use cross texture
 			BlockModel stoneModel = BlockModel::FromFile("stone.json");
-			stoneModel.ModelTextures.All = blockModel.ModelTextures.Cross; // Use cross texture
+			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["cross"]; // Use cross texture
 			blockModel = stoneModel;
 
 			// Set Tint to ShortGrass for all faces
@@ -183,7 +155,7 @@ namespace onion::voxel
 				if (!isOverlay)
 				{
 					glm::u8vec3 from = {elem.From[0], elem.From[1], elem.From[2]};
-					glm::u8vec3 to   = {elem.To[0],   elem.To[1],   elem.To[2]};
+					glm::u8vec3 to = {elem.To[0], elem.To[1], elem.To[2]};
 					baseTextures[(int) f] = TextureInfo{resolved, tint, from, to};
 					baseInitialized = true;
 				}
@@ -220,7 +192,7 @@ namespace onion::voxel
 			tex.faces[i].tintType = textures[i].tintType;
 			tex.faces[i].textureType = m_Atlas->GetTextureTransparency(textureName);
 			tex.faces[i].from = textures[i].from;
-			tex.faces[i].to   = textures[i].to;
+			tex.faces[i].to = textures[i].to;
 
 			m_AllTextureNames.insert(textureName);
 		}
@@ -234,7 +206,7 @@ namespace onion::voxel
 		if (it == m_Blocks.end())
 		{
 			throw std::runtime_error("BlockRegistry::SetOverlay: Block ID not found: " +
-									 std::to_string(static_cast<uint8_t>(id)));
+									 std::to_string(static_cast<uint16_t>(id)));
 		}
 
 		it->second.overlay[static_cast<size_t>(face)].texture = m_Atlas->GetTextureID(texture.name);
@@ -281,7 +253,7 @@ namespace onion::voxel
 		if (it == m_Blocks.end())
 		{
 			throw std::runtime_error("BlockRegistry::Get: Block ID not found: " +
-									 std::to_string(static_cast<uint8_t>(id)));
+									 std::to_string(static_cast<uint16_t>(id)));
 		}
 
 		return it->second;
@@ -289,6 +261,8 @@ namespace onion::voxel
 
 	void BlockRegistry::ReloadModels()
 	{
+		BlockModel::ClearCache();
+
 		m_AllTextureNames.clear();
 		m_Registrations.clear();
 		m_RegistrationsOverlays.clear();
@@ -343,6 +317,17 @@ namespace onion::voxel
 		RegisterModel(BlockId::ShortGrass, "short_grass.json");
 		RegisterModel(BlockId::CactusFlower, "cactus_flower.json");
 		RegisterModel(BlockId::Cactus, "cactus.json");
+
+		RegisterModel(BlockId::AcaciaLeaves, "acacia_leaves.json");
+		RegisterModel(BlockId::AcaciaLog, "acacia_log.json");
+		RegisterModel(BlockId::AcaciaLogHorizontal, "acacia_log_horizontal.json");
+		RegisterModel(BlockId::AcaciaPlanks, "acacia_planks.json");
+		RegisterModel(BlockId::AcaciaSapling, "acacia_sapling.json");
+		RegisterModel(BlockId::AcaciaWood, "acacia_wood.json");
+		RegisterModel(BlockId::Allium, "allium.json");
+		RegisterModel(BlockId::AmethystBlock, "amethyst_block.json");
+		RegisterModel(BlockId::AmethystCluster, "amethyst_cluster.json");
+		RegisterModel(BlockId::AncientDebris, "ancient_debris.json");
 
 		// ---- Custom Blocks that do not exist in Minecraft, or have special texture requirements ----
 		RegisterModel(BlockId::SnowGrass,

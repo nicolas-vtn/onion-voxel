@@ -15,29 +15,10 @@ namespace onion::voxel
 {
 	class BlockModel
 	{
-		// ----- Enums -----
+		// ----- Types -----
 	  public:
-		class Textures
-		{
-		  public:
-			std::string All;
-			std::string Particle;
-			std::string Down;
-			std::string Up;
-			std::string North;
-			std::string East;
-			std::string South;
-			std::string West;
-			std::string Bottom;
-			std::string Top;
-			std::string Side;
-			std::string End;
-			std::string Overlay;
-			std::string Front;
-			std::string Back;
-			std::string Cross;
-			std::string Texture;
-		};
+		// Maps texture alias name (without '#') to its value, e.g. "side" -> "block/oak_log"
+		using Textures = std::unordered_map<std::string, std::string>;
 
 		struct Face
 		{
@@ -64,6 +45,7 @@ namespace onion::voxel
 		// ----- Public API -----
 	  public:
 		static BlockModel FromFile(const std::filesystem::path& modelPath);
+		static void ClearCache();
 
 		// ----- Members -----
 	  public:
@@ -83,8 +65,6 @@ namespace onion::voxel
 
 		// ----- Static Private Members -----
 	  private:
-		static inline ZipArchive s_ModelsArchive{AssetsManager::GetAssetsDirectory() / "models" / "models.zip"};
-
 		static inline std::unordered_map<std::filesystem::path, BlockModel> s_ModelCache;
 		static inline std::recursive_mutex s_CacheMutex;
 		static const BlockModel& GetModel(const std::filesystem::path& path);
