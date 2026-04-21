@@ -63,7 +63,8 @@ namespace onion::voxel
 		}
 	}
 
-	static inline Face GetTextureFaceForWorldFace(Face worldFace, const BlockState& block)
+	static inline Face GetTextureFaceForWorldFace(Face worldFace, const BlockState& block,
+		BlockState::RotationType rotationType)
 	{
 		if (block.Facing == BlockState::Orientation::None || block.Top == BlockState::Orientation::None)
 		{
@@ -76,10 +77,24 @@ namespace onion::voxel
 
 		glm::ivec3 worldDir = FaceToVector(worldFace);
 
-		if (worldDir == forward)
+		if (rotationType == BlockState::RotationType::Pillar)
+		{
+			// For pillars, block.Facing is the log axis (end-cap direction).
+			// End-cap world faces map to Top/Bottom texture slots; all side faces use Front (same side texture).
+			if (worldDir == forward)
+				return Face::Top;
+			if (worldDir == -forward)
+				return Face::Bottom;
+
 			return Face::Front;
-		if (worldDir == -forward)
-			return Face::Back;
+		}
+		else
+		{
+			if (worldDir == forward)
+				return Face::Front;
+			if (worldDir == -forward)
+				return Face::Back;
+		}
 
 		if (worldDir == up)
 			return Face::Top;
@@ -102,13 +117,22 @@ namespace onion::voxel
 			return 0;
 		}
 
-		if (block.Facing == BlockState::Orientation::North || block.Facing == BlockState::Orientation::South)
+		// UV "up" direction per world face, derived from vertex winding in GetBlockFaceBuildDescs:
+		//   Top:    v0→v1=+X, v1→v2=-Z  →  uvUp = -Z
+		//   Bottom: v0→v1=+X, v1→v2=+Z  →  uvUp = +Z
+		//   Front/Back/Left/Right: v1→v2=+Y  →  uvUp = +Y
+		glm::ivec3 uvUp;
+		switch (worldFace)
 		{
-			if (worldFace == Face::Left || worldFace == Face::Right)
-				return 1;
-			else
-				return 0;
+			case Face::Top:    uvUp = {0, 0, -1}; break;
+			case Face::Bottom: uvUp = {0, 0,  1}; break;
+			default:           uvUp = {0, 1,  0}; break;
 		}
+
+		// If the log's grain axis is already parallel to UV-up, no rotation is needed.
+		glm::ivec3 facingVec = OrientationToVector(block.Facing);
+		if (facingVec == uvUp || facingVec == -uvUp)
+			return 0;
 
 		return 1;
 	}
@@ -611,7 +635,7 @@ namespace onion::voxel
 								const BlockTextures& blockTextures,
 								const FaceBuildDesc& f)
 	{
-		const Face textureFace = GetTextureFaceForWorldFace(f.face, block);
+		const Face textureFace = GetTextureFaceForWorldFace(f.face, block, blockTextures.rotationType);
 		const FaceTexture& faceTex = blockTextures.faces[(size_t) textureFace];
 
 		auto uv = textureAtlas.GetAtlasEntry(faceTex.texture);
