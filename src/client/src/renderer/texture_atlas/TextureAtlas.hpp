@@ -12,6 +12,13 @@
 
 namespace onion::voxel
 {
+	enum class Transparency : uint8_t
+	{
+		Opaque,
+		Cutout,
+		Transparent
+	};
+
 	class TextureAtlas
 	{
 		// ----- Structs -----
@@ -41,14 +48,20 @@ namespace onion::voxel
 	  public:
 		TextureID GetTextureID(const std::string& name) const;
 		const AtlasEntry& GetAtlasEntry(TextureID id) const;
+		Transparency GetTextureTransparency(const std::string& name) const;
 
 		// ----- Private Methods -----
 	  private:
 		void BuildAtlas(const std::unordered_set<std::string>& textureNames);
 
+		// ----- Private Helpers -----
+	  private:
+		static Transparency GetTextureTransparency(const unsigned char* pixels, int width, int height, int channels);
+
 		// ----- Private Members -----
 	  private:
 		std::unordered_map<std::string, TextureID> m_NameToID;
+		std::unordered_map<std::string, Transparency> m_NameToTransparency;
 		std::vector<AtlasEntry> m_Entries;
 
 		// ----- Texture Atlas Info -----

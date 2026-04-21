@@ -48,8 +48,8 @@ namespace onion::voxel
 
 		struct Element
 		{
-			std::array<float, 3> From{0, 0, 0};
-			std::array<float, 3> To{0, 0, 0};
+			std::array<uint8_t, 3> From{0, 0, 0};
+			std::array<uint8_t, 3> To{0, 0, 0};
 
 			std::unordered_map<std::string, Face> Faces;
 			// keys: "north", "south", etc.

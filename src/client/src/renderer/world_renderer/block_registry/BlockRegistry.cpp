@@ -74,6 +74,17 @@ namespace
 
 		throw std::runtime_error("Unknown face: " + name);
 	}
+
+	bool IsOverlay(const onion::voxel::BlockModel::Element& elem)
+	{
+		// Overlay if all textures points to "#overlay"
+		for (const auto& [faceName, face] : elem.Faces)
+		{
+			if (face.Texture != "#overlay")
+				return false;
+		}
+		return true;
+	}
 } // namespace
 
 namespace onion::voxel
@@ -137,23 +148,16 @@ namespace onion::voxel
 		PreRegisterModel(BlockId::PinkTulip, "pink_tulip.json");
 		PreRegisterModel(BlockId::ShortGrass, "short_grass.json");
 		PreRegisterModel(BlockId::CactusFlower, "cactus_flower.json");
-
-		PreRegister(BlockId::Cactus,
-					{TextureInfo{"cactus_top.png", Tint::None, Transparency::Cutout},
-					 TextureInfo{"cactus_bottom.png", Tint::None, Transparency::Cutout},
-					 TextureInfo{"cactus_side.png", Tint::None, Transparency::Cutout},
-					 TextureInfo{"cactus_side.png", Tint::None, Transparency::Cutout},
-					 TextureInfo{"cactus_side.png", Tint::None, Transparency::Cutout},
-					 TextureInfo{"cactus_side.png", Tint::None, Transparency::Cutout}});
+		PreRegisterModel(BlockId::Cactus, "cactus.json");
 
 		// ---- Custom Blocks that do not exist in Minecraft, or have special texture requirements ----
 		PreRegister(BlockId::SnowGrass,
-					{TextureInfo{"snow.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"dirt.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque},
-					 TextureInfo{"grass_block_snow.png", Tint::None, Transparency::Opaque}});
+					{TextureInfo{"snow.png", Tint::None},
+					 TextureInfo{"dirt.png", Tint::None},
+					 TextureInfo{"grass_block_snow.png", Tint::None},
+					 TextureInfo{"grass_block_snow.png", Tint::None},
+					 TextureInfo{"grass_block_snow.png", Tint::None},
+					 TextureInfo{"grass_block_snow.png", Tint::None}});
 	}
 
 	void BlockRegistry::PreRegister(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel)
@@ -195,7 +199,7 @@ namespace onion::voxel
 	{
 		BlockModel blockModel = BlockModel::FromFile(model);
 
-		// Magic Tricks
+		// ----- Magic trick for water block ----
 		if (id == BlockId::Water)
 		{
 			// Load stone.json as base model to get the geometry, but use water texture
@@ -217,6 +221,8 @@ namespace onion::voxel
 		bool baseInitialized = false;
 
 		Model textureModel = Model::Block;
+
+		// ----- Magic trick for blocks with cross textures -----
 		if (!blockModel.ModelTextures.Cross.empty())
 		{
 			textureModel = Model::Cross;
@@ -241,7 +247,8 @@ namespace onion::voxel
 		for (size_t elemIndex = 0; elemIndex < blockModel.Elements.size(); elemIndex++)
 		{
 			const auto& elem = blockModel.Elements[elemIndex];
-			bool isOverlay = (elemIndex > 0);
+
+			bool isOverlay = IsOverlay(elem);
 
 			for (const auto& [faceName, face] : elem.Faces)
 			{
@@ -262,23 +269,12 @@ namespace onion::voxel
 
 				if (!isOverlay)
 				{
-					bool transparent = BlockState::IsTransparent(id);
-					Transparency texTransparency = transparent ? Transparency::Transparent : Transparency::Opaque;
-
-					// Force Cutout for Cross models
-					if (textureModel == Model::Cross)
-						texTransparency = Transparency::Cutout;
-
-					// Force Cutout for Leaves
-					if (id == BlockId::OakLeaves || id == BlockId::BirchLeaves || id == BlockId::SpruceLeaves)
-						texTransparency = Transparency::Cutout;
-
-					baseTextures[(int) f] = TextureInfo{resolved, tint, texTransparency};
+					baseTextures[(int) f] = TextureInfo{resolved, tint};
 					baseInitialized = true;
 				}
 				else
 				{
-					PreSetOverlay(id, f, TextureInfo{resolved, tint, Transparency::Cutout});
+					PreSetOverlay(id, f, TextureInfo{resolved, tint});
 				}
 			}
 		}
@@ -299,11 +295,17 @@ namespace onion::voxel
 
 		for (size_t i = 0; i < 6; i++)
 		{
-			tex.faces[i].texture = m_Atlas->GetTextureID(textures[i].name);
-			tex.faces[i].tintType = textures[i].tintType;
-			tex.faces[i].textureType = textures[i].textureType;
+			const std::string& textureName = textures[i].name;
+			if (textureName.empty())
+			{
+				return;
+			}
 
-			m_AllTextureNames.insert(textures[i].name);
+			tex.faces[i].texture = m_Atlas->GetTextureID(textureName);
+			tex.faces[i].tintType = textures[i].tintType;
+			tex.faces[i].textureType = m_Atlas->GetTextureTransparency(textureName);
+
+			m_AllTextureNames.insert(textureName);
 		}
 
 		m_Blocks[id] = tex;
@@ -320,7 +322,7 @@ namespace onion::voxel
 
 		it->second.overlay[static_cast<size_t>(face)].texture = m_Atlas->GetTextureID(texture.name);
 		it->second.overlay[static_cast<size_t>(face)].tintType = texture.tintType;
-		it->second.overlay[static_cast<size_t>(face)].textureType = texture.textureType;
+		it->second.overlay[static_cast<size_t>(face)].textureType = m_Atlas->GetTextureTransparency(texture.name);
 
 		m_AllTextureNames.insert(texture.name);
 	}

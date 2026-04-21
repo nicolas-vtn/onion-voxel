@@ -31,13 +31,6 @@ namespace onion::voxel
 		Water
 	};
 
-	enum class Transparency : uint8_t
-	{
-		Opaque,
-		Cutout,
-		Transparent
-	};
-
 	enum class Model : uint8_t
 	{
 		Block,
@@ -55,7 +48,6 @@ namespace onion::voxel
 	{
 		std::string name;
 		Tint tintType = Tint::None;
-		Transparency textureType = Transparency::Opaque;
 	};
 
 	struct BlockTextures

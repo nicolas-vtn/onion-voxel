@@ -17,9 +17,9 @@ namespace onion::voxel
 			return value;
 		}
 
-		std::array<float, 3> ParseVec3(const nlohmann::json& j)
+		std::array<uint8_t, 3> ParseiVec3(const nlohmann::json& j)
 		{
-			return {j[0].get<float>(), j[1].get<float>(), j[2].get<float>()};
+			return {j[0].get<uint8_t>(), j[1].get<uint8_t>(), j[2].get<uint8_t>()};
 		}
 
 		std::array<float, 4> ParseVec4(const nlohmann::json& j)
@@ -83,10 +83,10 @@ namespace onion::voxel
 				BlockModel::Element elem;
 
 				if (elemJson.contains("from"))
-					elem.From = ParseVec3(elemJson.at("from"));
+					elem.From = ParseiVec3(elemJson.at("from"));
 
 				if (elemJson.contains("to"))
-					elem.To = ParseVec3(elemJson.at("to"));
+					elem.To = ParseiVec3(elemJson.at("to"));
 
 				if (elemJson.contains("faces"))
 				{

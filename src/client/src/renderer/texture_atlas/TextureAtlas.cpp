@@ -47,6 +47,16 @@ namespace onion::voxel
 		return m_Entries[id];
 	}
 
+	Transparency TextureAtlas::GetTextureTransparency(const std::string& name) const
+	{
+		auto it = m_NameToTransparency.find(name);
+
+		if (it == m_NameToTransparency.end())
+			throw std::runtime_error("Texture not found: " + name);
+
+		return it->second;
+	}
+
 	void TextureAtlas::BuildAtlas(const std::unordered_set<std::string>& textureNames)
 	{
 		m_Texture.Delete();
@@ -109,13 +119,12 @@ namespace onion::voxel
 					   m_TextureSize * 4);
 			}
 
-			stbi_image_free(pixels);
-
 			TextureID id = (TextureID) i;
 
 			std::string name = *it;
 
 			m_NameToID[name] = id;
+			m_NameToTransparency[name] = GetTextureTransparency(pixels, w, h, 4);
 
 			float u0 = (float) atlasX / (float) m_AtlasSize;
 			float v0 = (float) atlasY / (float) m_AtlasSize;
@@ -124,9 +133,44 @@ namespace onion::voxel
 			float v1 = (float) (atlasY + m_TextureSize) / (float) m_AtlasSize;
 
 			m_Entries[id] = {{u0, v0}, {u1, v1}};
+
+			stbi_image_free(pixels);
 		}
 
 		m_Texture = Texture("TextureAtlas", atlasPixels, m_AtlasSize, m_AtlasSize, 4);
+	}
+
+	Transparency TextureAtlas::GetTextureTransparency(const unsigned char* pixels, int width, int height, int channels)
+	{
+		if (pixels == nullptr || width <= 0 || height <= 0)
+			return Transparency::Opaque;
+
+		// Supported common layouts:
+		// 1 = Gray
+		// 2 = Gray + Alpha
+		// 3 = RGB
+		// 4 = RGBA
+
+		const bool hasAlpha = (channels == 2 || channels == 4);
+		if (!hasAlpha)
+			return Transparency::Opaque;
+
+		const int alphaIndex = channels - 1;
+
+		bool hasZeroAlpha = false;
+
+		for (size_t i = 0; i + alphaIndex < static_cast<size_t>(width * height * channels); i += channels)
+		{
+			const unsigned char alpha = pixels[i + alphaIndex];
+
+			if (alpha > 0 && alpha < 255)
+				return Transparency::Transparent;
+
+			if (alpha == 0)
+				hasZeroAlpha = true;
+		}
+
+		return hasZeroAlpha ? Transparency::Cutout : Transparency::Opaque;
 	}
 
 } // namespace onion::voxel
