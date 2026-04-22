@@ -6,7 +6,7 @@ namespace onion::voxel
 	enum class BlockId : uint16_t
 	{
 		Air = 0,
-		SnowGrassBlock,
+		//SnowGrassBlock,
 
 		AcaciaButton,
 		AcaciaDoor,

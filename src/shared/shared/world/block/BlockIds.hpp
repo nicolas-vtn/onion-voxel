@@ -30,7 +30,7 @@ namespace onion::voxel
 	  private:
 		static inline std::array<std::string, static_cast<size_t>(BlockId::Count)> s_IdToName = {
 			"Air",
-			"Snow Grass Block",
+			//"Snow Grass Block",
 			"Acacia Button",
 			"Acacia Door",
 			"Acacia Fence",

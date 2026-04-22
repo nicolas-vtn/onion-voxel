@@ -48,6 +48,10 @@ namespace onion::voxel
 		Orientation Facing = Orientation::None;
 		Orientation Top = Orientation::None;
 
+		// Index into BlockRegistry's per-block variant list.
+		// 0 = default / first variant. Resolved at block placement or chunk load.
+		uint8_t VariantIndex = 0;
+
 		// ----- Static Helpers -----
 	  public:
 		static bool IsOpaque(BlockId blockID);

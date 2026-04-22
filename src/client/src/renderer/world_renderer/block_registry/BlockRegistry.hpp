@@ -1,16 +1,19 @@
 #pragma once
 
 #include <array>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include <glm/glm.hpp>
 
 #include <renderer/texture_atlas/TextureAtlas.hpp>
 
 #include <shared/world/block/Block.hpp>
+#include <shared/world/block/BlockstateRegistry.hpp>
 
 namespace onion::voxel
 {
@@ -77,20 +80,40 @@ namespace onion::voxel
 		void Initialize();
 		void ReloadTextures();
 		const std::unordered_set<std::string>& GetAllTextureNames() const;
+
+		// Get BlockTextures for the default (first) variant
 		const BlockTextures& Get(BlockId id) const;
+
+		// Get BlockTextures for a specific variant index (clamped to valid range)
+		const BlockTextures& Get(BlockId id, uint8_t variantIndex) const;
+
+		// Returns the number of registered variants for a block (at least 1 if the block exists)
+		size_t GetVariantCount(BlockId id) const;
+
+		// Given a set of blockstate properties (e.g. {"axis"->"x"}), return the
+		// matching variant index for this block. Returns 0 if no match is found.
+		uint8_t ResolveVariantIndex(BlockId id, const std::map<std::string, std::string>& properties) const;
 
 		// ----- Private Methods -----
 	  private:
 		void ReloadModels();
 
-		void RegisterModel(BlockId id, const std::string& blockstate);
-		void RegisterModel(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel);
+		// Register all variants for a block
+		void RegisterModel(BlockId id);
+		// Register a specific variant (by VariantModel) — used internally
+		void RegisterVariant(BlockId id, const VariantModel& variant, size_t variantIndex);
+		// Register a direct texture array (used by hand-crafted special cases)
+		void
+		RegisterModel(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel, size_t variantIndex);
 
 		void PreSetOverlay(BlockId id, Face face, const TextureInfo& texture);
 
 		// ----- Real Registrations -----
 	  private:
-		void Register(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel = Model::Block);
+		void Register(BlockId id,
+					  uint8_t variantIndex,
+					  const std::array<TextureInfo, 6>& textures,
+					  Model textureModel = Model::Block);
 		void SetOverlay(BlockId id, Face face, const TextureInfo& texture);
 
 		// ----- Private Members -----
@@ -98,6 +121,7 @@ namespace onion::voxel
 		struct PreRegistration
 		{
 			BlockId id;
+			uint8_t variantIndex; // which slot within m_Blocks[id]
 			std::array<TextureInfo, 6> textures;
 			Model textureModel;
 		};
@@ -112,7 +136,8 @@ namespace onion::voxel
 		std::vector<PreRegistration> m_Registrations;
 		std::vector<PreOverlayRegistration> m_RegistrationsOverlays;
 
-		std::unordered_map<BlockId, BlockTextures> m_Blocks;
+		// Each block can have multiple variants; index 0 is always the default
+		std::unordered_map<BlockId, std::vector<BlockTextures>> m_Blocks;
 		std::shared_ptr<TextureAtlas> m_Atlas;
 		std::unordered_set<std::string> m_AllTextureNames;
 	};

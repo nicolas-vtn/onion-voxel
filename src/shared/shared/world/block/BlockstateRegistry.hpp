@@ -28,7 +28,7 @@ namespace onion::voxel
 	{
 		// ----- Public API -----
 	  public:
-		const std::unordered_map<BlockId, std::vector<VariantModel>>& Get() const;
+		static const std::unordered_map<BlockId, std::vector<VariantModel>>& Get();
 
 		// ----- Private Methods -----
 	  private:

@@ -366,7 +366,7 @@ namespace onion::voxel
 							continue;
 
 						// ------ Get Block Textures ------
-						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.ID);
+						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.ID, block.VariantIndex);
 
 						// ------ Build Mesh ------
 						if (blockTextures.textureModel == Model::Block)

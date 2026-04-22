@@ -64,7 +64,7 @@ namespace
 
 namespace onion::voxel
 {
-	const std::unordered_map<BlockId, std::vector<VariantModel>>& BlockstateRegistry::Get() const
+	const std::unordered_map<BlockId, std::vector<VariantModel>>& BlockstateRegistry::Get()
 	{
 		static const std::unordered_map<BlockId, std::vector<VariantModel>> blockstateMap = LoadVariantsModel();
 		return blockstateMap;
