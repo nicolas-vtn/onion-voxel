@@ -3,13 +3,18 @@
 #include "BlockModel.hpp"
 #include "BlockStateJson.hpp"
 
+#include <algorithm>
+#include <cmath>
+#include <functional>
 #include <iostream>
 
+// ---------------------------------------------------------------------------
+// Anonymous namespace — file-local helpers
+// ---------------------------------------------------------------------------
 namespace
 {
 	static std::string ToFilename(const std::string& texturePath)
 	{
-		// Add extension
 		return texturePath + ".png";
 	}
 
@@ -20,9 +25,7 @@ namespace
 		// ---- Remove ".json" extension ----
 		const std::string ext = ".json";
 		if (name.size() >= ext.size() && name.substr(name.size() - ext.size()) == ext)
-		{
 			name.erase(name.size() - ext.size());
-		}
 
 		// ---- Replace '_' with ' ' ----
 		std::replace(name.begin(), name.end(), '_', ' ');
@@ -32,40 +35,37 @@ namespace
 		for (char& c : name)
 		{
 			if (std::isspace(static_cast<unsigned char>(c)))
-			{
 				capitalizeNext = true;
-			}
 			else if (capitalizeNext)
 			{
 				c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
 				capitalizeNext = false;
 			}
 			else
-			{
 				c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-			}
 		}
 
 		return name;
 	}
 
-	std::string ResolveTexture(const std::string& ref, const onion::voxel::BlockModel::Textures& t)
+	static std::string ResolveTexture(const std::string& ref, const onion::voxel::BlockModel::Textures& t)
 	{
-		if (!ref.starts_with('#'))
-			return ToFilename(ref);
-
-		const std::string key = ref.substr(1);
-		auto it = t.find(key);
-		if (it != t.end())
-			return ResolveTexture(it->second, t);
-
-		return "";
+		std::function<std::string(const std::string&)> resolve = [&](const std::string& r) -> std::string
+		{
+			if (!r.starts_with('#'))
+				return ToFilename(r);
+			const std::string key = r.substr(1);
+			auto it = t.find(key);
+			if (it != t.end())
+				return resolve(it->second);
+			return "";
+		};
+		return resolve(ref);
 	}
 
-	onion::voxel::Face ToFace(const std::string& name)
+	static onion::voxel::Face ToFace(const std::string& name)
 	{
 		using namespace onion::voxel;
-
 		if (name == "up")
 			return Face::Top;
 		if (name == "down")
@@ -78,40 +78,152 @@ namespace
 			return Face::Left;
 		if (name == "east")
 			return Face::Right;
-
 		throw std::runtime_error("Unknown face: " + name);
 	}
 
-	bool IsOverlay(const onion::voxel::BlockModel::Element& elem)
+	static bool IsOverlayElem(const onion::voxel::BlockModel::Element& elem)
 	{
-		// Overlay if all textures points to "#overlay"
 		for (const auto& [faceName, face] : elem.Faces)
-		{
 			if (face.Texture != "#overlay")
 				return false;
-		}
 		return true;
 	}
-} // namespace
 
+	// ---------------------------------------------------------------------------
+	// Geometry rotation helpers (for baking blockstate x/y rotations)
+	// ---------------------------------------------------------------------------
+
+	// Rotate a point 90° CW around center 8 on the X axis (looking from +X).
+	// Cycle: Up → South → Down → North → Up
+	static glm::u8vec3 RotateX90(glm::u8vec3 p)
+	{
+		int y = p.y - 8;
+		int z = p.z - 8;
+		return {p.x, static_cast<uint8_t>(z + 8), static_cast<uint8_t>(-y + 8)};
+	}
+
+	// Rotate a point 90° CW around center 8 on the Y axis (looking down).
+	// Cycle: North(-Z) → East(+X) → South(+Z) → West(-X) → North
+	static glm::u8vec3 RotateY90(glm::u8vec3 p)
+	{
+		int x = p.x - 8;
+		int z = p.z - 8;
+		return {static_cast<uint8_t>(-z + 8), p.y, static_cast<uint8_t>(x + 8)};
+	}
+
+	static glm::u8vec3 RotatePoint(glm::u8vec3 p, int steps, bool aroundY)
+	{
+		steps = ((steps % 4) + 4) % 4;
+		for (int i = 0; i < steps; i++)
+			p = aroundY ? RotateY90(p) : RotateX90(p);
+		return p;
+	}
+
+	// Remap face names for Y-axis rotation (CW from above):
+	// north(0) → east(1) → south(2) → west(3) → north
+	static std::string RotateFaceY(const std::string& face, int steps)
+	{
+		static const char* cycle[4] = {"north", "east", "south", "west"};
+		int idx = -1;
+		if (face == "north")
+			idx = 0;
+		else if (face == "east")
+			idx = 1;
+		else if (face == "south")
+			idx = 2;
+		else if (face == "west")
+			idx = 3;
+		if (idx < 0)
+			return face; // up / down unaffected
+		return cycle[((idx + steps) % 4 + 4) % 4];
+	}
+
+	// Remap face names for X-axis rotation (CW from +X):
+	// up(0) → south(1) → down(2) → north(3) → up
+	static std::string RotateFaceX(const std::string& face, int steps)
+	{
+		static const char* cycle[4] = {"up", "south", "down", "north"};
+		int idx = -1;
+		if (face == "up")
+			idx = 0;
+		else if (face == "south")
+			idx = 1;
+		else if (face == "down")
+			idx = 2;
+		else if (face == "north")
+			idx = 3;
+		if (idx < 0)
+			return face; // east / west unaffected
+		return cycle[((idx + steps) % 4 + 4) % 4];
+	}
+
+	// Apply X then Y rotation to a BlockModel's element geometry and face name keys.
+	// stepsX / stepsY = rotation_degrees / 90
+	static onion::voxel::BlockModel ApplyModelRotation(onion::voxel::BlockModel model, int stepsX, int stepsY)
+	{
+		if (stepsX == 0 && stepsY == 0)
+			return model;
+
+		for (auto& elem : model.Elements)
+		{
+			glm::u8vec3 from(elem.From[0], elem.From[1], elem.From[2]);
+			glm::u8vec3 to(elem.To[0], elem.To[1], elem.To[2]);
+
+			// Apply X rotation first, then Y
+			from = RotatePoint(from, stepsX, false);
+			to = RotatePoint(to, stepsX, false);
+			from = RotatePoint(from, stepsY, true);
+			to = RotatePoint(to, stepsY, true);
+
+			// Re-normalise min/max after rotation
+			elem.From = {static_cast<uint8_t>(std::min(from.x, to.x)),
+						 static_cast<uint8_t>(std::min(from.y, to.y)),
+						 static_cast<uint8_t>(std::min(from.z, to.z))};
+			elem.To = {static_cast<uint8_t>(std::max(from.x, to.x)),
+					   static_cast<uint8_t>(std::max(from.y, to.y)),
+					   static_cast<uint8_t>(std::max(from.z, to.z))};
+
+			// Remap face direction keys
+			std::unordered_map<std::string, onion::voxel::BlockModel::Face> rotatedFaces;
+			for (auto& [faceName, face] : elem.Faces)
+			{
+				std::string newName = faceName;
+				if (stepsX != 0)
+					newName = RotateFaceX(newName, stepsX);
+				if (stepsY != 0)
+					newName = RotateFaceY(newName, stepsY);
+				rotatedFaces[newName] = std::move(face);
+			}
+			elem.Faces = std::move(rotatedFaces);
+		}
+
+		return model;
+	}
+
+} // anonymous namespace
+
+// ---------------------------------------------------------------------------
+// onion::voxel::BlockRegistry implementation
+// ---------------------------------------------------------------------------
 namespace onion::voxel
 {
 	BlockRegistry::BlockRegistry(std::shared_ptr<TextureAtlas> atlas) : m_Atlas(atlas) {}
 
+	// ---- Direct texture-array registration (used by special-case blocks) ----
 	void BlockRegistry::RegisterModel(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel)
 	{
 		for (const auto& texture : textures)
-		{
 			if (!texture.name.empty())
 				m_AllTextureNames.insert(texture.name);
-		}
 
-		PreRegistration registration;
-		registration.id = id;
-		registration.textures = textures;
-		registration.textureModel = textureModel;
+		uint8_t variantIndex = m_VariantCounters[id]++;
 
-		m_Registrations.emplace_back(registration);
+		PreRegistration reg;
+		reg.id = id;
+		reg.variantIndex = variantIndex;
+		reg.textures = textures;
+		reg.textureModel = textureModel;
+		m_Registrations.emplace_back(reg);
 	}
 
 	void BlockRegistry::PreSetOverlay(BlockId id, Face face, const TextureInfo& texture)
@@ -120,103 +232,83 @@ namespace onion::voxel
 		m_RegistrationsOverlays.emplace_back(id, face, texture);
 	}
 
-	void BlockRegistry::RegisterModel(BlockId id, const std::string& blockstate)
+	// ---- Register one VariantModel for a block ----
+	void BlockRegistry::RegisterVariant(BlockId id, const VariantModel& variant)
 	{
-		BlockStateJson blockState = BlockStateJson::FromFile(blockstate);
-
-		const std::string& blockName = ToBlockName(blockstate);
-		BlockIds::RegisterBlockIdName(id, blockName);
-
-		// Remove everything before the last '/' to get the model name
-		auto it = blockState.ModelPath.find_last_of('/');
-		std::string model = (it != std::string::npos) ? blockState.ModelPath.substr(it + 1) : blockState.ModelPath;
+		// Strip path prefix to get bare model filename
+		const std::string& path = variant.ModelPath;
+		auto slashPos = path.find_last_of('/');
+		std::string model = (slashPos != std::string::npos) ? path.substr(slashPos + 1) : path;
 
 		BlockModel blockModel = BlockModel::FromFile(model + ".json");
 
-		// ----- Magic trick for water block ----
+		// ----- Special-case magic -----
 		if (id == BlockId::Water)
 		{
-			// Load stone.json as base model to get the geometry, but use water texture
 			BlockModel stoneModel = BlockModel::FromFile("stone.json");
-			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"]; // Use water texture
+			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"];
 			blockModel = stoneModel;
-
-			// Set Tint to Water for all faces
 			for (auto& elem : blockModel.Elements)
-			{
-				for (auto& [faceName, face] : elem.Faces)
-				{
-					face.TintIndex = 1; // Corresponds to Tint::Water
-				}
-			}
+				for (auto& [fn, face] : elem.Faces)
+					face.TintIndex = 1; // Water tint
 		}
-
-		// ----- Magic trick for Lava block ----
-		if (id == BlockId::Lava)
+		else if (id == BlockId::Lava)
 		{
-			// Load stone.json as base model to get the geometry, but use lava texture
 			BlockModel stoneModel = BlockModel::FromFile("stone.json");
-			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"]; // Use lava texture
+			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"];
 			blockModel = stoneModel;
 		}
-
-		std::array<TextureInfo, 6> baseTextures{};
-		bool baseInitialized = false;
 
 		Model textureModel = Model::Block;
-
-		// ----- Magic trick for blocks with cross textures -----
 		if (!blockModel.ModelTextures["cross"].empty())
 		{
 			textureModel = Model::Cross;
-			// Load stone.json as base model to get the geometry, but use cross texture
 			BlockModel stoneModel = BlockModel::FromFile("stone.json");
-			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["cross"]; // Use cross texture
+			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["cross"];
 			blockModel = stoneModel;
-
-			// Set Tint to ShortGrass for all faces
 			if (id == BlockId::ShortGrass)
-			{
 				for (auto& elem : blockModel.Elements)
-				{
-					for (auto& [faceName, face] : elem.Faces)
-					{
-						face.TintIndex = 0; // Corresponds to Tint::Grass
-					}
-				}
-			}
+					for (auto& [fn, face] : elem.Faces)
+						face.TintIndex = 0; // Grass tint
 		}
 
-		// ----- If Missing Texture : Use missing_texture.png -----
 		if (blockModel.Elements.empty())
 		{
-			std::cout << "Warning: BlockModel for block ID " << static_cast<uint16_t>(id) << " has no elements."
-					  << std::endl;
+			std::cout << "Warning: BlockModel for block ID " << static_cast<uint16_t>(id) << " (" << model
+					  << ") has no elements." << std::endl;
 			blockModel = BlockModel::FromFile("bubble_coral_block.json");
 		}
 
-		for (size_t elemIndex = 0; elemIndex < blockModel.Elements.size(); elemIndex++)
-		{
-			const auto& elem = blockModel.Elements[elemIndex];
+		// ----- Bake blockstate rotation into element geometry -----
+		const int stepsX = ((variant.RotationX / 90) % 4 + 4) % 4;
+		const int stepsY = ((variant.RotationY / 90) % 4 + 4) % 4;
+		if (stepsX != 0 || stepsY != 0)
+			blockModel = ApplyModelRotation(std::move(blockModel), stepsX, stepsY);
 
-			bool isOverlay = IsOverlay(elem);
+		// ----- Convert elements to TextureInfo -----
+		std::array<TextureInfo, 6> baseTextures{};
+		bool baseInitialized = false;
+
+		for (const auto& elem : blockModel.Elements)
+		{
+			bool isOverlay = IsOverlayElem(elem);
 
 			for (const auto& [faceName, face] : elem.Faces)
 			{
 				Face f = ToFace(faceName);
 
 				std::string resolved = ResolveTexture(face.Texture, blockModel.ModelTextures);
-
 				if (resolved.empty())
-				{
 					throw std::runtime_error("Failed to resolve texture reference: " + face.Texture);
-				}
 
 				Tint tint = Tint::None;
-				if (face.TintIndex.has_value() && face.TintIndex.value() == 0)
-					tint = Tint::Grass;
-				else if (face.TintIndex.has_value() && face.TintIndex.value() == 1)
-					tint = Tint::Water;
+				if (face.TintIndex.has_value())
+				{
+					if (face.TintIndex.value() == 0)
+						tint = Tint::Grass;
+					else if (face.TintIndex.value() == 1)
+						tint = Tint::Water;
+				}
 
 				if (!isOverlay)
 				{
@@ -233,14 +325,34 @@ namespace onion::voxel
 		}
 
 		if (baseInitialized)
-		{
 			RegisterModel(id, baseTextures, textureModel);
-		}
-
-		return;
 	}
 
-	void BlockRegistry::Register(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel)
+	// ---- Register all variants parsed from a blockstate JSON ----
+	void BlockRegistry::RegisterModel(BlockId id, const std::string& blockstate)
+	{
+		BlockStateJson blockStateJson = BlockStateJson::FromFile(blockstate);
+
+		BlockIds::RegisterBlockIdName(id, ToBlockName(blockstate));
+
+		// Store conditions for ResolveVariantIndex
+		m_VariantConditions[id] = blockStateJson.Variants;
+
+		for (const auto& variant : blockStateJson.Variants)
+		{
+			if (variant.Models.empty())
+				continue;
+			// Register the first model as the representative for this variant.
+			// Weighted random selection can be layered on top later.
+			RegisterVariant(id, variant.Models[0]);
+		}
+	}
+
+	// ---- Finalize: resolve TextureIDs from atlas ----
+	void BlockRegistry::Register(BlockId id,
+								 uint8_t variantIndex,
+								 const std::array<TextureInfo, 6>& textures,
+								 Model textureModel)
 	{
 		BlockTextures tex;
 		tex.rotationType = BlockState::GetRotationType(id);
@@ -250,9 +362,7 @@ namespace onion::voxel
 		{
 			const std::string& textureName = textures[i].name;
 			if (textureName.empty())
-			{
 				continue;
-			}
 
 			tex.faces[i].texture = m_Atlas->GetTextureID(textureName);
 			tex.faces[i].tintType = textures[i].tintType;
@@ -264,21 +374,29 @@ namespace onion::voxel
 			m_AllTextureNames.insert(textureName);
 		}
 
-		m_Blocks[id] = tex;
+		auto& variants = m_Blocks[id];
+		// Grow the vector to fit this variant index
+		if (variantIndex >= variants.size())
+			variants.resize(variantIndex + 1);
+		variants[variantIndex] = tex;
 	}
 
 	void BlockRegistry::SetOverlay(BlockId id, Face face, const TextureInfo& texture)
 	{
 		auto it = m_Blocks.find(id);
-		if (it == m_Blocks.end())
+		if (it == m_Blocks.end() || it->second.empty())
 		{
 			throw std::runtime_error("BlockRegistry::SetOverlay: Block ID not found: " +
 									 std::to_string(static_cast<uint16_t>(id)));
 		}
 
-		it->second.overlay[static_cast<size_t>(face)].texture = m_Atlas->GetTextureID(texture.name);
-		it->second.overlay[static_cast<size_t>(face)].tintType = texture.tintType;
-		it->second.overlay[static_cast<size_t>(face)].textureType = m_Atlas->GetTextureTransparency(texture.name);
+		// Apply overlay to all variants of this block
+		for (auto& blockTex : it->second)
+		{
+			blockTex.overlay[static_cast<size_t>(face)].texture = m_Atlas->GetTextureID(texture.name);
+			blockTex.overlay[static_cast<size_t>(face)].tintType = texture.tintType;
+			blockTex.overlay[static_cast<size_t>(face)].textureType = m_Atlas->GetTextureTransparency(texture.name);
+		}
 
 		m_AllTextureNames.insert(texture.name);
 	}
@@ -290,23 +408,15 @@ namespace onion::voxel
 
 	void BlockRegistry::ReloadTextures()
 	{
-		// Reload Models
 		ReloadModels();
 
-		// Clear existing data
 		m_Blocks.clear();
 
-		// Process pending registrations
 		for (const auto& registration : m_Registrations)
-		{
-			Register(registration.id, registration.textures, registration.textureModel);
-		}
+			Register(registration.id, registration.variantIndex, registration.textures, registration.textureModel);
 
-		// Process pending overlays
 		for (const auto& overlay : m_RegistrationsOverlays)
-		{
 			SetOverlay(overlay.id, overlay.face, overlay.texture);
-		}
 	}
 
 	const std::unordered_set<std::string>& BlockRegistry::GetAllTextureNames() const
@@ -316,14 +426,63 @@ namespace onion::voxel
 
 	const BlockTextures& BlockRegistry::Get(BlockId id) const
 	{
+		return Get(id, 0);
+	}
+
+	const BlockTextures& BlockRegistry::Get(BlockId id, uint8_t variantIndex) const
+	{
 		auto it = m_Blocks.find(id);
-		if (it == m_Blocks.end())
+		if (it == m_Blocks.end() || it->second.empty())
 		{
 			throw std::runtime_error("BlockRegistry::Get: Block ID not found: " +
 									 std::to_string(static_cast<uint16_t>(id)));
 		}
 
-		return it->second;
+		// Clamp to valid range — prevents crashes from stale variant indices
+		const auto& variants = it->second;
+		const size_t idx = std::min(static_cast<size_t>(variantIndex), variants.size() - 1);
+		return variants[idx];
+	}
+
+	size_t BlockRegistry::GetVariantCount(BlockId id) const
+	{
+		auto it = m_Blocks.find(id);
+		if (it == m_Blocks.end())
+			return 0;
+		return it->second.size();
+	}
+
+	uint8_t BlockRegistry::ResolveVariantIndex(BlockId id, const std::map<std::string, std::string>& properties) const
+	{
+		auto it = m_VariantConditions.find(id);
+		if (it == m_VariantConditions.end())
+			return 0;
+
+		const auto& variants = it->second;
+		for (size_t i = 0; i < variants.size(); i++)
+		{
+			const auto& conditions = variants[i].Conditions;
+
+			// Empty conditions = matches-all (single-variant blocks like stone)
+			if (conditions.empty())
+				return static_cast<uint8_t>(i);
+
+			// Check every condition in the variant against the provided properties
+			bool match = true;
+			for (const auto& [key, val] : conditions)
+			{
+				auto pit = properties.find(key);
+				if (pit == properties.end() || pit->second != val)
+				{
+					match = false;
+					break;
+				}
+			}
+			if (match)
+				return static_cast<uint8_t>(i);
+		}
+
+		return 0; // Default fallback
 	}
 
 	void BlockRegistry::ReloadModels()
@@ -333,6 +492,8 @@ namespace onion::voxel
 		m_AllTextureNames.clear();
 		m_Registrations.clear();
 		m_RegistrationsOverlays.clear();
+		m_VariantCounters.clear();
+		m_VariantConditions.clear();
 
 		RegisterModel(BlockId::AcaciaLeaves, "acacia_leaves.json");
 		RegisterModel(BlockId::AcaciaLog, "acacia_log.json");
@@ -846,7 +1007,7 @@ namespace onion::voxel
 		RegisterModel(BlockId::YellowTerracotta, "yellow_terracotta.json");
 		RegisterModel(BlockId::YellowWool, "yellow_wool.json");
 
-		// ---- Custom Blocks that do not exist in Minecraft, or have special texture requirements ----
+		// ---- Custom Blocks (not in Minecraft, or with special texture requirements) ----
 		RegisterModel(BlockId::SnowGrassBlock,
 					  {TextureInfo{"block/snow.png", Tint::None},
 					   TextureInfo{"block/dirt.png", Tint::None},
@@ -859,4 +1020,5 @@ namespace onion::voxel
 		// ---- Reload Atlas Textures ----
 		m_Atlas->ReloadTextures(m_AllTextureNames);
 	}
+
 } // namespace onion::voxel
