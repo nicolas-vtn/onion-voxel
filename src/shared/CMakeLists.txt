@@ -9,6 +9,7 @@ add_library(onion_voxel_shared
  "shared/world/chunk/SubChunk.cpp"
  "shared/world/block/Block.cpp"
  "shared/world/block/BlockState.cpp"
+ "shared/world/block/BlockStateJson.cpp"
 
  "shared/world/world_manager/WorldManager.cpp"
  "shared/world/world_generator/WorldGenerator.cpp"

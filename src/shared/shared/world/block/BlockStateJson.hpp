@@ -37,7 +37,7 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		static BlockStateJson FromFile(const std::string& filename);
+		static BlockStateJson FromJson(const std::string& jsonText);
 
 		// Returns true if this blockstate uses the "variants" format
 		bool HasVariants() const { return !Variants.empty(); }

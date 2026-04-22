@@ -13,8 +13,7 @@
 #include <renderer/texture_atlas/TextureAtlas.hpp>
 
 #include <shared/world/block/Block.hpp>
-
-#include "BlockStateJson.hpp"
+#include <shared/world/block/BlockStateJson.hpp>
 
 namespace onion::voxel
 {

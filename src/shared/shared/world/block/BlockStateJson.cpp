@@ -1,7 +1,6 @@
 #include "BlockStateJson.hpp"
 
 #include <nlohmann/json.hpp>
-#include <renderer/EngineContext.hpp>
 
 #include <sstream>
 
@@ -55,17 +54,11 @@ namespace
 
 namespace onion::voxel
 {
-	BlockStateJson BlockStateJson::FromFile(const std::string& filename)
+	BlockStateJson BlockStateJson::FromJson(const std::string& jsonText)
 	{
 		BlockStateJson blockState;
 
 		// ---- Read file from ResourcePack ----
-		static const std::filesystem::path blockstatesDirectory =
-			std::filesystem::path("assets") / "minecraft" / "blockstates";
-
-		const std::string jsonText =
-			EngineContext::Get().Assets->GetResourcePackFileText(blockstatesDirectory / filename);
-
 		const auto json = nlohmann::json::parse(jsonText);
 
 		// ---- "variants" format ----
@@ -105,16 +98,16 @@ namespace onion::voxel
 			}
 
 			if (blockState.Variants.empty())
-				throw std::runtime_error("Invalid blockstate: no valid variants found in " + filename);
+				throw std::runtime_error("Invalid blockstate: no valid variants found.");
 
 			return blockState;
 		}
 
 		// ---- "multipart" format — not yet supported ----
 		if (json.contains("multipart"))
-			throw std::runtime_error("Blockstate multipart format not yet supported: " + filename);
+			throw std::runtime_error("Blockstate multipart format not yet supported.");
 
-		throw std::runtime_error("Invalid blockstate: unrecognised format in " + filename);
+		throw std::runtime_error("Invalid blockstate: unrecognised format.");
 	}
 
 } // namespace onion::voxel
