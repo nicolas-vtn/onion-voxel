@@ -15,6 +15,7 @@
 - Add UI Tooltip on hovering something
 - Particules (breaking blocks, footsteps, ...)
 - First person view : Arm and selected block. (+ Movement on walking, placing and breaking)
+- Use Block Model for collision instead of full block.
 
 
 		----- KNOWN ISSUES -----
@@ -23,4 +24,6 @@
 - Random crashes when loading worlds (probably due to server port)
 - For ViewFrustum culling : use the real height of the chunk instead of a 256 height hard coded (BAD !) ...
 - BlockStateJson fallback on default resourcepack if invalid BlockStateJson read from current resourcepack
-- Add new blocks to "BlockState.cpp" (transparent, logs, pilars, flowers, ...)
+- Add new blocks to "BlockState.cpp" (transparent / solid / flower)
+- Fix Model uv and from / to usage. from / to defines the position where the textude should be drawn, and uv defines what part of the texture should be drawn.
+- Implement Multi model faces. (Example a  Model with 2 "#west" faces.

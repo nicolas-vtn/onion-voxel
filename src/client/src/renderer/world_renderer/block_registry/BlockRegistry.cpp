@@ -15,36 +15,6 @@ namespace
 		return texturePath + ".png";
 	}
 
-	static std::string ToBlockName(const std::string& blockstateName)
-	{
-		std::string name = blockstateName;
-
-		// ---- Remove ".json" extension ----
-		const std::string ext = ".json";
-		if (name.size() >= ext.size() && name.substr(name.size() - ext.size()) == ext)
-			name.erase(name.size() - ext.size());
-
-		// ---- Replace '_' with ' ' ----
-		std::replace(name.begin(), name.end(), '_', ' ');
-
-		// ---- Capitalize each word ----
-		bool capitalizeNext = true;
-		for (char& c : name)
-		{
-			if (std::isspace(static_cast<unsigned char>(c)))
-				capitalizeNext = true;
-			else if (capitalizeNext)
-			{
-				c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-				capitalizeNext = false;
-			}
-			else
-				c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-		}
-
-		return name;
-	}
-
 	static std::string ResolveTexture(const std::string& ref, const onion::voxel::BlockModel::Textures& t)
 	{
 		std::function<std::string(const std::string&)> resolve = [&](const std::string& r) -> std::string
