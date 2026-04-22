@@ -8,7 +8,9 @@ add_library(onion_voxel_shared
  "shared/world/chunk/Chunk.cpp"
  "shared/world/chunk/SubChunk.cpp"
  "shared/world/block/Block.cpp"
- "shared/world/block/BlockState.cpp"
+ "shared/world/block/BlockState.cpp" 
+ "shared/world/block/BlockModel.cpp"
+ "shared/world/block/BlockstateRegistry.cpp"
 
  "shared/world/world_manager/WorldManager.cpp"
  "shared/world/world_generator/WorldGenerator.cpp"
@@ -25,7 +27,7 @@ add_library(onion_voxel_shared
 
  "shared/utils/Utils.cpp"
 
-)
+ )
 
 target_link_libraries(onion_voxel_shared
 	PUBLIC

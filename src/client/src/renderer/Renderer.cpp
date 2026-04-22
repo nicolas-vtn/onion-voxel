@@ -1217,7 +1217,7 @@ namespace onion::voxel
 			ImGui::Text(
 				"Hit Block Position: %d, %d, %d", m_HitBlock.Position.x, m_HitBlock.Position.y, m_HitBlock.Position.z);
 			ImGui::Text("Hit Block ID: %d", m_HitBlock.ID());
-			ImGui::Text("Name: %s", BlockIds::GetBlockIdName(m_HitBlock.ID()).c_str());
+			ImGui::Text("Name: %s", BlockIds::GetName(m_HitBlock.ID()).c_str());
 		}
 
 		ImGui::End();

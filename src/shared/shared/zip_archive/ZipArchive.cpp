@@ -55,9 +55,9 @@ namespace onion::voxel
 		return mz_zip_reader_locate_file(&m_Zip, filePath.generic_string().c_str(), nullptr, 0) >= 0;
 	}
 
-	std::vector<std::string> ZipArchive::GetFileList(const std::filesystem::path& directory) const
+	std::vector<std::filesystem::path> ZipArchive::GetFileList(const std::filesystem::path& directory) const
 	{
-		std::vector<std::string> files;
+		std::vector<std::filesystem::path> files;
 
 		mz_uint fileCount = mz_zip_reader_get_num_files(&m_Zip);
 
@@ -80,7 +80,7 @@ namespace onion::voxel
 					continue;
 			}
 
-			files.push_back(name);
+			files.emplace_back(name);
 		}
 
 		return files;

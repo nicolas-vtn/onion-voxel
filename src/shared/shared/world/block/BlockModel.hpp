@@ -9,8 +9,6 @@
 
 #include <shared/zip_archive/ZipArchive.hpp>
 
-#include <renderer/assets_manager/AssetsManager.hpp>
-
 namespace onion::voxel
 {
 	class BlockModel
@@ -44,7 +42,8 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		static BlockModel FromFile(const std::filesystem::path& modelPath);
+		static void SetModelArchive(const std::filesystem::path& archiveFilePath);
+		static BlockModel FromFile(const std::string& filename);
 		static void ClearCache();
 
 		// ----- Members -----
@@ -65,6 +64,7 @@ namespace onion::voxel
 
 		// ----- Static Private Members -----
 	  private:
+		static inline std::unique_ptr<ZipArchive> s_ModelArchive;
 		static inline std::unordered_map<std::filesystem::path, BlockModel> s_ModelCache;
 		static inline std::recursive_mutex s_CacheMutex;
 		static const BlockModel& GetModel(const std::filesystem::path& path);

@@ -2,8 +2,6 @@
 
 #include <nlohmann/json.hpp>
 
-#include <renderer/EngineContext.hpp>
-
 namespace onion::voxel
 {
 	namespace
@@ -79,10 +77,15 @@ namespace onion::voxel
 		}
 	} // namespace
 
-	BlockModel BlockModel::FromFile(const std::filesystem::path& modelPath)
+	void BlockModel::SetModelArchive(const std::filesystem::path& archiveFilePath)
 	{
-		const std::filesystem::path fullPath = std::filesystem::path("block") / modelPath;
-		return GetModel(fullPath);
+		s_ModelArchive = std::make_unique<ZipArchive>(archiveFilePath);
+	}
+
+	BlockModel BlockModel::FromFile(const std::string& filename)
+	{
+		const std::filesystem::path pathInsideArchive = std::filesystem::path("block") / filename;
+		return GetModel(pathInsideArchive);
 	}
 
 	std::filesystem::path BlockModel::ResolveModelPath(const std::string& parentPath)
@@ -109,9 +112,10 @@ namespace onion::voxel
 
 	BlockModel BlockModel::LoadRawModel(const std::filesystem::path& modelPath)
 	{
-		// ---- Read file from ResourcePack ----
-		static const std::filesystem::path modelsDirectory = std::filesystem::path("assets") / "minecraft" / "models";
-		const std::string jsonText = EngineContext::Get().Assets->GetResourcePackFileText(modelsDirectory / modelPath);
+		// ---- Read file from Archive ----
+		std::filesystem::path path = modelPath;
+		path.replace_extension(".json");
+		const std::string jsonText = s_ModelArchive->GetFileText(path);
 
 		// ---- Parse JSON ----
 		nlohmann::json json = nlohmann::json::parse(jsonText);

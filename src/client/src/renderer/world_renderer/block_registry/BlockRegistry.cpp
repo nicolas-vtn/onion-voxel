@@ -1,7 +1,6 @@
 #include "BlockRegistry.hpp"
 
-#include "BlockModel.hpp"
-#include "BlockStateJson.hpp"
+#include <shared/world/block/BlockModel.hpp>
 
 #include <iostream>
 
@@ -122,120 +121,120 @@ namespace onion::voxel
 
 	void BlockRegistry::RegisterModel(BlockId id, const std::string& blockstate)
 	{
-		BlockStateJson blockState = BlockStateJson::FromFile(blockstate);
+		//	BlockStateJson blockState = BlockStateJson::FromFile(blockstate);
 
-		const std::string& blockName = ToBlockName(blockstate);
-		BlockIds::RegisterBlockIdName(id, blockName);
+		//	const std::string& blockName = ToBlockName(blockstate);
+		//	BlockIds::RegisterBlockIdName(id, blockName);
 
-		// Remove everything before the last '/' to get the model name
-		auto it = blockState.ModelPath.find_last_of('/');
-		std::string model = (it != std::string::npos) ? blockState.ModelPath.substr(it + 1) : blockState.ModelPath;
+		//	// Remove everything before the last '/' to get the model name
+		//	auto it = blockState.ModelPath.find_last_of('/');
+		//	std::string model = (it != std::string::npos) ? blockState.ModelPath.substr(it + 1) : blockState.ModelPath;
 
-		BlockModel blockModel = BlockModel::FromFile(model + ".json");
+		//	BlockModel blockModel = BlockModel::FromFile(model + ".json");
 
-		// ----- Magic trick for water block ----
-		if (id == BlockId::Water)
-		{
-			// Load stone.json as base model to get the geometry, but use water texture
-			BlockModel stoneModel = BlockModel::FromFile("stone.json");
-			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"]; // Use water texture
-			blockModel = stoneModel;
+		//	// ----- Magic trick for water block ----
+		//	if (id == BlockId::Water)
+		//	{
+		//		// Load stone.json as base model to get the geometry, but use water texture
+		//		BlockModel stoneModel = BlockModel::FromFile("stone.json");
+		//		stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"]; // Use water texture
+		//		blockModel = stoneModel;
 
-			// Set Tint to Water for all faces
-			for (auto& elem : blockModel.Elements)
-			{
-				for (auto& [faceName, face] : elem.Faces)
-				{
-					face.TintIndex = 1; // Corresponds to Tint::Water
-				}
-			}
-		}
+		//		// Set Tint to Water for all faces
+		//		for (auto& elem : blockModel.Elements)
+		//		{
+		//			for (auto& [faceName, face] : elem.Faces)
+		//			{
+		//				face.TintIndex = 1; // Corresponds to Tint::Water
+		//			}
+		//		}
+		//	}
 
-		// ----- Magic trick for Lava block ----
-		if (id == BlockId::Lava)
-		{
-			// Load stone.json as base model to get the geometry, but use lava texture
-			BlockModel stoneModel = BlockModel::FromFile("stone.json");
-			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"]; // Use lava texture
-			blockModel = stoneModel;
-		}
+		//	// ----- Magic trick for Lava block ----
+		//	if (id == BlockId::Lava)
+		//	{
+		//		// Load stone.json as base model to get the geometry, but use lava texture
+		//		BlockModel stoneModel = BlockModel::FromFile("stone.json");
+		//		stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"]; // Use lava texture
+		//		blockModel = stoneModel;
+		//	}
 
-		std::array<TextureInfo, 6> baseTextures{};
-		bool baseInitialized = false;
+		//	std::array<TextureInfo, 6> baseTextures{};
+		//	bool baseInitialized = false;
 
-		Model textureModel = Model::Block;
+		//	Model textureModel = Model::Block;
 
-		// ----- Magic trick for blocks with cross textures -----
-		if (!blockModel.ModelTextures["cross"].empty())
-		{
-			textureModel = Model::Cross;
-			// Load stone.json as base model to get the geometry, but use cross texture
-			BlockModel stoneModel = BlockModel::FromFile("stone.json");
-			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["cross"]; // Use cross texture
-			blockModel = stoneModel;
+		//	// ----- Magic trick for blocks with cross textures -----
+		//	if (!blockModel.ModelTextures["cross"].empty())
+		//	{
+		//		textureModel = Model::Cross;
+		//		// Load stone.json as base model to get the geometry, but use cross texture
+		//		BlockModel stoneModel = BlockModel::FromFile("stone.json");
+		//		stoneModel.ModelTextures["all"] = blockModel.ModelTextures["cross"]; // Use cross texture
+		//		blockModel = stoneModel;
 
-			// Set Tint to ShortGrass for all faces
-			if (id == BlockId::ShortGrass)
-			{
-				for (auto& elem : blockModel.Elements)
-				{
-					for (auto& [faceName, face] : elem.Faces)
-					{
-						face.TintIndex = 0; // Corresponds to Tint::Grass
-					}
-				}
-			}
-		}
+		//		// Set Tint to ShortGrass for all faces
+		//		if (id == BlockId::ShortGrass)
+		//		{
+		//			for (auto& elem : blockModel.Elements)
+		//			{
+		//				for (auto& [faceName, face] : elem.Faces)
+		//				{
+		//					face.TintIndex = 0; // Corresponds to Tint::Grass
+		//				}
+		//			}
+		//		}
+		//	}
 
-		// ----- If Missing Texture : Use missing_texture.png -----
-		if (blockModel.Elements.empty())
-		{
-			std::cout << "Warning: BlockModel for block ID " << static_cast<uint16_t>(id) << " has no elements."
-					  << std::endl;
-			blockModel = BlockModel::FromFile("bubble_coral_block.json");
-		}
+		//	// ----- If Missing Texture : Use missing_texture.png -----
+		//	if (blockModel.Elements.empty())
+		//	{
+		//		std::cout << "Warning: BlockModel for block ID " << static_cast<uint16_t>(id) << " has no elements."
+		//				  << std::endl;
+		//		blockModel = BlockModel::FromFile("bubble_coral_block.json");
+		//	}
 
-		for (size_t elemIndex = 0; elemIndex < blockModel.Elements.size(); elemIndex++)
-		{
-			const auto& elem = blockModel.Elements[elemIndex];
+		//	for (size_t elemIndex = 0; elemIndex < blockModel.Elements.size(); elemIndex++)
+		//	{
+		//		const auto& elem = blockModel.Elements[elemIndex];
 
-			bool isOverlay = IsOverlay(elem);
+		//		bool isOverlay = IsOverlay(elem);
 
-			for (const auto& [faceName, face] : elem.Faces)
-			{
-				Face f = ToFace(faceName);
+		//		for (const auto& [faceName, face] : elem.Faces)
+		//		{
+		//			Face f = ToFace(faceName);
 
-				std::string resolved = ResolveTexture(face.Texture, blockModel.ModelTextures);
+		//			std::string resolved = ResolveTexture(face.Texture, blockModel.ModelTextures);
 
-				if (resolved.empty())
-				{
-					throw std::runtime_error("Failed to resolve texture reference: " + face.Texture);
-				}
+		//			if (resolved.empty())
+		//			{
+		//				throw std::runtime_error("Failed to resolve texture reference: " + face.Texture);
+		//			}
 
-				Tint tint = Tint::None;
-				if (face.TintIndex.has_value() && face.TintIndex.value() == 0)
-					tint = Tint::Grass;
-				else if (face.TintIndex.has_value() && face.TintIndex.value() == 1)
-					tint = Tint::Water;
+		//			Tint tint = Tint::None;
+		//			if (face.TintIndex.has_value() && face.TintIndex.value() == 0)
+		//				tint = Tint::Grass;
+		//			else if (face.TintIndex.has_value() && face.TintIndex.value() == 1)
+		//				tint = Tint::Water;
 
-				if (!isOverlay)
-				{
-					glm::u8vec3 from = {elem.From[0], elem.From[1], elem.From[2]};
-					glm::u8vec3 to = {elem.To[0], elem.To[1], elem.To[2]};
-					baseTextures[(int) f] = TextureInfo{resolved, tint, from, to, face.UV};
-					baseInitialized = true;
-				}
-				else
-				{
-					PreSetOverlay(id, f, TextureInfo{resolved, tint});
-				}
-			}
-		}
+		//			if (!isOverlay)
+		//			{
+		//				glm::u8vec3 from = {elem.From[0], elem.From[1], elem.From[2]};
+		//				glm::u8vec3 to = {elem.To[0], elem.To[1], elem.To[2]};
+		//				baseTextures[(int) f] = TextureInfo{resolved, tint, from, to, face.UV};
+		//				baseInitialized = true;
+		//			}
+		//			else
+		//			{
+		//				PreSetOverlay(id, f, TextureInfo{resolved, tint});
+		//			}
+		//		}
+		//	}
 
-		if (baseInitialized)
-		{
-			RegisterModel(id, baseTextures, textureModel);
-		}
+		//	if (baseInitialized)
+		//	{
+		//		RegisterModel(id, baseTextures, textureModel);
+		//	}
 
 		return;
 	}

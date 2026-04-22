@@ -23,7 +23,7 @@ namespace onion::voxel
 
 		// ------------ Public API ------------
 	  public:
-		std::vector<std::string> GetFileList(const std::filesystem::path& directory = "") const;
+		std::vector<std::filesystem::path> GetFileList(const std::filesystem::path& directory = "") const;
 
 		bool FileExists(const std::filesystem::path& filePath) const;
 
