@@ -152,8 +152,7 @@ namespace onion::voxel
 	{
 		BlockStateDTO dto;
 		dto.id = (uint16_t) block.ID;
-		dto.facing = (uint8_t) block.Facing;
-		dto.top = (uint8_t) block.Top;
+		dto.variantIndex = block.VariantIndex;
 
 		return dto;
 	}
@@ -162,8 +161,7 @@ namespace onion::voxel
 	{
 		BlockState block;
 		block.ID = (BlockId) dto.id;
-		block.Facing = (BlockState::Orientation) dto.facing;
-		block.Top = (BlockState::Orientation) dto.top;
+		block.VariantIndex = dto.variantIndex;
 
 		return block;
 	}

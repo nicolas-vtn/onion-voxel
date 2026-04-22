@@ -95,21 +95,22 @@ namespace onion::voxel
 
 		static void BuildFace(TextureAtlas& textureAtlas,
 							  SubChunkMesh& mesh,
-							  const BlockState& block,
 							  const BlockTextures& blockTextures,
 							  const FaceBuildDesc& faceDesc);
 
 		static void AddFace(SubChunkMesh& mesh,
 							const FaceBuildDesc& f,
-							const BlockState& block,
 							const FaceTexture& faceTexture,
-							const TextureAtlas::AtlasEntry& uv,
-							BlockState::RotationType rotationType);
+							const TextureAtlas::AtlasEntry& uv);
 
 		PointsAndOcclusion GetPointsAndOcclusion(
 			const BlockTextures& blockTextures, SubChunkMesh* mesh, const int lx, const int wy, const int lz);
-		PointsAndOcclusion GetPointsAndOcclusionForBlock(SubChunkMesh* mesh, const int lx, const int wy, const int lz,
-			const glm::u8vec3& from = {0, 0, 0}, const glm::u8vec3& to = {16, 16, 16});
+		PointsAndOcclusion GetPointsAndOcclusionForBlock(SubChunkMesh* mesh,
+														 const int lx,
+														 const int wy,
+														 const int lz,
+														 const glm::u8vec3& from = {0, 0, 0},
+														 const glm::u8vec3& to = {16, 16, 16});
 		PointsAndOcclusion GetPointsAndOcclusionForCross(SubChunkMesh* mesh, const int lx, const int wy, const int lz);
 
 		std::vector<FaceBuildDesc> GetFaceBuildDescs(const BlockTextures& blockTextures, const PointsAndOcclusion& pao);

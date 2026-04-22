@@ -29,10 +29,7 @@ namespace onion::voxel
 	  public:
 		bool IsOpaque() const;
 		bool IsTransparent() const;
-		BlockState::RotationType GetRotationType() const;
 
 		BlockId ID() const { return State.ID; }
-		BlockState::Orientation Facing() const { return State.Facing; }
-		BlockState::Orientation Top() const { return State.Top; }
 	};
 } // namespace onion::voxel

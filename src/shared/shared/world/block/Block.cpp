@@ -26,8 +26,4 @@ namespace onion::voxel
 		return BlockState::IsTransparent(State.ID);
 	}
 
-	BlockState::RotationType Block::GetRotationType() const
-	{
-		return BlockState::GetRotationType(State.ID);
-	}
 } // namespace onion::voxel

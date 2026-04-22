@@ -8,9 +8,8 @@ namespace onion::voxel
 	struct BlockStateDTO
 	{
 		uint16_t id;
-		uint8_t facing;
-		uint8_t top;
+		uint8_t variantIndex;
 
-		template <class Archive> void serialize(Archive& ar) { ar(id, facing, top); }
+		template <class Archive> void serialize(Archive& ar) { ar(id, variantIndex); }
 	};
 } // namespace onion::voxel

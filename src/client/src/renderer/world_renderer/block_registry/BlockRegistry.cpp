@@ -354,7 +354,6 @@ namespace onion::voxel
 								 Model textureModel)
 	{
 		BlockTextures tex;
-		tex.rotationType = BlockState::GetRotationType(id);
 		tex.textureModel = textureModel;
 
 		for (size_t i = 0; i < 6; i++)

@@ -65,7 +65,6 @@ namespace onion::voxel
 	{
 		std::array<FaceTexture, (size_t) Face::Count> faces;
 		std::array<FaceTexture, (size_t) Face::Count> overlay;
-		BlockState::RotationType rotationType = BlockState::RotationType::None;
 		Model textureModel = Model::Block;
 	};
 

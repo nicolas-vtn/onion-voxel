@@ -84,7 +84,7 @@ namespace onion::voxel
 		}
 
 		// Add the block to the palette and get the block data index
-		uint8_t indexInPalette = AddBlockToPalette(block);
+		uint16_t indexInPalette = AddBlockToPalette(block);
 
 		// Get the subchunk
 		SubChunk& subChunk = m_SubChunks[subChunkIndex];
@@ -100,7 +100,7 @@ namespace onion::voxel
 	void voxel::Chunk::SetBlock_Unsafe(const uint8_t x, const uint16_t y, const uint8_t z, const BlockState& block)
 	{
 		// Add the block to the palette and get the block data index
-		const uint8_t indexInPalette = AddBlockToPalette(block);
+		const uint16_t indexInPalette = AddBlockToPalette(block);
 
 		// Calculate which subchunk the local position is in
 		const int subChunkIndex = y / WorldConstants::CHUNK_SIZE;
@@ -127,25 +127,25 @@ namespace onion::voxel
 		return m_SubChunks[subChunkIndex].IsMonoBlock();
 	}
 
-	uint8_t Chunk::AddBlockToPalette(const BlockState& block)
+	uint16_t Chunk::AddBlockToPalette(const BlockState& block)
 	{
 		// Checks if the block is already in the block palette, if not add it and get the new block data index
 		auto it = std::find(m_BlocksPalette.begin(), m_BlocksPalette.end(), block);
 
-		uint8_t indexInPalette;
+		uint16_t indexInPalette;
 
 		if (it != m_BlocksPalette.end())
 		{
 			size_t index = std::distance(m_BlocksPalette.begin(), it);
-			assert(std::distance(m_BlocksPalette.begin(), it) <= UINT16_MAX); // Ensure the index can fit in a uint8_t
-			indexInPalette = static_cast<uint8_t>(index);
+			assert(std::distance(m_BlocksPalette.begin(), it) <= UINT16_MAX); // Ensure the index can fit in a uint16_t
+			indexInPalette = static_cast<uint16_t>(index);
 		}
 		else
 		{
 			m_BlocksPalette.push_back(block);
 			size_t index = m_BlocksPalette.size() - 1;
-			assert(index <= UINT16_MAX); // Ensure the index can fit in a uint8_t
-			indexInPalette = static_cast<uint8_t>(index);
+			assert(index <= UINT16_MAX); // Ensure the index can fit in a uint16_t
+			indexInPalette = static_cast<uint16_t>(index);
 		}
 
 		return indexInPalette;

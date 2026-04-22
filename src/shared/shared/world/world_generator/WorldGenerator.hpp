@@ -13,7 +13,6 @@
 #include <shared/world/World.hpp>
 #include <shared/world/chunk/Chunk.hpp>
 #include <shared/world/schematic/Schematic.hpp>
-//#include <shared/world/world_manager/WorldManager.hpp>
 
 #include "SeededRandom.hpp"
 
