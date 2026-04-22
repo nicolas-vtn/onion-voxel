@@ -710,4 +710,9 @@ namespace onion::voxel
 		return m_ChunkMeshes.size();
 	}
 
+	std::unordered_map<BlockId, uint8_t> WorldRenderer::GetAllVariantCounts() const
+	{
+		return m_MeshBuilder.GetAllVariantCounts();
+	}
+
 } // namespace onion::voxel

@@ -247,6 +247,7 @@ namespace onion::voxel
 
 		m_Gui.Initialize();
 		m_WorldRenderer.Initialize();
+		m_WorldManager->SetVariantCounts(m_WorldRenderer.GetAllVariantCounts());
 		SubscribeToGuiEvents();
 
 		while (!st.stop_requested() && !glfwWindowShouldClose(m_Window))
@@ -601,8 +602,8 @@ namespace onion::voxel
 		glm::vec3 rayOrigin = m_Camera->GetPosition();
 		glm::vec3 rayDirection = m_Camera->GetFront();
 
-		Block hitBlock = Block(glm::ivec3(), BlockId::Air);
-		Block prevBlock = Block(glm::ivec3(), BlockId::Air);
+		Block hitBlock = Block(glm::ivec3(), BlockState(BlockId::Air));
+		Block prevBlock = Block(glm::ivec3(), BlockState(BlockId::Air));
 		for (int i = 0; i < 100; i++)
 		{
 			float delta = 0.1f; // Step size for ray marching
@@ -621,7 +622,7 @@ namespace onion::voxel
 		KeyState attackKeyState = m_KeyBinds.GetKeyState(eAction::Attack);
 		if (attackKeyState.IsPressed)
 		{
-			Block airBlockToPlace = Block(hitBlock.Position, BlockId::Air);
+			Block airBlockToPlace = Block(hitBlock.Position, BlockState(BlockId::Air));
 
 			bool success = m_WorldManager->SetBlock(
 				airBlockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
@@ -633,7 +634,7 @@ namespace onion::voxel
 		KeyState interactKeyState = m_KeyBinds.GetKeyState(eAction::Interact);
 		if (interactKeyState.IsPressed)
 		{
-			Block blockToPlace = Block(prevBlock.Position, BlockId::Cobblestone);
+			Block blockToPlace = Block(prevBlock.Position, BlockState(BlockId::Cobblestone));
 
 			bool success = m_WorldManager->SetBlock(
 				blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);

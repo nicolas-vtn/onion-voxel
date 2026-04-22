@@ -2,8 +2,8 @@
 
 #include <glm/glm.hpp>
 
-#include <shared_mutex>
 #include <mutex>
+#include <shared_mutex>
 #include <vector>
 
 #include <shared/world/block/Block.hpp>
@@ -47,7 +47,7 @@ namespace onion::voxel
 		const glm::ivec2 m_Position;	   // Position of the chunk in chunk coordinates (Not in world coordinates)
 		mutable std::shared_mutex m_Mutex; // Mutex for synchronizing access to the chunk data
 		std::vector<SubChunk> m_SubChunks; // The subchunks that make up this chunk
-		std::vector<BlockState> m_BlocksPalette{BlockId::Air}; // The blocks palette that make up this chunk
+		std::vector<BlockState> m_BlocksPalette{BlockState(BlockId::Air)}; // The blocks palette that make up this chunk
 
 		// ----- Private Methods -----
 	  private:

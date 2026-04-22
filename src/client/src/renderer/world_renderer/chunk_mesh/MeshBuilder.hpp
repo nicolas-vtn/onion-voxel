@@ -39,6 +39,9 @@ namespace onion::voxel
 
 		const std::unordered_set<std::string>& GetAllRegisteredTextureNames() const;
 
+		// Returns a map of BlockId -> variant count for all registered blocks.
+		std::unordered_map<BlockId, uint8_t> GetAllVariantCounts() const;
+
 		// ----- Private Members -----
 	  private:
 		std::shared_ptr<WorldManager> m_WorldManager;
@@ -95,16 +98,13 @@ namespace onion::voxel
 
 		static void BuildFace(TextureAtlas& textureAtlas,
 							  SubChunkMesh& mesh,
-							  const BlockState& block,
 							  const BlockTextures& blockTextures,
 							  const FaceBuildDesc& faceDesc);
 
 		static void AddFace(SubChunkMesh& mesh,
 							const FaceBuildDesc& f,
-							const BlockState& block,
 							const FaceTexture& faceTexture,
-							const TextureAtlas::AtlasEntry& uv,
-							BlockState::RotationType rotationType);
+							const TextureAtlas::AtlasEntry& uv);
 
 		PointsAndOcclusion GetPointsAndOcclusion(
 			const BlockTextures& blockTextures, SubChunkMesh* mesh, const int lx, const int wy, const int lz);

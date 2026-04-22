@@ -41,7 +41,7 @@ namespace onion::voxel
 
 		// ----- Private Members -----
 	  private:
-		static inline const std::string s_CurrentVersion = "1.0";
+		static inline const std::string s_CurrentVersion = "1.1";
 
 		const std::filesystem::path m_SaveDirectory;
 

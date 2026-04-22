@@ -322,6 +322,12 @@ namespace onion::voxel
 		return m_SingleplayerPlayerUUID;
 	}
 
+	void WorldManager::SetVariantCounts(std::unordered_map<BlockId, uint8_t> variantCounts)
+	{
+		if (m_WorldGenerator)
+			m_WorldGenerator->SetVariantCounts(std::move(variantCounts));
+	}
+
 	void WorldManager::SubscribeToInternalEvents()
 	{
 		m_InternalEventHandles.push_back(EvtPlayerChangedChunk.Subscribe([this](const PlayerChangedChunkEventArgs& args)

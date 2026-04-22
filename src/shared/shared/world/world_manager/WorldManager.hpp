@@ -102,6 +102,9 @@ namespace onion::voxel
 		void SetSingleplayerPlayerUUID(const std::string& playerUUID);
 		std::string GetSingleplayerPlayerUUID() const;
 
+		// Supply per-block variant counts to the world generator (called from client after BlockRegistry is initialized).
+		void SetVariantCounts(std::unordered_map<BlockId, uint8_t> variantCounts);
+
 		// ----- Events -----
 	  public:
 		Event<std::shared_ptr<Chunk>> EvtChunkAdded;

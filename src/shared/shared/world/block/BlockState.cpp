@@ -46,17 +46,6 @@ namespace onion::voxel
 		return table;
 	}();
 
-	const std::vector<BlockState::RotationType> BlockState::s_RotationTypeLookupTable = []()
-	{
-		std::vector<RotationType> table(static_cast<size_t>(BlockIds::GetBlockIdCount()), RotationType::None);
-		//table[static_cast<size_t>(BlockId::Furnace)] = RotationType::Horizontal;
-		table[static_cast<size_t>(BlockId::OakLog)] = RotationType::Pillar;
-		table[static_cast<size_t>(BlockId::BirchLog)] = RotationType::Pillar;
-		table[static_cast<size_t>(BlockId::SpruceLog)] = RotationType::Pillar;
-		table[static_cast<size_t>(BlockId::Sandstone)] = RotationType::Horizontal;
-		return table;
-	}();
-
 	const std::vector<bool> BlockState::s_SolidLookupTable = []()
 	{
 		std::vector<bool> table(static_cast<size_t>(BlockIds::GetBlockIdCount()), true);
@@ -82,15 +71,9 @@ namespace onion::voxel
 													  BlockId::WhiteTulip,
 													  BlockId::PinkTulip};
 
-	// ----- Constructor / Destructor -----
-
-	BlockState::BlockState(BlockId blockID, Orientation facing, Orientation top) : ID(blockID), Facing(facing), Top(top)
-	{
-	}
-
 	bool BlockState::operator==(const BlockState& other) const
 	{
-		return ID == other.ID && Facing == other.Facing && Top == other.Top;
+		return ID == other.ID && VariantIndex == other.VariantIndex;
 	}
 
 	bool BlockState::operator!=(const BlockState& other) const
@@ -113,8 +96,4 @@ namespace onion::voxel
 		return s_SolidLookupTable[static_cast<size_t>(blockID)];
 	}
 
-	BlockState::RotationType BlockState::GetRotationType(BlockId blockID)
-	{
-		return s_RotationTypeLookupTable[static_cast<size_t>(blockID)];
-	}
 } // namespace onion::voxel

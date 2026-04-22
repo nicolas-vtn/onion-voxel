@@ -211,59 +211,9 @@ namespace onion::voxel
 		return genChunk;
 	}
 
-	struct OrientationPair
+	void WorldGenerator::SetVariantCounts(std::unordered_map<BlockId, uint8_t> variantCounts)
 	{
-		BlockState::Orientation facing;
-		BlockState::Orientation top;
-	};
-
-	static std::vector<OrientationPair> GetOrientationPairs(BlockId id)
-	{
-		using O = BlockState::Orientation;
-
-		std::vector<OrientationPair> pairs;
-		pairs.reserve(6);
-
-		switch (BlockState::GetRotationType(id))
-		{
-			case BlockState::RotationType::None:
-				{
-					pairs.push_back({O::None, O::None});
-					break;
-				}
-
-			case BlockState::RotationType::Facing:
-				{
-					pairs.push_back({O::North, O::Up});
-					pairs.push_back({O::South, O::Up});
-					pairs.push_back({O::East, O::Up});
-					pairs.push_back({O::West, O::Up});
-					break;
-				}
-
-			case BlockState::RotationType::Pillar:
-				{
-					pairs.push_back({O::Up, O::North});
-					pairs.push_back({O::Down, O::North});
-
-					pairs.push_back({O::North, O::Up});
-					pairs.push_back({O::South, O::Up});
-					pairs.push_back({O::East, O::Up});
-					pairs.push_back({O::West, O::Up});
-					break;
-				}
-
-			case BlockState::RotationType::Horizontal:
-				{
-					pairs.push_back({O::North, O::Up});
-					pairs.push_back({O::South, O::Up});
-					pairs.push_back({O::East, O::Up});
-					pairs.push_back({O::West, O::Up});
-					break;
-				}
-		}
-
-		return pairs;
+		m_VariantCounts = std::move(variantCounts);
 	}
 
 	WorldGenerator::GenChunk WorldGenerator::GenerateChunk_DemoBlocks(const glm::ivec2& chunkPosition)
@@ -272,54 +222,8 @@ namespace onion::voxel
 		genChunk.chunk = std::make_shared<Chunk>(chunkPosition);
 		auto& chunk = genChunk.chunk;
 
-		constexpr int spacing = 3; // 1 block + 1 air gap
+		constexpr int spacing = 3; // 1 block + 2 air gap
 		constexpr int start = 1;   // avoid borders
-
-		// ---- All orientations except None ----
-		std::vector<BlockState::Orientation> orientations = {BlockState::Orientation::Up,
-															 BlockState::Orientation::Down,
-															 BlockState::Orientation::North,
-															 BlockState::Orientation::South,
-															 BlockState::Orientation::East,
-															 BlockState::Orientation::West};
-
-		// ---- Build valid (Facing, Top) pairs ----
-
-		std::vector<OrientationPair> orientationPairs;
-
-		auto IsPerpendicular = [](BlockState::Orientation a, BlockState::Orientation b)
-		{
-			if (a == b)
-				return false;
-
-			auto opposite = [](BlockState::Orientation o)
-			{
-				switch (o)
-				{
-					case BlockState::Orientation::Up:
-						return BlockState::Orientation::Down;
-					case BlockState::Orientation::Down:
-						return BlockState::Orientation::Up;
-					case BlockState::Orientation::North:
-						return BlockState::Orientation::South;
-					case BlockState::Orientation::South:
-						return BlockState::Orientation::North;
-					case BlockState::Orientation::East:
-						return BlockState::Orientation::West;
-					case BlockState::Orientation::West:
-						return BlockState::Orientation::East;
-					default:
-						return BlockState::Orientation::None;
-				}
-			};
-
-			return opposite(a) != b;
-		};
-
-		for (auto facing : orientations)
-			for (auto top : orientations)
-				if (IsPerpendicular(facing, top))
-					orientationPairs.push_back({facing, top});
 
 		int x = start;
 		int z = start;
@@ -327,7 +231,6 @@ namespace onion::voxel
 
 		const int max = WorldConstants::CHUNK_SIZE - 1;
 
-		// ---- Iterate all blocks ----
 		const int blockIdCount = BlockIds::GetBlockIdCount();
 		for (int blockId = 0; blockId < blockIdCount; blockId++)
 		{
@@ -336,8 +239,13 @@ namespace onion::voxel
 			if (id == BlockId::Air)
 				continue;
 
-			auto pairs = GetOrientationPairs(id);
-			for (const auto& pair : pairs)
+			// How many variants does this block have?
+			uint8_t variantCount = 1;
+			auto it = m_VariantCounts.find(id);
+			if (it != m_VariantCounts.end())
+				variantCount = it->second;
+
+			for (uint8_t variantIndex = 0; variantIndex < variantCount; variantIndex++)
 			{
 				if (x >= max)
 				{
@@ -354,9 +262,8 @@ namespace onion::voxel
 				if (y >= 100)
 					return genChunk;
 
-				BlockState block{id};
-				block.Facing = pair.facing;
-				block.Top = pair.top;
+				BlockState block(id);
+				block.VariantIndex = variantIndex;
 
 				chunk->SetBlock({x, y, z}, block);
 
@@ -380,7 +287,7 @@ namespace onion::voxel
 		int y = 0;
 
 		// Bedrock layer
-		BlockState bedrock{BlockId::Bedrock};
+		BlockState bedrock(BlockId::Bedrock);
 		for (y = 0; y <= 0; y++)
 		{
 
@@ -394,7 +301,7 @@ namespace onion::voxel
 		}
 
 		// 3 Dirt layers
-		BlockState dirt{BlockId::Dirt};
+		BlockState dirt(BlockId::Dirt);
 		for (y = 1; y <= 3; y++)
 		{
 			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
@@ -407,7 +314,7 @@ namespace onion::voxel
 		}
 
 		// Grass layer
-		BlockState grass{BlockId::GrassBlock};
+		BlockState grass(BlockId::GrassBlock);
 		for (y = 4; y <= 4; y++)
 		{
 			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
@@ -685,7 +592,7 @@ namespace onion::voxel
 						if (y == 0)
 						{
 							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
+								(uint8_t) x, y, (uint8_t) z, BlockState(BlockId::Bedrock)); // Set bedrock at the bottom
 							continue;
 						}
 
@@ -697,7 +604,7 @@ namespace onion::voxel
 						if (y < height - numDirtLayers)
 						{
 							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockId::Stone); // Set stone below the dirt
+								(uint8_t) x, y, (uint8_t) z, BlockState(BlockId::Stone)); // Set stone below the dirt
 							continue;
 						}
 
@@ -705,14 +612,16 @@ namespace onion::voxel
 						if (y < height)
 						{
 							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockId::Dirt); // Set dirt below the top block
+								(uint8_t) x, y, (uint8_t) z, BlockState(BlockId::Dirt)); // Set dirt below the top block
 							continue;
 						}
 
 						if (y == height)
 						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, topBlockId); // Set the Top block (grass or snow grass)
+							chunk->SetBlock_Unsafe((uint8_t) x,
+												   y,
+												   (uint8_t) z,
+												   BlockState(topBlockId)); // Set the Top block (grass or snow grass)
 							continue;
 						}
 					}
@@ -725,25 +634,25 @@ namespace onion::voxel
 						if (y == 0)
 						{
 							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockId::Bedrock); // Set bedrock at the bottom
+								(uint8_t) x, y, (uint8_t) z, BlockState(BlockId::Bedrock)); // Set bedrock at the bottom
 						}
 						// Stone
 						else if (y < height - 3)
 						{
 							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockId::Stone); // Set stone at the bottom
+								(uint8_t) x, y, (uint8_t) z, BlockState(BlockId::Stone)); // Set stone at the bottom
 						}
 						// Gravel Or Sand
 						else if (y <= height)
 						{
 							// Deeper sea has gravel, shallower sea has sand
 							BlockId seaFloor = (height < m_SeaLevel - 8) ? BlockId::Gravel : BlockId::Sand;
-							chunk->SetBlock_Unsafe((uint8_t) x, y, (uint8_t) z, seaFloor);
+							chunk->SetBlock_Unsafe((uint8_t) x, y, (uint8_t) z, BlockState(seaFloor));
 						}
 						else if (y > height && y < m_SeaLevel)
 						{
 							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockId::Water); // Set water above the gravel
+								(uint8_t) x, y, (uint8_t) z, BlockState(BlockId::Water)); // Set water above the gravel
 						}
 					}
 				}
@@ -817,7 +726,7 @@ namespace onion::voxel
 
 				for (int y = 0; y < height; y++)
 				{
-					chunk->SetBlock(glm::ivec3(x, y, z), blockId);
+					chunk->SetBlock(glm::ivec3(x, y, z), BlockState(blockId));
 				}
 			}
 		}
@@ -1134,7 +1043,9 @@ namespace onion::voxel
 		static std::uniform_int_distribution<int> dist(1, 100);
 
 		// Creates the block palette for the tree
-		BlockState verticalLog = BlockState(logType, BlockState::Orientation::Up, BlockState::Orientation::North);
+		// axis=y is variant index 1 in all Minecraft log blockstates (axis=x=0, axis=y=1, axis=z=2)
+		BlockState verticalLog(logType);
+		verticalLog.VariantIndex = 1;
 		BlockState leaves = BlockState(leavesType);
 
 		// Generate the Logs

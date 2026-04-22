@@ -5,6 +5,7 @@
 #include <memory>
 #include <random>
 #include <thread>
+#include <unordered_map>
 #include <unordered_set>
 
 #include <onion/Event.hpp>
@@ -13,7 +14,6 @@
 #include <shared/world/World.hpp>
 #include <shared/world/chunk/Chunk.hpp>
 #include <shared/world/schematic/Schematic.hpp>
-//#include <shared/world/world_manager/WorldManager.hpp>
 
 #include "SeededRandom.hpp"
 
@@ -83,6 +83,10 @@ namespace onion::voxel
 		eWorldGenerationType GetWorldGenerationType() const;
 		void SetWorldGenerationType(eWorldGenerationType worldGenerationType);
 
+		// Supply per-block variant counts so DemoBlocks can display every variant.
+		// key = BlockId, value = number of registered variants (>= 1).
+		void SetVariantCounts(std::unordered_map<BlockId, uint8_t> variantCounts);
+
 		// ----- Helpers -----
 	  private:
 		static const std::unordered_map<std::string, eWorldGenerationType> s_StringToWorldGenerationType;
@@ -100,6 +104,10 @@ namespace onion::voxel
 	  private:
 		eWorldGenerationType m_WorldGenerationType = eWorldGenerationType::Superflat;
 		std::atomic_uint32_t m_Seed{1};
+
+		// Variant counts per BlockId — supplied by the client's BlockRegistry after initialization.
+		// Used by GenerateChunk_DemoBlocks to place one block per variant.
+		std::unordered_map<BlockId, uint8_t> m_VariantCounts;
 
 		// ----- Chunk Generation Thread -----
 	  private:

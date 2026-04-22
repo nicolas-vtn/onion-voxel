@@ -66,7 +66,6 @@ namespace onion::voxel
 	{
 		std::array<FaceTexture, (size_t) Face::Count> faces;
 		std::array<FaceTexture, (size_t) Face::Count> overlay;
-		BlockState::RotationType rotationType = BlockState::RotationType::None;
 		Model textureModel = Model::Block;
 	};
 
@@ -90,6 +89,10 @@ namespace onion::voxel
 
 		// Returns the number of registered variants for a block (at least 1 if the block exists)
 		size_t GetVariantCount(BlockId id) const;
+
+		// Returns a map of BlockId -> variant count for all registered blocks.
+		// Intended to be passed to WorldGenerator::SetVariantCounts() after initialization.
+		std::unordered_map<BlockId, uint8_t> GetAllVariantCounts() const;
 
 		// Given a set of blockstate properties (e.g. {"axis"->"x"}), return the
 		// matching variant index for this block. Returns 0 if no match is found.

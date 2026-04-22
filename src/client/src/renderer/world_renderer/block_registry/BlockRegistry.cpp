@@ -355,7 +355,6 @@ namespace onion::voxel
 								 Model textureModel)
 	{
 		BlockTextures tex;
-		tex.rotationType = BlockState::GetRotationType(id);
 		tex.textureModel = textureModel;
 
 		for (size_t i = 0; i < 6; i++)
@@ -450,6 +449,18 @@ namespace onion::voxel
 		if (it == m_Blocks.end())
 			return 0;
 		return it->second.size();
+	}
+
+	std::unordered_map<BlockId, uint8_t> BlockRegistry::GetAllVariantCounts() const
+	{
+		std::unordered_map<BlockId, uint8_t> result;
+		result.reserve(m_Blocks.size());
+		for (const auto& [id, variants] : m_Blocks)
+		{
+			const size_t count = variants.size();
+			result[id] = static_cast<uint8_t>(count > 255 ? 255 : count);
+		}
+		return result;
 	}
 
 	uint8_t BlockRegistry::ResolveVariantIndex(BlockId id, const std::map<std::string, std::string>& properties) const

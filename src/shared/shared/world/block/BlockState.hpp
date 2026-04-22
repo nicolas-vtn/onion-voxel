@@ -10,31 +10,10 @@ namespace onion::voxel
 {
 	class BlockState
 	{
-		// ----- Enums -----
-	  public:
-		enum class Orientation
-		{
-			None,
-			Up,
-			Down,
-			North,
-			South,
-			East,
-			West
-		};
-
-		enum class RotationType
-		{
-			None,		// Dirt, stone
-			Horizontal, // Furnace, chest
-			Pillar,		// Rotatable along X/Y/Z
-			Facing,		// Observers, pistons
-		};
-
 		// ----- Constructor / Destructor -----
 	  public:
 		BlockState() = default;
-		BlockState(BlockId blockID, Orientation facing = Orientation::None, Orientation top = Orientation::None);
+		explicit BlockState(BlockId blockID) : ID(blockID) {}
 		~BlockState() = default;
 
 		// ----- Operators -----
@@ -44,9 +23,7 @@ namespace onion::voxel
 
 		// ----- Members -----
 	  public:
-		BlockId ID = BlockId::Air; // The block ID (type) of this block
-		Orientation Facing = Orientation::None;
-		Orientation Top = Orientation::None;
+		BlockId ID = BlockId::Air;
 
 		// Index into BlockRegistry's per-block variant list.
 		// 0 = default / first variant. Resolved at block placement or chunk load.
@@ -57,15 +34,11 @@ namespace onion::voxel
 		static bool IsOpaque(BlockId blockID);
 		static bool IsTransparent(BlockId blockID);
 		static bool IsSolid(BlockId blockID);
-		static RotationType GetRotationType(BlockId blockID);
 
 		// ----- Static Members -----
 	  private:
 		// A lookup table for block transparency, indexed by BlockId
 		static const std::vector<bool> s_TransparencyLookupTable;
-
-		// A lookup table for block rotation types, indexed by BlockId
-		static const std::vector<RotationType> s_RotationTypeLookupTable;
 
 		// A lookup table for block solidity, indexed by BlockId
 		static const std::vector<bool> s_SolidLookupTable;

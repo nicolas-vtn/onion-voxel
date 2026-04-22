@@ -55,6 +55,9 @@ namespace onion::voxel
 		uint64_t GetVertexCount() const;
 		uint64_t GetChunkMeshesCount() const;
 
+		// Returns per-block variant counts from the block registry (after Initialize()).
+		std::unordered_map<BlockId, uint8_t> GetAllVariantCounts() const;
+
 		// ----- States -----
 	  private:
 		bool m_RenderChunkBorders{false};
