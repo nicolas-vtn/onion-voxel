@@ -14,14 +14,14 @@ namespace onion::voxel
 			return value;
 		}
 
-		glm::vec3 ParseVec3(const nlohmann::json& j)
+		void ParseVec3(const nlohmann::json& j, glm::vec3& vec)
 		{
-			return {j[0].get<float>(), j[1].get<float>(), j[2].get<float>()};
+			vec = {j[0].get<float>(), j[1].get<float>(), j[2].get<float>()};
 		}
 
-		std::array<float, 4> ParseVec4(const nlohmann::json& j)
+		void ParseVec4(const nlohmann::json& j, std::array<float, 4>& vec)
 		{
-			return {j[0].get<float>(), j[1].get<float>(), j[2].get<float>(), j[3].get<float>()};
+			vec = {j[0].get<float>(), j[1].get<float>(), j[2].get<float>(), j[3].get<float>()};
 		}
 
 		void ParseTextures(const nlohmann::json& texturesJson, BlockModel::Textures& textures)
@@ -33,12 +33,10 @@ namespace onion::voxel
 			}
 		}
 
-		static BlockModel::Face ParseFace(const nlohmann::json& faceJson)
+		static void ParseFace(const nlohmann::json& faceJson, BlockModel::Face& face)
 		{
-			BlockModel::Face face;
-
 			if (faceJson.contains("uv"))
-				face.UV = ParseVec4(faceJson.at("uv"));
+				ParseVec4(faceJson.at("uv"), face.UV);
 
 			if (faceJson.contains("texture"))
 				face.Texture = faceJson.at("texture").get<std::string>();
@@ -51,8 +49,18 @@ namespace onion::voxel
 
 			if (faceJson.contains("rotation"))
 				face.Rotation = faceJson.at("rotation").get<float>();
+		}
 
-			return face;
+		static void ParseElementRotation(const nlohmann::json& rotationJson, BlockModel::ElementRotation& rotation)
+		{
+			if (rotationJson.contains("origin"))
+				ParseVec3(rotationJson.at("origin"), rotation.Origin);
+
+			if (rotationJson.contains("axis"))
+				rotation.Axis = rotationJson.at("axis").get<std::string>();
+
+			if (rotationJson.contains("angle"))
+				rotation.Angle = rotationJson.at("angle").get<float>();
 		}
 
 		static void ParseElements(const nlohmann::json& elementsJson, std::vector<BlockModel::Element>& elements)
@@ -62,16 +70,19 @@ namespace onion::voxel
 				BlockModel::Element elem;
 
 				if (elemJson.contains("from"))
-					elem.From = ParseVec3(elemJson.at("from"));
+					ParseVec3(elemJson.at("from"), elem.From);
 
 				if (elemJson.contains("to"))
-					elem.To = ParseVec3(elemJson.at("to"));
+					ParseVec3(elemJson.at("to"), elem.To);
+
+				if (elemJson.contains("rotation"))
+					ParseElementRotation(elemJson.at("rotation"), elem.Rotation);
 
 				if (elemJson.contains("faces"))
 				{
 					for (auto& [faceName, faceJson] : elemJson.at("faces").items())
 					{
-						elem.Faces[faceName] = ParseFace(faceJson);
+						ParseFace(faceJson, elem.Faces[faceName]);
 					}
 				}
 

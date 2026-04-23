@@ -29,10 +29,18 @@ namespace onion::voxel
 			std::optional<float> Rotation;
 		};
 
+		struct ElementRotation
+		{
+			glm::vec3 Origin{0, 0, 0};
+			std::string Axis; // "x", "y", or "z"
+			float Angle{0.0f};
+		};
+
 		struct Element
 		{
 			glm::vec3 From{0, 0, 0};
 			glm::vec3 To{0, 0, 0};
+			ElementRotation Rotation;
 
 			std::unordered_map<std::string, Face> Faces;
 			// keys: "north", "south", etc.

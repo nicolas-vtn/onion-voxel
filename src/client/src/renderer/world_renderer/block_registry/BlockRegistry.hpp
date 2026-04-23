@@ -13,6 +13,7 @@
 #include <renderer/texture_atlas/TextureAtlas.hpp>
 
 #include <shared/world/block/Block.hpp>
+#include <shared/world/block/BlockModel.hpp>
 #include <shared/world/block/BlockstateRegistry.hpp>
 
 namespace onion::voxel
@@ -53,6 +54,7 @@ namespace onion::voxel
 		glm::vec3 to = {16, 16, 16};
 		std::array<float, 4> uv = {0, 0, 16, 16}; // per-face UV override [u1,v1,u2,v2] in MC units (0-16)
 		int uvRotation = 0;                         // per-face UV rotation in degrees (0, 90, 180, 270)
+		BlockModel::ElementRotation elemRotation;   // element-level 3D rotation (axis/angle/origin)
 	};
 
 	struct BlockTextures

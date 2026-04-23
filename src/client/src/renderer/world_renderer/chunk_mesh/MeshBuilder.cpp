@@ -2,6 +2,7 @@
 
 #include <numeric>
 
+#include <glm/gtc/matrix_transform.hpp>
 #include <shared/utils/Stopwatch.hpp>
 
 namespace onion::voxel
@@ -222,8 +223,8 @@ namespace onion::voxel
 									continue;
 								}
 
-								PointsAndOcclusion pao = GetPointsAndOcclusionForBlock(
-									mesh.get(), x, wy, z, faceTexture.from, faceTexture.to);
+							PointsAndOcclusion pao = GetPointsAndOcclusionForBlock(
+								mesh.get(), x, wy, z, faceTexture.from, faceTexture.to, faceTexture.elemRotation);
 
 								std::vector<FaceBuildDesc> faceDescs = GetBlockFaceBuildDescs(pao);
 								// Only emit the descriptor matching this face index, and only
@@ -748,7 +749,8 @@ namespace onion::voxel
 	}
 
 	MeshBuilder::PointsAndOcclusion MeshBuilder::GetPointsAndOcclusionForBlock(
-		SubChunkMesh* mesh, const int lx, const int wy, const int lz, const glm::vec3& from, const glm::vec3& to)
+		SubChunkMesh* mesh, const int lx, const int wy, const int lz, const glm::vec3& from, const glm::vec3& to,
+		const BlockModel::ElementRotation& rotation)
 	{
 		PointsAndOcclusion result;
 
@@ -772,6 +774,36 @@ namespace onion::voxel
 		result.p101 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofny, lz * subBlockSize + ofpz);
 		result.p110 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofpy, lz * subBlockSize + ofnz);
 		result.p111 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofpy, lz * subBlockSize + ofpz);
+
+		// Apply element rotation if present
+		if (rotation.Angle != 0.0f && !rotation.Axis.empty())
+		{
+			// Convert origin from MC units (0-16) to sub-block units, relative to this block's world position
+			glm::vec3 origin(
+				lx * subBlockSize + rotation.Origin.x * 2.0f,
+				wy * subBlockSize + rotation.Origin.y * 2.0f,
+				lz * subBlockSize + rotation.Origin.z * 2.0f);
+
+			glm::vec3 axis(0.0f);
+			if (rotation.Axis == "x")      axis = {1, 0, 0};
+			else if (rotation.Axis == "y") axis = {0, 1, 0};
+			else if (rotation.Axis == "z") axis = {0, 0, 1};
+
+			float radians = glm::radians(rotation.Angle);
+			glm::mat4 rot = glm::rotate(glm::mat4(1.0f), radians, axis);
+
+			auto rotatePoint = [&](glm::vec3& p)
+			{
+				glm::vec3 local = p - origin;
+				local = glm::vec3(rot * glm::vec4(local, 0.0f));
+				p = local + origin;
+			};
+
+			rotatePoint(result.p000); rotatePoint(result.p001);
+			rotatePoint(result.p010); rotatePoint(result.p011);
+			rotatePoint(result.p100); rotatePoint(result.p101);
+			rotatePoint(result.p110); rotatePoint(result.p111);
+		}
 
 		constexpr int SIZE = WorldConstants::CHUNK_SIZE;
 		const int ly = wy % SIZE;
