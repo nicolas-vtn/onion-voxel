@@ -226,12 +226,27 @@ namespace onion::voxel
 									mesh.get(), x, wy, z, faceTexture.from, faceTexture.to);
 
 								std::vector<FaceBuildDesc> faceDescs = GetBlockFaceBuildDescs(pao);
-								// Only emit the descriptor matching this face index
+								// Only emit the descriptor matching this face index, and only
+								// draw the specific face entry [i] that owns this pao — not all
+								// entries sharing the same face direction (which would mix UVs
+								// from different elements onto the wrong geometry).
 								for (const auto& f : faceDescs)
 								{
 									if ((int) f.face != faceIdx)
 										continue;
-									BuildFace(*m_TextureAtlas, *mesh, blockTextures, f);
+
+									// Normal pass: this entry only
+									auto atlasEntry = m_TextureAtlas->GetAtlasEntry(faceTexture.texture);
+									AddFace(*mesh, f, faceTexture, atlasEntry);
+
+									// Overlay pass: all overlay entries for this face direction
+									for (const auto& overlayTex : blockTextures.overlay)
+									{
+										if (overlayTex.face != faceTexture.face)
+											continue;
+										auto overlayAtlas = m_TextureAtlas->GetAtlasEntry(overlayTex.texture);
+										AddFace(*mesh, f, overlayTex, overlayAtlas);
+									}
 								}
 							}
 						}

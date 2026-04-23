@@ -16,7 +16,9 @@
 - Particules (breaking blocks, footsteps, ...)
 - First person view : Arm and selected block. (+ Movement on walking, placing and breaking)
 - Use Block Model for collision instead of full block.
-
+- Support model face culling
+- Support decimal "from" / "to" in Models
+- Add new blocks to "BlockState.cpp" (transparent / solid / flower)
 
 		----- KNOWN ISSUES -----
 - Z-Ordering issue in GUI (Fix TextField Background drawn in wrong order to bypass this issue )
@@ -24,6 +26,3 @@
 - Random crashes when loading worlds (probably due to server port)
 - For ViewFrustum culling : use the real height of the chunk instead of a 256 height hard coded (BAD !) ...
 - BlockStateJson fallback on default resourcepack if invalid BlockStateJson read from current resourcepack
-- Add new blocks to "BlockState.cpp" (transparent / solid / flower)
-- Fix Model uv and from / to usage. from / to defines the position where the textude should be drawn, and uv defines what part of the texture should be drawn.
-- Support model face culling
