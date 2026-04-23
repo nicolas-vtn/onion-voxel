@@ -7,6 +7,8 @@
 #include <string>
 #include <unordered_map>
 
+#include <glm/glm.hpp>
+
 #include <shared/zip_archive/ZipArchive.hpp>
 
 namespace onion::voxel
@@ -28,8 +30,8 @@ namespace onion::voxel
 
 		struct Element
 		{
-			std::array<float, 3> From{0, 0, 0};
-			std::array<float, 3> To{0, 0, 0};
+			glm::vec3 From{0, 0, 0};
+			glm::vec3 To{0, 0, 0};
 
 			std::unordered_map<std::string, Face> Faces;
 			// keys: "north", "south", etc.

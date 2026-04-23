@@ -14,18 +14,9 @@ namespace onion::voxel
 			return value;
 		}
 
-		std::array<float, 3> ParseVec3(const nlohmann::json& j)
+		glm::vec3 ParseVec3(const nlohmann::json& j)
 		{
-			float x = j[0].get<float>();
-			float y = j[1].get<float>();
-			float z = j[2].get<float>();
-
-			// Clamp values to [0, 16] range
-			x = std::clamp(x, 0.0f, 16.0f);
-			y = std::clamp(y, 0.0f, 16.0f);
-			z = std::clamp(z, 0.0f, 16.0f);
-
-			return {x, y, z};
+			return {j[0].get<float>(), j[1].get<float>(), j[2].get<float>()};
 		}
 
 		std::array<float, 4> ParseVec4(const nlohmann::json& j)

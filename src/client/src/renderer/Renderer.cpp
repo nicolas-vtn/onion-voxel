@@ -1121,6 +1121,8 @@ namespace onion::voxel
 			m_WorldManager->RemoveAllChunks();
 			m_WorldRenderer.DeleteChunkMeshes();
 
+			m_HitBlock = Block(); // Reset HitBlock
+
 			m_Gui.SetIsInGame(false);
 
 			m_IsPaused = false;
@@ -1273,8 +1275,21 @@ namespace onion::voxel
 		// Render Raycasted block highlight
 		if (m_HitBlock.ID() != BlockId::Air)
 		{
-			DebugDraws::DrawBlockOutline(m_HitBlock.Position, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);
+			//DebugDraws::DrawBlockOutline(m_HitBlock.Position, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);
 			//DebugDraws::DrawBlockOutline(prevBlockPos, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 3, true);
+
+			const auto& blockId = m_HitBlock.ID();
+			const auto& blockModels = BlockstateRegistry::Get();
+			const auto& variantModels = blockModels.at(blockId);
+			const VariantModel& variantModel = variantModels.at(m_HitBlock.State.VariantIndex);
+
+			for (const auto& element : variantModel.Model.Elements)
+			{
+				const glm::vec3 worldFrom = glm::vec3(m_HitBlock.Position) + (element.From / 16.f);
+				const glm::vec3 worldTo = glm::vec3(m_HitBlock.Position) + (element.To / 16.f);
+
+				DebugDraws::DrawWorldBoxMinMax(worldFrom, worldTo, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 2, true);
+			}
 		}
 
 		// Update and render the world and entities only when in the InGame state
