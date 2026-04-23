@@ -1,5 +1,5 @@
 #version 330 core
-layout (location = 0) in uvec3 aPos;
+layout (location = 0) in ivec3 aPos;
 layout (location = 1) in vec2 aTexCoord;
 layout (location = 2) in uint aFacing;
 layout (location = 3) in uint aOcclusion;
@@ -24,7 +24,7 @@ void main()
 
     vec3 offsetChunk = vec3(u_ChunkOffset.x, 0, u_ChunkOffset.y);
     vec3 totalOffset = offsetChunk - u_CameraPosition;
-    vec3 pos = vec3(aPos.x / 16.0, aPos.y / 16.0, aPos.z / 16.0) + totalOffset;
+    vec3 pos = vec3(aPos.x / 32.0, aPos.y / 32.0, aPos.z / 32.0) + totalOffset;
     gl_Position = u_ViewProjMatrix * vec4(pos, 1.0);
 
      // --- World position ---

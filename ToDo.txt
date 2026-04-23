@@ -19,6 +19,7 @@
 - Support model face culling
 - Support decimal "from" / "to" in Models
 - Add new blocks to "BlockState.cpp" (transparent / solid / flower)
+- Add Support for Model Json Parsing "rotation" (ex : "  "rotation": {"angle": 45, "axis": "y", "origin": [9, 6, 7]},  ")
 
 		----- KNOWN ISSUES -----
 - Z-Ordering issue in GUI (Fix TextField Background drawn in wrong order to bypass this issue )

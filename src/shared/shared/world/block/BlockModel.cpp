@@ -14,14 +14,14 @@ namespace onion::voxel
 			return value;
 		}
 
-		std::array<uint8_t, 3> ParseiVec3(const nlohmann::json& j)
+		std::array<float, 3> ParseiVec3(const nlohmann::json& j)
 		{
-			return {j[0].get<uint8_t>(), j[1].get<uint8_t>(), j[2].get<uint8_t>()};
+			return {j[0].get<float>(), j[1].get<float>(), j[2].get<float>()};
 		}
 
-		std::array<uint8_t, 4> ParseiVec4(const nlohmann::json& j)
+		std::array<float, 4> ParseiVec4(const nlohmann::json& j)
 		{
-			return {j[0].get<uint8_t>(), j[1].get<uint8_t>(), j[2].get<uint8_t>(), j[3].get<uint8_t>()};
+			return {j[0].get<float>(), j[1].get<float>(), j[2].get<float>(), j[3].get<float>()};
 		}
 
 		void ParseTextures(const nlohmann::json& texturesJson, BlockModel::Textures& textures)

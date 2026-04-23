@@ -173,7 +173,7 @@ namespace onion::voxel
 
 			// vertex attrib
 			glEnableVertexAttribArray(0); // Position x y z
-			glVertexAttribIPointer(0, 3, GL_UNSIGNED_SHORT, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glVertexAttribIPointer(0, 3, GL_SHORT, sizeof(Vertex), (void*) offsetof(Vertex, x));
 
 			glEnableVertexAttribArray(1); // Texture
 			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
@@ -211,7 +211,7 @@ namespace onion::voxel
 
 			// vertex attrib
 			glEnableVertexAttribArray(0); // Position x y z
-			glVertexAttribIPointer(0, 3, GL_UNSIGNED_SHORT, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glVertexAttribIPointer(0, 3, GL_SHORT, sizeof(Vertex), (void*) offsetof(Vertex, x));
 
 			glEnableVertexAttribArray(1); // Texture
 			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));
@@ -251,7 +251,7 @@ namespace onion::voxel
 
 			// vertex attrib
 			glEnableVertexAttribArray(0); // Position x y z
-			glVertexAttribIPointer(0, 3, GL_UNSIGNED_SHORT, sizeof(Vertex), (void*) offsetof(Vertex, x));
+			glVertexAttribIPointer(0, 3, GL_SHORT, sizeof(Vertex), (void*) offsetof(Vertex, x));
 
 			glEnableVertexAttribArray(1); // Texture
 			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texX));

@@ -633,7 +633,7 @@ namespace onion::voxel
 		// Determine the [s0,t0,s1,t1] sub-region within the atlas tile (0..1 range).
 		// Priority: explicit per-face UV override wins; fall back to from/to-derived UVs.
 
-		constexpr std::array<uint8_t, 4> kDefaultUV{0, 0, 16, 16};
+		constexpr std::array<float, 4> kDefaultUV{0, 0, 16, 16};
 		float s0, t0, s1, t1;
 
 		if (faceTexture.uv != kDefaultUV)
@@ -729,13 +729,13 @@ namespace onion::voxel
 		// ------ VERTEX CREATION ------
 		uint32_t startIndex = static_cast<uint32_t>(vertices->size());
 
-		auto makeVertex = [&](const glm::ivec3& p, const glm::vec2& uv, uint8_t occlusion)
+		auto makeVertex = [&](const glm::vec3& p, const glm::vec2& uv, uint8_t occlusion)
 		{
 			SubChunkMesh::Vertex vert;
 
-			vert.x = static_cast<uint16_t>(p.x);
-			vert.y = static_cast<uint16_t>(p.y);
-			vert.z = static_cast<uint16_t>(p.z);
+			vert.x = static_cast<int16_t>(std::round(p.x));
+			vert.y = static_cast<int16_t>(std::round(p.y));
+			vert.z = static_cast<int16_t>(std::round(p.z));
 
 			vert.texX = uv.x;
 			vert.texY = uv.y;
@@ -795,20 +795,20 @@ namespace onion::voxel
 	}
 
 	MeshBuilder::PointsAndOcclusion MeshBuilder::GetPointsAndOcclusionForBlock(
-		SubChunkMesh* mesh, const int lx, const int wy, const int lz, const glm::u8vec3& from, const glm::u8vec3& to)
+		SubChunkMesh* mesh, const int lx, const int wy, const int lz, const glm::vec3& from, const glm::vec3& to)
 	{
 		PointsAndOcclusion result;
 
-		constexpr uint16_t subBlockSize = 16; // Assuming a sub-block is 16 units in size
+		constexpr int subBlockSize = 32; // 2 sub-units per MC unit; supports 0.5-step precision and negative offsets
 
-		uint16_t ofnx = from.x;
-		uint16_t ofpx = to.x;
+		float ofnx = from.x * 2.0f;
+		float ofpx = to.x   * 2.0f;
 
-		uint16_t ofny = from.y;
-		uint16_t ofpy = to.y;
+		float ofny = from.y * 2.0f;
+		float ofpy = to.y   * 2.0f;
 
-		uint16_t ofnz = from.z;
-		uint16_t ofpz = to.z;
+		float ofnz = from.z * 2.0f;
+		float ofpz = to.z   * 2.0f;
 
 		result.p000 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofnz);
 		result.p001 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofpz);
@@ -851,16 +851,16 @@ namespace onion::voxel
 	{
 		(void) mesh; // Cross model does not use occlusion values
 
-		constexpr uint16_t subBlockSize = 16; // Assuming a sub-block is 16 units in size
+		constexpr int subBlockSize = 32; // 2 sub-units per MC unit
 
-		uint16_t ofnx = 0 * 16;
-		uint16_t ofpx = 1 * 16;
+		int ofnx = 0;
+		int ofpx = 32;
 
-		uint16_t ofny = 0 * 16;
-		uint16_t ofpy = 1 * 16;
+		int ofny = 0;
+		int ofpy = 32;
 
-		uint16_t ofnz = 0 * 16;
-		uint16_t ofpz = 1 * 16;
+		int ofnz = 0;
+		int ofpz = 32;
 
 		PointsAndOcclusion result;
 		result.p000 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofnz);

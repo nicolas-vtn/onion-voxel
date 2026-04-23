@@ -62,23 +62,23 @@ namespace
 
 	// Rotate a point 90° CW around center 8 on the X axis (looking from +X).
 	// Cycle: Up → South → Down → North → Up
-	static glm::u8vec3 RotateX90(glm::u8vec3 p)
+	static glm::vec3 RotateX90(glm::vec3 p)
 	{
-		int y = p.y - 8;
-		int z = p.z - 8;
-		return {p.x, static_cast<uint8_t>(z + 8), static_cast<uint8_t>(-y + 8)};
+		float y = p.y - 8;
+		float z = p.z - 8;
+		return {p.x, z + 8, -y + 8};
 	}
 
 	// Rotate a point 90° CW around center 8 on the Y axis (looking down).
 	// Cycle: North(-Z) → East(+X) → South(+Z) → West(-X) → North
-	static glm::u8vec3 RotateY90(glm::u8vec3 p)
+	static glm::vec3 RotateY90(glm::vec3 p)
 	{
-		int x = p.x - 8;
-		int z = p.z - 8;
-		return {static_cast<uint8_t>(-z + 8), p.y, static_cast<uint8_t>(x + 8)};
+		float x = p.x - 8;
+		float z = p.z - 8;
+		return {-z + 8, p.y, x + 8};
 	}
 
-	static glm::u8vec3 RotatePoint(glm::u8vec3 p, int steps, bool aroundY)
+	static glm::vec3 RotatePoint(glm::vec3 p, int steps, bool aroundY)
 	{
 		steps = ((steps % 4) + 4) % 4;
 		for (int i = 0; i < steps; i++)
@@ -133,8 +133,8 @@ namespace
 
 		for (auto& elem : model.Elements)
 		{
-			glm::u8vec3 from(elem.From[0], elem.From[1], elem.From[2]);
-			glm::u8vec3 to(elem.To[0], elem.To[1], elem.To[2]);
+			glm::vec3 from(elem.From[0], elem.From[1], elem.From[2]);
+			glm::vec3 to(elem.To[0], elem.To[1], elem.To[2]);
 
 			// Apply X rotation first, then Y
 			from = RotatePoint(from, stepsX, false);
@@ -143,12 +143,8 @@ namespace
 			to = RotatePoint(to, stepsY, true);
 
 			// Re-normalise min/max after rotation
-			elem.From = {static_cast<uint8_t>(std::min(from.x, to.x)),
-						 static_cast<uint8_t>(std::min(from.y, to.y)),
-						 static_cast<uint8_t>(std::min(from.z, to.z))};
-			elem.To = {static_cast<uint8_t>(std::max(from.x, to.x)),
-					   static_cast<uint8_t>(std::max(from.y, to.y)),
-					   static_cast<uint8_t>(std::max(from.z, to.z))};
+			elem.From = {std::min(from.x, to.x), std::min(from.y, to.y), std::min(from.z, to.z)};
+			elem.To   = {std::max(from.x, to.x), std::max(from.y, to.y), std::max(from.z, to.z)};
 
 			// Remap face direction keys
 			std::unordered_map<std::string, onion::voxel::BlockModel::Face> rotatedFaces;

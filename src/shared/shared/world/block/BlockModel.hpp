@@ -20,7 +20,7 @@ namespace onion::voxel
 
 		struct Face
 		{
-			std::array<uint8_t, 4> UV{0, 0, 16, 16};
+			std::array<float, 4> UV{0, 0, 16, 16};
 			std::string Texture; // "#side" or resolved later
 			std::optional<std::string> CullFace;
 			std::optional<int> TintIndex;
@@ -28,8 +28,8 @@ namespace onion::voxel
 
 		struct Element
 		{
-			std::array<uint8_t, 3> From{0, 0, 0};
-			std::array<uint8_t, 3> To{0, 0, 0};
+			std::array<float, 3> From{0, 0, 0};
+			std::array<float, 3> To{0, 0, 0};
 
 			std::unordered_map<std::string, Face> Faces;
 			// keys: "north", "south", etc.

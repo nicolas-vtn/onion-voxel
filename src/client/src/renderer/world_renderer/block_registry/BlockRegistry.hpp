@@ -48,9 +48,9 @@ namespace onion::voxel
 		Face face = Face::Bottom;
 		Tint tintType = Tint::None;
 		Transparency textureType = Transparency::Opaque;
-		glm::u8vec3 from = {0, 0, 0};				// element start corner in MC units (0-16)
-		glm::u8vec3 to = {16, 16, 16};				// element end corner in MC units (0-16)
-		std::array<uint8_t, 4> uv = {0, 0, 16, 16}; // per-face UV override [u1,v1,u2,v2] in MC units (0-16)
+		glm::vec3 from = {0, 0, 0};	 // element start corner in MC units (0-16, may be fractional or negative)
+		glm::vec3 to = {16, 16, 16}; // element end corner in MC units
+		std::array<float, 4> uv = {0, 0, 16, 16}; // per-face UV override [u1,v1,u2,v2] in MC units (0-16)
 	};
 
 	struct TextureInfo
@@ -58,9 +58,9 @@ namespace onion::voxel
 		std::string name;
 		Face face;
 		Tint tintType = Tint::None;
-		glm::u8vec3 from = {0, 0, 0};
-		glm::u8vec3 to = {16, 16, 16};
-		std::array<uint8_t, 4> uv = {0, 0, 16, 16}; // per-face UV override [u1,v1,u2,v2] in MC units (0-16)
+		glm::vec3 from = {0, 0, 0};
+		glm::vec3 to = {16, 16, 16};
+		std::array<float, 4> uv = {0, 0, 16, 16}; // per-face UV override [u1,v1,u2,v2] in MC units (0-16)
 	};
 
 	struct BlockTextures

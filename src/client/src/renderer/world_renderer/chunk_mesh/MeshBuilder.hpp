@@ -109,8 +109,8 @@ namespace onion::voxel
 														 const int lx,
 														 const int wy,
 														 const int lz,
-														 const glm::u8vec3& from = {0, 0, 0},
-														 const glm::u8vec3& to = {16, 16, 16});
+														 const glm::vec3& from = {0, 0, 0},
+														 const glm::vec3& to = {16, 16, 16});
 		PointsAndOcclusion GetPointsAndOcclusionForCross(SubChunkMesh* mesh, const int lx, const int wy, const int lz);
 
 		std::vector<FaceBuildDesc> GetFaceBuildDescs(const BlockTextures& blockTextures, const PointsAndOcclusion& pao);
