@@ -223,8 +223,8 @@ namespace onion::voxel
 									continue;
 								}
 
-							PointsAndOcclusion pao = GetPointsAndOcclusionForBlock(
-								mesh.get(), x, wy, z, faceTexture.from, faceTexture.to, faceTexture.elemRotation);
+								PointsAndOcclusion pao = GetPointsAndOcclusionForBlock(
+									mesh.get(), x, wy, z, faceTexture.from, faceTexture.to, faceTexture.elemRotation);
 
 								std::vector<FaceBuildDesc> faceDescs = GetBlockFaceBuildDescs(pao);
 								// Only emit the descriptor matching this face index, and only
@@ -748,9 +748,14 @@ namespace onion::voxel
 		}
 	}
 
-	MeshBuilder::PointsAndOcclusion MeshBuilder::GetPointsAndOcclusionForBlock(
-		SubChunkMesh* mesh, const int lx, const int wy, const int lz, const glm::vec3& from, const glm::vec3& to,
-		const BlockModel::ElementRotation& rotation)
+	MeshBuilder::PointsAndOcclusion
+	MeshBuilder::GetPointsAndOcclusionForBlock(SubChunkMesh* mesh,
+											   const int lx,
+											   const int wy,
+											   const int lz,
+											   const glm::vec3& from,
+											   const glm::vec3& to,
+											   const BlockModel::ElementRotation& rotation)
 	{
 		PointsAndOcclusion result;
 
@@ -779,15 +784,17 @@ namespace onion::voxel
 		if (rotation.Angle != 0.0f && !rotation.Axis.empty())
 		{
 			// Convert origin from MC units (0-16) to sub-block units, relative to this block's world position
-			glm::vec3 origin(
-				lx * subBlockSize + rotation.Origin.x * 2.0f,
-				wy * subBlockSize + rotation.Origin.y * 2.0f,
-				lz * subBlockSize + rotation.Origin.z * 2.0f);
+			glm::vec3 origin(lx * subBlockSize + rotation.Origin.x * 2.0f,
+							 wy * subBlockSize + rotation.Origin.y * 2.0f,
+							 lz * subBlockSize + rotation.Origin.z * 2.0f);
 
 			glm::vec3 axis(0.0f);
-			if (rotation.Axis == "x")      axis = {1, 0, 0};
-			else if (rotation.Axis == "y") axis = {0, 1, 0};
-			else if (rotation.Axis == "z") axis = {0, 0, 1};
+			if (rotation.Axis == "x")
+				axis = {1, 0, 0};
+			else if (rotation.Axis == "y")
+				axis = {0, 1, 0};
+			else if (rotation.Axis == "z")
+				axis = {0, 0, 1};
 
 			float radians = glm::radians(rotation.Angle);
 			glm::mat4 rot = glm::rotate(glm::mat4(1.0f), radians, axis);
@@ -799,10 +806,14 @@ namespace onion::voxel
 				p = local + origin;
 			};
 
-			rotatePoint(result.p000); rotatePoint(result.p001);
-			rotatePoint(result.p010); rotatePoint(result.p011);
-			rotatePoint(result.p100); rotatePoint(result.p101);
-			rotatePoint(result.p110); rotatePoint(result.p111);
+			rotatePoint(result.p000);
+			rotatePoint(result.p001);
+			rotatePoint(result.p010);
+			rotatePoint(result.p011);
+			rotatePoint(result.p100);
+			rotatePoint(result.p101);
+			rotatePoint(result.p110);
+			rotatePoint(result.p111);
 		}
 
 		constexpr int SIZE = WorldConstants::CHUNK_SIZE;

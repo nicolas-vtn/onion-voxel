@@ -186,15 +186,13 @@ namespace
 					newName = RotateFaceY(newName, stepsY);
 
 				// If the face was NOT remapped by Y rotation (up/down), rotate its UV.
-				if (stepsY != 0 && newName == faceName &&
-					(faceName == "up" || faceName == "down"))
+				if (stepsY != 0 && newName == faceName && (faceName == "up" || faceName == "down"))
 				{
 					face.UV = RotateUVSteps(face.UV, stepsY);
 				}
 
 				// If the face was NOT remapped by X rotation (east/west), rotate its UV.
-				if (stepsX != 0 && newName == faceName &&
-					(faceName == "east" || faceName == "west"))
+				if (stepsX != 0 && newName == faceName && (faceName == "east" || faceName == "west"))
 				{
 					face.UV = RotateUVSteps(face.UV, stepsX);
 				}
