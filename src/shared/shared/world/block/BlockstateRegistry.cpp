@@ -94,11 +94,6 @@ namespace onion::voxel
 			const std::string blockName = ToBlockName(blockstateFile.filename().string());
 			BlockId blockId = BlockIds::GetId(blockName);
 
-			if (blockId == BlockId::Dirt)
-			{
-				int stop = 0;
-			}
-
 			const auto& variants = json.at("variants");
 
 			// ---- Iterate variants ----

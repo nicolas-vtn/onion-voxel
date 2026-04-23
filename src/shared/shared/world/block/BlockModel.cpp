@@ -14,12 +14,21 @@ namespace onion::voxel
 			return value;
 		}
 
-		std::array<float, 3> ParseiVec3(const nlohmann::json& j)
+		std::array<float, 3> ParseVec3(const nlohmann::json& j)
 		{
-			return {j[0].get<float>(), j[1].get<float>(), j[2].get<float>()};
+			float x = j[0].get<float>();
+			float y = j[1].get<float>();
+			float z = j[2].get<float>();
+
+			// Clamp values to [0, 16] range
+			x = std::clamp(x, 0.0f, 16.0f);
+			y = std::clamp(y, 0.0f, 16.0f);
+			z = std::clamp(z, 0.0f, 16.0f);
+
+			return {x, y, z};
 		}
 
-		std::array<float, 4> ParseiVec4(const nlohmann::json& j)
+		std::array<float, 4> ParseVec4(const nlohmann::json& j)
 		{
 			return {j[0].get<float>(), j[1].get<float>(), j[2].get<float>(), j[3].get<float>()};
 		}
@@ -38,7 +47,7 @@ namespace onion::voxel
 			BlockModel::Face face;
 
 			if (faceJson.contains("uv"))
-				face.UV = ParseiVec4(faceJson.at("uv"));
+				face.UV = ParseVec4(faceJson.at("uv"));
 
 			if (faceJson.contains("texture"))
 				face.Texture = faceJson.at("texture").get<std::string>();
@@ -59,10 +68,10 @@ namespace onion::voxel
 				BlockModel::Element elem;
 
 				if (elemJson.contains("from"))
-					elem.From = ParseiVec3(elemJson.at("from"));
+					elem.From = ParseVec3(elemJson.at("from"));
 
 				if (elemJson.contains("to"))
-					elem.To = ParseiVec3(elemJson.at("to"));
+					elem.To = ParseVec3(elemJson.at("to"));
 
 				if (elemJson.contains("faces"))
 				{
