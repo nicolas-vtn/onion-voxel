@@ -114,7 +114,7 @@ namespace onion::voxel
 		// ----- ImGui menu -----
 	  private:
 		void RenderDebugPanel();
-		bool m_UseFaceCulling{true};
+		bool m_UseFaceCulling = false;
 
 		// ----- Structs -----
 	  public:

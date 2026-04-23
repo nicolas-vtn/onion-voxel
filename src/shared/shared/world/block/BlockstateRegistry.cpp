@@ -91,20 +91,41 @@ namespace onion::voxel
 				continue;
 			}
 
+			const std::string blockName = ToBlockName(blockstateFile.filename().string());
+			BlockId blockId = BlockIds::GetId(blockName);
+
+			if (blockId == BlockId::Dirt)
+			{
+				int stop = 0;
+			}
+
 			const auto& variants = json.at("variants");
 
 			// ---- Iterate variants ----
-			for (auto it = variants.begin(); it != variants.end(); ++it)
+			for (auto it = variants.begin(); it != variants.end(); it++)
 			{
 				const std::string& variantKey = it.key();
 				const nlohmann::json& variantValue = it.value();
-				VariantModel variantModel = VariantModelFromJson(variantValue);
 
-				variantModel.Conditions = ParseConditions(variantKey);
+				auto conditions = ParseConditions(variantKey);
 
-				const std::string blockName = ToBlockName(blockstateFile.filename().string());
-				BlockId blockId = BlockIds::GetId(blockName);
-				blockstateMap[blockId].push_back(std::move(variantModel));
+				if (variantValue.is_object())
+				{
+					VariantModel variantModel = VariantModelFromJson(variantValue);
+					variantModel.Conditions = conditions;
+
+					blockstateMap[blockId].push_back(std::move(variantModel));
+				}
+				else if (variantValue.is_array())
+				{
+					for (const auto& entry : variantValue)
+					{
+						VariantModel variantModel = VariantModelFromJson(entry);
+						variantModel.Conditions = conditions;
+
+						blockstateMap[blockId].push_back(std::move(variantModel));
+					}
+				}
 			}
 		}
 

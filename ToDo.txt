@@ -26,4 +26,4 @@
 - BlockStateJson fallback on default resourcepack if invalid BlockStateJson read from current resourcepack
 - Add new blocks to "BlockState.cpp" (transparent / solid / flower)
 - Fix Model uv and from / to usage. from / to defines the position where the textude should be drawn, and uv defines what part of the texture should be drawn.
-- Implement Multi model faces. (Example a  Model with 2 "#west" faces.
+- Support model face culling

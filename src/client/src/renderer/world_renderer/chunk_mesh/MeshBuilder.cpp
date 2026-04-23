@@ -208,12 +208,14 @@ namespace onion::voxel
 						if (blockTextures.textureModel == Model::Block)
 						{
 							// Build each face individually using its own element geometry (from/to)
-							for (int faceIdx = 0; faceIdx < (int) Face::Count; faceIdx++)
+							for (size_t i = 0; i < blockTextures.faces.size(); i++)
 							{
+								const int& faceIdx = (int) blockTextures.faces[i].face;
+
 								if (!faceVisible[faceIdx])
 									continue;
 
-								const FaceTexture& faceTexture = blockTextures.faces[faceIdx];
+								const FaceTexture& faceTexture = blockTextures.faces[i];
 
 								if (faceTexture.texture == UINT16_MAX)
 								{
@@ -482,21 +484,26 @@ namespace onion::voxel
 								const BlockTextures& blockTextures,
 								const FaceBuildDesc& f)
 	{
-		// Face direction maps directly to texture slot — rotation is baked into geometry at load time
-		const FaceTexture& faceTex = blockTextures.faces[(size_t) f.face];
-
-		auto uv = textureAtlas.GetAtlasEntry(faceTex.texture);
-
-		AddFace(mesh, f, faceTex, uv);
-
-		// Overlay pass
-		const FaceTexture& overlay = blockTextures.overlay[(size_t) f.face];
-
-		if (overlay.texture != UINT16_MAX)
+		// ------ NORMAL PASS ---------
+		for (size_t i = 0; i < blockTextures.faces.size(); i++)
 		{
-			auto uvOverlay = textureAtlas.GetAtlasEntry(overlay.texture);
+			if (blockTextures.faces[i].face == f.face)
+			{
+				const FaceTexture& faceTex = blockTextures.faces[i];
+				auto uv = textureAtlas.GetAtlasEntry(faceTex.texture);
+				AddFace(mesh, f, faceTex, uv);
+			}
+		}
 
-			AddFace(mesh, f, overlay, uvOverlay);
+		// ------ OVERLAY PASS ---------
+		for (size_t i = 0; i < blockTextures.overlay.size(); i++)
+		{
+			if (blockTextures.overlay[i].face == f.face)
+			{
+				const FaceTexture& faceTex = blockTextures.overlay[i];
+				auto uv = textureAtlas.GetAtlasEntry(faceTex.texture);
+				AddFace(mesh, f, faceTex, uv);
+			}
 		}
 	}
 

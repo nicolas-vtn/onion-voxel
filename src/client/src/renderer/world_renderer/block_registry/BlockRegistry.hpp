@@ -45,6 +45,7 @@ namespace onion::voxel
 	struct FaceTexture
 	{
 		TextureAtlas::TextureID texture = UINT16_MAX;
+		Face face = Face::Bottom;
 		Tint tintType = Tint::None;
 		Transparency textureType = Transparency::Opaque;
 		glm::u8vec3 from = {0, 0, 0};				// element start corner in MC units (0-16)
@@ -55,6 +56,7 @@ namespace onion::voxel
 	struct TextureInfo
 	{
 		std::string name;
+		Face face;
 		Tint tintType = Tint::None;
 		glm::u8vec3 from = {0, 0, 0};
 		glm::u8vec3 to = {16, 16, 16};
@@ -63,8 +65,8 @@ namespace onion::voxel
 
 	struct BlockTextures
 	{
-		std::array<FaceTexture, (size_t) Face::Count> faces;
-		std::array<FaceTexture, (size_t) Face::Count> overlay;
+		std::vector<FaceTexture> faces;
+		std::vector<FaceTexture> overlay;
 		Model textureModel = Model::Block;
 	};
 
@@ -103,17 +105,17 @@ namespace onion::voxel
 		void RegisterVariant(BlockId id, const VariantModel& variant, size_t variantIndex);
 		// Register a direct texture array (used by hand-crafted special cases)
 		void
-		RegisterModel(BlockId id, const std::array<TextureInfo, 6>& textures, Model textureModel, size_t variantIndex);
+		RegisterModel(BlockId id, const std::vector<TextureInfo>& textures, Model textureModel, size_t variantIndex);
 
-		void PreSetOverlay(BlockId id, Face face, const TextureInfo& texture);
+		void RegisterModelOverlay(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex);
 
 		// ----- Real Registrations -----
 	  private:
 		void Register(BlockId id,
 					  uint8_t variantIndex,
-					  const std::array<TextureInfo, 6>& textures,
+					  const std::vector<TextureInfo>& textures,
 					  Model textureModel = Model::Block);
-		void SetOverlay(BlockId id, Face face, const TextureInfo& texture);
+		void RegisterOverlay(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures);
 
 		// ----- Private Members -----
 	  private:
@@ -121,15 +123,15 @@ namespace onion::voxel
 		{
 			BlockId id;
 			uint8_t variantIndex; // which slot within m_Blocks[id]
-			std::array<TextureInfo, 6> textures;
+			std::vector<TextureInfo> textures;
 			Model textureModel;
 		};
 
 		struct PreOverlayRegistration
 		{
 			BlockId id;
-			Face face;
-			TextureInfo texture;
+			uint8_t variantIndex; // which slot within m_Blocks[id]
+			std::vector<TextureInfo> textures;
 		};
 
 		std::vector<PreRegistration> m_Registrations;

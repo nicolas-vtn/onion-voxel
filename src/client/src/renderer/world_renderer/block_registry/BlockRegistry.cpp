@@ -178,7 +178,7 @@ namespace onion::voxel
 
 	// ---- Direct texture-array registration (used by special-case blocks) ----
 	void BlockRegistry::RegisterModel(BlockId id,
-									  const std::array<TextureInfo, 6>& textures,
+									  const std::vector<TextureInfo>& textures,
 									  Model textureModel,
 									  size_t variantIndex)
 	{
@@ -191,13 +191,21 @@ namespace onion::voxel
 		reg.variantIndex = static_cast<uint8_t>(variantIndex);
 		reg.textures = textures;
 		reg.textureModel = textureModel;
-		m_Registrations.emplace_back(reg);
+		m_Registrations.push_back(std::move(reg));
 	}
 
-	void BlockRegistry::PreSetOverlay(BlockId id, Face face, const TextureInfo& texture)
+	void BlockRegistry::RegisterModelOverlay(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex)
 	{
-		m_AllTextureNames.insert(texture.name);
-		m_RegistrationsOverlays.emplace_back(id, face, texture);
+		for (const auto& texture : textures)
+			if (!texture.name.empty())
+				m_AllTextureNames.insert(texture.name);
+
+		PreOverlayRegistration reg;
+		reg.id = id;
+		reg.variantIndex = static_cast<uint8_t>(variantIndex);
+		reg.textures = textures;
+
+		m_RegistrationsOverlays.push_back(std::move(reg));
 	}
 
 	// ---- Register one VariantModel for a block ----
@@ -249,8 +257,13 @@ namespace onion::voxel
 			blockModel = ApplyModelRotation(std::move(blockModel), stepsX, stepsY);
 
 		// ----- Convert elements to TextureInfo -----
-		std::array<TextureInfo, 6> baseTextures{};
+		std::vector<TextureInfo> baseTextures;
+		baseTextures.reserve(6);
 		bool baseInitialized = false;
+
+		std::vector<TextureInfo> overlayTextures;
+		overlayTextures.reserve(6);
+		bool overlayInitialized = false;
 
 		for (const auto& elem : blockModel.Elements)
 		{
@@ -273,22 +286,29 @@ namespace onion::voxel
 						tint = Tint::Water;
 				}
 
+				glm::u8vec3 from = {elem.From[0], elem.From[1], elem.From[2]};
+				glm::u8vec3 to = {elem.To[0], elem.To[1], elem.To[2]};
+
+				TextureInfo info{resolved, f, tint, from, to, face.UV};
+
 				if (!isOverlay)
 				{
-					glm::u8vec3 from = {elem.From[0], elem.From[1], elem.From[2]};
-					glm::u8vec3 to = {elem.To[0], elem.To[1], elem.To[2]};
-					baseTextures[(int) f] = TextureInfo{resolved, tint, from, to, face.UV};
+					baseTextures.push_back(std::move(info));
 					baseInitialized = true;
 				}
 				else
 				{
-					PreSetOverlay(id, f, TextureInfo{resolved, tint});
+					overlayTextures.push_back(std::move(info));
+					overlayInitialized = true;
 				}
 			}
 		}
 
 		if (baseInitialized)
 			RegisterModel(id, baseTextures, textureModel, variantIndex);
+
+		if (overlayInitialized)
+			RegisterModelOverlay(id, overlayTextures, variantIndex);
 	}
 
 	// ---- Register all variants parsed from a blockstate JSON ----
@@ -320,24 +340,30 @@ namespace onion::voxel
 	// ---- Finalize: resolve TextureIDs from atlas ----
 	void BlockRegistry::Register(BlockId id,
 								 uint8_t variantIndex,
-								 const std::array<TextureInfo, 6>& textures,
+								 const std::vector<TextureInfo>& textures,
 								 Model textureModel)
 	{
 		BlockTextures tex;
 		tex.textureModel = textureModel;
 
-		for (size_t i = 0; i < 6; i++)
+		for (const auto& textureInfo : textures)
 		{
-			const std::string& textureName = textures[i].name;
+			const std::string& textureName = textureInfo.name;
+
 			if (textureName.empty())
 				continue;
 
-			tex.faces[i].texture = m_Atlas->GetTextureID(textureName);
-			tex.faces[i].tintType = textures[i].tintType;
-			tex.faces[i].textureType = m_Atlas->GetTextureTransparency(textureName);
-			tex.faces[i].from = textures[i].from;
-			tex.faces[i].to = textures[i].to;
-			tex.faces[i].uv = textures[i].uv;
+			FaceTexture faceTex;
+
+			faceTex.texture = m_Atlas->GetTextureID(textureName);
+			faceTex.face = textureInfo.face;
+			faceTex.tintType = textureInfo.tintType;
+			faceTex.textureType = m_Atlas->GetTextureTransparency(textureName);
+			faceTex.from = textureInfo.from;
+			faceTex.to = textureInfo.to;
+			faceTex.uv = textureInfo.uv;
+
+			tex.faces.push_back(std::move(faceTex));
 
 			m_AllTextureNames.insert(textureName);
 		}
@@ -349,7 +375,7 @@ namespace onion::voxel
 		variants[variantIndex] = tex;
 	}
 
-	void BlockRegistry::SetOverlay(BlockId id, Face face, const TextureInfo& texture)
+	void BlockRegistry::RegisterOverlay(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures)
 	{
 		auto it = m_Blocks.find(id);
 		if (it == m_Blocks.end() || it->second.empty())
@@ -358,15 +384,25 @@ namespace onion::voxel
 									 std::to_string(static_cast<uint16_t>(id)));
 		}
 
-		// Apply overlay to all variants of this block
-		for (auto& blockTex : it->second)
-		{
-			blockTex.overlay[static_cast<size_t>(face)].texture = m_Atlas->GetTextureID(texture.name);
-			blockTex.overlay[static_cast<size_t>(face)].tintType = texture.tintType;
-			blockTex.overlay[static_cast<size_t>(face)].textureType = m_Atlas->GetTextureTransparency(texture.name);
-		}
+		// Extract the corresponding variant
+		BlockTextures& blockTex = it->second[variantIndex];
 
-		m_AllTextureNames.insert(texture.name);
+		for (const auto& texture : textures)
+		{
+			FaceTexture overlayTex;
+
+			overlayTex.face = texture.face;
+			overlayTex.texture = m_Atlas->GetTextureID(texture.name);
+			overlayTex.tintType = texture.tintType;
+			overlayTex.textureType = m_Atlas->GetTextureTransparency(texture.name);
+			overlayTex.from = texture.from;
+			overlayTex.to = texture.to;
+			overlayTex.uv = texture.uv;
+
+			blockTex.overlay.push_back(std::move(overlayTex));
+
+			m_AllTextureNames.insert(texture.name);
+		}
 	}
 
 	void BlockRegistry::Initialize()
@@ -384,7 +420,7 @@ namespace onion::voxel
 			Register(registration.id, registration.variantIndex, registration.textures, registration.textureModel);
 
 		for (const auto& overlay : m_RegistrationsOverlays)
-			SetOverlay(overlay.id, overlay.face, overlay.texture);
+			RegisterOverlay(overlay.id, overlay.variantIndex, overlay.textures);
 	}
 
 	const std::unordered_set<std::string>& BlockRegistry::GetAllTextureNames() const

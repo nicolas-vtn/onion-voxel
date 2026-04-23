@@ -272,9 +272,6 @@ namespace onion::voxel
 			}
 		}
 
-		std::cout << "Max block ID: " << blockIdCount - 1 << std::endl;
-		std::cout << "Max Y reached: " << y << std::endl;
-
 		return genChunk;
 	}
 
