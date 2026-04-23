@@ -49,6 +49,9 @@ namespace onion::voxel
 			if (faceJson.contains("tintindex"))
 				face.TintIndex = faceJson.at("tintindex").get<int>();
 
+			if (faceJson.contains("rotation"))
+				face.Rotation = faceJson.at("rotation").get<float>();
+
 			return face;
 		}
 

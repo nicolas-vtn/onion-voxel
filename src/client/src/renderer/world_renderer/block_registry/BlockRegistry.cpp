@@ -169,7 +169,15 @@ namespace onion::voxel
 						tint = Tint::Water;
 				}
 
-				TextureInfo info{UINT16_MAX, resolved, f, tint, Transparency::Opaque, elem.From, elem.To, face.UV};
+				TextureInfo info{UINT16_MAX,
+							 resolved,
+							 f,
+							 tint,
+							 Transparency::Opaque,
+							 elem.From,
+							 elem.To,
+							 face.UV,
+							 static_cast<int>(face.Rotation.value_or(0.f))};
 
 				if (!isOverlay)
 				{

@@ -26,6 +26,7 @@ namespace onion::voxel
 			std::string Texture; // "#side" or resolved later
 			std::optional<std::string> CullFace;
 			std::optional<int> TintIndex;
+			std::optional<float> Rotation;
 		};
 
 		struct Element

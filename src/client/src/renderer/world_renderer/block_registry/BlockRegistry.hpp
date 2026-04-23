@@ -52,6 +52,7 @@ namespace onion::voxel
 		glm::vec3 from = {0, 0, 0};
 		glm::vec3 to = {16, 16, 16};
 		std::array<float, 4> uv = {0, 0, 16, 16}; // per-face UV override [u1,v1,u2,v2] in MC units (0-16)
+		int uvRotation = 0;                         // per-face UV rotation in degrees (0, 90, 180, 270)
 	};
 
 	struct BlockTextures

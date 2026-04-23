@@ -705,6 +705,19 @@ namespace onion::voxel
 		glm::vec2 uv2 = uv.uvMin + tileSize * glm::vec2(s1, t1);
 		glm::vec2 uv3 = uv.uvMin + tileSize * glm::vec2(s0, t1);
 
+		// Apply per-face UV rotation (0, 90, 180, 270 degrees CW).
+		// A cyclic permutation of the four corners rotates the texture on the quad.
+		const int uvSteps = ((faceTexture.uvRotation / 90) % 4 + 4) % 4;
+		if (uvSteps != 0)
+		{
+			// Rotate the corner array by `uvSteps` positions (each step = 90° CW)
+			std::array<glm::vec2, 4> corners{uv0, uv1, uv2, uv3};
+			uv0 = corners[(0 + uvSteps) % 4];
+			uv1 = corners[(1 + uvSteps) % 4];
+			uv2 = corners[(2 + uvSteps) % 4];
+			uv3 = corners[(3 + uvSteps) % 4];
+		}
+
 		// ------ TINT HANDLING ------
 		glm::ivec3 tint(255);
 
