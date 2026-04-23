@@ -16,6 +16,7 @@ namespace onion::voxel
 	  public:
 		BlockState() = default;
 		explicit BlockState(BlockId blockID);
+		explicit BlockState(BlockId blockID, uint8_t variantIndex);
 		~BlockState() = default;
 
 		// ----- Operators -----

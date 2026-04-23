@@ -479,6 +479,8 @@ namespace onion::voxel
 
 	BlockState::BlockState(BlockId blockID) : ID(blockID) {}
 
+	BlockState::BlockState(BlockId blockID, uint8_t variantIndex) : ID(blockID), VariantIndex(variantIndex) {}
+
 	bool BlockState::operator==(const BlockState& other) const
 	{
 		return ID == other.ID && VariantIndex == other.VariantIndex;

@@ -128,6 +128,27 @@ namespace
 		return cycle[((idx + steps) % 4 + 4) % 4];
 	}
 
+	// Rotate a UV rect [u1,v1,u2,v2] by `steps` × 90° CW around center (8,8).
+	// Used for top/bottom faces under Y rotation, and east/west faces under X rotation.
+	static std::array<float, 4> RotateUV90CW(const std::array<float, 4>& uv)
+	{
+		// Corners: TL=(u1,v1), TR=(u2,v1), BR=(u2,v2), BL=(u1,v2)
+		// 90° CW around (8,8): (u,v) → (16-v, u)  [in MC UV space]
+		// New rect from rotated corners:
+		float u1 = uv[0], v1 = uv[1], u2 = uv[2], v2 = uv[3];
+		// After 90° CW: new u-range = [16-v2, 16-v1], new v-range = [u1, u2]
+		return {16.f - v2, u1, 16.f - v1, u2};
+	}
+
+	static std::array<float, 4> RotateUVSteps(const std::array<float, 4>& uv, int steps)
+	{
+		steps = ((steps % 4) + 4) % 4;
+		std::array<float, 4> result = uv;
+		for (int i = 0; i < steps; i++)
+			result = RotateUV90CW(result);
+		return result;
+	}
+
 	static void RotateModel(onion::voxel::BlockModel& model, int stepsX, int stepsY)
 	{
 		if (stepsX == 0 && stepsY == 0)
@@ -148,7 +169,13 @@ namespace
 			elem.From = {std::min(from.x, to.x), std::min(from.y, to.y), std::min(from.z, to.z)};
 			elem.To = {std::max(from.x, to.x), std::max(from.y, to.y), std::max(from.z, to.z)};
 
-			// Remap face direction keys
+			// Remap face direction keys and rotate UVs for faces whose plane is
+			// parallel to the rotation axis (i.e. faces that stay on the same side).
+			//
+			// - Y rotation: up/down faces stay in place → their UV rotates by stepsY CW.
+			// - X rotation: east/west faces stay in place → their UV rotates by stepsX CW.
+			// Side faces that get remapped to a new direction keep their UV content
+			// unchanged (the texture moves with the geometry).
 			std::unordered_map<std::string, onion::voxel::BlockModel::Face> rotatedFaces;
 			for (auto& [faceName, face] : elem.Faces)
 			{
@@ -157,6 +184,21 @@ namespace
 					newName = RotateFaceX(newName, stepsX);
 				if (stepsY != 0)
 					newName = RotateFaceY(newName, stepsY);
+
+				// If the face was NOT remapped by Y rotation (up/down), rotate its UV.
+				if (stepsY != 0 && newName == faceName &&
+					(faceName == "up" || faceName == "down"))
+				{
+					face.UV = RotateUVSteps(face.UV, stepsY);
+				}
+
+				// If the face was NOT remapped by X rotation (east/west), rotate its UV.
+				if (stepsX != 0 && newName == faceName &&
+					(faceName == "east" || faceName == "west"))
+				{
+					face.UV = RotateUVSteps(face.UV, stepsX);
+				}
+
 				rotatedFaces[newName] = std::move(face);
 			}
 			elem.Faces = std::move(rotatedFaces);

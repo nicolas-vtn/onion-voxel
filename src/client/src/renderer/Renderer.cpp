@@ -633,7 +633,7 @@ namespace onion::voxel
 		KeyState interactKeyState = m_KeyBinds.GetKeyState(eAction::Interact);
 		if (interactKeyState.IsPressed)
 		{
-			Block blockToPlace = Block(prevBlock.Position, BlockState(BlockId::Cake));
+			Block blockToPlace = Block(prevBlock.Position, BlockState(BlockId::BrickStairs, 14));
 
 			bool success = m_WorldManager->SetBlock(
 				blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
