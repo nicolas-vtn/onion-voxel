@@ -633,70 +633,10 @@ namespace onion::voxel
 		// Determine the [s0,t0,s1,t1] sub-region within the atlas tile (0..1 range).
 		// Priority: explicit per-face UV override wins; fall back to from/to-derived UVs.
 
-		constexpr std::array<float, 4> kDefaultUV{0, 0, 16, 16};
-		float s0, t0, s1, t1;
-
-		if (faceTexture.uv != kDefaultUV)
-		{
-			// Explicit UV override from the block model JSON
-			s0 = faceTexture.uv[0] / 16.0f;
-			t0 = faceTexture.uv[1] / 16.0f;
-			s1 = faceTexture.uv[2] / 16.0f;
-			t1 = faceTexture.uv[3] / 16.0f;
-		}
-		else
-		{
-			// Derive UV sub-region from from/to geometry, following Minecraft's per-face UV convention.
-			// MC UV coords: u maps to the horizontal axis on the face, v maps to the vertical (v=0 is top of image).
-			const auto& fr = faceTexture.from;
-			const auto& to = faceTexture.to;
-
-			switch (f.face)
-			{
-				case Face::Top: // up:    u=X, v=Z
-					s0 = fr.x / 16.0f;
-					t0 = fr.z / 16.0f;
-					s1 = to.x / 16.0f;
-					t1 = to.z / 16.0f;
-					break;
-				case Face::Bottom: // down:  u=X, v=Z (Z flipped)
-					s0 = fr.x / 16.0f;
-					t0 = to.z / 16.0f;
-					s1 = to.x / 16.0f;
-					t1 = fr.z / 16.0f;
-					break;
-				case Face::Front: // north: u=X (right-to-left), v=Y (top-to-bottom = 16-Y)
-					s0 = to.x / 16.0f;
-					t0 = (16 - to.y) / 16.0f;
-					s1 = fr.x / 16.0f;
-					t1 = (16 - fr.y) / 16.0f;
-					break;
-				case Face::Back: // south: u=X (left-to-right), v=Y
-					s0 = fr.x / 16.0f;
-					t0 = (16 - to.y) / 16.0f;
-					s1 = to.x / 16.0f;
-					t1 = (16 - fr.y) / 16.0f;
-					break;
-				case Face::Left: // west:  u=Z (left-to-right), v=Y
-					s0 = fr.z / 16.0f;
-					t0 = (16 - to.y) / 16.0f;
-					s1 = to.z / 16.0f;
-					t1 = (16 - fr.y) / 16.0f;
-					break;
-				case Face::Right: // east:  u=Z (right-to-left), v=Y
-					s0 = to.z / 16.0f;
-					t0 = (16 - to.y) / 16.0f;
-					s1 = fr.z / 16.0f;
-					t1 = (16 - fr.y) / 16.0f;
-					break;
-				default:
-					s0 = 0.0f;
-					t0 = 0.0f;
-					s1 = 1.0f;
-					t1 = 1.0f;
-					break;
-			}
-		}
+		float s0 = faceTexture.uv[0] / 16.0f;
+		float s1 = faceTexture.uv[2] / 16.0f;
+		float t0 = 1.0f - faceTexture.uv[3] / 16.0f; // MC v2, flipped to OpenGL
+		float t1 = 1.0f - faceTexture.uv[1] / 16.0f; // MC v1, flipped to OpenGL
 
 		// Remap [s0,t0,s1,t1] into the atlas tile's UV space
 		glm::vec2 tileSize = uv.uvMax - uv.uvMin;
