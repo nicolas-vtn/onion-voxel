@@ -169,7 +169,7 @@ namespace onion::voxel
 						tint = Tint::Water;
 				}
 
-				TextureInfo info{resolved, f, tint, elem.From, elem.To, face.UV};
+				TextureInfo info{UINT16_MAX, resolved, f, tint, Transparency::Opaque, elem.From, elem.To, face.UV};
 
 				if (!isOverlay)
 				{
@@ -233,17 +233,11 @@ namespace onion::voxel
 			if (textureName.empty())
 				continue;
 
-			FaceTexture faceTex;
+			TextureInfo resolvedInfo = textureInfo;
+			resolvedInfo.texture = m_Atlas->GetTextureID(textureName);
+			resolvedInfo.textureType = m_Atlas->GetTextureTransparency(textureName);
 
-			faceTex.texture = m_Atlas->GetTextureID(textureName);
-			faceTex.face = textureInfo.face;
-			faceTex.tintType = textureInfo.tintType;
-			faceTex.textureType = m_Atlas->GetTextureTransparency(textureName);
-			faceTex.from = textureInfo.from;
-			faceTex.to = textureInfo.to;
-			faceTex.uv = textureInfo.uv;
-
-			tex.faces.push_back(std::move(faceTex));
+			tex.faces.push_back(resolvedInfo);
 
 			m_AllTextureNames.insert(textureName);
 		}
@@ -267,21 +261,19 @@ namespace onion::voxel
 		// Extract the corresponding variant
 		BlockTextures& blockTex = it->second[variantIndex];
 
-		for (const auto& texture : textures)
+		for (const auto& textureInfo : textures)
 		{
-			FaceTexture overlayTex;
+			const std::string& textureName = textureInfo.name;
 
-			overlayTex.face = texture.face;
-			overlayTex.texture = m_Atlas->GetTextureID(texture.name);
-			overlayTex.tintType = texture.tintType;
-			overlayTex.textureType = m_Atlas->GetTextureTransparency(texture.name);
-			overlayTex.from = texture.from;
-			overlayTex.to = texture.to;
-			overlayTex.uv = texture.uv;
+			if (textureName.empty())
+				continue;
 
-			blockTex.overlay.push_back(std::move(overlayTex));
+			TextureInfo resolvedInfo = textureInfo;
+			resolvedInfo.texture = m_Atlas->GetTextureID(textureName);
+			resolvedInfo.textureType = m_Atlas->GetTextureTransparency(textureName);
 
-			m_AllTextureNames.insert(texture.name);
+			blockTex.overlay.push_back(resolvedInfo);
+			m_AllTextureNames.insert(textureName);
 		}
 	}
 

@@ -215,7 +215,7 @@ namespace onion::voxel
 								if (!faceVisible[faceIdx])
 									continue;
 
-								const FaceTexture& faceTexture = blockTextures.faces[i];
+								const TextureInfo& faceTexture = blockTextures.faces[i];
 
 								if (faceTexture.texture == UINT16_MAX)
 								{
@@ -504,7 +504,7 @@ namespace onion::voxel
 		{
 			if (blockTextures.faces[i].face == f.face)
 			{
-				const FaceTexture& faceTex = blockTextures.faces[i];
+				const TextureInfo& faceTex = blockTextures.faces[i];
 				auto uv = textureAtlas.GetAtlasEntry(faceTex.texture);
 				AddFace(mesh, f, faceTex, uv);
 			}
@@ -515,7 +515,7 @@ namespace onion::voxel
 		{
 			if (blockTextures.overlay[i].face == f.face)
 			{
-				const FaceTexture& faceTex = blockTextures.overlay[i];
+				const TextureInfo& faceTex = blockTextures.overlay[i];
 				auto uv = textureAtlas.GetAtlasEntry(faceTex.texture);
 				AddFace(mesh, f, faceTex, uv);
 			}
@@ -604,7 +604,7 @@ namespace onion::voxel
 
 	void MeshBuilder::AddFace(SubChunkMesh& mesh,
 							  const FaceBuildDesc& f,
-							  const FaceTexture& faceTexture,
+							  const TextureInfo& faceTexture,
 							  const TextureAtlas::AtlasEntry& uv)
 	{
 		std::vector<SubChunkMesh::Vertex>* vertices = nullptr;
@@ -802,13 +802,13 @@ namespace onion::voxel
 		constexpr int subBlockSize = 32; // 2 sub-units per MC unit; supports 0.5-step precision and negative offsets
 
 		float ofnx = from.x * 2.0f;
-		float ofpx = to.x   * 2.0f;
+		float ofpx = to.x * 2.0f;
 
 		float ofny = from.y * 2.0f;
-		float ofpy = to.y   * 2.0f;
+		float ofpy = to.y * 2.0f;
 
 		float ofnz = from.z * 2.0f;
-		float ofpz = to.z   * 2.0f;
+		float ofpz = to.z * 2.0f;
 
 		result.p000 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofnz);
 		result.p001 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofpz);

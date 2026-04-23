@@ -100,7 +100,7 @@ namespace onion::voxel
 
 		static void AddFace(SubChunkMesh& mesh,
 							const FaceBuildDesc& f,
-							const FaceTexture& faceTexture,
+							const TextureInfo& faceTexture,
 							const TextureAtlas::AtlasEntry& uv);
 
 		PointsAndOcclusion GetPointsAndOcclusion(
