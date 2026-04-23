@@ -170,14 +170,14 @@ namespace onion::voxel
 				}
 
 				TextureInfo info{UINT16_MAX,
-							 resolved,
-							 f,
-							 tint,
-							 Transparency::Opaque,
-							 elem.From,
-							 elem.To,
-							 face.UV,
-							 static_cast<int>(face.Rotation.value_or(0.f))};
+								 resolved,
+								 f,
+								 tint,
+								 Transparency::Opaque,
+								 elem.From,
+								 elem.To,
+								 face.UV,
+								 static_cast<int>(face.Rotation.value_or(0.f))};
 
 				if (!isOverlay)
 				{
@@ -243,7 +243,15 @@ namespace onion::voxel
 
 			TextureInfo resolvedInfo = textureInfo;
 			resolvedInfo.texture = m_Atlas->GetTextureID(textureName);
-			resolvedInfo.textureType = m_Atlas->GetTextureTransparency(textureName);
+
+			const Transparency transparency = m_Atlas->GetTextureTransparency(textureName);
+			resolvedInfo.textureType = transparency;
+
+			// Update the transparency type of the block
+			if (transparency == Transparency::Transparent || transparency == Transparency::Cutout)
+			{
+				BlockState::SetTransparency(id, true);
+			}
 
 			tex.faces.push_back(resolvedInfo);
 

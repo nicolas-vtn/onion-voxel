@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 
+#include <shared_mutex>
 #include <vector>
 
 #include "BlockIds.hpp"
@@ -34,10 +35,13 @@ namespace onion::voxel
 		static bool IsTransparent(BlockId blockID);
 		static bool IsSolid(BlockId blockID);
 
+		static void SetTransparency(BlockId blockID, bool transparent);
+
 		// ----- Static Members -----
 	  private:
 		// A lookup table for block transparency, indexed by BlockId
-		static const std::vector<bool> s_TransparencyLookupTable;
+		static std::vector<bool> s_TransparencyLookupTable;
+		static inline std::shared_mutex s_TransparencyLookupTableMutex;
 
 		// A lookup table for block solidity, indexed by BlockId
 		static const std::vector<bool> s_SolidLookupTable;
