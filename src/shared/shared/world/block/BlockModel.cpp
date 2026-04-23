@@ -82,7 +82,28 @@ namespace onion::voxel
 				{
 					for (auto& [faceName, faceJson] : elemJson.at("faces").items())
 					{
-						ParseFace(faceJson, elem.Faces[faceName]);
+						BlockModel::Face face;
+
+						// Default UVs derived from element bounds per face direction,
+						// following Minecraft's convention (V=0 at top of texture).
+						const float fx = elem.From.x, fy = elem.From.y, fz = elem.From.z;
+						const float tx = elem.To.x, ty = elem.To.y, tz = elem.To.z;
+						if (faceName == "down")
+							face.UV = {fx, fz, tx, tz};
+						else if (faceName == "up")
+							face.UV = {fx, fz, tx, tz};
+						else if (faceName == "north")
+							face.UV = {16 - tx, 16 - ty, 16 - fx, 16 - fy};
+						else if (faceName == "south")
+							face.UV = {fx, 16 - ty, tx, 16 - fy};
+						else if (faceName == "west")
+							face.UV = {fz, 16 - ty, tz, 16 - fy};
+						else if (faceName == "east")
+							face.UV = {16 - tz, 16 - ty, 16 - fz, 16 - fy};
+
+						ParseFace(faceJson, face);
+
+						elem.Faces[faceName] = face;
 					}
 				}
 
