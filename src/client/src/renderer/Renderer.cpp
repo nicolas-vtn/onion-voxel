@@ -709,7 +709,8 @@ namespace onion::voxel
 		// Air
 		float airMaxSpeed = 5.0f;
 		float airAcceleration = 8.0f;
-		float airDeceleration = 4.0f; // optional, often low
+		float airDeceleration = 4.0f;		   // low — intentional air-control feel when key held
+		float jumpReleaseDeceleration = 30.0f; // faster decel when no key pressed mid-air, prevents floaty drift
 
 		// Flying
 		float flyMaxSpeed = m_PlayerFlySpeed;
@@ -893,8 +894,14 @@ namespace onion::voxel
 			}
 			else
 			{
+				// Use a higher deceleration when airborne and no key is pressed so that
+				// the jump horizontal kick doesn't cause uncontrolled drift after release.
+				float releaseDecel = physics.OnGround ? groundDeceleration : jumpReleaseDeceleration;
+
+				// Only apply release deceleration to XZ — vel.y is owned by gravity.
+				glm::vec3 target(0.0f, physics.Velocity.y, 0.0f);
 				physics.Velocity =
-					MoveTowards(physics.Velocity, glm::vec3(0.0f), deceleration * static_cast<float>(m_DeltaTime));
+					MoveTowards(physics.Velocity, target, releaseDecel * static_cast<float>(m_DeltaTime));
 				player->SetState(Entity::State::Idle);
 			}
 
