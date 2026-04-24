@@ -32,7 +32,6 @@ namespace onion::voxel
 	{
 		None,
 		Grass,
-		Foliage,
 		Water
 	};
 

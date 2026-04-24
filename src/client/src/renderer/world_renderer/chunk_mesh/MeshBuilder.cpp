@@ -652,10 +652,6 @@ namespace onion::voxel
 				tint = glm::ivec3(95, 190, 60);
 				break;
 
-			case Tint::Foliage:
-				tint = glm::ivec3(60, 170, 50);
-				break;
-
 			case Tint::Water:
 				tint = glm::ivec3(77, 128, 255);
 				break;
@@ -678,7 +674,7 @@ namespace onion::voxel
 			vert.texX = uv.x;
 			vert.texY = uv.y;
 
-			vert.facing = static_cast<uint8_t>(f.face);
+			vert.facing = vert.facing = static_cast<uint8_t>(faceTexture.shade ? f.face : Face::Top);
 			vert.occlusion = occlusion;
 
 			vert.tintR = static_cast<uint8_t>(tint.r);
@@ -778,6 +774,37 @@ namespace onion::voxel
 			rotatePoint(result.p101);
 			rotatePoint(result.p110);
 			rotatePoint(result.p111);
+
+			// Apply rescale: expand the two axes perpendicular to the rotation axis so
+			// the rotated element still fills the full block boundary (scale = 1/cos(angle)).
+			if (rotation.Rescale)
+			{
+				float scale = 1.0f / std::cos(radians);
+
+				glm::vec3 scaleAxes(1.0f);
+				if (rotation.Axis == "x")
+					scaleAxes = {1.0f, scale, scale};
+				else if (rotation.Axis == "y")
+					scaleAxes = {scale, 1.0f, scale};
+				else if (rotation.Axis == "z")
+					scaleAxes = {scale, scale, 1.0f};
+
+				auto scalePoint = [&](glm::vec3& p)
+				{
+					glm::vec3 local = p - origin;
+					local *= scaleAxes;
+					p = local + origin;
+				};
+
+				scalePoint(result.p000);
+				scalePoint(result.p001);
+				scalePoint(result.p010);
+				scalePoint(result.p011);
+				scalePoint(result.p100);
+				scalePoint(result.p101);
+				scalePoint(result.p110);
+				scalePoint(result.p111);
+			}
 		}
 
 		// Fetch occlusion values from the mesh's occlusion map if this texture requires shading
