@@ -274,6 +274,7 @@ namespace onion::voxel
 
 		player->SetName(updatedPlayer->GetName());
 		player->SetState(updatedPlayer->GetState());
+		player->SetIsSneaking(updatedPlayer->IsSneaking());
 
 		if (updatedPlayer->HasTransform())
 		{

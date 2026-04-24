@@ -718,7 +718,7 @@ namespace onion::voxel
 		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::StrafeLeft);
 		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::StrafeRight);
 		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
-		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Sneak);
+		KeyState sneakKeyState = m_KeyBinds.GetKeyState(eAction::Sneak);
 		KeyState toggleFlyModeKeyState = m_KeyBinds.GetKeyState(eAction::ToggleFlyMode);
 
 		// ----- PLAYER ORIENTATION -----
@@ -795,6 +795,9 @@ namespace onion::voxel
 
 		glm::vec3 moveDir(0.0f);
 
+		// ----- MOVEMENT -----
+		player->SetIsSneaking(sneakKeyState.IsPressed);
+
 		if (physics.IsFlying)
 		{
 
@@ -809,7 +812,7 @@ namespace onion::voxel
 				moveDir += glm::normalize(glm::cross(frontXZ, Up));
 			if (moveUpKeyState.IsPressed)
 				moveDir += Up;
-			if (moveDownKeyState.IsPressed)
+			if (sneakKeyState.IsPressed)
 				moveDir -= Up;
 
 			if (glm::length(moveDir) > 0.0f)
@@ -840,6 +843,10 @@ namespace onion::voxel
 			// Walking movement
 
 			float maxSpeed = physics.OnGround ? m_GroundMaxSpeed : m_AirMaxSpeed;
+			if (player->IsSneaking())
+			{
+				maxSpeed *= m_SneakSpeedFactor;
+			}
 			float acceleration = physics.OnGround ? m_GroundAcceleration : m_AirAcceleration;
 
 			if (moveForwardKeyState.IsPressed)
@@ -859,7 +866,7 @@ namespace onion::voxel
 
 				float sprintFactor = 1.0f;
 
-				if (speedUpKeyState.IsPressed)
+				if (speedUpKeyState.IsPressed && !player->IsSneaking())
 				{
 					player->SetState(Entity::State::Running);
 

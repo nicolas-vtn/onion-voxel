@@ -172,6 +172,7 @@ namespace onion::voxel
 		float m_GroundMaxSpeed = 6.0f;
 		float m_GroundAcceleration = 40.f;
 		float m_GroundDeceleration = 20.f;
+		float m_SneakSpeedFactor = 0.3f;
 
 		// Air movement — exposed in Physics Debug panel for live tuning
 		float m_AirMaxSpeed = 5.0f;

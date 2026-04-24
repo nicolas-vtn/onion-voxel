@@ -300,6 +300,7 @@ namespace onion::voxel
 		EntityDTO entityDTO = SerializeEntity(player);
 		PlayerDTO playerDto(entityDTO);
 		playerDto.Name = player.GetName();
+		playerDto.IsSneaking = player.IsSneaking();
 		return playerDto;
 	}
 
@@ -309,6 +310,7 @@ namespace onion::voxel
 		ApplyEntityDTO(dto, player);
 
 		player->SetName(dto.Name);
+		player->SetIsSneaking(dto.IsSneaking);
 
 		return player;
 	}
