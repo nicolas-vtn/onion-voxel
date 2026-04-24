@@ -206,7 +206,7 @@ namespace onion::voxel
 						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.ID, block.VariantIndex);
 
 						// ------ Build Mesh ------
-						if (blockTextures.textureModel == Model::Block)
+						if (blockTextures.textureModel == eTextureModel::Block)
 						{
 							// Build each face individually using its own element geometry (from/to)
 							for (size_t i = 0; i < blockTextures.faces.size(); i++)
@@ -738,9 +738,9 @@ namespace onion::voxel
 	{
 		switch (blockTextures.textureModel)
 		{
-			case Model::Block:
+			case eTextureModel::Block:
 				return GetPointsAndOcclusionForBlock(mesh, lx, wy, lz);
-			case Model::Cross:
+			case eTextureModel::Cross:
 				return GetPointsAndOcclusionForCross(mesh, lx, wy, lz);
 			default:
 				assert(false && "Unknown TextureModel");
@@ -885,10 +885,10 @@ namespace onion::voxel
 
 		switch (blockTextures.textureModel)
 		{
-			case Model::Block:
+			case eTextureModel::Block:
 				desc = GetBlockFaceBuildDescs(pao);
 				break;
-			case Model::Cross:
+			case eTextureModel::Cross:
 				desc = GetCrossFaceBuildDescs(pao);
 				break;
 			default:

@@ -68,7 +68,7 @@ namespace onion::voxel
 	// ---- Direct texture-array registration (used by special-case blocks) ----
 	void BlockRegistry::RegisterModel(BlockId id,
 									  const std::vector<TextureInfo>& textures,
-									  Model textureModel,
+									  eTextureModel textureModel,
 									  size_t variantIndex)
 	{
 		for (const auto& texture : textures)
@@ -119,10 +119,10 @@ namespace onion::voxel
 			blockModel = stoneModel;
 		}
 
-		Model textureModel = Model::Block;
+		eTextureModel textureModel = eTextureModel::Block;
 		if (!blockModel.ModelTextures["cross"].empty())
 		{
-			textureModel = Model::Cross;
+			textureModel = eTextureModel::Cross;
 			BlockModel stoneModel = BlockModel::FromFile("stone.json");
 			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["cross"];
 			blockModel = stoneModel;
@@ -230,7 +230,7 @@ namespace onion::voxel
 	void BlockRegistry::Register(BlockId id,
 								 uint8_t variantIndex,
 								 const std::vector<TextureInfo>& textures,
-								 Model textureModel)
+								 eTextureModel textureModel)
 	{
 		BlockTextures tex;
 		tex.textureModel = textureModel;
@@ -367,7 +367,7 @@ namespace onion::voxel
 		//			   TextureInfo{"block/grass_block_snow.png", Tint::None},
 		//			   TextureInfo{"block/grass_block_snow.png", Tint::None},
 		//			   TextureInfo{"block/grass_block_snow.png", Tint::None}},
-		//			  Model::Block,
+		//			  eTextureModel::Block,
 		//			  0);
 
 		// ---- Reload Atlas Textures ----

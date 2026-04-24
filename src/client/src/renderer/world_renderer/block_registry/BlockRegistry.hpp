@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -37,7 +36,7 @@ namespace onion::voxel
 		Water
 	};
 
-	enum class Model : uint8_t
+	enum class eTextureModel : uint8_t
 	{
 		Block,
 		Cross
@@ -61,7 +60,7 @@ namespace onion::voxel
 	{
 		std::vector<TextureInfo> faces;
 		std::vector<TextureInfo> overlay;
-		Model textureModel = Model::Block;
+		eTextureModel textureModel = eTextureModel::Block;
 	};
 
 	class BlockRegistry
@@ -85,10 +84,6 @@ namespace onion::voxel
 		// Returns the number of registered variants for a block (at least 1 if the block exists)
 		size_t GetVariantCount(BlockId id) const;
 
-		// Given a set of blockstate properties (e.g. {"axis"->"x"}), return the
-		// matching variant index for this block. Returns 0 if no match is found.
-		uint8_t ResolveVariantIndex(BlockId id, const std::map<std::string, std::string>& properties) const;
-
 		// ----- Private Methods -----
 	  private:
 		void ReloadModels();
@@ -98,8 +93,10 @@ namespace onion::voxel
 		// Register a specific variant (by VariantModel) — used internally
 		void RegisterVariant(BlockId id, const VariantModel& variant, size_t variantIndex);
 		// Register a direct texture array (used by hand-crafted special cases)
-		void
-		RegisterModel(BlockId id, const std::vector<TextureInfo>& textures, Model textureModel, size_t variantIndex);
+		void RegisterModel(BlockId id,
+						   const std::vector<TextureInfo>& textures,
+						   eTextureModel textureModel,
+						   size_t variantIndex);
 
 		void RegisterModelOverlay(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex);
 
@@ -108,7 +105,7 @@ namespace onion::voxel
 		void Register(BlockId id,
 					  uint8_t variantIndex,
 					  const std::vector<TextureInfo>& textures,
-					  Model textureModel = Model::Block);
+					  eTextureModel textureModel = eTextureModel::Block);
 		void RegisterOverlay(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures);
 
 		// ----- Private Members -----
@@ -118,7 +115,7 @@ namespace onion::voxel
 			BlockId id;
 			uint8_t variantIndex; // which slot within m_Blocks[id]
 			std::vector<TextureInfo> textures;
-			Model textureModel;
+			eTextureModel textureModel;
 		};
 
 		struct PreOverlayRegistration

@@ -42,11 +42,11 @@ namespace
 
 	// Parse "axis=x,waterlogged=false" → { "axis" -> "x", "waterlogged" -> "false" }
 	// An empty key string → empty map (matches-all variant)
-	static std::map<std::string, std::string> ParseConditions(const std::string& key)
+	static std::map<std::string, std::string> ParseProperties(const std::string& key)
 	{
-		std::map<std::string, std::string> conditions;
+		std::map<std::string, std::string> properties;
 		if (key.empty())
-			return conditions;
+			return properties;
 
 		std::istringstream stream(key);
 		std::string token;
@@ -55,9 +55,9 @@ namespace
 			const size_t eq = token.find('=');
 			if (eq == std::string::npos)
 				continue;
-			conditions[token.substr(0, eq)] = token.substr(eq + 1);
+			properties[token.substr(0, eq)] = token.substr(eq + 1);
 		}
-		return conditions;
+		return properties;
 	}
 
 	// ---------------------------------------------------------------------------
@@ -226,8 +226,8 @@ namespace onion::voxel
 			bool containsUpper = false;
 			for (const auto& variant : it->second)
 			{
-				auto itvariant = variant.Conditions.find("half");
-				if (itvariant != variant.Conditions.end())
+				auto itvariant = variant.Properties.find("half");
+				if (itvariant != variant.Properties.end())
 				{
 					if (itvariant->second == "lower")
 						containsLower = true;
@@ -256,7 +256,7 @@ namespace onion::voxel
 				const auto& variant = variants[i];
 				bool matches = true;
 
-				for (const auto& [key, value] : variant.Conditions)
+				for (const auto& [key, value] : variant.Properties)
 				{
 					auto itprop = properties.find(key);
 					if (itprop == properties.end() || itprop->second != value)
@@ -306,12 +306,12 @@ namespace onion::voxel
 				const std::string& variantKey = it.key();
 				const nlohmann::json& variantValue = it.value();
 
-				auto conditions = ParseConditions(variantKey);
+				auto properties = ParseProperties(variantKey);
 
 				if (variantValue.is_object())
 				{
 					VariantModel variantModel = VariantModelFromJson(variantValue);
-					variantModel.Conditions = conditions;
+					variantModel.Properties = properties;
 
 					// ----- Bake blockstate rotation into element geometry -----
 					const int stepsX = ((variantModel.RotationX / 90) % 4 + 4) % 4;
@@ -330,7 +330,7 @@ namespace onion::voxel
 					for (const auto& entry : variantValue)
 					{
 						VariantModel variantModel = VariantModelFromJson(entry);
-						variantModel.Conditions = conditions;
+						variantModel.Properties = properties;
 
 						// ----- Bake blockstate rotation into element geometry -----
 						const int stepsX = ((variantModel.RotationX / 90) % 4 + 4) % 4;

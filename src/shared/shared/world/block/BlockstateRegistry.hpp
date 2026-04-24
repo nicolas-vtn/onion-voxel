@@ -17,7 +17,7 @@ namespace onion::voxel
 {
 	struct VariantModel
 	{
-		std::map<std::string, std::string> Conditions;
+		std::map<std::string, std::string> Properties;
 		BlockModel Model;
 		int RotationX = 0;
 		int RotationY = 0;
