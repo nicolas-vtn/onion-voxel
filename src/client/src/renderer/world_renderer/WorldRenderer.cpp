@@ -129,12 +129,18 @@ namespace onion::voxel
 		SubChunkMesh::s_Shader.setBool("u_RenderCutout", true);
 
 		// ----- OpenGL State Setup -----
+		// Face culling is enabled to avoid back-face / front-face z-fighting on coplanar
+		// double-sided geometry (e.g. leaf quads). The cutout pass is split into two
+		// sub-passes in Render(): back faces first (no offset), then front faces with a
+		// small negative polygon offset so front faces always win over back faces.
+		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		glPolygonOffset(-1.0f, -1.0f);
+		// Polygon offset is managed per sub-pass in Render(); disable it here as the
+		// back-face sub-pass does not need it.
+		glDisable(GL_POLYGON_OFFSET_FILL);
 	}
 
 	void WorldRenderer::PrepareForRenderingTransparent()
@@ -246,6 +252,21 @@ namespace onion::voxel
 
 		PrepareForRenderingCutout();
 
+		// Sub-pass 1: back faces — cull front faces, no polygon offset.
+		// Back faces are rendered first and write to the depth buffer.
+		glCullFace(GL_FRONT);
+		glDisable(GL_POLYGON_OFFSET_FILL);
+		for (const auto& [chunkPos, chunkMesh] : chunkMeshesSnapshot)
+		{
+			chunkMesh->RenderCutout();
+		}
+
+		// Sub-pass 2: front faces — cull back faces, small negative polygon offset
+		// so front faces are shifted slightly toward the camera and always win over
+		// the back faces written in sub-pass 1.
+		glCullFace(GL_BACK);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(-1.0f, -1.0f);
 		for (const auto& [chunkPos, chunkMesh] : chunkMeshesSnapshot)
 		{
 			chunkMesh->RenderCutout();
