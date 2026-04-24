@@ -77,8 +77,8 @@ namespace onion::voxel
 
 		struct PointsAndOcclusion
 		{
-			glm::vec3 p000, p001, p010, p011, p100, p101, p110, p111;
-			uint8_t o000, o001, o010, o011, o100, o101, o110, o111;
+			glm::vec3 p000{0.0f}, p001{0.0f}, p010{0.0f}, p011{0.0f}, p100{0.0f}, p101{0.0f}, p110{0.0f}, p111{0.0f};
+			uint8_t o000 = 0, o001 = 0, o010 = 0, o011 = 0, o100 = 0, o101 = 0, o110 = 0, o111 = 0;
 		};
 
 		// ----- Private Methods -----
@@ -104,18 +104,8 @@ namespace onion::voxel
 							const TextureAtlas::AtlasEntry& uv);
 
 		PointsAndOcclusion GetPointsAndOcclusion(
-			const BlockTextures& blockTextures, SubChunkMesh* mesh, const int lx, const int wy, const int lz);
-		PointsAndOcclusion GetPointsAndOcclusionForBlock(SubChunkMesh* mesh,
-														 const int lx,
-														 const int wy,
-														 const int lz,
-														 const glm::vec3& from = {0, 0, 0},
-														 const glm::vec3& to = {16, 16, 16},
-														 const BlockModel::ElementRotation& rotation = {});
-		PointsAndOcclusion GetPointsAndOcclusionForCross(SubChunkMesh* mesh, const int lx, const int wy, const int lz);
+			SubChunkMesh* mesh, const int lx, const int wy, const int lz, const TextureInfo& textureInfo);
 
-		std::vector<FaceBuildDesc> GetFaceBuildDescs(const BlockTextures& blockTextures, const PointsAndOcclusion& pao);
 		std::vector<FaceBuildDesc> GetBlockFaceBuildDescs(const PointsAndOcclusion& pao);
-		std::vector<FaceBuildDesc> GetCrossFaceBuildDescs(const PointsAndOcclusion& pao);
 	};
 } // namespace onion::voxel

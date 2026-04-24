@@ -33,6 +33,8 @@ namespace onion::voxel
 		static bool IsTallPlant(BlockId flowerId);
 		static uint8_t GetVariantIndex(BlockId id, const std::map<std::string, std::string>& properties);
 
+		static bool CountsInAO(BlockId id, uint8_t variantIndex);
+
 		// ----- Private Methods -----
 	  private:
 		static inline const std::filesystem::path s_BlockstateArchiveFilePath =

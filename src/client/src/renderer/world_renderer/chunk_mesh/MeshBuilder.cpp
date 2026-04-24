@@ -206,65 +206,45 @@ namespace onion::voxel
 						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.ID, block.VariantIndex);
 
 						// ------ Build Mesh ------
-						if (blockTextures.textureModel == eTextureModel::Block)
+						// Build each face individually using its own element geometry (from/to)
+						for (size_t i = 0; i < blockTextures.faces.size(); i++)
 						{
-							// Build each face individually using its own element geometry (from/to)
-							for (size_t i = 0; i < blockTextures.faces.size(); i++)
+							const int& faceIdx = (int) blockTextures.faces[i].face;
+
+							if (!faceVisible[faceIdx])
+								continue;
+
+							const TextureInfo& faceTexture = blockTextures.faces[i];
+
+							if (faceTexture.texture == UINT16_MAX)
 							{
-								const int& faceIdx = (int) blockTextures.faces[i].face;
-
-								if (!faceVisible[faceIdx])
-									continue;
-
-								const TextureInfo& faceTexture = blockTextures.faces[i];
-
-								if (faceTexture.texture == UINT16_MAX)
-								{
-									continue;
-								}
-
-								PointsAndOcclusion pao = GetPointsAndOcclusionForBlock(
-									mesh.get(), x, wy, z, faceTexture.from, faceTexture.to, faceTexture.elemRotation);
-
-								std::vector<FaceBuildDesc> faceDescs = GetBlockFaceBuildDescs(pao);
-								// Only emit the descriptor matching this face index, and only
-								// draw the specific face entry [i] that owns this pao — not all
-								// entries sharing the same face direction (which would mix UVs
-								// from different elements onto the wrong geometry).
-								for (const auto& f : faceDescs)
-								{
-									if ((int) f.face != faceIdx)
-										continue;
-
-									// Normal pass: this entry only
-									auto atlasEntry = m_TextureAtlas->GetAtlasEntry(faceTexture.texture);
-									AddFace(*mesh, f, faceTexture, atlasEntry);
-
-									// Overlay pass: all overlay entries for this face direction
-									for (const auto& overlayTex : blockTextures.overlay)
-									{
-										if (overlayTex.face != faceTexture.face)
-											continue;
-										auto overlayAtlas = m_TextureAtlas->GetAtlasEntry(overlayTex.texture);
-										AddFace(*mesh, f, overlayTex, overlayAtlas);
-									}
-								}
+								continue;
 							}
-						}
-						else
-						{
-							// Non-block models (Cross etc.) use a single shared pao
-							PointsAndOcclusion pao = GetPointsAndOcclusion(blockTextures, mesh.get(), x, wy, z);
-							std::vector<FaceBuildDesc> faces = GetFaceBuildDescs(blockTextures, pao);
 
-							for (const auto& f : faces)
+							PointsAndOcclusion pao = GetPointsAndOcclusion(mesh.get(), x, wy, z, faceTexture);
+
+							std::vector<FaceBuildDesc> faceDescs = GetBlockFaceBuildDescs(pao);
+							// Only emit the descriptor matching this face index, and only
+							// draw the specific face entry [i] that owns this pao — not all
+							// entries sharing the same face direction (which would mix UVs
+							// from different elements onto the wrong geometry).
+							for (const auto& f : faceDescs)
 							{
-								int idx = (int) f.face;
-
-								if (!faceVisible[idx])
+								if ((int) f.face != faceIdx)
 									continue;
 
-								BuildFace(*m_TextureAtlas, *mesh, blockTextures, f);
+								// Normal pass: this entry only
+								auto atlasEntry = m_TextureAtlas->GetAtlasEntry(faceTexture.texture);
+								AddFace(*mesh, f, faceTexture, atlasEntry);
+
+								// Overlay pass: all overlay entries for this face direction
+								for (const auto& overlayTex : blockTextures.overlay)
+								{
+									if (overlayTex.face != faceTexture.face)
+										continue;
+									auto overlayAtlas = m_TextureAtlas->GetAtlasEntry(overlayTex.texture);
+									AddFace(*mesh, f, overlayTex, overlayAtlas);
+								}
 							}
 						}
 					}
@@ -314,8 +294,8 @@ namespace onion::voxel
 		if (isMonoBlock)
 		{
 			const auto mono = chunk->GetBlock({0, yMini, 0});
-			const bool solid = BlockState::IsOpaque(mono.ID);
-			if (solid)
+			const bool countsInAO = BlockstateRegistry::CountsInAO(mono.ID, mono.VariantIndex);
+			if (countsInAO)
 			{
 				const Row FULL_X = Row((1ull << SX) - 1ull);
 				const Row FULL_Z = Row((1ull << SZ) - 1ull);
@@ -342,12 +322,12 @@ namespace onion::voxel
 					Row rowX = 0;
 					for (int x = 0; x < SX; x++)
 					{
-						const BlockId id =
-							chunk->GetBlock({static_cast<int>(x), static_cast<int>(y) + yMini, static_cast<int>(z)}).ID;
-						const bool s = BlockState::IsOpaque(id);
-						rowX |= Row(s) << x;		 // along X in [y][z]
-						solidZ[y][x] |= Row(s) << z; // along Z in [y][x]
-						solidY[z][x] |= Row(s) << y; // along Y in [z][x]
+						const BlockState blockstate =
+							chunk->GetBlock({static_cast<int>(x), static_cast<int>(y) + yMini, static_cast<int>(z)});
+						const bool countsInAO = BlockstateRegistry::CountsInAO(blockstate.ID, blockstate.VariantIndex);
+						rowX |= Row(countsInAO) << x;		  // along X in [y][z]
+						solidZ[y][x] |= Row(countsInAO) << z; // along Z in [y][x]
+						solidY[z][x] |= Row(countsInAO) << y; // along Y in [z][x]
 					}
 					solidX[y][z] = rowX;
 				}
@@ -369,13 +349,15 @@ namespace onion::voxel
 
 				// X-
 				{
-					BlockId blockId = adjacentNegX ? adjacentNegX->GetBlock({SX - 1, ly + yMini, lz}).ID : BlockId::Air;
-					nbrXneg[ly][lz] = BlockState::IsOpaque(blockId) ? 1 : 0;
+					BlockState block =
+						adjacentNegX ? adjacentNegX->GetBlock({SX - 1, ly + yMini, lz}) : BlockState(BlockId::Air);
+					nbrXneg[ly][lz] = BlockstateRegistry::CountsInAO(block.ID, block.VariantIndex) ? 1 : 0;
 				}
 				// X+
 				{
-					BlockId blockId = adjacentPosX ? adjacentPosX->GetBlock({0, ly + yMini, lz}).ID : BlockId::Air;
-					nbrXpos[ly][lz] = BlockState::IsOpaque(blockId) ? 1 : 0;
+					BlockState block =
+						adjacentPosX ? adjacentPosX->GetBlock({0, ly + yMini, lz}) : BlockState(BlockId::Air);
+					nbrXpos[ly][lz] = BlockstateRegistry::CountsInAO(block.ID, block.VariantIndex) ? 1 : 0;
 				}
 			}
 		}
@@ -388,13 +370,15 @@ namespace onion::voxel
 
 				// Z-
 				{
-					BlockId blockId = adjacentNegZ ? adjacentNegZ->GetBlock({lx, ly + yMini, SZ - 1}).ID : BlockId::Air;
-					nbrZneg[ly][lx] = BlockState::IsOpaque(blockId) ? 1 : 0;
+					BlockState block =
+						adjacentNegZ ? adjacentNegZ->GetBlock({lx, ly + yMini, SZ - 1}) : BlockState(BlockId::Air);
+					nbrZneg[ly][lx] = BlockstateRegistry::CountsInAO(block.ID, block.VariantIndex) ? 1 : 0;
 				}
 				// Z+
 				{
-					BlockId blockId = adjacentPosZ ? adjacentPosZ->GetBlock({lx, ly + yMini, 0}).ID : BlockId::Air;
-					nbrZpos[ly][lx] = BlockState::IsOpaque(blockId) ? 1 : 0;
+					BlockState block =
+						adjacentPosZ ? adjacentPosZ->GetBlock({lx, ly + yMini, 0}) : BlockState(BlockId::Air);
+					nbrZpos[ly][lx] = BlockstateRegistry::CountsInAO(block.ID, block.VariantIndex) ? 1 : 0;
 				}
 			}
 		}
@@ -406,13 +390,13 @@ namespace onion::voxel
 			{
 				// Y-
 				{
-					BlockId blockId = chunk->GetBlock({lx, yMini - 1, lz}).ID;
-					nbrYneg[lz][lx] = BlockState::IsOpaque(blockId) ? 1 : 0;
+					BlockState block = chunk->GetBlock({lx, yMini - 1, lz});
+					nbrYneg[lz][lx] = BlockstateRegistry::CountsInAO(block.ID, block.VariantIndex) ? 1 : 0;
 				}
 				// Y+
 				{
-					BlockId blockId = chunk->GetBlock({lx, yMini + SY, lz}).ID;
-					nbrYpos[lz][lx] = BlockState::IsOpaque(blockId) ? 1 : 0;
+					BlockState block = chunk->GetBlock({lx, yMini + SY, lz});
+					nbrYpos[lz][lx] = BlockstateRegistry::CountsInAO(block.ID, block.VariantIndex) ? 1 : 0;
 				}
 			}
 		}
@@ -734,41 +718,20 @@ namespace onion::voxel
 	}
 
 	MeshBuilder::PointsAndOcclusion MeshBuilder::GetPointsAndOcclusion(
-		const BlockTextures& blockTextures, SubChunkMesh* mesh, const int lx, const int wy, const int lz)
-	{
-		switch (blockTextures.textureModel)
-		{
-			case eTextureModel::Block:
-				return GetPointsAndOcclusionForBlock(mesh, lx, wy, lz);
-			case eTextureModel::Cross:
-				return GetPointsAndOcclusionForCross(mesh, lx, wy, lz);
-			default:
-				assert(false && "Unknown TextureModel");
-				return PointsAndOcclusion();
-		}
-	}
-
-	MeshBuilder::PointsAndOcclusion
-	MeshBuilder::GetPointsAndOcclusionForBlock(SubChunkMesh* mesh,
-											   const int lx,
-											   const int wy,
-											   const int lz,
-											   const glm::vec3& from,
-											   const glm::vec3& to,
-											   const BlockModel::ElementRotation& rotation)
+		SubChunkMesh* mesh, const int lx, const int wy, const int lz, const TextureInfo& textureInfo)
 	{
 		PointsAndOcclusion result;
 
 		constexpr int subBlockSize = 32; // 2 sub-units per MC unit; supports 0.5-step precision and negative offsets
 
-		float ofnx = from.x * 2.0f;
-		float ofpx = to.x * 2.0f;
+		float ofnx = textureInfo.from.x * 2.0f;
+		float ofpx = textureInfo.to.x * 2.0f;
 
-		float ofny = from.y * 2.0f;
-		float ofpy = to.y * 2.0f;
+		float ofny = textureInfo.from.y * 2.0f;
+		float ofpy = textureInfo.to.y * 2.0f;
 
-		float ofnz = from.z * 2.0f;
-		float ofpz = to.z * 2.0f;
+		float ofnz = textureInfo.from.z * 2.0f;
+		float ofpz = textureInfo.to.z * 2.0f;
 
 		result.p000 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofnz);
 		result.p001 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofpz);
@@ -781,6 +744,7 @@ namespace onion::voxel
 		result.p111 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofpy, lz * subBlockSize + ofpz);
 
 		// Apply element rotation if present
+		const auto& rotation = textureInfo.elemRotation;
 		if (rotation.Angle != 0.0f && !rotation.Axis.empty())
 		{
 			// Convert origin from MC units (0-16) to sub-block units, relative to this block's world position
@@ -816,87 +780,34 @@ namespace onion::voxel
 			rotatePoint(result.p111);
 		}
 
-		constexpr int SIZE = WorldConstants::CHUNK_SIZE;
-		const int ly = wy % SIZE;
-
-		const int NX = SIZE + 1;
-		const int NY = SIZE + 1;
-		auto AO = [&](int dx, int dy, int dz) -> uint8_t
+		// Fetch occlusion values from the mesh's occlusion map if this texture requires shading
+		if (textureInfo.shade)
 		{
-			int ax = lx + dx;
-			int ay = ly + dy;
-			int az = lz + dz;
-			return mesh->m_OcclusionMap[ax + NX * (ay + NY * az)];
-		};
+			constexpr int SIZE = WorldConstants::CHUNK_SIZE;
+			const int ly = wy % SIZE;
 
-		result.o000 = AO(0, 0, 0);
-		result.o001 = AO(0, 0, 1);
-		result.o010 = AO(0, 1, 0);
-		result.o011 = AO(0, 1, 1);
+			const int NX = SIZE + 1;
+			const int NY = SIZE + 1;
+			auto AO = [&](int dx, int dy, int dz) -> uint8_t
+			{
+				int ax = lx + dx;
+				int ay = ly + dy;
+				int az = lz + dz;
+				return mesh->m_OcclusionMap[ax + NX * (ay + NY * az)];
+			};
 
-		result.o100 = AO(1, 0, 0);
-		result.o101 = AO(1, 0, 1);
-		result.o110 = AO(1, 1, 0);
-		result.o111 = AO(1, 1, 1);
+			result.o000 = AO(0, 0, 0);
+			result.o001 = AO(0, 0, 1);
+			result.o010 = AO(0, 1, 0);
+			result.o011 = AO(0, 1, 1);
 
-		return result;
-	}
-
-	MeshBuilder::PointsAndOcclusion
-	MeshBuilder::GetPointsAndOcclusionForCross(SubChunkMesh* mesh, const int lx, const int wy, const int lz)
-	{
-		(void) mesh; // Cross model does not use occlusion values
-
-		constexpr int subBlockSize = 32; // 2 sub-units per MC unit
-
-		int ofnx = 0;
-		int ofpx = 32;
-
-		int ofny = 0;
-		int ofpy = 32;
-
-		int ofnz = 0;
-		int ofpz = 32;
-
-		PointsAndOcclusion result;
-		result.p000 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofnz);
-		result.p001 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofny, lz * subBlockSize + ofpz);
-		result.p010 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofpy, lz * subBlockSize + ofnz);
-		result.p011 = glm::vec3(lx * subBlockSize + ofnx, wy * subBlockSize + ofpy, lz * subBlockSize + ofpz);
-		result.p100 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofny, lz * subBlockSize + ofnz);
-		result.p101 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofny, lz * subBlockSize + ofpz);
-		result.p110 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofpy, lz * subBlockSize + ofnz);
-		result.p111 = glm::vec3(lx * subBlockSize + ofpx, wy * subBlockSize + ofpy, lz * subBlockSize + ofpz);
-		result.o000 = 0;
-		result.o001 = 0;
-		result.o010 = 0;
-		result.o011 = 0;
-		result.o100 = 0;
-		result.o101 = 0;
-		result.o110 = 0;
-		result.o111 = 0;
-		return result;
-	}
-
-	std::vector<MeshBuilder::FaceBuildDesc> MeshBuilder::GetFaceBuildDescs(const BlockTextures& blockTextures,
-																		   const PointsAndOcclusion& pao)
-	{
-		std::vector<MeshBuilder::FaceBuildDesc> desc;
-
-		switch (blockTextures.textureModel)
-		{
-			case eTextureModel::Block:
-				desc = GetBlockFaceBuildDescs(pao);
-				break;
-			case eTextureModel::Cross:
-				desc = GetCrossFaceBuildDescs(pao);
-				break;
-			default:
-				assert(false && "Unknown TextureModel");
-				break;
+			result.o100 = AO(1, 0, 0);
+			result.o101 = AO(1, 0, 1);
+			result.o110 = AO(1, 1, 0);
+			result.o111 = AO(1, 1, 1);
 		}
 
-		return desc;
+		return result;
 	}
 
 	std::vector<MeshBuilder::FaceBuildDesc> MeshBuilder::GetBlockFaceBuildDescs(const PointsAndOcclusion& pao)
@@ -908,33 +819,6 @@ namespace onion::voxel
 			{Face::Back, {&pao.p100, &pao.p000, &pao.p010, &pao.p110}, {&pao.o100, &pao.o000, &pao.o010, &pao.o110}},
 			{Face::Right, {&pao.p101, &pao.p100, &pao.p110, &pao.p111}, {&pao.o101, &pao.o100, &pao.o110, &pao.o111}},
 			{Face::Left, {&pao.p000, &pao.p001, &pao.p011, &pao.p010}, {&pao.o000, &pao.o001, &pao.o011, &pao.o010}},
-		};
-	}
-
-	std::vector<MeshBuilder::FaceBuildDesc> MeshBuilder::GetCrossFaceBuildDescs(const PointsAndOcclusion& pao)
-	{
-		// The cross model consists of two quads that intersect each other. Each quad has a front and back face (For correct FACE CULLING)
-		return {
-			// Plane 1
-			FaceBuildDesc{
-				Face::Top, {&pao.p000, &pao.p101, &pao.p111, &pao.p010}, {&pao.o000, &pao.o101, &pao.o111, &pao.o010}},
-
-			// Plane 2
-			FaceBuildDesc{
-				Face::Top, {&pao.p100, &pao.p001, &pao.p011, &pao.p110}, {&pao.o100, &pao.o001, &pao.o011, &pao.o110}},
-
-			// Plane 1
-			FaceBuildDesc{Face::Top,
-						  {&pao.p000, &pao.p101, &pao.p111, &pao.p010},
-						  {&pao.o000, &pao.o101, &pao.o111, &pao.o010},
-						  true},
-
-			// Plane 2
-			FaceBuildDesc{Face::Top,
-						  {&pao.p100, &pao.p001, &pao.p011, &pao.p110},
-						  {&pao.o100, &pao.o001, &pao.o011, &pao.o110},
-						  true},
-
 		};
 	}
 

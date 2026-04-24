@@ -16,11 +16,6 @@ namespace onion::voxel
 		return !(*this == other);
 	}
 
-	bool Block::IsOpaque() const
-	{
-		return BlockState::IsOpaque(State.ID);
-	}
-
 	bool Block::IsTransparent() const
 	{
 		return BlockState::IsTransparent(State.ID);

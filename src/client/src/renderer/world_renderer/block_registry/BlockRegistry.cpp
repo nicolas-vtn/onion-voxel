@@ -66,10 +66,7 @@ namespace onion::voxel
 	BlockRegistry::BlockRegistry(std::shared_ptr<TextureAtlas> atlas) : m_Atlas(atlas) {}
 
 	// ---- Direct texture-array registration (used by special-case blocks) ----
-	void BlockRegistry::RegisterModel(BlockId id,
-									  const std::vector<TextureInfo>& textures,
-									  eTextureModel textureModel,
-									  size_t variantIndex)
+	void BlockRegistry::RegisterModel(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex)
 	{
 		for (const auto& texture : textures)
 			if (!texture.name.empty())
@@ -79,7 +76,6 @@ namespace onion::voxel
 		reg.id = id;
 		reg.variantIndex = static_cast<uint8_t>(variantIndex);
 		reg.textures = textures;
-		reg.textureModel = textureModel;
 		m_Registrations.push_back(std::move(reg));
 	}
 
@@ -117,19 +113,6 @@ namespace onion::voxel
 			BlockModel stoneModel = BlockModel::FromFile("stone.json");
 			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"];
 			blockModel = stoneModel;
-		}
-
-		eTextureModel textureModel = eTextureModel::Block;
-		if (!blockModel.ModelTextures["cross"].empty())
-		{
-			textureModel = eTextureModel::Cross;
-			BlockModel stoneModel = BlockModel::FromFile("stone.json");
-			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["cross"];
-			blockModel = stoneModel;
-			if (id == BlockId::ShortGrass)
-				for (auto& elem : blockModel.Elements)
-					for (auto& [fn, face] : elem.Faces)
-						face.TintIndex = 0; // Grass tint
 		}
 
 		if (blockModel.Elements.empty())
@@ -178,7 +161,8 @@ namespace onion::voxel
 								 elem.To,
 								 face.UV,
 								 static_cast<int>(face.Rotation.value_or(0.f)),
-								 elem.Rotation};
+								 elem.Rotation,
+								 elem.Shade};
 
 				if (!isOverlay)
 				{
@@ -194,7 +178,7 @@ namespace onion::voxel
 		}
 
 		if (baseInitialized)
-			RegisterModel(id, baseTextures, textureModel, variantIndex);
+			RegisterModel(id, baseTextures, variantIndex);
 
 		if (overlayInitialized)
 			RegisterModelOverlay(id, overlayTextures, variantIndex);
@@ -227,13 +211,9 @@ namespace onion::voxel
 	}
 
 	// ---- Finalize: resolve TextureIDs from atlas ----
-	void BlockRegistry::Register(BlockId id,
-								 uint8_t variantIndex,
-								 const std::vector<TextureInfo>& textures,
-								 eTextureModel textureModel)
+	void BlockRegistry::Register(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures)
 	{
 		BlockTextures tex;
-		tex.textureModel = textureModel;
 
 		for (const auto& textureInfo : textures)
 		{
@@ -306,7 +286,7 @@ namespace onion::voxel
 		m_Blocks.clear();
 
 		for (const auto& registration : m_Registrations)
-			Register(registration.id, registration.variantIndex, registration.textures, registration.textureModel);
+			Register(registration.id, registration.variantIndex, registration.textures);
 
 		for (const auto& overlay : m_RegistrationsOverlays)
 			RegisterOverlay(overlay.id, overlay.variantIndex, overlay.textures);

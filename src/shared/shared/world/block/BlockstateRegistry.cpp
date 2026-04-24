@@ -274,6 +274,22 @@ namespace onion::voxel
 		return 0;
 	}
 
+	bool BlockstateRegistry::CountsInAO(BlockId id, uint8_t variantIndex)
+	{
+		auto& blockstateMap = Get();
+
+		if (id == BlockId::Air)
+			return false;
+
+		auto it = blockstateMap.find(id);
+		if (it != blockstateMap.end())
+		{
+			return it->second[variantIndex].Model.AmbientOcclusion;
+		}
+
+		return false;
+	}
+
 	std::unordered_map<BlockId, std::vector<VariantModel>> BlockstateRegistry::LoadVariantsModel()
 	{
 		// Init BlockModel archive first since VariantModel depends on it (same directory, but different file name)

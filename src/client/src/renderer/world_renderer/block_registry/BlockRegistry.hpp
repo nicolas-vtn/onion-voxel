@@ -36,12 +36,6 @@ namespace onion::voxel
 		Water
 	};
 
-	enum class eTextureModel : uint8_t
-	{
-		Block,
-		Cross
-	};
-
 	struct TextureInfo
 	{
 		TextureAtlas::TextureID texture = UINT16_MAX;
@@ -54,13 +48,13 @@ namespace onion::voxel
 		std::array<float, 4> uv = {0, 0, 16, 16}; // per-face UV override [u1,v1,u2,v2] in MC units (0-16)
 		int uvRotation = 0;						  // per-face UV rotation in degrees (0, 90, 180, 270)
 		BlockModel::ElementRotation elemRotation; // element-level 3D rotation (axis/angle/origin)
+		bool shade = true;
 	};
 
 	struct BlockTextures
 	{
 		std::vector<TextureInfo> faces;
 		std::vector<TextureInfo> overlay;
-		eTextureModel textureModel = eTextureModel::Block;
 	};
 
 	class BlockRegistry
@@ -93,19 +87,13 @@ namespace onion::voxel
 		// Register a specific variant (by VariantModel) — used internally
 		void RegisterVariant(BlockId id, const VariantModel& variant, size_t variantIndex);
 		// Register a direct texture array (used by hand-crafted special cases)
-		void RegisterModel(BlockId id,
-						   const std::vector<TextureInfo>& textures,
-						   eTextureModel textureModel,
-						   size_t variantIndex);
+		void RegisterModel(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex);
 
 		void RegisterModelOverlay(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex);
 
 		// ----- Real Registrations -----
 	  private:
-		void Register(BlockId id,
-					  uint8_t variantIndex,
-					  const std::vector<TextureInfo>& textures,
-					  eTextureModel textureModel = eTextureModel::Block);
+		void Register(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures);
 		void RegisterOverlay(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures);
 
 		// ----- Private Members -----
@@ -115,7 +103,6 @@ namespace onion::voxel
 			BlockId id;
 			uint8_t variantIndex; // which slot within m_Blocks[id]
 			std::vector<TextureInfo> textures;
-			eTextureModel textureModel;
 		};
 
 		struct PreOverlayRegistration

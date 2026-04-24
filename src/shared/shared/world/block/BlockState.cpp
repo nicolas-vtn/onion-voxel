@@ -491,11 +491,6 @@ namespace onion::voxel
 		return !(*this == other);
 	}
 
-	bool BlockState::IsOpaque(BlockId blockID)
-	{
-		return !IsTransparent(blockID);
-	}
-
 	bool BlockState::IsTransparent(BlockId blockID)
 	{
 		std::shared_lock lock(s_TransparencyLookupTableMutex);

@@ -27,7 +27,6 @@ namespace onion::voxel
 
 		// ----- Getters -----
 	  public:
-		bool IsOpaque() const;
 		bool IsTransparent() const;
 
 		BlockId ID() const { return State.ID; }

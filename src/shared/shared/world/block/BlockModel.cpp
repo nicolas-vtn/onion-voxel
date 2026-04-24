@@ -61,6 +61,9 @@ namespace onion::voxel
 
 			if (rotationJson.contains("angle"))
 				rotation.Angle = rotationJson.at("angle").get<float>();
+
+			if (rotationJson.contains("rescale"))
+				rotation.Rescale = rotationJson.at("rescale").get<bool>();
 		}
 
 		static void ParseElements(const nlohmann::json& elementsJson, std::vector<BlockModel::Element>& elements)
@@ -77,6 +80,9 @@ namespace onion::voxel
 
 				if (elemJson.contains("rotation"))
 					ParseElementRotation(elemJson.at("rotation"), elem.Rotation);
+
+				if (elemJson.contains("shade"))
+					elem.Shade = elemJson.at("shade").get<bool>();
 
 				if (elemJson.contains("faces"))
 				{
@@ -161,6 +167,12 @@ namespace onion::voxel
 		if (json.contains("parent") && json.at("parent").is_string())
 		{
 			model.ParentPath = json.at("parent").get<std::string>();
+		}
+
+		// ---- Ambient Occlusion ----
+		if (json.contains("ambientocclusion") && json.at("ambientocclusion").is_boolean())
+		{
+			model.AmbientOcclusion = json.at("ambientocclusion").get<bool>();
 		}
 
 		// ---- Textures ----

@@ -34,6 +34,7 @@ namespace onion::voxel
 			glm::vec3 Origin{0, 0, 0};
 			std::string Axis; // "x", "y", or "z"
 			float Angle{0.0f};
+			bool Rescale = false;
 		};
 
 		struct Element
@@ -41,6 +42,7 @@ namespace onion::voxel
 			glm::vec3 From{0, 0, 0};
 			glm::vec3 To{0, 0, 0};
 			ElementRotation Rotation;
+			bool Shade = true;
 
 			std::unordered_map<std::string, Face> Faces;
 			// keys: "north", "south", etc.
@@ -59,6 +61,7 @@ namespace onion::voxel
 
 		// ----- Members -----
 	  public:
+		bool AmbientOcclusion = true;
 		Textures ModelTextures;
 		std::vector<Element> Elements;
 
