@@ -20,6 +20,68 @@ namespace
 
 		return {center - p.HalfSize, center + p.HalfSize};
 	}
+
+	// ---------------------------------------------------------------------------
+	// Swept AABB test: moves box `a` by `displacement`, tests against static `b`.
+	// Returns the normalised time of first contact in [0, 1) or 1.0 if no hit.
+	// `outNormal` is set to the face normal of `b` that was hit (only valid on hit).
+	// ---------------------------------------------------------------------------
+	float SweptAABB(const AABBWorld& a, const glm::vec3& displacement, const AABBWorld& b, glm::vec3& outNormal)
+	{
+		// Distances from each face of b to the near/far face of a on each axis
+		glm::vec3 invEntry, invExit;
+
+		for (int i = 0; i < 3; ++i)
+		{
+			if (displacement[i] > 0.0f)
+			{
+				invEntry[i] = b.Min[i] - a.Max[i];
+				invExit[i] = b.Max[i] - a.Min[i];
+			}
+			else
+			{
+				invEntry[i] = b.Max[i] - a.Min[i];
+				invExit[i] = b.Min[i] - a.Max[i];
+			}
+		}
+
+		// Times of entry/exit per axis
+		glm::vec3 tEntry, tExit;
+
+		for (int i = 0; i < 3; ++i)
+		{
+			if (displacement[i] == 0.0f)
+			{
+				// No movement on this axis — use sentinel values
+				tEntry[i] = -std::numeric_limits<float>::infinity();
+				tExit[i] = std::numeric_limits<float>::infinity();
+			}
+			else
+			{
+				tEntry[i] = invEntry[i] / displacement[i];
+				tExit[i] = invExit[i] / displacement[i];
+			}
+		}
+
+		float tEnter = std::max({tEntry.x, tEntry.y, tEntry.z});
+		float tLeave = std::min({tExit.x, tExit.y, tExit.z});
+
+		// No collision: separating axis exists, already past, or entry after end of sweep
+		if (tEnter >= tLeave || tEnter >= 1.0f || tLeave <= 0.0f)
+			return 1.0f;
+
+		// Determine the axis of first contact and build the outward normal from b
+		outNormal = glm::vec3(0.0f);
+		if (tEntry.x >= tEntry.y && tEntry.x >= tEntry.z)
+			outNormal.x = (displacement.x > 0.0f) ? -1.0f : 1.0f;
+		else if (tEntry.y >= tEntry.x && tEntry.y >= tEntry.z)
+			outNormal.y = (displacement.y > 0.0f) ? -1.0f : 1.0f;
+		else
+			outNormal.z = (displacement.z > 0.0f) ? -1.0f : 1.0f;
+
+		return tEnter;
+	}
+
 } // namespace
 
 namespace onion::voxel
@@ -53,7 +115,7 @@ namespace onion::voxel
 			if (inLoadedChunk)
 			{
 				UpdateEntityPhysics(entity, deltaTime);
-				ResolveTerrainCollisions(entity, deltaTime);
+				SweptResolveTerrainCollisions(entity, deltaTime);
 			}
 		}
 	}
@@ -129,7 +191,7 @@ namespace onion::voxel
 		velocity.z -= std::min(speedZ, frictionAmountZ) * glm::sign(velocity.z);
 	}
 
-	void PhysicsEngine::ResolveTerrainCollisions(std::shared_ptr<Entity> entity, float dt)
+	void PhysicsEngine::LegacyResolveTerrainCollisions(std::shared_ptr<Entity> entity, float dt)
 	{
 		if (!entity->HasPhysicsBody() || !entity->HasTransform())
 			return;
@@ -295,6 +357,173 @@ namespace onion::voxel
 		{
 			transform.Position.y += 1.0f; // Move up by 1 block until no longer colliding
 		}
+
+		entity->SetTransform(transform);
+		entity->SetPhysicsBody(physics);
+	}
+
+	// -------------------------------------------------------------------------
+	// SweptResolveTerrainCollisions
+	//
+	// Performs up to MAX_ITERATIONS of swept-AABB collision resolution per frame.
+	// Each iteration:
+	//   1. Broadphase: expand entity AABB by remaining displacement to find candidate blocks.
+	//   2. Narrowphase: run SweptAABB against every candidate solid block, find earliest hit.
+	//   3. Move entity to the hit point (minus a small epsilon to avoid touching).
+	//   4. Zero velocity on the hit normal axis; project remaining displacement onto the
+	//      slide plane so the entity slides along walls/floor naturally.
+	//   5. Repeat with the remaining displacement until no more hits or iterations exhausted.
+	//
+	// OnGround is set when the entity lands on a surface whose normal points upward.
+	// A small downward ground probe is also run each frame to keep OnGround stable while
+	// the entity is standing still on a floor (tEnter == 0 case).
+	// -------------------------------------------------------------------------
+	void PhysicsEngine::SweptResolveTerrainCollisions(std::shared_ptr<Entity> entity, float dt)
+	{
+		if (!entity->HasPhysicsBody() || !entity->HasTransform())
+			return;
+
+		auto physics = entity->GetPhysicsBody();
+		auto transform = entity->GetTransform();
+
+		physics.OnGround = false;
+
+		constexpr int MAX_ITERATIONS = 3;
+		constexpr float EPSILON = 0.001f; // Push-back from surface to avoid float overlap
+
+		const glm::vec3 half = physics.HalfSize;
+		const glm::vec3 offset = physics.Offset;
+
+		glm::vec3 pos = transform.Position;
+		glm::vec3 vel = physics.Velocity;
+
+		// Total displacement this frame
+		glm::vec3 remaining = vel * dt;
+
+		for (int iter = 0; iter < MAX_ITERATIONS; ++iter)
+		{
+			if (glm::length(remaining) < EPSILON * 0.1f)
+				break;
+
+			// --- Broadphase: AABB swept over the remaining displacement ---
+			glm::vec3 center = pos + offset;
+			AABBWorld swept;
+			swept.Min = glm::min(center - half, center - half + remaining) - glm::vec3(EPSILON);
+			swept.Max = glm::max(center + half, center + half + remaining) + glm::vec3(EPSILON);
+
+			int bMinX = static_cast<int>(std::floor(swept.Min.x));
+			int bMaxX = static_cast<int>(std::floor(swept.Max.x));
+			int bMinY = static_cast<int>(std::floor(swept.Min.y));
+			int bMaxY = static_cast<int>(std::floor(swept.Max.y));
+			int bMinZ = static_cast<int>(std::floor(swept.Min.z));
+			int bMaxZ = static_cast<int>(std::floor(swept.Max.z));
+
+			// --- Narrowphase: find the earliest hit among all candidate blocks ---
+			float tMin = 1.0f;
+			glm::vec3 hitNormal = glm::vec3(0.0f);
+
+			AABBWorld entityBox{center - half, center + half};
+
+			for (int bx = bMinX; bx <= bMaxX; ++bx)
+			{
+				for (int by = bMinY; by <= bMaxY; ++by)
+				{
+					for (int bz = bMinZ; bz <= bMaxZ; ++bz)
+					{
+						const BlockState& block = m_WorldManager.GetBlock(glm::ivec3{bx, by, bz});
+						if (!BlockState::IsSolid(block.ID))
+							continue;
+
+						// Full-cube AABB for this block
+						AABBWorld blockBox{glm::vec3(bx, by, bz), glm::vec3(bx + 1.0f, by + 1.0f, bz + 1.0f)};
+
+						glm::vec3 normal;
+						float t = SweptAABB(entityBox, remaining, blockBox, normal);
+
+						if (t < tMin)
+						{
+							tMin = t;
+							hitNormal = normal;
+						}
+					}
+				}
+			}
+
+			if (tMin >= 1.0f)
+			{
+				// No collision this iteration — consume all remaining displacement
+				pos += remaining;
+				break;
+			}
+
+			// Move entity to the point of contact, leaving a tiny gap.
+			// Convert the surface epsilon to a time offset based on displacement length.
+			float dispLen = glm::length(remaining);
+			float tEpsilon = (dispLen > 0.0f) ? (EPSILON / dispLen) : 0.0f;
+			float tSafe = std::max(0.0f, tMin - tEpsilon);
+			pos += remaining * tSafe;
+
+			// Detect ground contact (normal pointing upward)
+			if (hitNormal.y > 0.5f)
+			{
+				physics.OnGround = true;
+				vel.y = 0.0f;
+			}
+			// Ceiling hit
+			else if (hitNormal.y < -0.5f)
+			{
+				vel.y = 0.0f;
+			}
+			// Wall hit on X
+			if (std::abs(hitNormal.x) > 0.5f)
+				vel.x = 0.0f;
+
+			// Wall hit on Z
+			if (std::abs(hitNormal.z) > 0.5f)
+				vel.z = 0.0f;
+
+			// Remaining displacement: subtract the consumed portion, then project onto
+			// the slide plane (remove the component along the hit normal).
+			remaining = remaining * (1.0f - tSafe);
+			remaining -= glm::dot(remaining, hitNormal) * hitNormal;
+		}
+
+		// ---- Ground probe ----
+		// When the entity is resting on a floor it may have zero vertical velocity, so
+		// the sweep above won't detect a hit. Cast a tiny ray downward to check.
+		if (!physics.OnGround && !physics.IsFlying)
+		{
+			glm::vec3 center = pos + offset;
+			AABBWorld probeBox{center - half, center + half};
+			glm::vec3 probeDisp(0.0f, -EPSILON * 4.0f, 0.0f);
+
+			glm::vec3 pCenter = pos + offset;
+			int bMinX = static_cast<int>(std::floor(pCenter.x - half.x));
+			int bMaxX = static_cast<int>(std::floor(pCenter.x + half.x));
+			int bY = static_cast<int>(std::floor(pCenter.y - half.y - EPSILON * 2.0f));
+			int bMinZ = static_cast<int>(std::floor(pCenter.z - half.z));
+			int bMaxZ = static_cast<int>(std::floor(pCenter.z + half.z));
+
+			for (int bx = bMinX; bx <= bMaxX && !physics.OnGround; ++bx)
+			{
+				for (int bz = bMinZ; bz <= bMaxZ && !physics.OnGround; ++bz)
+				{
+					const BlockState& block = m_WorldManager.GetBlock(glm::ivec3{bx, bY, bz});
+					if (!BlockState::IsSolid(block.ID))
+						continue;
+
+					AABBWorld blockBox{glm::vec3(bx, bY, bz), glm::vec3(bx + 1.0f, bY + 1.0f, bz + 1.0f)};
+					glm::vec3 normal;
+					float t = SweptAABB(probeBox, probeDisp, blockBox, normal);
+					if (t < 1.0f && normal.y > 0.5f)
+						physics.OnGround = true;
+				}
+			}
+		}
+
+		// ---- Apply ----
+		transform.Position = pos;
+		physics.Velocity = vel;
 
 		entity->SetTransform(transform);
 		entity->SetPhysicsBody(physics);

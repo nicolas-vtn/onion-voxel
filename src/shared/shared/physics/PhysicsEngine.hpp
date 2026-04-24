@@ -35,7 +35,12 @@ namespace onion::voxel
 	  private:
 		void UpdateEntityPhysics(std::shared_ptr<Entity> entity, float deltaTime);
 		void ApplyFriction(glm::vec3& velocity, float deltaTime);
-		void ResolveTerrainCollisions(std::shared_ptr<Entity> entity, float deltaTime);
+
+		// New swept AABB collision resolution (stable, tunneling-free)
+		void SweptResolveTerrainCollisions(std::shared_ptr<Entity> entity, float deltaTime);
+
+		// Legacy axis-separated resolution (kept for reference)
+		void LegacyResolveTerrainCollisions(std::shared_ptr<Entity> entity, float deltaTime);
 
 		bool IsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset);
 

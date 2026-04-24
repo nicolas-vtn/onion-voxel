@@ -620,7 +620,7 @@ namespace onion::voxel
 		if (interactKeyState.IsPressed && m_CurrentRaycastHit.has_value())
 		{
 			const Block& adjacentBlock = m_CurrentRaycastHit->AdjacentBlock;
-			Block blockToPlace = Block(adjacentBlock.Position, BlockState(BlockId::BrickStairs, 14));
+			Block blockToPlace = Block(adjacentBlock.Position, BlockState(BlockId::Cobblestone));
 
 			bool success = m_WorldManager->SetBlock(
 				blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
