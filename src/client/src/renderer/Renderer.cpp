@@ -1279,12 +1279,37 @@ namespace onion::voxel
 				const auto& variantModels = it->second;
 				const VariantModel& variantModel = variantModels.at(hitBlock.State.VariantIndex);
 
-				for (const auto& element : variantModel.Model.Elements)
+				// Special case: cross-shaped models (e.g. grass, flowers).
+				// Two thin elements both rotated 45° around Y — draw a single union AABB.
+				const auto& elements = variantModel.Model.Elements;
+				auto isThinY45 = [](const BlockModel::Element& e)
 				{
-					const glm::vec3 worldFrom = glm::vec3(hitBlock.Position) + (element.From / 16.f);
-					const glm::vec3 worldTo = glm::vec3(hitBlock.Position) + (element.To / 16.f);
+					constexpr float kThinThreshold = 0.5f;
+					bool thinOnX = (e.To.x - e.From.x) < kThinThreshold;
+					bool thinOnZ = (e.To.z - e.From.z) < kThinThreshold;
+					return (thinOnX || thinOnZ) && e.Rotation.Axis == "y" &&
+						(e.Rotation.Angle == 45.f || e.Rotation.Angle == -45.f);
+				};
+
+				if (elements.size() == 2 && isThinY45(elements[0]) && isThinY45(elements[1]))
+				{
+					glm::vec3 unionFrom = glm::min(elements[0].From, elements[1].From);
+					glm::vec3 unionTo = glm::max(elements[0].To, elements[1].To);
+
+					const glm::vec3 worldFrom = glm::vec3(hitBlock.Position) + (unionFrom / 16.f);
+					const glm::vec3 worldTo = glm::vec3(hitBlock.Position) + (unionTo / 16.f);
 
 					DebugDraws::DrawWorldBoxMinMax(worldFrom, worldTo, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 2, false);
+				}
+				else
+				{
+					for (const auto& element : elements)
+					{
+						const glm::vec3 worldFrom = glm::vec3(hitBlock.Position) + (element.From / 16.f);
+						const glm::vec3 worldTo = glm::vec3(hitBlock.Position) + (element.To / 16.f);
+
+						DebugDraws::DrawWorldBoxMinMax(worldFrom, worldTo, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 2, false);
+					}
 				}
 
 				//DebugDraws::DrawBlockOutline(hitBlock.Position, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);

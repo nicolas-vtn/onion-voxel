@@ -396,16 +396,47 @@ namespace onion::voxel
 		{
 			const std::vector<BlockModel::Element>& elements = it->second[blockState.VariantIndex].Model.Elements;
 
-			// Verify if the position collides with any of the block's elements
-			for (const auto& element : elements)
+			// Special case: cross-shaped models (e.g. grass, flowers).
+			// Two elements, both thin (zero depth on one axis) and both rotated 45° around Y.
+			// Instead of testing two zero-depth planes that a ray point will never land on,
+			// compute a single union AABB and test against that.
+			auto isThinY45 = [](const BlockModel::Element& e)
 			{
-				glm::vec3 blockMin = glm::vec3(flooredPosition) + (element.From / 16.f);
-				glm::vec3 blockMax = glm::vec3(flooredPosition) + (element.To / 16.f);
+				constexpr float kThinThreshold = 0.5f; // in Minecraft units (0–16)
+				bool thinOnX = (e.To.x - e.From.x) < kThinThreshold;
+				bool thinOnZ = (e.To.z - e.From.z) < kThinThreshold;
+				return (thinOnX || thinOnZ) && e.Rotation.Axis == "y" &&
+					(e.Rotation.Angle == 45.f || e.Rotation.Angle == -45.f);
+			};
+
+			if (elements.size() == 2 && isThinY45(elements[0]) && isThinY45(elements[1]))
+			{
+				glm::vec3 unionMin = glm::min(elements[0].From, elements[1].From);
+				glm::vec3 unionMax = glm::max(elements[0].To, elements[1].To);
+
+				glm::vec3 blockMin = glm::vec3(flooredPosition) + (unionMin / 16.f);
+				glm::vec3 blockMax = glm::vec3(flooredPosition) + (unionMax / 16.f);
 
 				if (worldPosition.x >= blockMin.x && worldPosition.x < blockMax.x && worldPosition.y >= blockMin.y &&
 					worldPosition.y < blockMax.y && worldPosition.z >= blockMin.z && worldPosition.z < blockMax.z)
 				{
-					return blockState; // Return the block state if the world position collides with the block's element
+					return blockState;
+				}
+			}
+			else
+			{
+				// Verify if the position collides with any of the block's elements
+				for (const auto& element : elements)
+				{
+					glm::vec3 blockMin = glm::vec3(flooredPosition) + (element.From / 16.f);
+					glm::vec3 blockMax = glm::vec3(flooredPosition) + (element.To / 16.f);
+
+					if (worldPosition.x >= blockMin.x && worldPosition.x < blockMax.x &&
+						worldPosition.y >= blockMin.y && worldPosition.y < blockMax.y &&
+						worldPosition.z >= blockMin.z && worldPosition.z < blockMax.z)
+					{
+						return blockState;
+					}
 				}
 			}
 		}

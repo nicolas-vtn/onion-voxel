@@ -16,7 +16,6 @@
 - Particules (breaking blocks, footsteps, ...)
 - First person view : Arm and selected block. (+ Movement on walking, placing and breaking)
 - Use Block Model for collision instead of full block.
-- Use Block Model for ray casting instead of full block.
 - Support model face culling ( Can optimize face cutout culling issue (double cutout render pass))
 - Rotated Oak Logs (Barks in correct direction)
 
