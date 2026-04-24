@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <shared/utils/Utils.hpp>
+#include <shared/world/block/BlockstateRegistry.hpp>
 
 namespace
 {
@@ -84,6 +85,53 @@ namespace
 			outNormal.z = (displacement.z > 0.0f) ? -1.0f : 1.0f;
 
 		return tEnter;
+	}
+
+	// -------------------------------------------------------------------------
+	// GetBlockElementAABBs
+	//
+	// Returns the world-space AABBs for each BlockModel::Element of a solid block.
+	// Element From/To are in Minecraft 0–16 units; dividing by 16 and offsetting by
+	// the block's integer world position converts them to world-space metres.
+	//
+	// Element rotation (ElementRotation) is intentionally ignored: collision-relevant
+	// blocks (slabs, stairs, fences, snow) never use element rotation. For any element
+	// that does have a non-zero rotation angle we still use its From/To AABB directly —
+	// this is slightly conservative but never under-estimates the actual geometry.
+	//
+	// Falls back to a single full-cube AABB if the block has no model or no elements.
+	// -------------------------------------------------------------------------
+	std::vector<AABBWorld> GetBlockElementAABBs(const BlockState& state, const glm::ivec3& blockPos)
+	{
+		const glm::vec3 origin = glm::vec3(blockPos);
+
+		const auto& registry = BlockstateRegistry::Get();
+		auto it = registry.find(state.ID);
+
+		if (it != registry.end())
+		{
+			const std::vector<BlockModel::Element>& elements = it->second[state.VariantIndex].Model.Elements;
+
+			if (!elements.empty())
+			{
+				std::vector<AABBWorld> result;
+				result.reserve(elements.size());
+
+				for (const auto& element : elements)
+				{
+					// Convert from Minecraft 0–16 units to world-space metres
+					AABBWorld box;
+					box.Min = origin + element.From / 16.0f;
+					box.Max = origin + element.To / 16.0f;
+					result.push_back(box);
+				}
+
+				return result;
+			}
+		}
+
+		// Fallback: full unit cube
+		return {AABBWorld{origin, origin + glm::vec3(1.0f)}};
 	}
 
 } // namespace
@@ -440,14 +488,17 @@ namespace onion::voxel
 						if (!BlockState::IsSolid(block.ID))
 							continue;
 
-						AABBWorld blockBox{glm::vec3(bx, by, bz), glm::vec3(bx + 1.0f, by + 1.0f, bz + 1.0f)};
-
-						glm::vec3 normal;
-						float t = SweptAABB(entityBox, disp, blockBox, normal);
-						if (t < tMin)
+						// Test each element AABB of the block model individually.
+						// Solid blocks with no model fall back to a full unit cube.
+						for (const AABBWorld& elemBox : GetBlockElementAABBs(block, {bx, by, bz}))
 						{
-							tMin = t;
-							hitNormal = normal;
+							glm::vec3 normal;
+							float t = SweptAABB(entityBox, disp, elemBox, normal);
+							if (t < tMin)
+							{
+								tMin = t;
+								hitNormal = normal;
+							}
 						}
 					}
 
