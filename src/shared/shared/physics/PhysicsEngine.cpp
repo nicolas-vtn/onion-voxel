@@ -509,12 +509,17 @@ namespace onion::voxel
 				float tSafe = std::max(0.0f, tMin - tEpsilon);
 				pos += disp * tSafe;
 
-				// Only zero vel.y on floor/ceiling hits — gravity accumulates it indefinitely
-				// and must be cleared on contact. vel.x/z are owned by input: zeroing them
-				// causes stickiness because input rebuilds them into the wall every frame.
-				// Positional blocking (pos stops at the wall) is sufficient horizontally.
+				// Zero velocity on the hit axis. Per-axis sweeping makes this safe:
+				// - vel.y must be zeroed to prevent gravity accumulation through floors/ceilings.
+				// - vel.x/z zeroing on wall hits no longer causes stickiness because each axis
+				//   is swept independently — the floor cannot interfere with an X wall hit.
+				//   Zeroing also prevents velocity stacking when running against a wall.
+				if (std::abs(hitNormal.x) > 0.5f)
+					vel.x = 0.0f;
 				if (std::abs(hitNormal.y) > 0.5f)
 					vel.y = 0.0f;
+				if (std::abs(hitNormal.z) > 0.5f)
+					vel.z = 0.0f;
 			}
 			else
 			{
