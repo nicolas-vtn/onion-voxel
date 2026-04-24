@@ -336,10 +336,15 @@ namespace onion::voxel
 									   height, // Grass layer height
 									   (chunkPosition.y * WorldConstants::CHUNK_SIZE) + z};
 
-				bool shouldGenerateShortGrass = ShouldGenerateShortGrass(worldPos);
+				bool shouldGenerateShortGrass = ShouldGenerateGrass(worldPos);
 				if (GENERATE_GRASS && shouldGenerateShortGrass)
 				{
-					chunk->SetBlock(glm::ivec3(x, height + 1, z), BlockState(BlockId::ShortGrass));
+					double randomVal = m_SeededRandom.GetValue(worldPos + glm::ivec3(75, 24, 199));
+					bool tall = randomVal > 0.8; // 20% chance to generate tall grass instead of short grass
+
+					Schematic grassSchematic = GenerateGrass(worldPos + glm::ivec3{0, 1, 0}, Biome::Plains, tall);
+
+					MergeSchematicInChunk(grassSchematic, genChunk);
 				}
 
 				bool shouldGenerateFlower = ShouldGenerateFlower(worldPos);
@@ -801,7 +806,7 @@ namespace onion::voxel
 		return randomVal < baseTreeChance;
 	}
 
-	bool WorldGenerator::ShouldGenerateShortGrass(const glm::ivec3& position, Biome biome) const
+	bool WorldGenerator::ShouldGenerateGrass(const glm::ivec3& position, Biome biome) const
 	{
 		double randomVal = m_SeededRandom.GetValue(position + glm::ivec3(745, 324, 199));
 
@@ -1127,6 +1132,34 @@ namespace onion::voxel
 		return treeSchematic;
 	}
 
+	Schematic WorldGenerator::GenerateGrass(const glm::ivec3& position, Biome biome, bool tall)
+	{
+		glm::ivec3 grassPosition{position.x, position.y, position.z};
+		glm::ivec3 schematicOrigin{grassPosition.x, grassPosition.y, grassPosition.z};
+		Schematic grassSchematic({1, 2, 1}, schematicOrigin);
+
+		if (!tall)
+		{
+			BlockId grassId = (biome == Biome::Desert) ? BlockId::DeadBush : BlockId::ShortGrass;
+			BlockState shortGrass = BlockState(grassId);
+			grassSchematic.SetBlock({0, 0, 0}, shortGrass); // Set the short grass block
+		}
+		else
+		{
+			uint8_t tallGrassLowerVariantIndex =
+				BlockstateRegistry::GetVariantIndex(BlockId::TallGrass, {{"half", "lower"}});
+			BlockState tallGrassLower = BlockState(BlockId::TallGrass, tallGrassLowerVariantIndex);
+			grassSchematic.SetBlock({0, 0, 0}, tallGrassLower); // Set the lower part of the tall grass
+
+			uint8_t tallGrassUpperVariantIndex =
+				BlockstateRegistry::GetVariantIndex(BlockId::TallGrass, {{"half", "upper"}});
+			BlockState tallGrassUpper = BlockState(BlockId::TallGrass, tallGrassUpperVariantIndex);
+			grassSchematic.SetBlock({0, 1, 0}, tallGrassUpper); // Set the upper part of the tall grass
+		}
+
+		return grassSchematic;
+	}
+
 	Schematic WorldGenerator::GenerateCactus(const glm::ivec3& position, int height)
 	{
 		glm::ivec3 cactusPosition{position.x, position.y, position.z};
@@ -1208,10 +1241,14 @@ namespace onion::voxel
 		// If top block is available
 		if (genChunk.chunk->GetBlock(localPos).ID == BlockId::Air)
 		{
-			if (ShouldGenerateShortGrass(worldPos, biome))
+			if (ShouldGenerateGrass(worldPos, biome))
 			{
-				BlockId grassId = (biome == Biome::Desert) ? BlockId::DeadBush : BlockId::ShortGrass;
-				genChunk.chunk->SetBlock(localPos, BlockState(grassId));
+				double randomVal = m_SeededRandom.GetValue(worldPos + glm::ivec3(75, 24, 199));
+				bool tall = randomVal > 0.8; // 20% chance to generate tall grass instead of short grass
+
+				Schematic grassSchematic = GenerateGrass(worldPos + glm::ivec3{0, 1, 0}, biome, tall);
+
+				MergeSchematicInChunk(grassSchematic, genChunk);
 			}
 			else if (ShouldGenerateFlower(worldPos, biome))
 			{

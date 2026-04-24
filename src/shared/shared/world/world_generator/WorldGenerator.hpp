@@ -115,7 +115,7 @@ namespace onion::voxel
 		// ----- Structures Generation -----
 	  private:
 		bool ShouldGenerateTree(const glm::ivec3& position, Biome biome = Biome::Plains) const;
-		bool ShouldGenerateShortGrass(const glm::ivec3& position, Biome biome = Biome::Plains) const;
+		bool ShouldGenerateGrass(const glm::ivec3& position, Biome biome = Biome::Plains) const;
 		bool ShouldGenerateFlower(const glm::ivec3& position, Biome biome = Biome::Plains) const;
 		BlockId GetFlowerType(const glm::ivec3& position) const;
 
@@ -137,6 +137,7 @@ namespace onion::voxel
 										  const std::unordered_set<BlockId>& overwritables = {BlockId::Air});
 
 		static Schematic GenerateTree(const glm::ivec3& position, int height, BlockId logType, BlockId leavesType);
+		static Schematic GenerateGrass(const glm::ivec3& position, Biome biome, bool tall);
 		static Schematic GenerateCactus(const glm::ivec3& position, int height);
 
 		void AddFoliage(GenChunk& genChunk, const glm::ivec3& worldPosition, glm::ivec3& localPosition, Biome biome);
