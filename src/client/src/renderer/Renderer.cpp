@@ -764,6 +764,12 @@ namespace onion::voxel
 			}
 		}
 
+		// Disable flying when touching ground
+		if (physics.IsFlying && physics.OnGround)
+		{
+			physics.IsFlying = false;
+		}
+
 		// ----- PLAYER FLYING SPEED -----
 		float flyVelocity = m_PlayerFlySpeed * (float) m_DeltaTime;
 		if (physics.IsFlying && inputs->Mouse.ScrollOffsetChanged)
