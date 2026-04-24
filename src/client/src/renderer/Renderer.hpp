@@ -178,7 +178,12 @@ namespace onion::voxel
 		float m_AirAcceleration = 8.0f;
 		float m_AirDeceleration = 4.0f;
 		float m_JumpReleaseDeceleration = 15.f;
-		bool m_AllowFlyToggle = true; // whether double-jump toggles fly mode
+		bool m_AllowFlyToggle = true;
+
+		// Coyote time — jump window after walking off an edge
+		float m_CoyoteTimeDuration = 0.12f;
+		float m_CoyoteTimeRemaining = 0.0f;
+		bool m_WasOnGround = false;
 
 		// ------ World Renderer ------
 	  private:
