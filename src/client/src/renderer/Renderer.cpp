@@ -601,26 +601,12 @@ namespace onion::voxel
 		glm::vec3 rayOrigin = m_Camera->GetPosition();
 		glm::vec3 rayDirection = m_Camera->GetFront();
 
-		Block hitBlock = Block(glm::ivec3(), BlockState(BlockId::Air));
-		Block prevBlock = Block(glm::ivec3(), BlockState(BlockId::Air));
-		for (int i = 0; i < 100; i++)
-		{
-			float delta = 0.1f; // Step size for ray marching
-			glm::vec3 checkPos = rayOrigin + rayDirection * delta * static_cast<float>(i);
-			hitBlock.Position = glm::floor(checkPos);
-			hitBlock.State = m_WorldManager->GetBlock(hitBlock.Position);
-			if (hitBlock.ID() != BlockId::Air)
-			{
-				break;
-			}
-			prevBlock = hitBlock;
-		}
-
-		m_HitBlock = hitBlock;
+		m_CurrentRaycastHit = Raycaster::Raycast(*m_WorldManager, rayOrigin, rayDirection, 10.0f, 300);
 
 		KeyState attackKeyState = m_KeyBinds.GetKeyState(eAction::Attack);
-		if (attackKeyState.IsPressed)
+		if (attackKeyState.IsPressed && m_CurrentRaycastHit.has_value())
 		{
+			const Block& hitBlock = m_CurrentRaycastHit->HitBlock;
 			Block airBlockToPlace = Block(hitBlock.Position, BlockState(BlockId::Air));
 
 			bool success = m_WorldManager->SetBlock(
@@ -631,15 +617,16 @@ namespace onion::voxel
 		}
 
 		KeyState interactKeyState = m_KeyBinds.GetKeyState(eAction::Interact);
-		if (interactKeyState.IsPressed)
+		if (interactKeyState.IsPressed && m_CurrentRaycastHit.has_value())
 		{
-			Block blockToPlace = Block(prevBlock.Position, BlockState(BlockId::BrickStairs, 14));
+			const Block& adjacentBlock = m_CurrentRaycastHit->AdjacentBlock;
+			Block blockToPlace = Block(adjacentBlock.Position, BlockState(BlockId::BrickStairs, 14));
 
 			bool success = m_WorldManager->SetBlock(
 				blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
 
-			std::cout << "Attempting to place block at " << prevBlock.Position.x << ", " << prevBlock.Position.y << ", "
-					  << prevBlock.Position.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
+			std::cout << "Attempting to place block at " << blockToPlace.Position.x << ", " << blockToPlace.Position.y
+					  << ", " << blockToPlace.Position.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
 		}
 	}
 
@@ -1121,7 +1108,7 @@ namespace onion::voxel
 			m_WorldManager->RemoveAllChunks();
 			m_WorldRenderer.DeleteChunkMeshes();
 
-			m_HitBlock = Block(); // Reset HitBlock
+			m_CurrentRaycastHit = std::nullopt; // Reset HitBlock
 
 			m_Gui.SetIsInGame(false);
 
@@ -1216,12 +1203,16 @@ namespace onion::voxel
 		// ----- Raycast Debug -----
 		if (ImGui::CollapsingHeader("Raycast", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			ImGui::Text(
-				"Hit Block Position: %d, %d, %d", m_HitBlock.Position.x, m_HitBlock.Position.y, m_HitBlock.Position.z);
-			ImGui::Text("Hit Block ID: %d", m_HitBlock.ID());
-			ImGui::Text("Name: %s", BlockIds::GetName(m_HitBlock.ID()).c_str());
-			int variantIndex = m_HitBlock.State.VariantIndex;
-			ImGui::Text("Variant Index: %d", variantIndex);
+			if (m_CurrentRaycastHit.has_value())
+			{
+				const Block& hitBlock = m_CurrentRaycastHit->HitBlock;
+				ImGui::Text(
+					"Hit Block Position: %d, %d, %d", hitBlock.Position.x, hitBlock.Position.y, hitBlock.Position.z);
+				ImGui::Text("Hit Block ID: %d", hitBlock.ID());
+				ImGui::Text("Name: %s", BlockIds::GetName(hitBlock.ID()).c_str());
+				int variantIndex = hitBlock.State.VariantIndex;
+				ImGui::Text("Variant Index: %d", variantIndex);
+			}
 		}
 
 		ImGui::End();
@@ -1273,33 +1264,34 @@ namespace onion::voxel
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Render Raycasted block highlight
-		if (m_HitBlock.ID() != BlockId::Air)
+		if (m_CurrentRaycastHit.has_value())
 		{
 			//DebugDraws::DrawBlockOutline(m_HitBlock.Position, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);
 			//DebugDraws::DrawBlockOutline(prevBlockPos, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 3, true);
 
-			const auto& blockId = m_HitBlock.ID();
+			const Block& hitBlock = m_CurrentRaycastHit->HitBlock;
+			const auto& blockId = hitBlock.ID();
 			const auto& blockModels = BlockstateRegistry::Get();
 
 			auto it = blockModels.find(blockId);
 			if (it != blockModels.end())
 			{
 				const auto& variantModels = it->second;
-				const VariantModel& variantModel = variantModels.at(m_HitBlock.State.VariantIndex);
+				const VariantModel& variantModel = variantModels.at(hitBlock.State.VariantIndex);
 
 				for (const auto& element : variantModel.Model.Elements)
 				{
-					const glm::vec3 worldFrom = glm::vec3(m_HitBlock.Position) + (element.From / 16.f);
-					const glm::vec3 worldTo = glm::vec3(m_HitBlock.Position) + (element.To / 16.f);
+					const glm::vec3 worldFrom = glm::vec3(hitBlock.Position) + (element.From / 16.f);
+					const glm::vec3 worldTo = glm::vec3(hitBlock.Position) + (element.To / 16.f);
 
-					DebugDraws::DrawWorldBoxMinMax(worldFrom, worldTo, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 2, true);
+					DebugDraws::DrawWorldBoxMinMax(worldFrom, worldTo, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 2, false);
 				}
 
-				DebugDraws::DrawBlockOutline(m_HitBlock.Position, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);
+				//DebugDraws::DrawBlockOutline(hitBlock.Position, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);
 			}
 			else
 			{
-				m_HitBlock = Block(); // Reset HitBlock if no model found.
+				m_CurrentRaycastHit = std::nullopt; // Reset HitBlock if no model found.
 			}
 		}
 

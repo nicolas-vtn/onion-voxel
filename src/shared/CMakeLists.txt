@@ -15,6 +15,7 @@ add_library(onion_voxel_shared
  "shared/world/world_manager/WorldManager.cpp"
  "shared/world/world_generator/WorldGenerator.cpp"
  "shared/world/world_save/WorldSave.cpp"
+ "shared/world/raycast/Raycast.cpp"
 
  "shared/data_transfer_objects/serializer/SerializerDTO.cpp"
 
@@ -26,8 +27,7 @@ add_library(onion_voxel_shared
  "shared/physics/PhysicsEngine.cpp"
 
  "shared/utils/Utils.cpp"
-
- )
+)
 
 target_link_libraries(onion_voxel_shared
 	PUBLIC

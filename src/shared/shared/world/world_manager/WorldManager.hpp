@@ -13,6 +13,7 @@
 #include <onion/Timer.hpp>
 
 #include <shared/entities/entity_manager/EntityManager.hpp>
+#include <shared/world/block/BlockstateRegistry.hpp>
 #include <shared/world/chunk/Chunk.hpp>
 #include <shared/world/world_generator/WorldGenerator.hpp>
 #include <shared/world/world_save/WorldSave.hpp>
@@ -62,6 +63,7 @@ namespace onion::voxel
 		void ClearWorld();
 
 		BlockState GetBlock(const glm::ivec3& worldPosition) const;
+		BlockState GetBlock(const glm::vec3& worldPosition) const;
 		bool SetBlock(const Block& block, BlocksChangedEventArgs::eOrigin origin, bool notify = true);
 		size_t SetBlocks(const std::vector<Block>& blocks, BlocksChangedEventArgs::eOrigin origin, bool notify = true);
 

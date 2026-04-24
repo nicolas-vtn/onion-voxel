@@ -325,7 +325,7 @@ namespace onion::voxel
 	void WorldManager::SubscribeToInternalEvents()
 	{
 		m_InternalEventHandles.push_back(EvtPlayerChangedChunk.Subscribe([this](const PlayerChangedChunkEventArgs& args)
-																	  { Handle_PlayerChangedChunk(args); }));
+																		 { Handle_PlayerChangedChunk(args); }));
 
 		m_InternalEventHandles.push_back(
 			EvtChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkAdded(chunk); }));
@@ -382,6 +382,35 @@ namespace onion::voxel
 		{
 			return BlockState(); // Air block if chunk not found
 		}
+	}
+
+	BlockState WorldManager::GetBlock(const glm::vec3& worldPosition) const
+	{
+		// Get the block at the floored world position, since blocks are at integer positions in the world
+		glm::ivec3 flooredPosition = glm::floor(worldPosition);
+		BlockState blockState = GetBlock(flooredPosition);
+
+		const auto& blockstates = BlockstateRegistry::Get();
+		auto it = blockstates.find(blockState.ID);
+		if (it != blockstates.end())
+		{
+			const std::vector<BlockModel::Element>& elements = it->second[blockState.VariantIndex].Model.Elements;
+
+			// Verify if the position collides with any of the block's elements
+			for (const auto& element : elements)
+			{
+				glm::vec3 blockMin = glm::vec3(flooredPosition) + (element.From / 16.f);
+				glm::vec3 blockMax = glm::vec3(flooredPosition) + (element.To / 16.f);
+
+				if (worldPosition.x >= blockMin.x && worldPosition.x < blockMax.x && worldPosition.y >= blockMin.y &&
+					worldPosition.y < blockMax.y && worldPosition.z >= blockMin.z && worldPosition.z < blockMax.z)
+				{
+					return blockState; // Return the block state if the world position collides with the block's element
+				}
+			}
+		}
+
+		return BlockState(); // Return air block if block ID not found in registry
 	}
 
 	bool WorldManager::SetBlock(const Block& block, BlocksChangedEventArgs::eOrigin origin, bool notify)

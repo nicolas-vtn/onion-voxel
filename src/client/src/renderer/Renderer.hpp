@@ -15,6 +15,7 @@
 #include <onion/Timer.hpp>
 
 #include <shared/physics/PhysicsEngine.hpp>
+#include <shared/world/raycast/Raycast.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
 #include "camera/FovSmoother.hpp"
@@ -170,11 +171,14 @@ namespace onion::voxel
 		std::shared_ptr<Camera> m_Camera;
 		FovSmoother m_FovSmoother;
 		float m_FovRunningRatio = 1.15f;
-		Block m_HitBlock;
 		float m_CameraSpeed = 5.0f;
 		WorldRenderer m_WorldRenderer;
 		bool m_IsFreeCamera = false;
 		void UpdateCameraFromInputs();
+
+		// ------ Raycast ------
+	  private:
+		std::optional<RaycastHit> m_CurrentRaycastHit;
 
 		// ----- Entity Renderer -----
 	  private:

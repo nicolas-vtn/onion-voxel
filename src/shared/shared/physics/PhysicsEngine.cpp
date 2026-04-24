@@ -164,7 +164,7 @@ namespace onion::voxel
 				for (int y = minY; y <= maxY; y++)
 					for (int z = minZ; z <= maxZ; z++)
 					{
-						const BlockState& block = m_WorldManager.GetBlock({x, y, z});
+						const BlockState& block = m_WorldManager.GetBlock(glm::ivec3{x, y, z});
 						if (!BlockState::IsSolid(block.ID))
 							continue;
 
@@ -214,7 +214,7 @@ namespace onion::voxel
 				for (int y = minY; y <= maxY; y++)
 					for (int z = minZ; z <= maxZ; z++)
 					{
-						const BlockState& block = m_WorldManager.GetBlock({x, y, z});
+						const BlockState& block = m_WorldManager.GetBlock(glm::ivec3{x, y, z});
 						if (!BlockState::IsSolid(block.ID))
 							continue;
 
@@ -258,7 +258,7 @@ namespace onion::voxel
 				for (int y = minY; y <= maxY; y++)
 					for (int z = minZ; z <= maxZ; z++)
 					{
-						const BlockState& block = m_WorldManager.GetBlock({x, y, z});
+						const BlockState& block = m_WorldManager.GetBlock(glm::ivec3{x, y, z});
 						if (!BlockState::IsSolid(block.ID))
 							continue;
 
@@ -320,7 +320,7 @@ namespace onion::voxel
 			{
 				for (int z = minZ; z <= maxZ; ++z)
 				{
-					const BlockState& block = m_WorldManager.GetBlock({x, y, z});
+					const BlockState& block = m_WorldManager.GetBlock(glm::ivec3{x, y, z});
 					if (!BlockState::IsSolid(block.ID))
 						continue;
 
