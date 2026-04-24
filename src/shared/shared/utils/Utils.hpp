@@ -52,4 +52,6 @@ namespace onion::voxel::Utils
 
 	void OpenDirectoryInFileExplorer(const std::filesystem::path& directory);
 
+	void ReplaceFileAtomic(const std::filesystem::path& targetPath, const std::filesystem::path& tempFilePath);
+
 }; // namespace onion::voxel::Utils

@@ -17,7 +17,7 @@ namespace onion::voxel
 		m_Infos = LoadInfos(saveDirectory);
 
 		// Start periodic task to save chunks every m_SavePeriodSeconds seconds
-		m_TimerSave.setTimeoutFunction([this]() { SavePeriodically(); });
+		m_TimerSave.setTimeoutFunction([this]() { SaveAll(); });
 		m_TimerSave.setElapsedPeriod(std::chrono::seconds(m_SavePeriodSeconds));
 		m_TimerSave.Start();
 	}
@@ -26,7 +26,7 @@ namespace onion::voxel
 	{
 		std::cout << "~WorldSave" << std::endl;
 		m_TimerSave.Stop();
-		SavePeriodically(); // Save one last time before destruction to minimize data loss
+		SaveAll(); // Save one last time before destruction to minimize data loss
 		std::cout << "WorldSave Saved" << std::endl;
 	}
 
@@ -272,7 +272,7 @@ namespace onion::voxel
 		return SerializerDTO::DeserializeOutOfBoundsBlocks(dto);
 	}
 
-	void WorldSave::SavePeriodically()
+	void WorldSave::SaveAll()
 	{
 		SaveGeneralData();
 		SaveChunks();
@@ -309,13 +309,22 @@ namespace onion::voxel
 			for (const auto& [chunkFilePath, chunkData] : chunksDataToWrite)
 			{
 				std::filesystem::create_directories(chunkFilePath.parent_path());
-				std::ofstream file(chunkFilePath, std::ios::binary);
+
+				std::filesystem::path tempFilePath = chunkFilePath;
+				tempFilePath += ".tmp";
+
+				std::ofstream file(tempFilePath, std::ios::binary);
 				if (!file.is_open())
 				{
-					std::cerr << "Failed to open chunk file for writing: " << chunkFilePath << "\n";
-					throw std::runtime_error("Failed to open chunk file for writing: " + chunkFilePath.string());
+					std::cerr << "Failed to open chunk file for writing: " << tempFilePath << "\n";
+					throw std::runtime_error("Failed to open chunk file for writing: " + tempFilePath.string());
 				}
 				file.write(reinterpret_cast<const char*>(chunkData.data()), chunkData.size());
+				file.flush();
+				file.close();
+
+				// Atomically replace the old file with the new file
+				Utils::ReplaceFileAtomic(chunkFilePath, tempFilePath);
 			}
 		}
 	}

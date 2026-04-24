@@ -64,7 +64,7 @@ namespace onion::voxel
 
 		Timer m_TimerSave;
 		int m_SavePeriodSeconds = 5;
-		void SavePeriodically();
+		void SaveAll();
 		void SaveChunks();
 		void SavePlayers();
 		void SaveGeneralData();
