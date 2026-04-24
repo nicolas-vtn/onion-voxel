@@ -165,6 +165,20 @@ namespace onion::voxel
 
 		void UpdatePlayerFromInputs();
 		float m_PlayerFlySpeed = 5.0f;
+		float m_JumpCooldown = 0.0f;
+		bool m_JumpKeyWasPressed = false;
+
+		// Ground movement — exposed in Physics Debug panel for live tuning
+		float m_GroundMaxSpeed = 6.0f;
+		float m_GroundAcceleration = 40.f;
+		float m_GroundDeceleration = 20.f;
+
+		// Air movement — exposed in Physics Debug panel for live tuning
+		float m_AirMaxSpeed = 5.0f;
+		float m_AirAcceleration = 8.0f;
+		float m_AirDeceleration = 4.0f;
+		float m_JumpReleaseDeceleration = 15.f;
+		bool m_AllowFlyToggle = true; // whether double-jump toggles fly mode
 
 		// ------ World Renderer ------
 	  private:

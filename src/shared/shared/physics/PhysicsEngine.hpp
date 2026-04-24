@@ -48,8 +48,8 @@ namespace onion::voxel
 	  private:
 		mutable std::shared_mutex m_MutexPhysics;
 
-		float m_Gravity = 50.0f;	  // Gravity acceleration in m/s^2
-		float m_JumpStrength = 13.0f; // Initial jump velocity
+		float m_Gravity = 40.f;		  // Gravity acceleration in m/s^2
+		float m_JumpStrength = 11.0f; // Initial jump velocity
 
 		float m_GroundFriction = 10.0f; // Friction applied when on the ground
 	};

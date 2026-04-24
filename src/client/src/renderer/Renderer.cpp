@@ -702,15 +702,15 @@ namespace onion::voxel
 
 		// Constants
 		// Ground
-		float groundMaxSpeed = 6.0f;
-		float groundAcceleration = 120.0f;
-		float groundDeceleration = 150.f;
+		float groundMaxSpeed = m_GroundMaxSpeed;
+		float groundAcceleration = m_GroundAcceleration;
+		float groundDeceleration = m_GroundDeceleration;
 
 		// Air
-		float airMaxSpeed = 5.0f;
-		float airAcceleration = 8.0f;
-		float airDeceleration = 4.0f;		   // low — intentional air-control feel when key held
-		float jumpReleaseDeceleration = 30.0f; // faster decel when no key pressed mid-air, prevents floaty drift
+		float airMaxSpeed = m_AirMaxSpeed;
+		float airAcceleration = m_AirAcceleration;
+		float airDeceleration = m_AirDeceleration;
+		float jumpReleaseDeceleration = m_JumpReleaseDeceleration;
 
 		// Flying
 		float flyMaxSpeed = m_PlayerFlySpeed;
@@ -761,7 +761,7 @@ namespace onion::voxel
 		}
 
 		// ----- TOGGLE FLYING MODE -----
-		if (toggleFlyModeKeyState.IsDoublePressed)
+		if (m_AllowFlyToggle && toggleFlyModeKeyState.IsDoublePressed)
 		{
 			physics.IsFlying = !physics.IsFlying;
 			if (physics.IsFlying)
@@ -906,7 +906,20 @@ namespace onion::voxel
 			}
 
 			// Jumping
-			if (moveUpKeyState.IsPressed && physics.OnGround)
+			constexpr float kJumpCooldownDuration = 0.4f;
+
+			// Tick down the cooldown each frame
+			m_JumpCooldown -= static_cast<float>(m_DeltaTime);
+
+			// Early cooldown reset: if the key was released since the last frame, allow
+			// jumping again immediately so a deliberate re-press is never blocked.
+			bool jumpKeyNowPressed = moveUpKeyState.IsPressed;
+			if (m_JumpKeyWasPressed && !jumpKeyNowPressed)
+				m_JumpCooldown = 0.0f;
+
+			m_JumpKeyWasPressed = jumpKeyNowPressed;
+
+			if (moveUpKeyState.IsPressed && physics.OnGround && m_JumpCooldown <= 0.0f)
 			{
 				physics.Velocity.y = m_PhysicsEngine.GetJumpStrength();
 
@@ -944,6 +957,7 @@ namespace onion::voxel
 				}
 
 				physics.OnGround = false;
+				m_JumpCooldown = kJumpCooldownDuration;
 			}
 		}
 
@@ -1239,6 +1253,24 @@ namespace onion::voxel
 		if (ImGui::DragFloat("Jump Strength", &jumpStrength, 0.1f, 0.f, 50.f))
 		{
 			m_PhysicsEngine.SetJumpStrength(jumpStrength);
+		}
+
+		ImGui::Checkbox("Allow Fly Toggle (double jump)", &m_AllowFlyToggle);
+
+		ImGui::Separator();
+		if (ImGui::CollapsingHeader("Ground Movement"))
+		{
+			ImGui::DragFloat("Max Speed##ground", &m_GroundMaxSpeed, 0.1f, 0.f, 50.f);
+			ImGui::DragFloat("Acceleration##ground", &m_GroundAcceleration, 1.0f, 0.f, 500.f);
+			ImGui::DragFloat("Deceleration##ground", &m_GroundDeceleration, 1.0f, 0.f, 500.f);
+		}
+
+		if (ImGui::CollapsingHeader("Air Movement"))
+		{
+			ImGui::DragFloat("Max Speed##air", &m_AirMaxSpeed, 0.1f, 0.f, 50.f);
+			ImGui::DragFloat("Acceleration##air", &m_AirAcceleration, 0.5f, 0.f, 100.f);
+			ImGui::DragFloat("Decel (key held)##air", &m_AirDeceleration, 0.5f, 0.f, 100.f);
+			ImGui::DragFloat("Decel (key released)##air", &m_JumpReleaseDeceleration, 1.0f, 0.f, 200.f);
 		}
 
 		ImGui::End();
