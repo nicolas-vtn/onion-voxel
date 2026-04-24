@@ -35,6 +35,7 @@ namespace onion::voxel
 		static bool IsOpaque(BlockId blockID);
 		static bool IsTransparent(BlockId blockID);
 		static bool IsSolid(BlockId blockID);
+		static bool IsFlower(BlockId blockId);
 
 		static void SetTransparency(BlockId blockID, bool transparent);
 

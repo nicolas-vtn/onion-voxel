@@ -346,7 +346,23 @@ namespace onion::voxel
 				if (GENERATE_FLOWERS && shouldGenerateFlower)
 				{
 					BlockId flowerId = GetFlowerType(worldPos);
-					chunk->SetBlock(glm::ivec3(x, height + 1, z), BlockState(flowerId));
+
+					bool isTallFlower = BlockstateRegistry::IsTallPlant(flowerId);
+
+					if (isTallFlower)
+					{
+						uint8_t lowerVariantIndex = BlockstateRegistry::GetVariantIndex(flowerId, {{"half", "lower"}});
+						BlockState lowerFlower = BlockState(flowerId, lowerVariantIndex);
+						chunk->SetBlock(glm::ivec3(x, height + 1, z), lowerFlower);
+
+						uint8_t upperVariantIndex = BlockstateRegistry::GetVariantIndex(flowerId, {{"half", "upper"}});
+						BlockState upperFlower = BlockState(flowerId, upperVariantIndex);
+						chunk->SetBlock(glm::ivec3(x, height + 2, z), upperFlower);
+					}
+					else
+					{
+						chunk->SetBlock(glm::ivec3(x, height + 1, z), BlockState(flowerId));
+					}
 				}
 
 				bool shouldGenerateTree = ShouldGenerateTree(worldPos);
@@ -363,7 +379,21 @@ namespace onion::voxel
 					glm::ivec3 treeBlock = worldPos + glm::ivec3(0, 1, 0);
 					Schematic tree = GenerateTree(
 						treeBlock, treeHeight, logId, leavesId); // Generate a tree at the top block position
-					MergeSchematicInChunk(tree, genChunk);
+
+					std::unordered_set<BlockId> overwritables;
+					overwritables.insert(BlockId::Air);
+					overwritables.insert(BlockId::OakLeaves);
+					overwritables.insert(BlockId::SpruceLeaves);
+					overwritables.insert(BlockId::BirchLeaves);
+					overwritables.insert(BlockId::Bush);
+					overwritables.insert(BlockId::ShortGrass);
+					overwritables.insert(BlockId::TallGrass);
+					for (auto& blockId : BlockState::Flowers)
+					{
+						overwritables.insert(blockId);
+					}
+
+					MergeSchematicInChunk(tree, genChunk, overwritables);
 				}
 			}
 		}
@@ -1161,6 +1191,13 @@ namespace onion::voxel
 			overwritables.insert(BlockId::OakLeaves);
 			overwritables.insert(BlockId::SpruceLeaves);
 			overwritables.insert(BlockId::BirchLeaves);
+			overwritables.insert(BlockId::Bush);
+			overwritables.insert(BlockId::ShortGrass);
+			overwritables.insert(BlockId::TallGrass);
+			for (auto& blockId : BlockState::Flowers)
+			{
+				overwritables.insert(blockId);
+			}
 			MergeSchematicInChunk(tree, genChunk, overwritables);
 
 			// Set dirt block under the tree

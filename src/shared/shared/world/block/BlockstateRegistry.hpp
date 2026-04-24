@@ -30,6 +30,9 @@ namespace onion::voxel
 	  public:
 		static const std::unordered_map<BlockId, std::vector<VariantModel>>& Get();
 
+		static bool IsTallPlant(BlockId flowerId);
+		static uint8_t GetVariantIndex(BlockId id, const std::map<std::string, std::string>& properties);
+
 		// ----- Private Methods -----
 	  private:
 		static inline const std::filesystem::path s_BlockstateArchiveFilePath =

@@ -465,7 +465,7 @@ namespace onion::voxel
 		BlockId::Torchflower,
 		BlockId::OpenEyeblossom,
 		BlockId::ClosedEyeblossom,
-		BlockId::Wildflowers,
+		// BlockId::Wildflowers, // Disabled because rendering issue.
 
 		// ── Double-tall flowers ──────────────────────────────────────────────────────
 		BlockId::Sunflower,
@@ -505,6 +505,11 @@ namespace onion::voxel
 	bool BlockState::IsSolid(BlockId blockID)
 	{
 		return s_SolidLookupTable[static_cast<size_t>(blockID)];
+	}
+
+	bool BlockState::IsFlower(BlockId blockId)
+	{
+		return std::find(Flowers.begin(), Flowers.end(), blockId) != Flowers.end();
 	}
 
 	void BlockState::SetTransparency(BlockId blockID, bool transparent)

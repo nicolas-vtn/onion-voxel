@@ -215,6 +215,65 @@ namespace onion::voxel
 		return blockstateMap;
 	}
 
+	bool BlockstateRegistry::IsTallPlant(BlockId blockId)
+	{
+		auto& blockstateMap = Get();
+
+		auto it = blockstateMap.find(blockId);
+		if (it != blockstateMap.end())
+		{
+			bool containsLower = false;
+			bool containsUpper = false;
+			for (const auto& variant : it->second)
+			{
+				auto itvariant = variant.Conditions.find("half");
+				if (itvariant != variant.Conditions.end())
+				{
+					if (itvariant->second == "lower")
+						containsLower = true;
+					else if (itvariant->second == "upper")
+						containsUpper = true;
+				}
+			}
+
+			return containsLower && containsUpper;
+		}
+
+		return false;
+	}
+
+	uint8_t BlockstateRegistry::GetVariantIndex(BlockId id, const std::map<std::string, std::string>& properties)
+	{
+		auto& blockstateMap = Get();
+
+		auto it = blockstateMap.find(id);
+		if (it != blockstateMap.end())
+		{
+			// Searches for the first variant that fits all the given properties.
+			const auto& variants = it->second;
+			for (size_t i = 0; i < variants.size(); i++)
+			{
+				const auto& variant = variants[i];
+				bool matches = true;
+
+				for (const auto& [key, value] : variant.Conditions)
+				{
+					auto itprop = properties.find(key);
+					if (itprop == properties.end() || itprop->second != value)
+					{
+						matches = false;
+						break;
+					}
+				}
+
+				if (matches)
+					return static_cast<uint8_t>(i);
+			}
+		}
+
+		return 0;
+	}
+
 	std::unordered_map<BlockId, std::vector<VariantModel>> BlockstateRegistry::LoadVariantsModel()
 	{
 		// Init BlockModel archive first since VariantModel depends on it (same directory, but different file name)

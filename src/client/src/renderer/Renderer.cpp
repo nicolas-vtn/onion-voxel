@@ -1280,15 +1280,26 @@ namespace onion::voxel
 
 			const auto& blockId = m_HitBlock.ID();
 			const auto& blockModels = BlockstateRegistry::Get();
-			const auto& variantModels = blockModels.at(blockId);
-			const VariantModel& variantModel = variantModels.at(m_HitBlock.State.VariantIndex);
 
-			for (const auto& element : variantModel.Model.Elements)
+			auto it = blockModels.find(blockId);
+			if (it != blockModels.end())
 			{
-				const glm::vec3 worldFrom = glm::vec3(m_HitBlock.Position) + (element.From / 16.f);
-				const glm::vec3 worldTo = glm::vec3(m_HitBlock.Position) + (element.To / 16.f);
+				const auto& variantModels = it->second;
+				const VariantModel& variantModel = variantModels.at(m_HitBlock.State.VariantIndex);
 
-				DebugDraws::DrawWorldBoxMinMax(worldFrom, worldTo, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 2, true);
+				for (const auto& element : variantModel.Model.Elements)
+				{
+					const glm::vec3 worldFrom = glm::vec3(m_HitBlock.Position) + (element.From / 16.f);
+					const glm::vec3 worldTo = glm::vec3(m_HitBlock.Position) + (element.To / 16.f);
+
+					DebugDraws::DrawWorldBoxMinMax(worldFrom, worldTo, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 2, true);
+				}
+
+				DebugDraws::DrawBlockOutline(m_HitBlock.Position, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 3, true);
+			}
+			else
+			{
+				m_HitBlock = Block(); // Reset HitBlock if no model found.
 			}
 		}
 
