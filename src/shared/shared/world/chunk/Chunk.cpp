@@ -9,11 +9,13 @@ namespace onion::voxel
 	Chunk::Chunk(const glm::ivec2& position, const size_t subChunkCount) : m_Position(position)
 	{
 		m_SubChunks.resize(subChunkCount);
+		m_ChunkHeight = static_cast<int>(subChunkCount * WorldConstants::CHUNK_SIZE);
 	}
 
 	Chunk::Chunk(glm::ivec2 position, std::vector<SubChunk> subChunks, std::vector<BlockState> blocksPalette)
 		: m_Position(position), m_SubChunks(std::move(subChunks)), m_BlocksPalette(std::move(blocksPalette))
 	{
+		m_ChunkHeight = static_cast<int>(m_SubChunks.size() * WorldConstants::CHUNK_SIZE);
 	}
 
 	Chunk::~Chunk() {}
@@ -26,6 +28,7 @@ namespace onion::voxel
 		while (!m_SubChunks.empty() && m_SubChunks.back().IsEmpty())
 		{
 			m_SubChunks.pop_back();
+			m_ChunkHeight = static_cast<int>(m_SubChunks.size() * WorldConstants::CHUNK_SIZE);
 		}
 
 		// Optimize each subchunk
@@ -81,6 +84,7 @@ namespace onion::voxel
 		while (m_SubChunks.size() <= subChunkIndex)
 		{
 			m_SubChunks.emplace_back();
+			m_ChunkHeight = static_cast<int>(m_SubChunks.size() * WorldConstants::CHUNK_SIZE);
 		}
 
 		// Add the block to the palette and get the block data index
@@ -113,6 +117,11 @@ namespace onion::voxel
 	{
 		std::shared_lock lock(m_Mutex);
 		return static_cast<int>(m_SubChunks.size());
+	}
+
+	int Chunk::GetChunkHeight() const
+	{
+		return m_ChunkHeight;
 	}
 
 	bool Chunk::IsSubchunkMonoBlock(const int subChunkIndex) const

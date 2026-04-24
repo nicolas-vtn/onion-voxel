@@ -5,8 +5,8 @@
 #include <atomic>
 #include <memory>
 #include <shared_mutex>
-#include <vector>
 #include <stop_token>
+#include <vector>
 
 #include <shared/world/chunk/Chunk.hpp>
 
@@ -37,6 +37,8 @@ namespace onion::voxel
 		void FinishRebuilding();
 
 		void ChangeChunk(std::shared_ptr<Chunk> newChunk);
+
+		int GetHeight() const;
 
 		// ----- Getters / Setters -----
 	  public:

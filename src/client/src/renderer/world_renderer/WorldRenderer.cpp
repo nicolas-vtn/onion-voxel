@@ -213,7 +213,8 @@ namespace onion::voxel
 			m_ChunksInFrustum.clear();
 			for (const auto& [chunkPos, chunkMesh] : chunkMeshesSnapshot)
 			{
-				if (IsChunkInFrustum(chunkPos, planes) || !m_UseFrustumCulling)
+				int chunkHeight = chunkMesh->GetHeight() + WorldConstants::CHUNK_SIZE;
+				if (IsChunkInFrustum(chunkPos, chunkHeight, planes) || !m_UseFrustumCulling)
 				{
 					m_ChunksInFrustum.insert(chunkPos);
 				}
@@ -557,10 +558,11 @@ namespace onion::voxel
 		return true;
 	}
 
-	bool WorldRenderer::IsChunkInFrustum(const glm::ivec2& chunkPos, const std::array<FrustumPlane, 6>& planes)
+	bool WorldRenderer::IsChunkInFrustum(const glm::ivec2& chunkPos,
+										 int chunkHeight,
+										 const std::array<FrustumPlane, 6>& planes)
 	{
 		// Compute AABB in world space
-		int chunkHeight = 256;
 		glm::vec3 min =
 			glm::vec3(chunkPos.x * WorldConstants::CHUNK_SIZE, 0.0f, chunkPos.y * WorldConstants::CHUNK_SIZE);
 		glm::vec3 max = min + glm::vec3(WorldConstants::CHUNK_SIZE, chunkHeight, WorldConstants::CHUNK_SIZE);

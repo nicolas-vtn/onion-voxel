@@ -80,7 +80,7 @@ namespace onion::voxel
 		void InitializeShaderVariables();
 		void MarkNeighboringSubChunkMeshesDirty(const glm::ivec3& blockPosition);
 
-		bool IsChunkInFrustum(const glm::ivec2& chunkPos, const std::array<FrustumPlane, 6>& planes);
+		bool IsChunkInFrustum(const glm::ivec2& chunkPos, int chunkHeight, const std::array<FrustumPlane, 6>& planes);
 
 		// ----- Camera -----
 	  private:

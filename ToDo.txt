@@ -18,11 +18,11 @@
 - Use Block Model for collision instead of full block.
 - Use Block Model for ray casting instead of full block.
 - Support model face culling
+- Rotated Oak Logs (Barks in correct direction)
 - Safe World Saving (save in a temp file and atomic replace)
 
 		----- KNOWN ISSUES -----
 - Z-Ordering issue in GUI (Fix TextField Background drawn in wrong order to bypass this issue )
 - On server close, client does not go back to main menu.
 - Random crashes when loading worlds (probably due to server port)
-- For ViewFrustum culling : use the real height of the chunk instead of a 256 height hard coded (BAD !) ...
 - BlockStateJson fallback on default resourcepack if invalid BlockStateJson read from current resourcepack

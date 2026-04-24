@@ -85,6 +85,19 @@ namespace onion::voxel
 		m_Chunk = newChunk;
 	}
 
+	int ChunkMesh::GetHeight() const
+	{
+		std::shared_ptr<Chunk> chunk = m_Chunk.lock();
+		if (chunk)
+		{
+			return chunk->GetChunkHeight();
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
 	const glm::ivec2& ChunkMesh::GetChunkPosition() const
 	{
 		return m_ChunkPosition;

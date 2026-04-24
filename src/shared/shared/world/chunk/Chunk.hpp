@@ -39,6 +39,7 @@ namespace onion::voxel
 		void SetBlock_Unsafe(const uint8_t x, const uint16_t y, const uint8_t z, const BlockState& block);
 
 		int GetSubChunkCount() const;
+		int GetChunkHeight() const;
 
 		bool IsSubchunkMonoBlock(const int subChunkIndex) const;
 
@@ -48,6 +49,7 @@ namespace onion::voxel
 		mutable std::shared_mutex m_Mutex; // Mutex for synchronizing access to the chunk data
 		std::vector<SubChunk> m_SubChunks; // The subchunks that make up this chunk
 		std::vector<BlockState> m_BlocksPalette{BlockState(BlockId::Air)}; // The blocks palette that make up this chunk
+		int m_ChunkHeight = 0;											   // The height of the chunk in blocks
 
 		// ----- Private Methods -----
 	  private:
