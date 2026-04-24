@@ -52,7 +52,11 @@ namespace
 		{
 			if (displacement[i] == 0.0f)
 			{
-				// No movement on this axis — use sentinel values
+				// No movement on this axis — collision is only possible if already overlapping spatially.
+				// Using (-inf, +inf) sentinels unconditionally causes false hits on blocks that are
+				// not overlapping on this axis (e.g. a ceiling block when sweeping horizontally).
+				if (a.Max[i] <= b.Min[i] || a.Min[i] >= b.Max[i])
+					return 1.0f; // no spatial overlap on stationary axis — no hit possible
 				tEntry[i] = -std::numeric_limits<float>::infinity();
 				tExit[i] = std::numeric_limits<float>::infinity();
 			}
@@ -365,18 +369,20 @@ namespace onion::voxel
 	// -------------------------------------------------------------------------
 	// SweptResolveTerrainCollisions
 	//
-	// Performs up to MAX_ITERATIONS of swept-AABB collision resolution per frame.
-	// Each iteration:
-	//   1. Broadphase: expand entity AABB by remaining displacement to find candidate blocks.
-	//   2. Narrowphase: run SweptAABB against every candidate solid block, find earliest hit.
-	//   3. Move entity to the hit point (minus a small epsilon to avoid touching).
-	//   4. Zero velocity on the hit normal axis; project remaining displacement onto the
-	//      slide plane so the entity slides along walls/floor naturally.
-	//   5. Repeat with the remaining displacement until no more hits or iterations exhausted.
+	// Resolves terrain collisions using per-axis swept AABB in order Y → X → Z.
+	// Sweeping each axis independently eliminates the priority ambiguity that occurs
+	// when a floor and a wall are both hit in the same frame (a combined 3D sweep can
+	// pick the wrong normal due to float noise, causing stickiness).
 	//
-	// OnGround is set when the entity lands on a surface whose normal points upward.
-	// A small downward ground probe is also run each frame to keep OnGround stable while
-	// the entity is standing still on a floor (tEnter == 0 case).
+	// For each axis:
+	//   1. Build a 1D displacement vector for that axis only.
+	//   2. Broadphase: expand entity AABB along that displacement to get candidate blocks.
+	//   3. Narrowphase: find the earliest SweptAABB hit (t in [0,1)).
+	//   4. Move entity to t_safe = (tMin - epsilon/|disp|), clamped to [0,1].
+	//   5. Zero velocity on that axis if a hit occurred.
+	//
+	// OnGround is set when a downward Y sweep hits a floor (normal.y > 0).
+	// A ground probe is run when vel.y == 0 so OnGround stays set while standing still.
 	// -------------------------------------------------------------------------
 	void PhysicsEngine::SweptResolveTerrainCollisions(std::shared_ptr<Entity> entity, float dt)
 	{
@@ -388,8 +394,7 @@ namespace onion::voxel
 
 		physics.OnGround = false;
 
-		constexpr int MAX_ITERATIONS = 3;
-		constexpr float EPSILON = 0.001f; // Push-back from surface to avoid float overlap
+		constexpr float EPSILON = 0.001f;
 
 		const glm::vec3 half = physics.HalfSize;
 		const glm::vec3 offset = physics.Offset;
@@ -397,19 +402,25 @@ namespace onion::voxel
 		glm::vec3 pos = transform.Position;
 		glm::vec3 vel = physics.Velocity;
 
-		// Total displacement this frame
-		glm::vec3 remaining = vel * dt;
-
-		for (int iter = 0; iter < MAX_ITERATIONS; ++iter)
+		// ------------------------------------------------------------------
+		// Per-axis sweep helper: sweeps the entity AABB along `disp` (which
+		// has only one non-zero component), finds the earliest solid block
+		// hit, moves pos to the safe contact point, and zeroes the velocity
+		// component on the hit axis. Returns the hit normal (zero if no hit).
+		// ------------------------------------------------------------------
+		auto sweepAxis = [&](glm::vec3 disp) -> glm::vec3
 		{
-			if (glm::length(remaining) < EPSILON * 0.1f)
-				break;
+			float dispLen = std::abs(disp.x) + std::abs(disp.y) + std::abs(disp.z); // only one axis non-zero
+			if (dispLen < 1e-6f)
+				return glm::vec3(0.0f);
 
-			// --- Broadphase: AABB swept over the remaining displacement ---
 			glm::vec3 center = pos + offset;
+			AABBWorld entityBox{center - half, center + half};
+
+			// Broadphase: swept AABB bounds
 			AABBWorld swept;
-			swept.Min = glm::min(center - half, center - half + remaining) - glm::vec3(EPSILON);
-			swept.Max = glm::max(center + half, center + half + remaining) + glm::vec3(EPSILON);
+			swept.Min = glm::min(entityBox.Min, entityBox.Min + disp) - glm::vec3(EPSILON);
+			swept.Max = glm::max(entityBox.Max, entityBox.Max + disp) + glm::vec3(EPSILON);
 
 			int bMinX = static_cast<int>(std::floor(swept.Min.x));
 			int bMaxX = static_cast<int>(std::floor(swept.Max.x));
@@ -418,110 +429,93 @@ namespace onion::voxel
 			int bMinZ = static_cast<int>(std::floor(swept.Min.z));
 			int bMaxZ = static_cast<int>(std::floor(swept.Max.z));
 
-			// --- Narrowphase: find the earliest hit among all candidate blocks ---
 			float tMin = 1.0f;
 			glm::vec3 hitNormal = glm::vec3(0.0f);
 
-			AABBWorld entityBox{center - half, center + half};
-
 			for (int bx = bMinX; bx <= bMaxX; ++bx)
-			{
 				for (int by = bMinY; by <= bMaxY; ++by)
-				{
 					for (int bz = bMinZ; bz <= bMaxZ; ++bz)
 					{
 						const BlockState& block = m_WorldManager.GetBlock(glm::ivec3{bx, by, bz});
 						if (!BlockState::IsSolid(block.ID))
 							continue;
 
-						// Full-cube AABB for this block
 						AABBWorld blockBox{glm::vec3(bx, by, bz), glm::vec3(bx + 1.0f, by + 1.0f, bz + 1.0f)};
 
 						glm::vec3 normal;
-						float t = SweptAABB(entityBox, remaining, blockBox, normal);
-
+						float t = SweptAABB(entityBox, disp, blockBox, normal);
 						if (t < tMin)
 						{
 							tMin = t;
 							hitNormal = normal;
 						}
 					}
-				}
-			}
 
-			if (tMin >= 1.0f)
+			if (tMin < 1.0f)
 			{
-				// No collision this iteration — consume all remaining displacement
-				pos += remaining;
-				break;
+				// Move to safe contact point: stop epsilon before the surface
+				float tEpsilon = EPSILON / dispLen;
+				float tSafe = std::max(0.0f, tMin - tEpsilon);
+				pos += disp * tSafe;
+
+				// Only zero vel.y on floor/ceiling hits — gravity accumulates it indefinitely
+				// and must be cleared on contact. vel.x/z are owned by input: zeroing them
+				// causes stickiness because input rebuilds them into the wall every frame.
+				// Positional blocking (pos stops at the wall) is sufficient horizontally.
+				if (std::abs(hitNormal.y) > 0.5f)
+					vel.y = 0.0f;
+			}
+			else
+			{
+				// No hit — consume full displacement
+				pos += disp;
 			}
 
-			// Move entity to the point of contact, leaving a tiny gap.
-			// Convert the surface epsilon to a time offset based on displacement length.
-			float dispLen = glm::length(remaining);
-			float tEpsilon = (dispLen > 0.0f) ? (EPSILON / dispLen) : 0.0f;
-			float tSafe = std::max(0.0f, tMin - tEpsilon);
-			pos += remaining * tSafe;
+			return hitNormal;
+		};
 
-			// Detect ground contact (normal pointing upward)
-			if (hitNormal.y > 0.5f)
+		// ------------------------------------------------------------------
+		// Axis order: Y first (gravity), then X, then Z.
+		// Resolving Y first ensures the floor normal is already handled before
+		// horizontal sweeps run, so horizontal movement is never eaten by the
+		// floor collision.
+		// ------------------------------------------------------------------
+
+		// Y axis
+		{
+			glm::vec3 normal = sweepAxis(glm::vec3(0.0f, vel.y * dt, 0.0f));
+			if (normal.y > 0.5f)
+				physics.OnGround = true;
+		}
+
+		// X axis
+		sweepAxis(glm::vec3(vel.x * dt, 0.0f, 0.0f));
+
+		// Z axis
+		sweepAxis(glm::vec3(0.0f, 0.0f, vel.z * dt));
+
+		// ------------------------------------------------------------------
+		// Ground probe — when vel.y is zero (standing still or just landed),
+		// the Y sweep above has zero displacement and won't detect the floor.
+		// Cast a tiny downward displacement to confirm ground contact.
+		// The probe displacement is small enough to not visibly move the entity.
+		// ------------------------------------------------------------------
+		if (!physics.OnGround && !physics.IsFlying)
+		{
+			float preProbeY = pos.y;
+			glm::vec3 probeNormal = sweepAxis(glm::vec3(0.0f, -EPSILON * 4.0f, 0.0f));
+			if (probeNormal.y > 0.5f)
 			{
 				physics.OnGround = true;
 				vel.y = 0.0f;
 			}
-			// Ceiling hit
-			else if (hitNormal.y < -0.5f)
-			{
-				vel.y = 0.0f;
-			}
-			// Wall hit on X
-			if (std::abs(hitNormal.x) > 0.5f)
-				vel.x = 0.0f;
-
-			// Wall hit on Z
-			if (std::abs(hitNormal.z) > 0.5f)
-				vel.z = 0.0f;
-
-			// Remaining displacement: subtract the consumed portion, then project onto
-			// the slide plane (remove the component along the hit normal).
-			remaining = remaining * (1.0f - tSafe);
-			remaining -= glm::dot(remaining, hitNormal) * hitNormal;
+			// Always restore Y — the probe must not physically move the entity
+			pos.y = preProbeY;
 		}
 
-		// ---- Ground probe ----
-		// When the entity is resting on a floor it may have zero vertical velocity, so
-		// the sweep above won't detect a hit. Cast a tiny ray downward to check.
-		if (!physics.OnGround && !physics.IsFlying)
-		{
-			glm::vec3 center = pos + offset;
-			AABBWorld probeBox{center - half, center + half};
-			glm::vec3 probeDisp(0.0f, -EPSILON * 4.0f, 0.0f);
-
-			glm::vec3 pCenter = pos + offset;
-			int bMinX = static_cast<int>(std::floor(pCenter.x - half.x));
-			int bMaxX = static_cast<int>(std::floor(pCenter.x + half.x));
-			int bY = static_cast<int>(std::floor(pCenter.y - half.y - EPSILON * 2.0f));
-			int bMinZ = static_cast<int>(std::floor(pCenter.z - half.z));
-			int bMaxZ = static_cast<int>(std::floor(pCenter.z + half.z));
-
-			for (int bx = bMinX; bx <= bMaxX && !physics.OnGround; ++bx)
-			{
-				for (int bz = bMinZ; bz <= bMaxZ && !physics.OnGround; ++bz)
-				{
-					const BlockState& block = m_WorldManager.GetBlock(glm::ivec3{bx, bY, bz});
-					if (!BlockState::IsSolid(block.ID))
-						continue;
-
-					AABBWorld blockBox{glm::vec3(bx, bY, bz), glm::vec3(bx + 1.0f, bY + 1.0f, bz + 1.0f)};
-					glm::vec3 normal;
-					float t = SweptAABB(probeBox, probeDisp, blockBox, normal);
-					if (t < 1.0f && normal.y > 0.5f)
-						physics.OnGround = true;
-				}
-			}
-		}
-
-		// ---- Apply ----
+		// ------------------------------------------------------------------
+		// Apply
+		// ------------------------------------------------------------------
 		transform.Position = pos;
 		physics.Velocity = vel;
 
