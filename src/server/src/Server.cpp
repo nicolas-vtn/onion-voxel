@@ -212,6 +212,7 @@ namespace onion::voxel
 
 		// Update player
 		std::shared_ptr<Player> deserializedPlayer = SerializerDTO::DeserializePlayer(msg.player);
+
 		m_WorldManager->UpdatePlayer(deserializedPlayer);
 	}
 

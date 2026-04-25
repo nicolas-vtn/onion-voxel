@@ -17,6 +17,10 @@ namespace onion::voxel
 		  m_HungerEmpty_Sprite("HungerEmpty_Sprite", s_PathHungerEmpty, Sprite::eOrigin::ResourcePack),
 		  m_ExperienceLevel_Label("ExperienceLevel_Label")
 	{
+		m_ExperienceBarBackground_Sprite.SetZOffset(0.4f);
+		m_ExperienceBarProgress_Sprite.SetZOffset(0.45f);
+
+		m_ExperienceLevel_Label.SetZOffset(0.5f);
 		m_ExperienceLevel_Label.SetTextColor(Font::eColor::Green);
 		m_ExperienceLevel_Label.SetTextAlignment(Font::eTextAlignment::Center);
 	}
@@ -51,8 +55,9 @@ namespace onion::voxel
 		float slotSizeRatioY = 95.f / 1009.f;
 		int slotSizeX = static_cast<int>(s_ScreenWidth * slotSizeRatioX);
 		int slotSizeY = static_cast<int>(s_ScreenHeight * slotSizeRatioY);
-		float spacingRatio = hotbarWidthRatio / 9.f;
-		float leftHotbarEdgeRatio = 0.5f - hotbarWidthRatio * 0.5f;
+		float hotbarBorderRatio = 4.f / 1920.f;
+		float spacingRatio = (hotbarWidthRatio - (2 * hotbarBorderRatio)) / 9.f;
+		float leftHotbarEdgeRatio = 0.5f - (hotbarWidthRatio - hotbarBorderRatio) * 0.5f;
 		int selectedSlotIndex = player->GetHotbar().SelectedSlot;
 		float selectionXratio = leftHotbarEdgeRatio + (spacingRatio / 2.f) + (spacingRatio * selectedSlotIndex);
 		glm::vec2 hotbarSelectionPos = {s_ScreenWidth * selectionXratio, screenBottom - hotbarHeight / 2};
@@ -66,7 +71,7 @@ namespace onion::voxel
 		float healthSizeY = (36.f / 1009.f) * s_ScreenHeight;
 		glm::vec2 healthSize = {healthSizeX, healthSizeY};
 		float firstHealthRatioX = 614.f / 1920.f;
-		float firstHealthRatioY = 872.f / 1009.f;
+		float firstHealthRatioY = 874.f / 1009.f;
 		glm::vec2 firstHealthPos = {s_ScreenWidth * firstHealthRatioX, s_ScreenHeight * firstHealthRatioY};
 
 		// Health Containers
@@ -109,7 +114,7 @@ namespace onion::voxel
 		float hungerSizeX = (36.f / 1920.f) * s_ScreenWidth;
 		float hungerSizeY = (36.f / 1009.f) * s_ScreenHeight;
 		glm::vec2 hungerSize = {hungerSizeX, hungerSizeY};
-		float firstHungerRatioX = 1305.f / 1920.f;
+		float firstHungerRatioX = 1306.f / 1920.f;
 		float firstHungerRatioY = firstHealthRatioY;
 		glm::vec2 firstHungerPos = {s_ScreenWidth * firstHungerRatioX, s_ScreenHeight * firstHungerRatioY};
 
@@ -150,11 +155,21 @@ namespace onion::voxel
 
 		// ---- Experience Bar (bottom-center, between hotbar and hearts row) ----
 		Experience::LevelInfo levelInfo = player->GetExperience().GetLevel();
+		float xpProgress = levelInfo.ExperienceForNextLevel > 0
+			? static_cast<float>(levelInfo.TotalExperienceForCurrentLevel) /
+				static_cast<float>(levelInfo.ExperienceForNextLevel)
+			: 0.f;
+
 		float xpBarWidthRatio = 728.f / 1920.f;
 		float xpBarHeightRatio = 19.f / 1009.f;
 		glm::vec2 xpBarSize = {s_ScreenWidth * xpBarWidthRatio, s_ScreenHeight * xpBarHeightRatio};
-		float xpBarCenterRatioY = (930 - 23) / 1009.f;
+		float xpBarCenterRatioY = (929 - 23) / 1009.f;
 		glm::vec2 xpBarPos = {screenCenterX, s_ScreenHeight * xpBarCenterRatioY};
+
+		glm::ivec2 xpBarCissorsTopLeft = {xpBarPos.x - (xpBarSize.x / 2), xpBarPos.y - (xpBarSize.y / 2)};
+		float progressWidth = xpBarSize.x * xpProgress;
+		glm::ivec2 xpBarCissorsBottomRight = {xpBarCissorsTopLeft.x + static_cast<int>(progressWidth),
+											  xpBarPos.y + static_cast<int>(xpBarSize.y / 2)};
 
 		float levelLabelCenterRatioX = 958.f / 1920.f;
 		float levelLabelCenterRatioY = (909 - 23) / 1009.f;
@@ -165,10 +180,18 @@ namespace onion::voxel
 		m_ExperienceBarBackground_Sprite.SetSize(xpBarSize);
 		m_ExperienceBarBackground_Sprite.Render();
 
-		m_ExperienceLevel_Label.SetPosition(levelLabelPos);
-		m_ExperienceLevel_Label.SetText(std::to_string(levelInfo.Level));
-		m_ExperienceLevel_Label.SetTextHeight(s_TextHeight);
-		m_ExperienceLevel_Label.Render();
+		m_ExperienceBarProgress_Sprite.SetPosition(xpBarPos);
+		m_ExperienceBarProgress_Sprite.SetSize(xpBarSize);
+		m_ExperienceBarProgress_Sprite.SetCissors(xpBarCissorsTopLeft, xpBarCissorsBottomRight);
+		m_ExperienceBarProgress_Sprite.Render();
+
+		if (levelInfo.Level > 0)
+		{
+			m_ExperienceLevel_Label.SetPosition(levelLabelPos);
+			m_ExperienceLevel_Label.SetText(std::to_string(levelInfo.Level));
+			m_ExperienceLevel_Label.SetTextHeight(s_TextHeight);
+			m_ExperienceLevel_Label.Render();
+		}
 	}
 
 	void HudPanel::Initialize()

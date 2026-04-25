@@ -286,6 +286,31 @@ namespace onion::voxel
 			player->SetPhysicsBody(updatedPlayer->GetPhysicsBody());
 		}
 
+		if (updatedPlayer->HasHealth())
+		{
+			player->SetHealth(updatedPlayer->GetHealth());
+		}
+
+		if (updatedPlayer->HasHunger())
+		{
+			player->SetHunger(updatedPlayer->GetHunger());
+		}
+
+		if (updatedPlayer->HasExperience())
+		{
+			player->SetExperience(updatedPlayer->GetExperience());
+		}
+
+		if (updatedPlayer->HasInventory())
+		{
+			player->SetInventory(updatedPlayer->GetInventory());
+		}
+
+		if (updatedPlayer->HasHotbar())
+		{
+			player->SetHotbar(updatedPlayer->GetHotbar());
+		}
+
 		if (newChunkPos != oldChunkPos)
 		{
 			PlayerChangedChunkEventArgs args;

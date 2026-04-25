@@ -51,11 +51,15 @@ namespace onion::voxel
 		int GetTextureWidth() const;
 		int GetTextureHeight() const;
 
+		/// @brief Sets the offset of the text in the Z direction. In range [-1, 1], where 1 is the closest to the camera and -1 is the farthest from the camera.
+		/// @param zOffset The new offset of the text in the Z direction.
 		void SetZOffset(float zOffset);
 		float GetZOffset() const;
 
 		void SetOrigin(eOrigin origin);
 		eOrigin GetOrigin() const;
+
+		void SetCissors(const glm::ivec2& topLeft, const glm::ivec2& bottomRight);
 
 		void SwapTexture(Texture newTexture);
 
@@ -74,12 +78,20 @@ namespace onion::voxel
 		bool m_UnreloadableTexture = false;
 		float m_Zoffset = 0.f;
 
+		glm::ivec2 m_CissorsTopLeft{0, 0};
+		glm::ivec2 m_CissorsBottomRight{0, 0};
+
 		bool m_WasHovered = false;
 		bool m_WasMouseDown = false;
 
 		// ----- Texture -----
 	  private:
 		Texture m_Texture;
+
+		// ----- Private Helpers -----
+	  private:
+		void StartCissors() const;
+		void EndCissors() const;
 
 		// ----- OPEN GL -----
 	  private:
