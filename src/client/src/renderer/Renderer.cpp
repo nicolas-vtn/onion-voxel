@@ -865,23 +865,26 @@ namespace onion::voxel
 			if (moveRightKeyState.IsPressed)
 				moveDir += glm::normalize(glm::cross(frontXZ, Up));
 
+			// Normalize early so each axis component represents its true proportion
+			// of the intended direction (length = 1 for pure cardinal, < 1 after any
+			// sneak edge clamp removes an axis, naturally encoding the speed reduction).
+			if (glm::length(moveDir) > 0.0f)
+				moveDir = glm::normalize(moveDir);
+
 			// --- Sneak edge prevention ---
-			// Test each world-space horizontal axis independently after moveDir is built
-			// but before it feeds into MoveTowards. This prevents acceleration from
-			// pushing the player off an edge even on the first frame a key is pressed.
-			// The ratio of surviving moveDir length to original is used to scale down
-			// finalMaxSpeed, so a near-parallel diagonal approach doesn't grant full
-			// speed on the surviving axis.
-			float sneakEdgeSpeedRatio = 1.0f;
+			// Test each world-space horizontal axis independently after moveDir is
+			// normalized. Zeroing a clamped axis reduces moveDir's length below 1,
+			// which proportionally reduces the MoveTowards target speed with no extra
+			// bookkeeping (sneakEdgeSpeedRatio removed).
 			if (player->IsSneaking() && physics.OnGround)
 			{
 				const glm::vec3 currentPos = player->GetTransform().Position;
-				constexpr float probeStep = 0.01f;
-				const float originalMoveDirLength = glm::length(moveDir);
 
-				if (std::abs(moveDir.x) > 0.0f)
+				if (std::abs(moveDir.x) > 0.0f || std::abs(physics.Velocity.x) > 0.0f)
 				{
-					glm::vec3 testPos = currentPos + glm::vec3(glm::sign(moveDir.x) * probeStep, 0.0f, 0.0f);
+					float deltaX = moveDir.x * maxSpeed * static_cast<float>(m_DeltaTime) +
+						physics.Velocity.x * static_cast<float>(m_DeltaTime);
+					glm::vec3 testPos = currentPos + glm::vec3(deltaX, 0.0f, 0.0f);
 					if (!m_PhysicsEngine.HasGroundSupport(testPos, physics.HalfSize, physics.Offset))
 					{
 						moveDir.x = 0.0f;
@@ -889,24 +892,21 @@ namespace onion::voxel
 					}
 				}
 
-				if (std::abs(moveDir.z) > 0.0f)
+				if (std::abs(moveDir.z) > 0.0f || std::abs(physics.Velocity.z) > 0.0f)
 				{
-					glm::vec3 testPos = currentPos + glm::vec3(0.0f, 0.0f, glm::sign(moveDir.z) * probeStep);
+					float deltaZ = moveDir.z * maxSpeed * static_cast<float>(m_DeltaTime) +
+						physics.Velocity.z * static_cast<float>(m_DeltaTime);
+					glm::vec3 testPos = currentPos + glm::vec3(0.0f, 0.0f, deltaZ);
 					if (!m_PhysicsEngine.HasGroundSupport(testPos, physics.HalfSize, physics.Offset))
 					{
 						moveDir.z = 0.0f;
 						physics.Velocity.z = 0.0f;
 					}
 				}
-
-				if (originalMoveDirLength > 0.0f)
-					sneakEdgeSpeedRatio = glm::length(moveDir) / originalMoveDirLength;
 			}
 
 			if (glm::length(moveDir) > 0.0f)
 			{
-				glm::vec3 desiredDir = glm::normalize(moveDir);
-
 				player->SetState(Entity::State::Walking);
 
 				float sprintFactor = 1.0f;
@@ -917,7 +917,7 @@ namespace onion::voxel
 					player->SetState(Entity::State::Running);
 
 					// How aligned we are with forward direction
-					float forwardDot = glm::dot(desiredDir, frontXZ);
+					float forwardDot = glm::dot(moveDir, frontXZ);
 
 					// Only boost if moving forward
 					if (forwardDot > 0.7f) // ~45° cone (tweakable)
@@ -926,11 +926,11 @@ namespace onion::voxel
 					}
 				}
 
-				float finalMaxSpeed = maxSpeed * sprintFactor * sneakEdgeSpeedRatio;
+				float finalMaxSpeed = maxSpeed * sprintFactor;
 				float finalAcceleration = acceleration * sprintFactor;
 
 				physics.Velocity = MoveTowards(
-					physics.Velocity, desiredDir * finalMaxSpeed, finalAcceleration * static_cast<float>(m_DeltaTime));
+					physics.Velocity, moveDir * finalMaxSpeed, finalAcceleration * static_cast<float>(m_DeltaTime));
 			}
 			else
 			{
