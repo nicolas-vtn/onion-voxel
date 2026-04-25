@@ -36,6 +36,39 @@ namespace onion::voxel
 			player = std::make_shared<Player>("HudPlaceholderPlayer");
 		}
 
+		// ---- Handle Hotbar Scrolling Input ----
+		double rawScroll = s_InputsSnapshot->Mouse.ScrollYoffset;
+
+		int scroll = 0;
+		if (rawScroll > 0.0)
+			scroll = 1;
+		else if (rawScroll < 0.0)
+			scroll = -1;
+
+		bool spacePressed = EngineContext::Get().Inputs->IsKeyPressed(Key::Space);
+		bool shiftPressed = EngineContext::Get().Inputs->IsKeyPressed(Key::LeftShift) ||
+			EngineContext::Get().Inputs->IsKeyPressed(Key::RightShift);
+
+		// This combinaison is used to lock the hotbar scroll when Accelerating Fly Speed.
+		bool bypassScroll = spacePressed && shiftPressed;
+
+		if (scroll != 0 && !bypassScroll)
+		{
+			constexpr int maxSlots = static_cast<int>(Hotbar::MaxSlots);
+
+			auto playerHotbar = player->GetHotbar();
+
+			int current = static_cast<int>(playerHotbar.SelectedSlot);
+
+			// Proper modulo wrapping (handles negative values correctly)
+			int newSlot = (current - scroll) % maxSlots;
+			if (newSlot < 0)
+				newSlot += maxSlots;
+
+			playerHotbar.SelectedSlot = static_cast<uint8_t>(newSlot);
+			player->SetHotbar(playerHotbar);
+		}
+
 		// ---- Constants ----
 		int screenCenterX = static_cast<int>(std::round(s_ScreenWidth * 0.5f));
 		int screenBottom = static_cast<int>(s_ScreenHeight);

@@ -150,14 +150,14 @@ void InputsManager::PoolMouseInputs()
 
 void InputsManager::PollKeyboardInputs()
 {
-	const std::unordered_set<Key> mouseInputs = {Key::MouseButtonLeft,
-												 Key::MouseButtonRight,
-												 Key::MouseButtonMiddle,
-												 Key::MouseButton4,
-												 Key::MouseButton5,
-												 Key::MouseButton6,
-												 Key::MouseButton7,
-												 Key::MouseButton8};
+	static const std::unordered_set<Key> mouseInputs = {Key::MouseButtonLeft,
+														Key::MouseButtonRight,
+														Key::MouseButtonMiddle,
+														Key::MouseButton4,
+														Key::MouseButton5,
+														Key::MouseButton6,
+														Key::MouseButton7,
+														Key::MouseButton8};
 
 	std::lock_guard lock(m_MutexRegisteredInputs);
 	for (auto& [inputId, keyControl] : m_RegisteredInputs)
@@ -193,6 +193,8 @@ void InputsManager::ResetFlags()
 	{
 		std::lock_guard lock(m_MutexMouse);
 		m_MouseState.ScrollOffsetChanged = false;
+		m_MouseState.ScrollYoffset = 0.0;
+		m_MouseState.ScrollXoffset = 0.0;
 		m_MouseState.MovementOffsetChanged = false;
 	}
 }
@@ -205,6 +207,36 @@ std::shared_ptr<InputsSnapshot> InputsManager::GetInputsSnapshot()
 			"InputsSnapshot is not initialized. Make sure to call PoolInputs() before GetInputsSnapshot().");
 	}
 	return m_InputsSnapshot;
+}
+
+bool onion::voxel::InputsManager::IsKeyPressed(Key key)
+{
+	static const std::unordered_set<Key> mouseInputs = {Key::MouseButtonLeft,
+														Key::MouseButtonRight,
+														Key::MouseButtonMiddle,
+														Key::MouseButton4,
+														Key::MouseButton5,
+														Key::MouseButton6,
+														Key::MouseButton7,
+														Key::MouseButton8};
+
+	if (key == Key::Unknown)
+	{
+		return false;
+	}
+
+	// If it's a mouse button
+	bool isKeyDown = false;
+	if (mouseInputs.contains(key))
+	{
+		isKeyDown = glfwGetMouseButton(m_Window, static_cast<int>(key)) == GLFW_PRESS;
+	}
+	else
+	{
+		isKeyDown = glfwGetKey(m_Window, static_cast<int>(key)) == GLFW_PRESS;
+	}
+
+	return isKeyDown;
 }
 
 void InputsManager::InitCallbacks()

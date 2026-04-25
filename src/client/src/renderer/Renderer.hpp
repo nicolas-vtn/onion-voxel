@@ -164,7 +164,7 @@ namespace onion::voxel
 		std::shared_ptr<WorldManager> m_WorldManager;
 
 		void UpdatePlayerFromInputs();
-		float m_PlayerFlySpeed = 5.0f;
+		float m_PlayerFlySpeed = 20.0f;
 		float m_JumpCooldown = 0.0f;
 		bool m_JumpKeyWasPressed = false;
 

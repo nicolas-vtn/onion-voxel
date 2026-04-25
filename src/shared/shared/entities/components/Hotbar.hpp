@@ -8,7 +8,10 @@ namespace onion::voxel
 {
 	struct Hotbar
 	{
-		std::array<BlockId, 9> Slots{BlockId::Air};
+		static constexpr size_t MaxSlots = 9;
+		std::array<BlockId, MaxSlots> Slots{BlockId::Air};
 		uint8_t SelectedSlot = 0;
+
+		size_t GetSelectedBlockIndex() const { return static_cast<size_t>(SelectedSlot); }
 	};
 } // namespace onion::voxel

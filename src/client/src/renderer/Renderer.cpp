@@ -772,7 +772,11 @@ namespace onion::voxel
 
 		// ----- PLAYER FLYING SPEED -----
 		float flyVelocity = m_PlayerFlySpeed * (float) m_DeltaTime;
-		if (physics.IsFlying && inputs->Mouse.ScrollOffsetChanged)
+		bool spacePressed = EngineContext::Get().Inputs->IsKeyPressed(Key::Space);
+		bool shiftPressed = EngineContext::Get().Inputs->IsKeyPressed(Key::LeftShift) ||
+			EngineContext::Get().Inputs->IsKeyPressed(Key::RightShift);
+		bool canSpeedUp = spacePressed && shiftPressed;
+		if (physics.IsFlying && canSpeedUp && inputs->Mouse.ScrollOffsetChanged)
 		{
 			const double yoffset = inputs->Mouse.ScrollYoffset;
 			if (yoffset != 0.f)
