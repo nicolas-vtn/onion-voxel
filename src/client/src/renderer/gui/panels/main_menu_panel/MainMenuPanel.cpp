@@ -33,7 +33,7 @@ namespace onion::voxel
 		m_SplashText_Label.SetRotationDegrees(-25.f);
 		m_SplashText_Label.SetTextAlignment(Font::eTextAlignment::Center);
 
-		std::string versionText = "Voxel::Onion " + std::string(PROJECT_VERSION);
+		std::string versionText = "Voxel::Onion " + std::string(GetProjectVersion());
 		m_Version_Label.SetText(versionText);
 		m_Version_Label.SetTextAlignment(Font::eTextAlignment::Left);
 

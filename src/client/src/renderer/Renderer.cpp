@@ -1243,7 +1243,7 @@ namespace onion::voxel
 
 		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 
-		ImGui::Text("Client Version: %s", PROJECT_VERSION);
+		ImGui::Text("Client Version: %s", GetProjectVersion());
 
 		// ----- Server Info Debug -----
 		if (ImGui::CollapsingHeader("Server Info", ImGuiTreeNodeFlags_DefaultOpen))

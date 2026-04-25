@@ -73,4 +73,10 @@ configure_file(
     ${CMAKE_BINARY_DIR}/generated/version.hpp
     @ONLY
 )
+configure_file(
+    ${CMAKE_SOURCE_DIR}/cmake/version.cpp.in
+    ${CMAKE_BINARY_DIR}/generated/version.cpp
+    @ONLY
+)
+target_sources(onion_voxel_shared PRIVATE ${CMAKE_BINARY_DIR}/generated/version.cpp)
 target_include_directories(onion_voxel_shared PUBLIC ${CMAKE_BINARY_DIR}/generated)
