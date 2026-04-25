@@ -405,7 +405,7 @@ namespace onion::voxel
 
 		// Teleport to surface if still colliding after resolution (prevents getting stuck in blocks)
 		int safety = 0;
-		while (IsCollidingWithTerrain(transform.Position, half, physics.Offset) && safety++ < 20)
+		while (LegacyIsCollidingWithTerrain(transform.Position, half, physics.Offset) && safety++ < 20)
 		{
 			transform.Position.y += 1.0f; // Move up by 1 block until no longer colliding
 		}
@@ -439,6 +439,8 @@ namespace onion::voxel
 
 		auto physics = entity->GetPhysicsBody();
 		auto transform = entity->GetTransform();
+
+		bool wasOnGround = physics.OnGround;
 
 		physics.OnGround = false;
 
@@ -531,6 +533,33 @@ namespace onion::voxel
 		};
 
 		// ------------------------------------------------------------------
+		// Checks if player is trying to move stairs / slab / ...
+		// Idea : Apply all movements, check collisions. If colliding, move up a bit,
+		// check collisions again, repeat until no collision or max step height reached.
+		// ------------------------------------------------------------------
+		{
+			constexpr float MAX_STEP_HEIGHT = 0.6f; // Maximum height the player can step up (e.g., stairs or slabs)
+			glm::vec3 playerPos = pos + vel * dt;
+
+			constexpr float STEP_EPSILON = 0.01f; // Small value to prevent floating-point issues
+
+			if (wasOnGround && IsCollidingWithTerrain(playerPos, half, offset))
+			{
+				float stepHeight = 0.0f;
+				while (stepHeight < MAX_STEP_HEIGHT && IsCollidingWithTerrain(playerPos, half, offset))
+				{
+					stepHeight += STEP_EPSILON;
+					playerPos.y += STEP_EPSILON;
+				}
+
+				if (stepHeight < MAX_STEP_HEIGHT)
+				{
+					pos.y += stepHeight;
+				}
+			}
+		}
+
+		// ------------------------------------------------------------------
 		// Axis order: Y first (gravity), then X, then Z.
 		// Resolving Y first ensures the floor normal is already handled before
 		// horizontal sweeps run, so horizontal movement is never eaten by the
@@ -579,8 +608,9 @@ namespace onion::voxel
 		entity->SetPhysicsBody(physics);
 	}
 
-	bool
-	PhysicsEngine::IsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset)
+	bool PhysicsEngine::LegacyIsCollidingWithTerrain(const glm::vec3& position,
+													 const glm::vec3& halfSize,
+													 const glm::vec3& offset)
 	{
 		glm::vec3 center = position + offset;
 		glm::vec3 min = center - halfSize;
@@ -611,6 +641,42 @@ namespace onion::voxel
 				}
 			}
 		}
+
+		return false;
+	}
+
+	bool
+	PhysicsEngine::IsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset)
+	{
+		glm::vec3 center = position + offset;
+		glm::vec3 min = center - halfSize;
+		glm::vec3 max = center + halfSize;
+
+		int minX = static_cast<int>(std::floor(min.x));
+		int maxX = static_cast<int>(std::floor(max.x));
+		int minY = static_cast<int>(std::floor(min.y));
+		int maxY = static_cast<int>(std::floor(max.y));
+		int minZ = static_cast<int>(std::floor(min.z));
+		int maxZ = static_cast<int>(std::floor(max.z));
+
+		for (int x = minX; x <= maxX; ++x)
+			for (int y = minY; y <= maxY; ++y)
+				for (int z = minZ; z <= maxZ; ++z)
+				{
+					const BlockState& block = m_WorldManager.GetBlock(glm::ivec3{x, y, z});
+					if (!BlockState::IsSolid(block.ID))
+						continue;
+
+					const auto& boxes = GetBlockElementAABBs(block, {x, y, z});
+					for (const AABBWorld& elemBox : boxes)
+					{
+						if (max.x > elemBox.Min.x && min.x < elemBox.Max.x && max.y > elemBox.Min.y &&
+							min.y < elemBox.Max.y && max.z > elemBox.Min.z && min.z < elemBox.Max.z)
+						{
+							return true;
+						}
+					}
+				}
 
 		return false;
 	}

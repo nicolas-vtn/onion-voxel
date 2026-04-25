@@ -42,6 +42,8 @@ namespace onion::voxel
 		// Legacy axis-separated resolution (kept for reference)
 		void LegacyResolveTerrainCollisions(std::shared_ptr<Entity> entity, float deltaTime);
 
+		bool
+		LegacyIsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset);
 		bool IsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset);
 
 		// Returns true if there is at least one solid block directly beneath the
