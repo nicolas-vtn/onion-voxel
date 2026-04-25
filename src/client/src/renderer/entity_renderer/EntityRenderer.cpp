@@ -782,11 +782,19 @@ namespace onion::voxel
 				if (player->HasHotbar())
 				{
 					Hotbar hotbar = player->GetHotbar();
+
 					int nonEmpty = 0;
 					for (const BlockId id : hotbar.Slots)
 						if (id != BlockId::Air)
 							nonEmpty++;
-					ImGui::Text("Selected Slot:   %d", (int) hotbar.SelectedSlot);
+
+					int selectedSlot = hotbar.SelectedSlot;
+					if (ImGui::SliderInt("Selected Slot", &selectedSlot, 0, 8))
+					{
+						hotbar.SelectedSlot = selectedSlot;
+						player->SetHotbar(hotbar);
+					}
+
 					ImGui::Text("Selected ID:     %d", (int) hotbar.Slots[hotbar.SelectedSlot]);
 					ImGui::Text("Non-empty slots: %d / 9", nonEmpty);
 				}
