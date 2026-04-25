@@ -7,7 +7,7 @@ namespace onion::voxel
 {
 	struct HungerDTO
 	{
-		int CurrentHunger = 20;
+		float CurrentHunger = 20.0f;
 
 		template <class Archive> void serialize(Archive& ar) { ar(CurrentHunger); }
 	};

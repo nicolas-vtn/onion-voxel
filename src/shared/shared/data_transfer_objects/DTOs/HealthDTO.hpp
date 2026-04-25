@@ -7,7 +7,7 @@ namespace onion::voxel
 {
 	struct HealthDTO
 	{
-		int CurrentHealth = 20;
+		float CurrentHealth = 20.0f;
 
 		template <class Archive> void serialize(Archive& ar) { ar(CurrentHealth); }
 	};

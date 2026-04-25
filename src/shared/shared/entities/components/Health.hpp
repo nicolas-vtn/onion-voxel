@@ -4,6 +4,6 @@ namespace onion::voxel
 {
 	struct Health
 	{
-		int CurrentHealth = 20;
+		float CurrentHealth = 20.0f;
 	};
 } // namespace onion::voxel

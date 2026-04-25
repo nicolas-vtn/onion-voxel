@@ -729,6 +729,89 @@ namespace onion::voxel
 					ImGui::Text("Player has no physics body component");
 				}
 			}
+			if (ImGui::CollapsingHeader("Player Health"))
+			{
+				if (player->HasHealth())
+				{
+					Health health = player->GetHealth();
+					if (ImGui::SliderFloat("Current Health", &health.CurrentHealth, 0.0f, 20.0f))
+					{
+						player->SetHealth(health);
+					}
+				}
+				else
+				{
+					ImGui::Text("Player has no health component");
+				}
+			}
+
+			if (ImGui::CollapsingHeader("Player Hunger"))
+			{
+				if (player->HasHunger())
+				{
+					Hunger hunger = player->GetHunger();
+					if (ImGui::SliderFloat("Current Hunger", &hunger.CurrentHunger, 0.0f, 20.0f))
+					{
+						player->SetHunger(hunger);
+					}
+				}
+				else
+				{
+					ImGui::Text("Player has no hunger component");
+				}
+			}
+
+			if (ImGui::CollapsingHeader("Player Experience"))
+			{
+				if (player->HasExperience())
+				{
+					Experience experience = player->GetExperience();
+					if (ImGui::InputInt("XP Value", &experience.Value))
+					{
+						player->SetExperience(experience);
+					}
+				}
+				else
+				{
+					ImGui::Text("Player has no experience component");
+				}
+			}
+
+			if (ImGui::CollapsingHeader("Player Hotbar"))
+			{
+				if (player->HasHotbar())
+				{
+					Hotbar hotbar = player->GetHotbar();
+					int nonEmpty = 0;
+					for (const BlockId id : hotbar.Slots)
+						if (id != BlockId::Air)
+							nonEmpty++;
+					ImGui::Text("Selected Slot:   %d", (int) hotbar.SelectedSlot);
+					ImGui::Text("Selected ID:     %d", (int) hotbar.Slots[hotbar.SelectedSlot]);
+					ImGui::Text("Non-empty slots: %d / 9", nonEmpty);
+				}
+				else
+				{
+					ImGui::Text("Player has no hotbar component");
+				}
+			}
+
+			if (ImGui::CollapsingHeader("Player Inventory"))
+			{
+				if (player->HasInventory())
+				{
+					Inventory inventory = player->GetInventory();
+					int used = 0;
+					for (const BlockId id : inventory.Slots)
+						if (id != BlockId::Air)
+							used++;
+					ImGui::Text("Used slots: %d / 27", used);
+				}
+				else
+				{
+					ImGui::Text("Player has no inventory component");
+				}
+			}
 		}
 		else
 		{

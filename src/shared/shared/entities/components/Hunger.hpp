@@ -4,6 +4,6 @@ namespace onion::voxel
 {
 	struct Hunger
 	{
-		int CurrentHunger = 20;
+		float CurrentHunger = 20.0f;
 	};
 } // namespace onion::voxel
