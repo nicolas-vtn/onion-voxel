@@ -698,7 +698,7 @@ namespace onion::voxel
 	{
 		// The feet centre is at (position + offset) - (0, halfSize.y, 0).
 		// We probe a thin horizontal slab just below that point.
-		constexpr float probeEpsilon = 0.05f; // how far below feet we look
+		constexpr float probeEpsilon = 0.51f; // how far below feet we look
 
 		glm::vec3 center = position + offset;
 		glm::vec3 feetMin = {center.x - halfSize.x, center.y - halfSize.y - probeEpsilon, center.z - halfSize.z};
@@ -719,15 +719,14 @@ namespace onion::voxel
 					if (!BlockState::IsSolid(block.ID))
 						continue;
 
-					// Simple AABB overlap — full-cube blocks only.
-					// Per-element checks (slabs, stairs) are not needed here: if the
-					// player is currently standing on a slab the swept Y resolution has
-					// already placed them at the correct height, so a full-cube probe
-					// correctly detects the block directly below.
-					if (feetMax.x > x && feetMin.x < x + 1.0f && feetMax.y > y && feetMin.y < y + 1.0f &&
-						feetMax.z > z && feetMin.z < z + 1.0f)
+					const auto& boxes = GetBlockElementAABBs(block, {x, y, z});
+					for (const AABBWorld& elemBox : boxes)
 					{
-						return true;
+						if (feetMax.x > elemBox.Min.x && feetMin.x < elemBox.Max.x && feetMax.y > elemBox.Min.y &&
+							feetMin.y < elemBox.Max.y && feetMax.z > elemBox.Min.z && feetMin.z < elemBox.Max.z)
+						{
+							return true;
+						}
 					}
 				}
 
