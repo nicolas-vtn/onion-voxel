@@ -13,7 +13,8 @@ namespace onion::voxel
 			  "ExperienceBarBackground_Sprite", s_PathExperienceBarBackground, Sprite::eOrigin::ResourcePack),
 		  m_ExperienceBarProgress_Sprite(
 			  "ExperienceBarProgress_Sprite", s_PathExperienceBarProgress, Sprite::eOrigin::ResourcePack),
-		  m_HeartContainer_Sprite("HeartContainer_Sprite", s_PathHeartContainer, Sprite::eOrigin::ResourcePack)
+		  m_HeartContainer_Sprite("HeartContainer_Sprite", s_PathHeartContainer, Sprite::eOrigin::ResourcePack),
+		  m_HungerEmpty_Sprite("HungerEmpty_Sprite", s_PathHungerEmpty, Sprite::eOrigin::ResourcePack)
 	{
 	}
 
@@ -100,17 +101,49 @@ namespace onion::voxel
 			m_HeartHalf_Sprite.Render();
 		}
 
-		//// ---- Hunger (icons, bottom-right above hotbar) ----
-		//float hungerStartX = screenCenterX + hotbarSize.x * 0.5f - iconSize;
+		// ---- Hunger (icons, bottom-right above hotbar) ----
+		float hunger = player->GetHunger().CurrentHunger;
+		float hungerSizeX = (36.f / 1920.f) * s_ScreenWidth;
+		float hungerSizeY = (36.f / 1009.f) * s_ScreenHeight;
+		glm::vec2 hungerSize = {hungerSizeX, hungerSizeY};
+		float firstHungerRatioX = 1305.f / 1920.f;
+		float firstHungerRatioY = firstHealthRatioY;
+		glm::vec2 firstHungerPos = {s_ScreenWidth * firstHungerRatioX, s_ScreenHeight * firstHungerRatioY};
 
-		//m_HungerFull_Sprite.SetPosition({hungerStartX, hudRowY});
-		//m_HungerFull_Sprite.SetSize({iconSize, iconSize});
-		//m_HungerFull_Sprite.Render();
+		// Hunger Containers
+		m_HungerEmpty_Sprite.SetSize(hungerSize);
+		magicOffsetX = (1.f / 9.f) * hungerSizeX;
+		for (int i = 0; i < 10; i++)
+		{
+			glm::vec2 hungerPos = {firstHungerPos.x - i * (hungerSize.x - magicOffsetX), firstHungerPos.y};
+			m_HungerEmpty_Sprite.SetPosition(hungerPos);
+			m_HungerEmpty_Sprite.Render();
+		}
 
-		//m_HungerHalf_Sprite.SetPosition({hungerStartX - iconSize, hudRowY});
-		//m_HungerHalf_Sprite.SetSize({iconSize, iconSize});
-		//m_HungerHalf_Sprite.Render();
+		// Half Foods
+		halfUnits = static_cast<int>(std::floor(hunger)); // number of half-foods
+		if (hunger > 0.f && halfUnits == 0)
+		{
+			halfUnits = 1; // Ensure at least a half-food is shown for any positive hunger
+		}
+		int fullFoods = halfUnits / 2;
+		m_HungerFull_Sprite.SetSize(hungerSize);
+		for (int i = 0; i < fullFoods; i++)
+		{
+			glm::vec2 foodPos = {firstHungerPos.x - i * (hungerSize.x - magicOffsetX), firstHungerPos.y};
+			m_HungerFull_Sprite.SetPosition(foodPos);
+			m_HungerFull_Sprite.Render();
+		}
 
+		// Half Food
+		bool hasHalfFood = (halfUnits % 2) != 0;
+		if (hasHalfFood)
+		{
+			m_HungerHalf_Sprite.SetSize(hungerSize);
+			glm::vec2 foodPos = {firstHungerPos.x - fullFoods * (hungerSize.x - magicOffsetX), firstHungerPos.y};
+			m_HungerHalf_Sprite.SetPosition(foodPos);
+			m_HungerHalf_Sprite.Render();
+		}
 		//// ---- Experience Bar (bottom-center, between hotbar and hearts row) ----
 		//glm::vec2 xpBarSize = {hotbarSize.x, s_ScreenHeight * 0.009f};
 		//glm::vec2 xpBarPos = {screenCenterX,
@@ -134,6 +167,7 @@ namespace onion::voxel
 		m_HeartHalf_Sprite.Initialize();
 		m_HungerFull_Sprite.Initialize();
 		m_HungerHalf_Sprite.Initialize();
+		m_HungerEmpty_Sprite.Initialize();
 		m_ExperienceBarBackground_Sprite.Initialize();
 		m_ExperienceBarProgress_Sprite.Initialize();
 
@@ -149,6 +183,7 @@ namespace onion::voxel
 		m_HeartHalf_Sprite.Delete();
 		m_HungerFull_Sprite.Delete();
 		m_HungerHalf_Sprite.Delete();
+		m_HungerEmpty_Sprite.Delete();
 		m_ExperienceBarBackground_Sprite.Delete();
 		m_ExperienceBarProgress_Sprite.Delete();
 
@@ -164,6 +199,7 @@ namespace onion::voxel
 		m_HeartHalf_Sprite.ReloadTextures();
 		m_HungerFull_Sprite.ReloadTextures();
 		m_HungerHalf_Sprite.ReloadTextures();
+		m_HungerEmpty_Sprite.ReloadTextures();
 		m_ExperienceBarBackground_Sprite.ReloadTextures();
 		m_ExperienceBarProgress_Sprite.ReloadTextures();
 	}

@@ -791,7 +791,7 @@ namespace onion::voxel
 					int selectedSlot = hotbar.SelectedSlot;
 					if (ImGui::SliderInt("Selected Slot", &selectedSlot, 0, 8))
 					{
-						hotbar.SelectedSlot = selectedSlot;
+						hotbar.SelectedSlot = static_cast<uint8_t>(selectedSlot);
 						player->SetHotbar(hotbar);
 					}
 

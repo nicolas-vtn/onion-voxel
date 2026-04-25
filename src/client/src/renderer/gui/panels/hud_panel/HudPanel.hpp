@@ -26,6 +26,7 @@ namespace onion::voxel
 		Sprite m_HeartContainer_Sprite;
 		Sprite m_HeartFull_Sprite;
 		Sprite m_HeartHalf_Sprite;
+		Sprite m_HungerEmpty_Sprite;
 		Sprite m_HungerFull_Sprite;
 		Sprite m_HungerHalf_Sprite;
 		Sprite m_ExperienceBarBackground_Sprite;
@@ -47,6 +48,9 @@ namespace onion::voxel
 
 		static inline const std::filesystem::path s_PathHeartContainer =
 			GuiElement::s_BasePathGuiAssets / "sprites" / "hud" / "heart" / "container.png";
+
+		static inline const std::filesystem::path s_PathHungerEmpty =
+			GuiElement::s_BasePathGuiAssets / "sprites" / "hud" / "food_empty.png";
 
 		static inline const std::filesystem::path s_PathHungerFull =
 			GuiElement::s_BasePathGuiAssets / "sprites" / "hud" / "food_full.png";
