@@ -872,7 +872,8 @@ namespace onion::voxel
 
 				float sprintFactor = 1.0f;
 
-				if (speedUpKeyState.IsPressed && !player->IsSneaking())
+				// Can run only if sprint key is held, moving forward, and not sneaking
+				if (speedUpKeyState.IsPressed && moveForwardKeyState.IsPressed && !player->IsSneaking())
 				{
 					player->SetState(Entity::State::Running);
 
@@ -957,7 +958,7 @@ namespace onion::voxel
 				glm::vec3 horizontalVelocity = glm::vec3(physics.Velocity.x, 0.0f, physics.Velocity.z);
 				float horizontalSpeed = glm::length(horizontalVelocity);
 
-				if (horizontalSpeed > 0.0001f)
+				if (horizontalSpeed > 0.0001f && moveForwardKeyState.IsPressed)
 				{
 					glm::vec3 currentDir = glm::normalize(horizontalVelocity);
 					glm::vec3 desiredDir = glm::normalize(glm::vec3(playerFront.x, 0.0f, playerFront.z));
@@ -980,7 +981,7 @@ namespace onion::voxel
 					else
 					{
 						// Snap for large angles, but reduce speed
-						float penalty = 0.7f; //
+						float penalty = 0.5f; //
 
 						physics.Velocity.x = desiredDir.x * horizontalSpeed * penalty;
 						physics.Velocity.z = desiredDir.z * horizontalSpeed * penalty;
