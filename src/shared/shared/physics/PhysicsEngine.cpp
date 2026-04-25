@@ -615,4 +615,57 @@ namespace onion::voxel
 		return false;
 	}
 
+	// -------------------------------------------------------------------------
+	// HasGroundSupport
+	//
+	// Returns true when there is at least one solid block directly beneath the
+	// player AABB at the given position. The probe checks a 1-block-tall slice
+	// just below the feet of the AABB, which is sufficient to determine whether
+	// the player is standing on (or would be standing on) solid ground.
+	//
+	// Used by sneak edge-prevention: before applying horizontal velocity we test
+	// whether the candidate position would leave the player unsupported, and if
+	// so we discard that velocity component so the player stays on the edge.
+	// -------------------------------------------------------------------------
+	bool
+	PhysicsEngine::HasGroundSupport(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset) const
+	{
+		// The feet centre is at (position + offset) - (0, halfSize.y, 0).
+		// We probe a thin horizontal slab just below that point.
+		constexpr float probeEpsilon = 0.05f; // how far below feet we look
+
+		glm::vec3 center = position + offset;
+		glm::vec3 feetMin = {center.x - halfSize.x, center.y - halfSize.y - probeEpsilon, center.z - halfSize.z};
+		glm::vec3 feetMax = {center.x + halfSize.x, center.y - halfSize.y, center.z + halfSize.z};
+
+		int minX = static_cast<int>(std::floor(feetMin.x));
+		int maxX = static_cast<int>(std::floor(feetMax.x));
+		int minY = static_cast<int>(std::floor(feetMin.y));
+		int maxY = static_cast<int>(std::floor(feetMax.y));
+		int minZ = static_cast<int>(std::floor(feetMin.z));
+		int maxZ = static_cast<int>(std::floor(feetMax.z));
+
+		for (int x = minX; x <= maxX; ++x)
+			for (int y = minY; y <= maxY; ++y)
+				for (int z = minZ; z <= maxZ; ++z)
+				{
+					const BlockState& block = m_WorldManager.GetBlock(glm::ivec3{x, y, z});
+					if (!BlockState::IsSolid(block.ID))
+						continue;
+
+					// Simple AABB overlap — full-cube blocks only.
+					// Per-element checks (slabs, stairs) are not needed here: if the
+					// player is currently standing on a slab the swept Y resolution has
+					// already placed them at the correct height, so a full-cube probe
+					// correctly detects the block directly below.
+					if (feetMax.x > x && feetMin.x < x + 1.0f && feetMax.y > y && feetMin.y < y + 1.0f &&
+						feetMax.z > z && feetMin.z < z + 1.0f)
+					{
+						return true;
+					}
+				}
+
+		return false;
+	}
+
 } // namespace onion::voxel

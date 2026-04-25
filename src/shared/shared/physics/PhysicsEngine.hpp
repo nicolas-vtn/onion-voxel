@@ -44,6 +44,11 @@ namespace onion::voxel
 
 		bool IsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset);
 
+		// Returns true if there is at least one solid block directly beneath the
+		// AABB defined by (position, halfSize, offset). Used by sneak edge-prevention.
+	  public:
+		bool HasGroundSupport(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset) const;
+
 		// ----- Private Constants -----
 	  private:
 		mutable std::shared_mutex m_MutexPhysics;

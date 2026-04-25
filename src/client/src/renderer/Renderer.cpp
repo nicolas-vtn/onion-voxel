@@ -853,6 +853,7 @@ namespace onion::voxel
 			{
 				maxSpeed *= m_SneakSpeedFactor;
 			}
+
 			float acceleration = physics.OnGround ? m_GroundAcceleration : m_AirAcceleration;
 
 			if (moveForwardKeyState.IsPressed)
@@ -863,6 +864,44 @@ namespace onion::voxel
 				moveDir -= glm::normalize(glm::cross(frontXZ, Up));
 			if (moveRightKeyState.IsPressed)
 				moveDir += glm::normalize(glm::cross(frontXZ, Up));
+
+			// --- Sneak edge prevention ---
+			// Test each world-space horizontal axis independently after moveDir is built
+			// but before it feeds into MoveTowards. This prevents acceleration from
+			// pushing the player off an edge even on the first frame a key is pressed.
+			// The ratio of surviving moveDir length to original is used to scale down
+			// finalMaxSpeed, so a near-parallel diagonal approach doesn't grant full
+			// speed on the surviving axis.
+			float sneakEdgeSpeedRatio = 1.0f;
+			if (player->IsSneaking() && physics.OnGround)
+			{
+				const glm::vec3 currentPos = player->GetTransform().Position;
+				constexpr float probeStep = 0.01f;
+				const float originalMoveDirLength = glm::length(moveDir);
+
+				if (std::abs(moveDir.x) > 0.0f)
+				{
+					glm::vec3 testPos = currentPos + glm::vec3(glm::sign(moveDir.x) * probeStep, 0.0f, 0.0f);
+					if (!m_PhysicsEngine.HasGroundSupport(testPos, physics.HalfSize, physics.Offset))
+					{
+						moveDir.x = 0.0f;
+						physics.Velocity.x = 0.0f;
+					}
+				}
+
+				if (std::abs(moveDir.z) > 0.0f)
+				{
+					glm::vec3 testPos = currentPos + glm::vec3(0.0f, 0.0f, glm::sign(moveDir.z) * probeStep);
+					if (!m_PhysicsEngine.HasGroundSupport(testPos, physics.HalfSize, physics.Offset))
+					{
+						moveDir.z = 0.0f;
+						physics.Velocity.z = 0.0f;
+					}
+				}
+
+				if (originalMoveDirLength > 0.0f)
+					sneakEdgeSpeedRatio = glm::length(moveDir) / originalMoveDirLength;
+			}
 
 			if (glm::length(moveDir) > 0.0f)
 			{
@@ -887,7 +926,7 @@ namespace onion::voxel
 					}
 				}
 
-				float finalMaxSpeed = maxSpeed * sprintFactor;
+				float finalMaxSpeed = maxSpeed * sprintFactor * sneakEdgeSpeedRatio;
 				float finalAcceleration = acceleration * sprintFactor;
 
 				physics.Velocity = MoveTowards(
