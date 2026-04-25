@@ -766,10 +766,19 @@ namespace onion::voxel
 				if (player->HasExperience())
 				{
 					Experience experience = player->GetExperience();
-					if (ImGui::InputInt("XP Value", &experience.Value))
+					Experience::LevelInfo levelInfo = experience.GetLevel();
+
+					int xp = static_cast<int>(experience.Value);
+					if (ImGui::InputInt("XP Value", &xp))
 					{
+						xp = std::max(0, xp); // clamp to valid range
+						experience.Value = static_cast<uint32_t>(xp);
 						player->SetExperience(experience);
 					}
+
+					ImGui::Text("Current Level: %d", levelInfo.Level);
+					ImGui::Text("XP for Next Level: %d", levelInfo.ExperienceForNextLevel);
+					ImGui::Text("XP of Current Level: %d", levelInfo.TotalExperienceForCurrentLevel);
 				}
 				else
 				{

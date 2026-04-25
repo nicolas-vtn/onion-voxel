@@ -14,8 +14,11 @@ namespace onion::voxel
 		  m_ExperienceBarProgress_Sprite(
 			  "ExperienceBarProgress_Sprite", s_PathExperienceBarProgress, Sprite::eOrigin::ResourcePack),
 		  m_HeartContainer_Sprite("HeartContainer_Sprite", s_PathHeartContainer, Sprite::eOrigin::ResourcePack),
-		  m_HungerEmpty_Sprite("HungerEmpty_Sprite", s_PathHungerEmpty, Sprite::eOrigin::ResourcePack)
+		  m_HungerEmpty_Sprite("HungerEmpty_Sprite", s_PathHungerEmpty, Sprite::eOrigin::ResourcePack),
+		  m_ExperienceLevel_Label("ExperienceLevel_Label")
 	{
+		m_ExperienceLevel_Label.SetTextColor(Font::eColor::Green);
+		m_ExperienceLevel_Label.SetTextAlignment(Font::eTextAlignment::Center);
 	}
 
 	void HudPanel::Render()
@@ -144,18 +147,28 @@ namespace onion::voxel
 			m_HungerHalf_Sprite.SetPosition(foodPos);
 			m_HungerHalf_Sprite.Render();
 		}
-		//// ---- Experience Bar (bottom-center, between hotbar and hearts row) ----
-		//glm::vec2 xpBarSize = {hotbarSize.x, s_ScreenHeight * 0.009f};
-		//glm::vec2 xpBarPos = {screenCenterX,
-		//					  screenBottom - hotbarSize.y - iconSize - xpBarSize.y * 0.5f - s_ScreenHeight * 0.01f};
 
-		//m_ExperienceBarBackground_Sprite.SetPosition(xpBarPos);
-		//m_ExperienceBarBackground_Sprite.SetSize(xpBarSize);
-		//m_ExperienceBarBackground_Sprite.Render();
+		// ---- Experience Bar (bottom-center, between hotbar and hearts row) ----
+		Experience::LevelInfo levelInfo = player->GetExperience().GetLevel();
+		float xpBarWidthRatio = 728.f / 1920.f;
+		float xpBarHeightRatio = 19.f / 1009.f;
+		glm::vec2 xpBarSize = {s_ScreenWidth * xpBarWidthRatio, s_ScreenHeight * xpBarHeightRatio};
+		float xpBarCenterRatioY = (930 - 23) / 1009.f;
+		glm::vec2 xpBarPos = {screenCenterX, s_ScreenHeight * xpBarCenterRatioY};
 
-		//m_ExperienceBarProgress_Sprite.SetPosition(xpBarPos);
-		//m_ExperienceBarProgress_Sprite.SetSize(xpBarSize);
-		//m_ExperienceBarProgress_Sprite.Render();
+		float levelLabelCenterRatioX = 958.f / 1920.f;
+		float levelLabelCenterRatioY = (909 - 23) / 1009.f;
+		glm::vec2 levelLabelPos = {s_ScreenWidth * levelLabelCenterRatioX, s_ScreenHeight * levelLabelCenterRatioY};
+		glm::vec3 labelColor = {1.f, 1.f, 1.f};
+
+		m_ExperienceBarBackground_Sprite.SetPosition(xpBarPos);
+		m_ExperienceBarBackground_Sprite.SetSize(xpBarSize);
+		m_ExperienceBarBackground_Sprite.Render();
+
+		m_ExperienceLevel_Label.SetPosition(levelLabelPos);
+		m_ExperienceLevel_Label.SetText(std::to_string(levelInfo.Level));
+		m_ExperienceLevel_Label.SetTextHeight(s_TextHeight);
+		m_ExperienceLevel_Label.Render();
 	}
 
 	void HudPanel::Initialize()
@@ -170,6 +183,7 @@ namespace onion::voxel
 		m_HungerEmpty_Sprite.Initialize();
 		m_ExperienceBarBackground_Sprite.Initialize();
 		m_ExperienceBarProgress_Sprite.Initialize();
+		m_ExperienceLevel_Label.Initialize();
 
 		SetInitState(true);
 	}
@@ -186,6 +200,7 @@ namespace onion::voxel
 		m_HungerEmpty_Sprite.Delete();
 		m_ExperienceBarBackground_Sprite.Delete();
 		m_ExperienceBarProgress_Sprite.Delete();
+		m_ExperienceLevel_Label.Delete();
 
 		SetDeletedState(true);
 	}
@@ -202,6 +217,7 @@ namespace onion::voxel
 		m_HungerEmpty_Sprite.ReloadTextures();
 		m_ExperienceBarBackground_Sprite.ReloadTextures();
 		m_ExperienceBarProgress_Sprite.ReloadTextures();
+		m_ExperienceLevel_Label.ReloadTextures();
 	}
 
 } // namespace onion::voxel

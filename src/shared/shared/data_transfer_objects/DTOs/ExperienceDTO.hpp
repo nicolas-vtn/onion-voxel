@@ -7,7 +7,7 @@ namespace onion::voxel
 {
 	struct ExperienceDTO
 	{
-		int Value = 0;
+		uint32_t Value = 0;
 
 		template <class Archive> void serialize(Archive& ar) { ar(Value); }
 	};

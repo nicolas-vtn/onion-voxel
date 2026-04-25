@@ -1,6 +1,7 @@
 #pragma once
 
 #include <renderer/gui/GuiElement.hpp>
+#include <renderer/gui/controls/label/Label.hpp>
 #include <renderer/gui/controls/sprite/Sprite.hpp>
 
 namespace onion::voxel
@@ -31,6 +32,7 @@ namespace onion::voxel
 		Sprite m_HungerHalf_Sprite;
 		Sprite m_ExperienceBarBackground_Sprite;
 		Sprite m_ExperienceBarProgress_Sprite;
+		Label m_ExperienceLevel_Label;
 
 		// ----- Textures -----
 	  private:
