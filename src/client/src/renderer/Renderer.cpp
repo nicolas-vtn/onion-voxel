@@ -1447,6 +1447,8 @@ namespace onion::voxel
 
 			m_WorldRenderer.Render();
 
+			m_Gui.RenderGameHUD();
+
 			// Render the Player entity only when in freecam mode.
 			std::vector<std::string> hiddenEntities;
 			if (!m_IsFreeCamera)

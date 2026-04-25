@@ -32,7 +32,7 @@ namespace onion::voxel
 		  m_DemoScrollingPanel("DemoScrollingPanel"), m_SingleplayerPanel("SingleplayerPanel"),
 		  m_VideoSettingsPanel("VideoSettingsPanel"), m_ControlsPanel("ControlsPanel"),
 		  m_MouseSettingsPanel("MouseSettingsPanel"), m_KeyBindsPanel("KeyBindsPanel"),
-		  m_DemoTextsPanel("DemoTextsPanel"), m_MultiplayerPanel("MultiplayerPanel")
+		  m_DemoTextsPanel("DemoTextsPanel"), m_MultiplayerPanel("MultiplayerPanel"), m_HudPanel("HudPanel")
 	{
 		SubscribeToPanelsEvents();
 	}
@@ -362,6 +362,7 @@ namespace onion::voxel
 		m_MouseSettingsPanel.Initialize();
 		m_KeyBindsPanel.Initialize();
 		m_MultiplayerPanel.Initialize();
+		m_HudPanel.Initialize();
 
 		ReloadSkyboxTextures();
 	}
@@ -431,6 +432,11 @@ namespace onion::voxel
 		m_MenuPreviousFrame = m_ActiveMenu;
 	}
 
+	void Gui::RenderGameHUD()
+	{
+		m_HudPanel.Render();
+	}
+
 	void Gui::RenderBackground()
 	{
 		// Render the skybox if we are not in-game
@@ -470,6 +476,7 @@ namespace onion::voxel
 		m_MouseSettingsPanel.Delete();
 		m_KeyBindsPanel.Delete();
 		m_MultiplayerPanel.Delete();
+		m_HudPanel.Delete();
 
 		m_Skybox.Unload();
 	}
@@ -491,6 +498,7 @@ namespace onion::voxel
 		m_MouseSettingsPanel.ReloadTextures();
 		m_KeyBindsPanel.ReloadTextures();
 		m_MultiplayerPanel.ReloadTextures();
+		m_HudPanel.ReloadTextures();
 
 		ReloadSkyboxTextures();
 	}
