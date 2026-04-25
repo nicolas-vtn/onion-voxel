@@ -19,7 +19,11 @@ namespace onion::voxel
 		PlayerDTO(const EntityDTO& entityDTO) : EntityDTO(entityDTO) {}
 
 		std::string Name;
+		bool IsSneaking = false;
 
-		template <class Archive> void serialize(Archive& ar) { ar(cereal::base_class<EntityDTO>(this), Name); }
+		template <class Archive> void serialize(Archive& ar)
+		{
+			ar(cereal::base_class<EntityDTO>(this), Name, IsSneaking);
+		}
 	};
 } // namespace onion::voxel

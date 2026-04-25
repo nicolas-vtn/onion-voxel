@@ -620,7 +620,7 @@ namespace onion::voxel
 		if (interactKeyState.IsPressed && m_CurrentRaycastHit.has_value())
 		{
 			const Block& adjacentBlock = m_CurrentRaycastHit->AdjacentBlock;
-			Block blockToPlace = Block(adjacentBlock.Position, BlockState(BlockId::BrickStairs, 14));
+			Block blockToPlace = Block(adjacentBlock.Position, BlockState(BlockId::Cobblestone));
 
 			bool success = m_WorldManager->SetBlock(
 				blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
@@ -700,18 +700,7 @@ namespace onion::voxel
 			return;
 		}
 
-		// Constants
-		// Ground
-		float groundMaxSpeed = 6.0f;
-		float groundAcceleration = 120.0f;
-		float groundDeceleration = 150.f;
-
-		// Air
-		float airMaxSpeed = 5.0f;
-		float airAcceleration = 8.0f;
-		float airDeceleration = 4.0f; // optional, often low
-
-		// Flying
+		// Flying Constants
 		float flyMaxSpeed = m_PlayerFlySpeed;
 		float flyAcceleration = m_PlayerFlySpeed * 5.f;
 		float flyDeceleration = m_PlayerFlySpeed * 5.f;
@@ -729,7 +718,7 @@ namespace onion::voxel
 		KeyState moveLeftKeyState = m_KeyBinds.GetKeyState(eAction::StrafeLeft);
 		KeyState moveRightKeyState = m_KeyBinds.GetKeyState(eAction::StrafeRight);
 		KeyState moveUpKeyState = m_KeyBinds.GetKeyState(eAction::Jump);
-		KeyState moveDownKeyState = m_KeyBinds.GetKeyState(eAction::Sneak);
+		KeyState sneakKeyState = m_KeyBinds.GetKeyState(eAction::Sneak);
 		KeyState toggleFlyModeKeyState = m_KeyBinds.GetKeyState(eAction::ToggleFlyMode);
 
 		// ----- PLAYER ORIENTATION -----
@@ -760,7 +749,7 @@ namespace onion::voxel
 		}
 
 		// ----- TOGGLE FLYING MODE -----
-		if (toggleFlyModeKeyState.IsDoublePressed)
+		if (m_AllowFlyToggle && toggleFlyModeKeyState.IsDoublePressed)
 		{
 			physics.IsFlying = !physics.IsFlying;
 			if (physics.IsFlying)
@@ -773,6 +762,12 @@ namespace onion::voxel
 			{
 				std::cout << "Flying mode disabled\n";
 			}
+		}
+
+		// Disable flying when touching ground
+		if (physics.IsFlying && physics.OnGround)
+		{
+			physics.IsFlying = false;
 		}
 
 		// ----- PLAYER FLYING SPEED -----
@@ -806,6 +801,9 @@ namespace onion::voxel
 
 		glm::vec3 moveDir(0.0f);
 
+		// ----- MOVEMENT -----
+		player->SetIsSneaking(sneakKeyState.IsPressed);
+
 		if (physics.IsFlying)
 		{
 
@@ -820,7 +818,7 @@ namespace onion::voxel
 				moveDir += glm::normalize(glm::cross(frontXZ, Up));
 			if (moveUpKeyState.IsPressed)
 				moveDir += Up;
-			if (moveDownKeyState.IsPressed)
+			if (sneakKeyState.IsPressed)
 				moveDir -= Up;
 
 			if (glm::length(moveDir) > 0.0f)
@@ -829,7 +827,7 @@ namespace onion::voxel
 			if (speedUpKeyState.IsPressed)
 				flyMaxSpeed *= 2.0f;
 
-			glm::vec3 desiredVelocity = moveDir * flyMaxSpeed;
+			glm::vec3 desiredVelocity = moveDir * m_PlayerFlySpeed;
 
 			if (glm::length(moveDir) > 0.0f)
 			{
@@ -850,9 +848,12 @@ namespace onion::voxel
 		{
 			// Walking movement
 
-			float maxSpeed = physics.OnGround ? groundMaxSpeed : airMaxSpeed;
-			float acceleration = physics.OnGround ? groundAcceleration : airAcceleration;
-			float deceleration = physics.OnGround ? groundDeceleration : airDeceleration;
+			float maxSpeed = physics.OnGround ? m_GroundMaxSpeed : m_AirMaxSpeed;
+			if (player->IsSneaking())
+			{
+				maxSpeed *= m_SneakSpeedFactor;
+			}
+			float acceleration = physics.OnGround ? m_GroundAcceleration : m_AirAcceleration;
 
 			if (moveForwardKeyState.IsPressed)
 				moveDir += frontXZ;
@@ -871,7 +872,7 @@ namespace onion::voxel
 
 				float sprintFactor = 1.0f;
 
-				if (speedUpKeyState.IsPressed)
+				if (speedUpKeyState.IsPressed && !player->IsSneaking())
 				{
 					player->SetState(Entity::State::Running);
 
@@ -893,15 +894,65 @@ namespace onion::voxel
 			}
 			else
 			{
+				// Use a higher deceleration when airborne and no key is pressed so that
+				// the jump horizontal kick doesn't cause uncontrolled drift after release.
+				float releaseDecel = physics.OnGround ? m_GroundDeceleration : m_JumpReleaseDeceleration;
+
+				// Only apply release deceleration to XZ — vel.y is owned by gravity.
+				glm::vec3 target(0.0f, physics.Velocity.y, 0.0f);
 				physics.Velocity =
-					MoveTowards(physics.Velocity, glm::vec3(0.0f), deceleration * static_cast<float>(m_DeltaTime));
+					MoveTowards(physics.Velocity, target, releaseDecel * static_cast<float>(m_DeltaTime));
 				player->SetState(Entity::State::Idle);
 			}
 
 			// Jumping
-			if (moveUpKeyState.IsPressed && physics.OnGround)
+			constexpr float kJumpCooldownDuration = 0.4f;
+
+			// Coyote time: track when the player leaves the ground naturally (not from jumping).
+			// m_WasOnGround is updated at the end of this block so we catch the exact frame
+			// of the ground → air transition.
+			bool onGroundNow = physics.OnGround;
+			if (m_WasOnGround && !onGroundNow && m_CoyoteTimeRemaining <= 0.0f)
 			{
+				// Player just walked off an edge — open the coyote window
+				m_CoyoteTimeRemaining = m_CoyoteTimeDuration;
+			}
+			else if (onGroundNow)
+			{
+				// Back on ground — reset window so it doesn't bleed into the next fall
+				m_CoyoteTimeRemaining = 0.0f;
+			}
+
+			m_CoyoteTimeRemaining -= static_cast<float>(m_DeltaTime);
+
+			// Tick down the jump cooldown each frame
+			m_JumpCooldown -= static_cast<float>(m_DeltaTime);
+
+			// Early cooldown reset: if the key was released since the last frame, allow
+			// jumping again immediately so a deliberate re-press is never blocked.
+			bool jumpKeyNowPressed = moveUpKeyState.IsPressed;
+			if (m_JumpKeyWasPressed && !jumpKeyNowPressed)
+			{
+				m_JumpCooldown = 0.0f;
+			}
+
+			m_JumpKeyWasPressed = jumpKeyNowPressed;
+
+			bool canJump = onGroundNow || m_CoyoteTimeRemaining > 0.0f;
+			if (moveUpKeyState.IsPressed && canJump && m_JumpCooldown <= 0.0f)
+			{
+				// Reset vertical velocity before applying jump strength so coyote jumps
+				// are not weakened by the downward velocity accumulated during the fall.
 				physics.Velocity.y = m_PhysicsEngine.GetJumpStrength();
+
+				if (m_CoyoteTimeRemaining > 0.0f)
+				{
+					std::cout << "Coyote Jump at " << m_CoyoteTimeRemaining << " seconds remaining\n";
+				}
+
+				// Consume the coyote window immediately to prevent it restarting
+				// on the next frame when OnGround transitions false → false.
+				m_CoyoteTimeRemaining = 0.0f;
 
 				glm::vec3 horizontalVelocity = glm::vec3(physics.Velocity.x, 0.0f, physics.Velocity.z);
 				float horizontalSpeed = glm::length(horizontalVelocity);
@@ -924,7 +975,7 @@ namespace onion::voxel
 						physics.Velocity.z = newDir.z * horizontalSpeed;
 
 						// Add a small kick in facing direction for better feel
-						physics.Velocity += frontXZ * (groundMaxSpeed / 3);
+						physics.Velocity += frontXZ * (m_GroundMaxSpeed / 3);
 					}
 					else
 					{
@@ -937,7 +988,10 @@ namespace onion::voxel
 				}
 
 				physics.OnGround = false;
+				m_JumpCooldown = kJumpCooldownDuration;
 			}
+
+			m_WasOnGround = onGroundNow;
 		}
 
 		player->SetPhysicsBody(physics);
@@ -1232,6 +1286,26 @@ namespace onion::voxel
 		if (ImGui::DragFloat("Jump Strength", &jumpStrength, 0.1f, 0.f, 50.f))
 		{
 			m_PhysicsEngine.SetJumpStrength(jumpStrength);
+		}
+
+		ImGui::DragFloat("Coyote Time (s)", &m_CoyoteTimeDuration, 0.01f, 0.0f, 0.5f);
+
+		ImGui::Checkbox("Allow Fly Toggle (double jump)", &m_AllowFlyToggle);
+
+		ImGui::Separator();
+		if (ImGui::CollapsingHeader("Ground Movement"))
+		{
+			ImGui::DragFloat("Max Speed##ground", &m_GroundMaxSpeed, 0.1f, 0.f, 50.f);
+			ImGui::DragFloat("Acceleration##ground", &m_GroundAcceleration, 1.0f, 0.f, 500.f);
+			ImGui::DragFloat("Deceleration##ground", &m_GroundDeceleration, 1.0f, 0.f, 500.f);
+		}
+
+		if (ImGui::CollapsingHeader("Air Movement"))
+		{
+			ImGui::DragFloat("Max Speed##air", &m_AirMaxSpeed, 0.1f, 0.f, 50.f);
+			ImGui::DragFloat("Acceleration##air", &m_AirAcceleration, 0.5f, 0.f, 100.f);
+			ImGui::DragFloat("Decel (key held)##air", &m_AirDeceleration, 0.5f, 0.f, 100.f);
+			ImGui::DragFloat("Decel (key released)##air", &m_JumpReleaseDeceleration, 1.0f, 0.f, 200.f);
 		}
 
 		ImGui::End();

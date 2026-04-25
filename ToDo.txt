@@ -3,10 +3,8 @@
 
 		----- ENHANCEMENTS -----
 - Add Sounds / Musics
-- Render non-full blocks (water surface, cactus, ...)
-- Animated textures (water, lava, ...)
-- Better collision system (swept AABB)
-- Add a "sneaking" state
+- Animated textures (water, lava, ...) and lower texture
+- Add a "sneaking" state (Do not fall off blocks)
 - Add a "Creative" UI with Block selection and inventory management
 - Add Player position interpolation in multiplayer
 - Add a Chat system
@@ -15,9 +13,9 @@
 - Add UI Tooltip on hovering something
 - Particules (breaking blocks, footsteps, ...)
 - First person view : Arm and selected block. (+ Movement on walking, placing and breaking)
-- Use Block Model for collision instead of full block.
 - Support model face culling ( Can optimize face cutout culling issue (double cutout render pass))
 - Rotated Oak Logs (Barks in correct direction)
+- Better Jump impulsion. (Fix jump forward when walking backward)
 
 		----- KNOWN ISSUES -----
 - Z-Ordering issue in GUI (Fix TextField Background drawn in wrong order to bypass this issue )
