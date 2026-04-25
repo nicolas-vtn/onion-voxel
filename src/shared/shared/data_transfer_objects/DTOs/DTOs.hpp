@@ -1,6 +1,11 @@
 #pragma once
 
 #include "BlockDTO.hpp"
+#include "ExperienceDTO.hpp"
+#include "HealthDTO.hpp"
+#include "HotbarDTO.hpp"
+#include "HungerDTO.hpp"
+#include "InventoryDTO.hpp"
 #include "BlockStateDTO.hpp"
 #include "ChunkDTO.hpp"
 #include "EntityDTO.hpp"

@@ -11,6 +11,12 @@ namespace onion::voxel
 		physicsBody.HalfSize = Size * 0.5f;
 		physicsBody.Offset = glm::vec3(0.f, Size.y * 0.5f, 0.f);
 		SetPhysicsBody(physicsBody);
+
+		SetHotbar(Hotbar{});
+		SetHealth(Health{20});
+		SetHunger(Hunger{20});
+		SetExperience(Experience{0});
+		SetInventory(Inventory{});
 	}
 
 	glm::vec3 Player::GetEyePosition() const
