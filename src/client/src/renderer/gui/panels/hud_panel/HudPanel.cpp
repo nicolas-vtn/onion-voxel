@@ -1,5 +1,7 @@
 #include "HudPanel.hpp"
 
+#include <renderer/debug_draws/DebugDraws.hpp>
+
 namespace onion::voxel
 {
 	HudPanel::HudPanel(const std::string& name)
@@ -225,6 +227,24 @@ namespace onion::voxel
 			m_ExperienceLevel_Label.SetTextHeight(s_TextHeight);
 			m_ExperienceLevel_Label.Render();
 		}
+
+		// ---- Crosshair ----
+		float crossHairHeightRatio = 35.f / 1009.f;
+		float crossHairHeight = s_ScreenHeight * crossHairHeightRatio;
+		float crossHairWidthRatio = 35.f / 1920.f;
+		float crossHairWidth = s_ScreenWidth * crossHairWidthRatio;
+
+		glm::vec2 centerScreenPos = {screenCenterX, s_ScreenHeight * 0.5f};
+		glm::vec2 crosshairTop = {centerScreenPos.x, centerScreenPos.y - (crossHairHeight / 2)};
+		glm::vec2 crosshairBottom = {centerScreenPos.x, centerScreenPos.y + (crossHairHeight / 2)};
+		glm::vec2 crosshairLeft = {centerScreenPos.x - (crossHairWidth / 2), centerScreenPos.y};
+		glm::vec2 crosshairRight = {centerScreenPos.x + (crossHairWidth / 2), centerScreenPos.y};
+
+		// Draw crosshair as 2 lines
+		glm::vec4 crosshairColor = {1.f, 1.f, 1.f, 1.f};
+		int crosshairLineWidth = static_cast<int>(s_ScreenWidth * (4.f / 1920.f));
+		DebugDraws::DrawScreenLine_Pixels(crosshairTop, crosshairBottom, crosshairColor, crosshairLineWidth);
+		DebugDraws::DrawScreenLine_Pixels(crosshairLeft, crosshairRight, crosshairColor, crosshairLineWidth);
 	}
 
 	void HudPanel::Initialize()
