@@ -8,7 +8,7 @@ namespace onion::voxel
 		: GuiElement(name), m_Title_Label(name + "_Title_Label"), m_Scroller(name + "_Scroller"),
 		  m_Done_Button(name + "_Done_Button"), m_ResetAll_Button(name + "_ResetAll_Button"),
 		  m_TitleMovement_Label(name + "_TitleMovement_Label"), m_TitleGameplay_Label(name + "_TitleGameplay_Label"),
-		  m_TitleDebug_Label(name + "_TitleDebug_Label")
+		  m_TitleDebug_Label(name + "_TitleDebug_Label"), m_TitleInventory_Label(name + "_TitleInventory_Label")
 	{
 		SubscribeToControlEvents();
 
@@ -20,6 +20,9 @@ namespace onion::voxel
 
 		m_TitleGameplay_Label.SetText("Gameplay");
 		m_TitleGameplay_Label.SetTextAlignment(Font::eTextAlignment::Center);
+
+		m_TitleInventory_Label.SetText("Inventory");
+		m_TitleInventory_Label.SetTextAlignment(Font::eTextAlignment::Center);
 
 		m_TitleDebug_Label.SetText("Debug");
 		m_TitleDebug_Label.SetTextAlignment(Font::eTextAlignment::Center);
@@ -139,6 +142,43 @@ namespace onion::voxel
 			}
 		}
 
+		// ----- Render Title Inventory -----
+		const glm::ivec2 titleInventoryPosition(centerX, currentYPosition);
+		m_TitleInventory_Label.SetPosition(titleInventoryPosition + scrollerOffset);
+		m_TitleInventory_Label.SetTextHeight(s_TextHeight);
+		m_TitleInventory_Label.Render();
+		currentYPosition += otherElementsYOffset;
+
+		// ----- Render Inventory Tiles -----
+		std::vector<eAction> inventoryActions = {
+			eAction::DropItem,
+			eAction::OpenInventory,
+			eAction::HotbarSlot1,
+			eAction::HotbarSlot2,
+			eAction::HotbarSlot3,
+			eAction::HotbarSlot4,
+			eAction::HotbarSlot5,
+			eAction::HotbarSlot6,
+			eAction::HotbarSlot7,
+			eAction::HotbarSlot8,
+			eAction::HotbarSlot9,
+		};
+
+		for (eAction action : inventoryActions)
+		{
+			auto it = m_ActionToKeyBindTileMap.find(action);
+			if (it != m_ActionToKeyBindTileMap.end())
+			{
+				KeyBindsTile* tilePtr = it->second.get();
+				const glm::ivec2 tilePosition(centerX, currentYPosition);
+				tilePtr->SetPosition(tilePosition + scrollerOffset);
+				tilePtr->SetSize(tileSize);
+				tilePtr->SetVisibility(m_Scroller.GetControlVisibleArea(tilePtr->GetPosition(), tileSize));
+				tilePtr->Render();
+				currentYPosition += tileSize.y;
+			}
+		}
+
 		// ----- Render Title Debug -----
 		const glm::ivec2 titleDebugPosition(centerX, currentYPosition);
 		m_TitleDebug_Label.SetPosition(titleDebugPosition + scrollerOffset);
@@ -211,6 +251,7 @@ namespace onion::voxel
 		m_TitleMovement_Label.Initialize();
 		m_TitleGameplay_Label.Initialize();
 		m_TitleDebug_Label.Initialize();
+		m_TitleInventory_Label.Initialize();
 
 		InitializeKeyBindTiles();
 
@@ -226,6 +267,7 @@ namespace onion::voxel
 		m_TitleMovement_Label.Delete();
 		m_TitleGameplay_Label.Delete();
 		m_TitleDebug_Label.Delete();
+		m_TitleInventory_Label.Delete();
 
 		for (auto& [action, tilePtr] : m_ActionToKeyBindTileMap)
 		{
@@ -244,6 +286,7 @@ namespace onion::voxel
 		m_TitleMovement_Label.ReloadTextures();
 		m_TitleGameplay_Label.ReloadTextures();
 		m_TitleDebug_Label.ReloadTextures();
+		m_TitleInventory_Label.ReloadTextures();
 
 		for (auto& [action, tilePtr] : m_ActionToKeyBindTileMap)
 		{

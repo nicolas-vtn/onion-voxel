@@ -535,10 +535,21 @@ namespace onion::voxel
 		m_KeyBinds.RemapAction(eAction::CloseMenu, actionToKey.at(eAction::CloseMenu), noRepeat);
 		m_KeyBinds.RemapAction(eAction::ToggleDebugMenus, actionToKey.at(eAction::ToggleDebugMenus), noRepeat);
 		m_KeyBinds.RemapAction(eAction::PickBlock, actionToKey.at(eAction::PickBlock), noRepeat);
+		m_KeyBinds.RemapAction(eAction::OpenInventory, actionToKey.at(eAction::OpenInventory), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot1, actionToKey.at(eAction::HotbarSlot1), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot2, actionToKey.at(eAction::HotbarSlot2), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot3, actionToKey.at(eAction::HotbarSlot3), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot4, actionToKey.at(eAction::HotbarSlot4), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot5, actionToKey.at(eAction::HotbarSlot5), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot6, actionToKey.at(eAction::HotbarSlot6), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot7, actionToKey.at(eAction::HotbarSlot7), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot8, actionToKey.at(eAction::HotbarSlot8), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot9, actionToKey.at(eAction::HotbarSlot9), noRepeat);
 
 		m_KeyBinds.RemapAction(eAction::Attack, actionToKey.at(eAction::Attack), repeatWithDelay);
 		m_KeyBinds.RemapAction(eAction::Interact, actionToKey.at(eAction::Interact), repeatWithDelay);
 		m_KeyBinds.RemapAction(eAction::ToggleFlyMode, actionToKey.at(eAction::ToggleFlyMode), repeatWithDelay);
+		m_KeyBinds.RemapAction(eAction::DropItem, actionToKey.at(eAction::DropItem), repeatWithDelay);
 	}
 
 	void Renderer::ProcessInputs()
@@ -604,15 +615,65 @@ namespace onion::voxel
 		if (!player)
 			return;
 
+		// ----- INVENTORY ------
+		bool inInventory = m_Gui.GetActiveMenu() == eMenu::Inventory;
+		KeyState toggleInventoryKeyState = m_KeyBinds.GetKeyState(eAction::OpenInventory);
+		if (inInventory)
+		{
+			if (toggleInventoryKeyState.IsPressed)
+			{
+				m_Gui.SetActiveMenu(eMenu::Gameplay);
+			}
+
+			return;
+		}
+		else if (toggleInventoryKeyState.IsPressed)
+		{
+			m_Gui.SetActiveMenu(eMenu::Inventory);
+			return;
+		}
+
 		// ----- RETREVE USEFULL PLAYER INFO -----
 		Inventory hotbar = player->GetHotbar();
 		size_t selectedSlot = hotbar.SelectedIndex();
+
+		// ----- HOTBAR SELECTION -----
+		static constexpr std::array<eAction, 9> hotbarActions = {
+			eAction::HotbarSlot1,
+			eAction::HotbarSlot2,
+			eAction::HotbarSlot3,
+			eAction::HotbarSlot4,
+			eAction::HotbarSlot5,
+			eAction::HotbarSlot6,
+			eAction::HotbarSlot7,
+			eAction::HotbarSlot8,
+			eAction::HotbarSlot9,
+		};
+
+		for (size_t i = 0; i < hotbarActions.size(); ++i)
+		{
+			if (m_KeyBinds.GetKeyState(hotbarActions[i]).IsPressed)
+			{
+				hotbar.SelectedIndex() = static_cast<int>(i);
+				player->SetHotbar(hotbar);
+				break;
+			}
+		}
 
 		// ----- RAYCASTING TO DETECT BLOCKS -----
 		glm::vec3 rayOrigin = m_Camera->GetPosition();
 		glm::vec3 rayDirection = m_Camera->GetFront();
 
 		m_CurrentRaycastHit = Raycaster::Raycast(*m_WorldManager, rayOrigin, rayDirection, 10.0f, 300);
+
+		// ----- DROP ITEM -----
+		KeyState dropItemKeyState = m_KeyBinds.GetKeyState(eAction::DropItem);
+		if (dropItemKeyState.IsPressed)
+		{
+			// Set air as the selected Hotbar slot
+			hotbar.Content()[selectedSlot] = BlockId::Air;
+			player->SetHotbar(hotbar);
+		}
 
 		// ----- PROCESS BLOCK DESTROY -----
 		KeyState attackKeyState = m_KeyBinds.GetKeyState(eAction::Attack);
