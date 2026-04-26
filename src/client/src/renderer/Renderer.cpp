@@ -283,7 +283,8 @@ namespace onion::voxel
 			eMenu activeMenu = m_Gui.GetActiveMenu();
 			bool isMainMenu = activeMenu == eMenu::MainMenu;
 			bool isInGameplay = activeMenu == eMenu::Gameplay;
-			bool blurry = (!isMainMenu && !isInGameplay);
+			bool isInInventory = activeMenu == eMenu::Inventory;
+			bool blurry = (!isMainMenu && !isInGameplay && !isInInventory);
 			if (blurry)
 			{
 				finalTexture = ApplyBlur(m_SceneColorTexture);
@@ -569,7 +570,9 @@ namespace onion::voxel
 		}
 
 		KeyState pauseKeyState = m_KeyBinds.GetKeyState(eAction::Pause);
-		if (pauseKeyState.IsPressed && GetRenderState() == eRenderState::InGame)
+		bool inGame = GetRenderState() == eRenderState::InGame;
+		bool inInventory = m_Gui.GetActiveMenu() == eMenu::Inventory;
+		if (pauseKeyState.IsPressed && inGame && !inInventory)
 		{
 			PauseGame(true);
 		}
@@ -1327,6 +1330,21 @@ namespace onion::voxel
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
+		// Prevents ImGui to capture cursor when mouse capture is enabled (no hover, clicks, ...)
+		if (m_InputsManager.IsMouseCaptureEnabled())
+		{
+			ImGuiIO& io = ImGui::GetIO();
+
+			io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
+			io.MouseDelta = ImVec2(0, 0);
+
+			for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); ++i)
+				io.MouseDown[i] = false;
+
+			io.MouseWheel = 0.0f;
+			io.MouseWheelH = 0.0f;
+		}
 	}
 
 	void Renderer::RenderDebugPanel()

@@ -34,6 +34,7 @@ namespace onion::voxel
 		Controls,
 		MouseSettings,
 		KeyBinds,
+		Inventory,
 		Gameplay,
 		Pause,
 		MusicAndSounds,

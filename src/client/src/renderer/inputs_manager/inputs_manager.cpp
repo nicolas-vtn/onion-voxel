@@ -355,6 +355,9 @@ void onion::voxel::InputsManager::MouseButtonCallback(int button, int action, in
 void InputsManager::SetMouseCaptureEnabled(bool enabled)
 {
 	bool wasEnabled = m_MouseCaptureEnabled;
+
+	bool changed = (enabled != wasEnabled);
+
 	m_MouseCaptureEnabled = enabled;
 	if (enabled)
 	{
@@ -368,6 +371,13 @@ void InputsManager::SetMouseCaptureEnabled(bool enabled)
 	else if (!enabled && wasEnabled)
 	{
 		glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // Release mouse
+	}
+
+	if (changed)
+	{
+		double centerX = m_FramebufferState.Width / 2.0;
+		double centerY = m_FramebufferState.Height / 2.0;
+		glfwSetCursorPos(m_Window, centerX, centerY);
 	}
 }
 

@@ -67,6 +67,7 @@ add_executable(OnionVoxel
     "src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.cpp"
 	"src/renderer/gui/panels/key_binds_panel/KeyBindsTile.cpp"
 	"src/renderer/gui/panels/hud_panel/HudPanel.cpp"
+	"src/renderer/gui/panels/inventory_panel/InventoryPanel.cpp"
 
 	"src/renderer/world_renderer/WorldRenderer.cpp"
 	"src/renderer/camera/Camera.cpp"
