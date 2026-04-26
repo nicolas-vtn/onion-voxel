@@ -31,7 +31,7 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		void Render(const glm::vec2& topLeftPosition);
+		void Render(const glm::vec2& topLeftPosition, int screenWidth, int screenHeight);
 
 		void SetInventory(const Inventory& inventory, const glm::vec2& slotSize, const glm::vec2& slotPadding);
 
@@ -56,8 +56,8 @@ namespace onion::voxel
 		// ----- Members -----
 	  private:
 		Inventory m_Inventory;
-		glm::vec2 m_SlotSize{0.2f, 0.2f};	   // In screen ratio
-		glm::vec2 m_SlotPadding{0.05f, 0.05f}; // In screen ratio
+		glm::vec2 m_SlotSize{50.f, 50.f};	   // In pixels
+		glm::vec2 m_SlotPadding{10.f, 10.f};   // In pixels
 
 		std::shared_ptr<TextureAtlas> m_TextureAtlas;
 

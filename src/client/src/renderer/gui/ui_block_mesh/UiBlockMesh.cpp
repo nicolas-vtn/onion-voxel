@@ -124,15 +124,10 @@ namespace onion::voxel
 		glDisable(GL_POLYGON_OFFSET_FILL);
 	}
 
-	void UiBlockMesh::Render(const glm::vec2& topLeftPosition)
+	void UiBlockMesh::Render(const glm::vec2& topLeftPosition, int screenWidth, int screenHeight)
 	{
-		float left = 0.f;
-		float right = 1.f;
-		float top = 0.f;
-		float bottom = 1.f;
-		float nearPlan = -1.f;
-		float farPlan = 1.f;
-		glm::mat4 viewProjMatrix = glm::ortho(left, right, bottom, top, nearPlan, farPlan);
+		glm::mat4 viewProjMatrix =
+			glm::ortho(0.f, static_cast<float>(screenWidth), static_cast<float>(screenHeight), 0.f, -100.f, 100.f);
 
 		// Render Debug Panel
 		//if (EngineContext::Get().ShowDebugMenus)
