@@ -30,9 +30,7 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		void RenderOpaque();
-		void RenderCutout();
-		void RenderTransparent();
+		void Render(const glm::vec2& topLeftPosition);
 
 		void SetInventory(const Inventory& inventory);
 
@@ -100,6 +98,17 @@ namespace onion::voxel
 		void CleanupOpenGlBuffers();
 
 		void PrepareForRendering();
+
+		void PrepareForRenderingOpaque();
+		void RenderOpaque();
+
+		void PrepareForRenderingCutout();
+		void RenderCutout();
+
+		void PrepareForRenderingTransparent();
+		void RenderTransparent();
+
+		void ResetOpenGLState();
 
 		// ----- Static Shader & Texture -----
 	  public:

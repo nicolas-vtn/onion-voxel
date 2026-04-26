@@ -55,6 +55,8 @@ namespace onion::voxel
 		uint64_t GetVertexCount() const;
 		uint64_t GetChunkMeshesCount() const;
 
+		const MeshBuilder& GetMeshBuilder() const;
+
 		// ----- States -----
 	  private:
 		bool m_RenderChunkBorders{false};

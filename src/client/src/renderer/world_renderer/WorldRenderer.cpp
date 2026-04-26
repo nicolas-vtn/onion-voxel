@@ -733,4 +733,9 @@ namespace onion::voxel
 		return m_ChunkMeshes.size();
 	}
 
+	const MeshBuilder& WorldRenderer::GetMeshBuilder() const
+	{
+		return m_MeshBuilder;
+	}
+
 } // namespace onion::voxel

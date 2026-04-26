@@ -11,6 +11,7 @@
 #include <shared/world/chunk/Chunk.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
+#include <renderer/gui/ui_block_mesh/UiBlockMesh.hpp>
 #include <renderer/world_renderer/block_registry/BlockRegistry.hpp>
 
 #include "ChunkMesh.hpp"
@@ -33,6 +34,8 @@ namespace onion::voxel
 		double GetAverageChunkMeshUpdateTime() const; // Returns the average time taken for chunk mesh updates in ms
 		size_t GetChunkMeshUpdatesLastSeconds() const;
 		double GetChunkMeshUpdatesPerSecond() const;
+
+		void UpdateUiBlockMesh(const std::shared_ptr<UiBlockMesh> uiBlockMesh) const;
 
 		size_t GetMeshBuilderThreadCount() const;
 		void SetMeshBuilderThreadCount(size_t count);

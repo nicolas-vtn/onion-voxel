@@ -558,6 +558,11 @@ namespace onion::voxel
 		return m_ExecutionTimes.size() / duration;
 	}
 
+	void MeshBuilder::UpdateUiBlockMesh(const std::shared_ptr<UiBlockMesh> uiBlockMesh) const
+	{
+		uiBlockMesh->SetDirty(false);
+	}
+
 	size_t MeshBuilder::GetMeshBuilderThreadCount() const
 	{
 		return m_ThreadPool.GetPoolsCount();

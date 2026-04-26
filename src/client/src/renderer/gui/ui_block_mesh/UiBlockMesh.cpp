@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <renderer/assets_manager/AssetsManager.hpp>
 
 namespace onion::voxel
@@ -25,6 +27,20 @@ namespace onion::voxel
 		}
 	}
 
+	void UiBlockMesh::PrepareForRenderingOpaque()
+	{
+		// ----- Shader Setup -----
+		s_Shader.Use();
+		s_Shader.setBool("u_RenderCutout", false);
+
+		// ----- OpenGL State Setup -----
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+		glDisable(GL_POLYGON_OFFSET_FILL);
+	}
+
 	void UiBlockMesh::RenderOpaque()
 	{
 		if (m_NeedsToPrepareRendering)
@@ -41,6 +57,26 @@ namespace onion::voxel
 		}
 	}
 
+	void UiBlockMesh::PrepareForRenderingCutout()
+	{ // ----- Shader Setup -----
+		s_Shader.Use();
+		s_Shader.setBool("u_RenderCutout", true);
+
+		// ----- OpenGL State Setup -----
+		// Face culling is enabled to avoid back-face / front-face z-fighting on coplanar
+		// double-sided geometry (e.g. leaf quads). The cutout pass is split into two
+		// sub-passes in Render(): back faces first (no offset), then front faces with a
+		// small negative polygon offset so front faces always win over back faces.
+		glEnable(GL_CULL_FACE);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+		// Polygon offset is managed per sub-pass in Render(); disable it here as the
+		// back-face sub-pass does not need it.
+		glDisable(GL_POLYGON_OFFSET_FILL);
+	}
+
 	void UiBlockMesh::RenderCutout()
 	{
 		if (m_IndicesCutoutCount > 0)
@@ -52,6 +88,24 @@ namespace onion::voxel
 		}
 	}
 
+	void UiBlockMesh::PrepareForRenderingTransparent()
+	{
+		// ----- Shader Setup -----
+		s_Shader.Use();
+		s_Shader.setBool("u_RenderCutout", false);
+
+		// ----- OpenGL State Setup -----
+		glDisable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		glDepthMask(GL_FALSE);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(-1.0f, -1.0f);
+	}
+
 	void UiBlockMesh::RenderTransparent()
 	{
 		if (m_IndicesTransparentCount > 0)
@@ -61,6 +115,61 @@ namespace onion::voxel
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_IndicesTransparentCount), GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
 		}
+	}
+
+	void UiBlockMesh::ResetOpenGLState()
+	{
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+		glDisable(GL_POLYGON_OFFSET_FILL);
+	}
+
+	void UiBlockMesh::Render(const glm::vec2& topLeftPosition)
+	{
+		float left = 0.f;
+		float right = 1.f;
+		float top = 0.f;
+		float bottom = 1.f;
+		float nearPlan = -1.f;
+		float farPlan = 1.f;
+		glm::mat4 viewProjMatrix = glm::ortho(left, right, bottom, top, nearPlan, farPlan);
+
+		// Render Debug Panel
+		//if (EngineContext::Get().ShowDebugMenus)
+		//	RenderDebugPanel();
+
+		s_Shader.Use();
+		s_Shader.setVec2("u_PositionOffset", topLeftPosition);
+
+		PrepareForRendering();
+
+		// Render Opaque Block Mesh
+		PrepareForRenderingOpaque();
+		RenderOpaque();
+
+		// Render Cutout BlockMesh
+		PrepareForRenderingCutout();
+
+		// Sub-pass 1: back faces — cull front faces, no polygon offset.
+		// Back faces are rendered first and write to the depth buffer.
+		glCullFace(GL_FRONT);
+		glDisable(GL_POLYGON_OFFSET_FILL);
+
+		RenderCutout();
+
+		// Sub-pass 2: front faces — cull back faces, small negative polygon offset
+		// so front faces are shifted slightly toward the camera and always win over
+		// the back faces written in sub-pass 1.
+		glCullFace(GL_BACK);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(-1.0f, -1.0f);
+		RenderCutout();
+
+		// Render Transparent Block Mesh
+		PrepareForRenderingTransparent();
+		RenderTransparent();
+
+		ResetOpenGLState();
 	}
 
 	void UiBlockMesh::SetInventory(const Inventory& inventory)

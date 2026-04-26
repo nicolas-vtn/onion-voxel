@@ -1,6 +1,7 @@
 #include "HudPanel.hpp"
 
 #include <renderer/debug_draws/DebugDraws.hpp>
+#include <renderer/world_renderer/WorldRenderer.hpp>
 
 namespace onion::voxel
 {
@@ -98,6 +99,15 @@ namespace onion::voxel
 		m_HotbarSelection_Sprite.SetPosition(hotbarSelectionPos);
 		m_HotbarSelection_Sprite.SetSize({slotSizeX, slotSizeY});
 		m_HotbarSelection_Sprite.Render();
+
+		// ---- Hotbar Item Rendering (overlaid on hotbar) ----
+		m_UiBlockMesh->SetInventory(player->GetHotbar());
+		if (m_UiBlockMesh->IsDirty())
+		{
+			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
+			meshBuilder.UpdateUiBlockMesh(m_UiBlockMesh);
+		}
+		m_UiBlockMesh->Render({0.5f, 0.5f});
 
 		// ---- Health (hearts, bottom-left above hotbar) ----
 		float health = player->GetHealth().CurrentHealth;

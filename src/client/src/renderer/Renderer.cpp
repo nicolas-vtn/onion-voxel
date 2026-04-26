@@ -43,7 +43,7 @@ namespace onion::voxel
 		}
 
 		// Sets the Engine Context
-		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager, settings);
+		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager, settings, &m_WorldRenderer);
 
 		UserSettingsChangedEventArgs args(settings, true);
 

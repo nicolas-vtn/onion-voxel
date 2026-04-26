@@ -24,6 +24,7 @@ namespace onion::voxel
 	void Gui::StaticShutdown()
 	{
 		GuiElement::Unload();
+		UiBlockMesh::s_Shader.Delete();
 	}
 
 	Gui::Gui()
