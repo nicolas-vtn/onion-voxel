@@ -560,17 +560,115 @@ namespace onion::voxel
 
 	void MeshBuilder::UpdateUiBlockMesh(const std::shared_ptr<UiBlockMesh> uiBlockMesh) const
 	{
-		// Demo : Takes the first block from the inventory.
-		const BlockId demoBlockId = uiBlockMesh->m_Inventory.At(0);
-		const auto& blockstateRegistry = BlockstateRegistry::Get();
-		const BlockModel& model = blockstateRegistry.at(demoBlockId)[0].Model;
-		const BlockModel::DisplayInfo& guiDisplay = model.ModelDisplay.Gui;
+		std::unique_lock lock(uiBlockMesh->m_Mutex);
 
-		const glm::vec3& rotation = guiDisplay.Rotation;
-		const glm::vec3& translation = guiDisplay.Translation;
-		const glm::vec3& scale = guiDisplay.Scale;
+		// Store the atlas so Render() can bind it
+		uiBlockMesh->m_TextureAtlas = m_TextureAtlas;
+
+		// Clear existing geometry
+		uiBlockMesh->m_VerticesOpaque.clear();
+		uiBlockMesh->m_IndicesOpaque.clear();
+		uiBlockMesh->m_VerticesCutout.clear();
+		uiBlockMesh->m_IndicesCutout.clear();
+		uiBlockMesh->m_VerticesTransparent.clear();
+		uiBlockMesh->m_IndicesTransparent.clear();
+
+		const Inventory& inventory = uiBlockMesh->m_Inventory;
+		const glm::vec2& slotSize = uiBlockMesh->m_SlotSize;
+		const glm::vec2& slotPadding = uiBlockMesh->m_SlotPadding;
+
+		const auto& blockstateRegistry = BlockstateRegistry::Get();
+
+		const int rows = inventory.Rows();
+		const int cols = inventory.Columns();
+
+		for (int row = 0; row < rows; ++row)
+		{
+			for (int col = 0; col < cols; ++col)
+			{
+				const BlockId blockId = inventory.At(row, col);
+				if (blockId == BlockId::Air)
+					continue;
+
+				// Slot top-left in normalized screen space
+				const float slotX = col * (slotSize.x + slotPadding.x);
+				const float slotY = row * (slotSize.y + slotPadding.y);
+
+				// Fetch Gui display transform from block model
+				auto registryIt = blockstateRegistry.find(blockId);
+				if (registryIt == blockstateRegistry.end() || registryIt->second.empty())
+					continue;
+
+				const BlockModel::DisplayInfo& gui = registryIt->second[0].Model.ModelDisplay.Gui;
+
+				// Build transform matrix.
+				// The unit cube spans [-0.5 .. 0.5] on each axis.
+				// We apply: scale(slot) → scale(gui) → Rx → Ry → Rz → translate(gui) → translate(slot center)
+				// gui.Translation is in MC model units where 1 block = 16 units.
+				// gui.Scale is a direct multiplier on the block.
+				const glm::vec3 slotCenter(slotX + slotSize.x * 0.5f, slotY + slotSize.y * 0.5f, 0.0f);
+				const float blockScreenSize = slotSize.x; // assume square slots
+
+				glm::mat4 transform = glm::mat4(1.0f);
+				transform = glm::translate(transform, slotCenter);
+				transform = glm::translate(transform, gui.Translation / 16.0f * blockScreenSize);
+				transform = glm::rotate(transform, glm::radians(gui.Rotation.z), glm::vec3(0, 0, 1));
+				transform = glm::rotate(transform, glm::radians(gui.Rotation.y), glm::vec3(0, 1, 0));
+				transform = glm::rotate(transform, glm::radians(gui.Rotation.x), glm::vec3(1, 0, 0));
+				transform = glm::scale(transform, gui.Scale * blockScreenSize);
+
+				// Compute the 8 corners of the unit cube through the transform.
+				// Convention matches GetPointsAndOcclusion: pXYZ where X=+x,Y=+y,Z=+z (1=max, 0=min)
+				auto tfm = [&](float x, float y, float z) -> glm::vec3
+				{ return glm::vec3(transform * glm::vec4(x, y, z, 1.0f)); };
+
+				PointsAndOcclusion pao;
+				// All occlusion values remain 0 (no AO for UI)
+				pao.p000 = tfm(-0.5f, -0.5f, -0.5f);
+				pao.p001 = tfm(-0.5f, -0.5f, +0.5f);
+				pao.p010 = tfm(-0.5f, +0.5f, -0.5f);
+				pao.p011 = tfm(-0.5f, +0.5f, +0.5f);
+				pao.p100 = tfm(+0.5f, -0.5f, -0.5f);
+				pao.p101 = tfm(+0.5f, -0.5f, +0.5f);
+				pao.p110 = tfm(+0.5f, +0.5f, -0.5f);
+				pao.p111 = tfm(+0.5f, +0.5f, +0.5f);
+
+				// Build face quads
+				const std::vector<FaceBuildDesc> faceDescs = GetBlockFaceBuildDescs(pao);
+
+				const BlockTextures& blockTextures = m_BlockRegistry.Get(blockId, 0);
+
+				for (const FaceBuildDesc& f : faceDescs)
+				{
+					const int faceIdx = static_cast<int>(f.face);
+
+					// Normal pass
+					for (const TextureInfo& faceTex : blockTextures.faces)
+					{
+						if (static_cast<int>(faceTex.face) != faceIdx)
+							continue;
+						if (faceTex.texture == UINT16_MAX)
+							continue;
+						const auto atlasEntry = m_TextureAtlas->GetAtlasEntry(faceTex.texture);
+						AddUiFace(*uiBlockMesh, f, faceTex, atlasEntry);
+					}
+
+					// Overlay pass
+					for (const TextureInfo& overlayTex : blockTextures.overlay)
+					{
+						if (static_cast<int>(overlayTex.face) != faceIdx)
+							continue;
+						if (overlayTex.texture == UINT16_MAX)
+							continue;
+						const auto overlayAtlas = m_TextureAtlas->GetAtlasEntry(overlayTex.texture);
+						AddUiFace(*uiBlockMesh, f, overlayTex, overlayAtlas);
+					}
+				}
+			}
+		}
 
 		uiBlockMesh->SetDirty(false);
+		uiBlockMesh->BuffersUpdated();
 	}
 
 	size_t MeshBuilder::GetMeshBuilderThreadCount() const
@@ -704,6 +802,124 @@ namespace onion::voxel
 		vertices->push_back(makeVertex(*f.v[1], uv1, *f.o[1]));
 		vertices->push_back(makeVertex(*f.v[2], uv2, *f.o[2]));
 		vertices->push_back(makeVertex(*f.v[3], uv3, *f.o[3]));
+
+		// ------ Add indices -----
+		if (!f.reverseWinding)
+		{
+			indices->push_back(startIndex + 0);
+			indices->push_back(startIndex + 1);
+			indices->push_back(startIndex + 2);
+
+			indices->push_back(startIndex + 2);
+			indices->push_back(startIndex + 3);
+			indices->push_back(startIndex + 0);
+		}
+		else
+		{
+			indices->push_back(startIndex + 0);
+			indices->push_back(startIndex + 3);
+			indices->push_back(startIndex + 2);
+
+			indices->push_back(startIndex + 2);
+			indices->push_back(startIndex + 1);
+			indices->push_back(startIndex + 0);
+		}
+	}
+
+	void MeshBuilder::AddUiFace(UiBlockMesh& mesh,
+								const FaceBuildDesc& f,
+								const TextureInfo& faceTexture,
+								const TextureAtlas::AtlasEntry& uv)
+	{
+		std::vector<UiBlockMesh::Vertex>* vertices = nullptr;
+		std::vector<uint32_t>* indices = nullptr;
+
+		switch (faceTexture.textureType)
+		{
+			case Transparency::Opaque:
+				vertices = &mesh.m_VerticesOpaque;
+				indices = &mesh.m_IndicesOpaque;
+				break;
+
+			case Transparency::Cutout:
+				vertices = &mesh.m_VerticesCutout;
+				indices = &mesh.m_IndicesCutout;
+				break;
+
+			case Transparency::Transparent:
+				vertices = &mesh.m_VerticesTransparent;
+				indices = &mesh.m_IndicesTransparent;
+				break;
+		}
+
+		// ------ COMPUTE UV SUB-REGION ------
+		float s0 = faceTexture.uv[0] / 16.0f;
+		float s1 = faceTexture.uv[2] / 16.0f;
+		float t0 = 1.0f - faceTexture.uv[3] / 16.0f; // MC v2, flipped to OpenGL
+		float t1 = 1.0f - faceTexture.uv[1] / 16.0f; // MC v1, flipped to OpenGL
+
+		glm::vec2 tileSize = uv.uvMax - uv.uvMin;
+		glm::vec2 uv0 = uv.uvMin + tileSize * glm::vec2(s0, t0);
+		glm::vec2 uv1 = uv.uvMin + tileSize * glm::vec2(s1, t0);
+		glm::vec2 uv2 = uv.uvMin + tileSize * glm::vec2(s1, t1);
+		glm::vec2 uv3 = uv.uvMin + tileSize * glm::vec2(s0, t1);
+
+		// Apply per-face UV rotation (0, 90, 180, 270 degrees CW)
+		const int uvSteps = ((faceTexture.uvRotation / 90) % 4 + 4) % 4;
+		if (uvSteps != 0)
+		{
+			std::array<glm::vec2, 4> corners{uv0, uv1, uv2, uv3};
+			uv0 = corners[(0 + uvSteps) % 4];
+			uv1 = corners[(1 + uvSteps) % 4];
+			uv2 = corners[(2 + uvSteps) % 4];
+			uv3 = corners[(3 + uvSteps) % 4];
+		}
+
+		// ------ TINT HANDLING ------
+		glm::ivec3 tint(255);
+
+		switch (faceTexture.tintType)
+		{
+			case Tint::Grass:
+				tint = glm::ivec3(95, 190, 60);
+				break;
+
+			case Tint::Water:
+				tint = glm::ivec3(77, 128, 255);
+				break;
+
+			default:
+				break;
+		}
+
+		// ------ VERTEX CREATION ------
+		uint32_t startIndex = static_cast<uint32_t>(vertices->size());
+
+		auto makeVertex = [&](const glm::vec3& p, const glm::vec2& texUv)
+		{
+			UiBlockMesh::Vertex vert;
+
+			vert.x = p.x;
+			vert.y = p.y;
+			vert.z = p.z;
+
+			vert.texX = texUv.x;
+			vert.texY = texUv.y;
+
+			vert.facing = static_cast<uint8_t>(faceTexture.shade ? f.face : Face::Top);
+
+			vert.tintR = static_cast<uint8_t>(tint.r);
+			vert.tintG = static_cast<uint8_t>(tint.g);
+			vert.tintB = static_cast<uint8_t>(tint.b);
+
+			return vert;
+		};
+
+		// ------ Add vertices -----
+		vertices->push_back(makeVertex(*f.v[0], uv0));
+		vertices->push_back(makeVertex(*f.v[1], uv1));
+		vertices->push_back(makeVertex(*f.v[2], uv2));
+		vertices->push_back(makeVertex(*f.v[3], uv3));
 
 		// ------ Add indices -----
 		if (!f.reverseWinding)

@@ -106,9 +106,14 @@ namespace onion::voxel
 							const TextureInfo& faceTexture,
 							const TextureAtlas::AtlasEntry& uv);
 
+		static void AddUiFace(UiBlockMesh& mesh,
+							  const FaceBuildDesc& f,
+							  const TextureInfo& faceTexture,
+							  const TextureAtlas::AtlasEntry& uv);
+
 		PointsAndOcclusion GetPointsAndOcclusion(
 			SubChunkMesh* mesh, const int lx, const int wy, const int lz, const TextureInfo& textureInfo);
 
-		std::vector<FaceBuildDesc> GetBlockFaceBuildDescs(const PointsAndOcclusion& pao);
+		static std::vector<FaceBuildDesc> GetBlockFaceBuildDescs(const PointsAndOcclusion& pao);
 	};
 } // namespace onion::voxel

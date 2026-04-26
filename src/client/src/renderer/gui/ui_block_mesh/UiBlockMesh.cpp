@@ -140,6 +140,9 @@ namespace onion::voxel
 
 		s_Shader.Use();
 		s_Shader.setVec2("u_PositionOffset", topLeftPosition);
+		s_Shader.setMat4("u_ViewProjMatrix", viewProjMatrix);
+		s_Shader.setVec3("u_LightColor", s_LightColor);
+		s_Shader.setBool("u_UseFaceShading", true);
 
 		PrepareForRendering();
 

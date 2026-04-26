@@ -9,6 +9,7 @@
 
 #include <renderer/shader/shader.hpp>
 #include <renderer/texture/texture.hpp>
+#include <renderer/texture_atlas/TextureAtlas.hpp>
 
 #include <shared/entities/components/Inventory.hpp>
 
@@ -57,6 +58,8 @@ namespace onion::voxel
 		Inventory m_Inventory;
 		glm::vec2 m_SlotSize{0.2f, 0.2f};	   // In screen ratio
 		glm::vec2 m_SlotPadding{0.05f, 0.05f}; // In screen ratio
+
+		std::shared_ptr<TextureAtlas> m_TextureAtlas;
 
 		// ----- States -----
 	  private:

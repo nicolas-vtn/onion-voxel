@@ -20,7 +20,9 @@ namespace onion::voxel
 		// ----- Public API -----
 	  public:
 		BlockId& At(int row, int column) { return m_Data[row * m_Columns + column]; }
+		const BlockId At(int row, int column) const { return m_Data[row * m_Columns + column]; }
 		BlockId& At(int index) { return m_Data[index]; }
+		const BlockId At(int index) const { return m_Data[index]; }
 
 		int& SelectedIndex() { return m_SelectedIndex; }
 		const int& SelectedIndex() const { return m_SelectedIndex; }
