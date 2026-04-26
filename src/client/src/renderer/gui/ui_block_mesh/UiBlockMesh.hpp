@@ -32,7 +32,7 @@ namespace onion::voxel
 	  public:
 		void Render(const glm::vec2& topLeftPosition);
 
-		void SetInventory(const Inventory& inventory);
+		void SetInventory(const Inventory& inventory, const glm::vec2& slotSize, const glm::vec2& slotPadding);
 
 		void Delete();
 
@@ -55,6 +55,8 @@ namespace onion::voxel
 		// ----- Members -----
 	  private:
 		Inventory m_Inventory;
+		glm::vec2 m_SlotSize{0.2f, 0.2f};	   // In screen ratio
+		glm::vec2 m_SlotPadding{0.05f, 0.05f}; // In screen ratio
 
 		// ----- States -----
 	  private:

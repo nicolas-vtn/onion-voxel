@@ -172,11 +172,13 @@ namespace onion::voxel
 		ResetOpenGLState();
 	}
 
-	void UiBlockMesh::SetInventory(const Inventory& inventory)
+	void UiBlockMesh::SetInventory(const Inventory& inventory, const glm::vec2& slotSize, const glm::vec2& slotPadding)
 	{
-		if (inventory != m_Inventory)
+		if (inventory != m_Inventory || slotSize != m_SlotSize || slotPadding != m_SlotPadding)
 		{
 			m_Inventory = inventory;
+			m_SlotSize = slotSize;
+			m_SlotPadding = slotPadding;
 			SetDirty(true);
 		}
 	}

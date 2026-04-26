@@ -560,6 +560,16 @@ namespace onion::voxel
 
 	void MeshBuilder::UpdateUiBlockMesh(const std::shared_ptr<UiBlockMesh> uiBlockMesh) const
 	{
+		// Demo : Takes the first block from the inventory.
+		const BlockId demoBlockId = uiBlockMesh->m_Inventory.At(0);
+		const auto& blockstateRegistry = BlockstateRegistry::Get();
+		const BlockModel& model = blockstateRegistry.at(demoBlockId)[0].Model;
+		const BlockModel::DisplayInfo& guiDisplay = model.ModelDisplay.Gui;
+
+		const glm::vec3& rotation = guiDisplay.Rotation;
+		const glm::vec3& translation = guiDisplay.Translation;
+		const glm::vec3& scale = guiDisplay.Scale;
+
 		uiBlockMesh->SetDirty(false);
 	}
 

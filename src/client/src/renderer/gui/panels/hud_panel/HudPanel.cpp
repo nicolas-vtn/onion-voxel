@@ -101,7 +101,9 @@ namespace onion::voxel
 		m_HotbarSelection_Sprite.Render();
 
 		// ---- Hotbar Item Rendering (overlaid on hotbar) ----
-		m_UiBlockMesh->SetInventory(player->GetHotbar());
+		glm::vec2 slotSize = {slotSizeRatioX, slotSizeRatioY};
+		glm::vec2 slotPadding = {0.01f, 0.01f}; // In screen ratio, padding between slots to prevent z-fighting
+		m_UiBlockMesh->SetInventory(player->GetHotbar(), slotSize, slotPadding);
 		if (m_UiBlockMesh->IsDirty())
 		{
 			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
