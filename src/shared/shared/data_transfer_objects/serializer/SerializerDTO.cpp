@@ -300,33 +300,31 @@ namespace onion::voxel
 		return experience;
 	}
 
-	HotbarDTO SerializerDTO::SerializeHotbar(const Hotbar& hotbar)
-	{
-		HotbarDTO dto;
-		dto.Slots = hotbar.Slots;
-		dto.SelectedSlot = hotbar.SelectedSlot;
-		return dto;
-	}
-
-	Hotbar SerializerDTO::DeserializeHotbar(const HotbarDTO& dto)
-	{
-		Hotbar hotbar;
-		hotbar.Slots = dto.Slots;
-		hotbar.SelectedSlot = dto.SelectedSlot;
-		return hotbar;
-	}
-
 	InventoryDTO SerializerDTO::SerializeInventory(const Inventory& inventory)
 	{
 		InventoryDTO dto;
-		dto.Slots = inventory.Slots;
+		dto.Rows = inventory.Rows();
+		dto.Columns = inventory.Columns();
+		dto.Slots = inventory.Content();
+		dto.SelectedIndex = inventory.SelectedIndex();
 		return dto;
 	}
 
 	Inventory SerializerDTO::DeserializeInventory(const InventoryDTO& dto)
 	{
-		Inventory inventory;
-		inventory.Slots = dto.Slots;
+		Inventory inventory(dto.Rows, dto.Columns);
+
+		// Safety check
+		if (dto.Slots.size() == static_cast<size_t>(dto.Rows * dto.Columns))
+		{
+			inventory.Content() = dto.Slots;
+			inventory.SelectedIndex() = dto.SelectedIndex;
+		}
+		else
+		{
+			throw std::runtime_error("Invalid InventoryDTO: Slots size does not match Rows * Columns.");
+		}
+
 		return inventory;
 	}
 
@@ -345,9 +343,9 @@ namespace onion::voxel
 		if (dto.Experience)
 			entity->SetExperience(DeserializeExperience(*dto.Experience));
 		if (dto.Hotbar)
-			entity->SetHotbar(DeserializeHotbar(*dto.Hotbar));
+			entity->SetHotbar(DeserializeInventory(*dto.Hotbar));
 		if (dto.Inventory)
-			entity->SetInventory(DeserializeInventory(*dto.Inventory));
+			entity->SetPlayerInventory(DeserializeInventory(*dto.Inventory));
 	}
 
 	EntityDTO SerializerDTO::SerializeEntity(const Entity& entity)
@@ -367,9 +365,9 @@ namespace onion::voxel
 		if (entity.HasExperience())
 			dto.Experience = SerializeExperience(entity.GetExperience());
 		if (entity.HasHotbar())
-			dto.Hotbar = SerializeHotbar(entity.GetHotbar());
-		if (entity.HasInventory())
-			dto.Inventory = SerializeInventory(entity.GetInventory());
+			dto.Hotbar = SerializeInventory(entity.GetHotbar());
+		if (entity.HasPlayerInventory())
+			dto.Inventory = SerializeInventory(entity.GetPlayerInventory());
 		return dto;
 	}
 

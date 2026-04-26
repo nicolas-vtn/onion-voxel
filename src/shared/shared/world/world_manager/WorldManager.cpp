@@ -301,9 +301,9 @@ namespace onion::voxel
 			player->SetExperience(updatedPlayer->GetExperience());
 		}
 
-		if (updatedPlayer->HasInventory())
+		if (updatedPlayer->HasPlayerInventory())
 		{
-			player->SetInventory(updatedPlayer->GetInventory());
+			player->SetPlayerInventory(updatedPlayer->GetPlayerInventory());
 		}
 
 		if (updatedPlayer->HasHotbar())

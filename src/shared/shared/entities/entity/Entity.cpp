@@ -165,23 +165,23 @@ namespace onion::voxel
 
 	// ----- Inventory -----
 
-	bool Entity::HasInventory() const
+	bool Entity::HasPlayerInventory() const
 	{
-		std::shared_lock lock(m_MutexInventory);
-		return m_Inventory.has_value();
+		std::shared_lock lock(m_MutexPlayerInventory);
+		return m_PlayerInventory.has_value();
 	}
 
-	Inventory Entity::GetInventory() const
+	Inventory Entity::GetPlayerInventory() const
 	{
-		std::shared_lock lock(m_MutexInventory);
-		assert(m_Inventory.has_value() && "Entity must have an Inventory component to get it.");
-		return *m_Inventory;
+		std::shared_lock lock(m_MutexPlayerInventory);
+		assert(m_PlayerInventory.has_value() && "Entity must have a PlayerInventory component to get it.");
+		return *m_PlayerInventory;
 	}
 
-	void Entity::SetInventory(const Inventory& inventory)
+	void Entity::SetPlayerInventory(const Inventory& inventory)
 	{
-		std::unique_lock lock(m_MutexInventory);
-		m_Inventory = inventory;
+		std::unique_lock lock(m_MutexPlayerInventory);
+		m_PlayerInventory = inventory;
 	}
 
 	// ----- Hotbar -----
@@ -192,14 +192,14 @@ namespace onion::voxel
 		return m_Hotbar.has_value();
 	}
 
-	Hotbar Entity::GetHotbar() const
+	Inventory Entity::GetHotbar() const
 	{
 		std::shared_lock lock(m_MutexHotbar);
 		assert(m_Hotbar.has_value() && "Entity must have a Hotbar component to get it.");
 		return *m_Hotbar;
 	}
 
-	void Entity::SetHotbar(const Hotbar& hotbar)
+	void Entity::SetHotbar(const Inventory& hotbar)
 	{
 		std::unique_lock lock(m_MutexHotbar);
 		m_Hotbar = hotbar;

@@ -790,21 +790,21 @@ namespace onion::voxel
 			{
 				if (player->HasHotbar())
 				{
-					Hotbar hotbar = player->GetHotbar();
+					Inventory hotbar = player->GetHotbar();
 
 					int nonEmpty = 0;
-					for (const BlockId id : hotbar.Slots)
+					for (const BlockId id : hotbar.Content())
 						if (id != BlockId::Air)
 							nonEmpty++;
 
-					int selectedSlot = hotbar.SelectedSlot;
+					int selectedSlot = hotbar.SelectedIndex();
 					if (ImGui::SliderInt("Selected Slot", &selectedSlot, 0, 8))
 					{
-						hotbar.SelectedSlot = static_cast<uint8_t>(selectedSlot);
+						hotbar.SelectedIndex() = static_cast<uint8_t>(selectedSlot);
 						player->SetHotbar(hotbar);
 					}
 
-					ImGui::Text("Selected ID:     %d", (int) hotbar.Slots[hotbar.SelectedSlot]);
+					ImGui::Text("Selected ID:     %d", (int) hotbar.Content()[hotbar.SelectedIndex()]);
 					ImGui::Text("Non-empty slots: %d / 9", nonEmpty);
 				}
 				else
@@ -815,11 +815,11 @@ namespace onion::voxel
 
 			if (ImGui::CollapsingHeader("Player Inventory"))
 			{
-				if (player->HasInventory())
+				if (player->HasPlayerInventory())
 				{
-					Inventory inventory = player->GetInventory();
+					Inventory inventory = player->GetPlayerInventory();
 					int used = 0;
-					for (const BlockId id : inventory.Slots)
+					for (const BlockId id : inventory.Content())
 						if (id != BlockId::Air)
 							used++;
 					ImGui::Text("Used slots: %d / 27", used);

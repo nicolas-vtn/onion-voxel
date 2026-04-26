@@ -12,11 +12,13 @@ namespace onion::voxel
 		physicsBody.Offset = glm::vec3(0.f, Size.y * 0.5f, 0.f);
 		SetPhysicsBody(physicsBody);
 
-		SetHotbar(Hotbar{});
+		Inventory hotbar(1, 9);
+		hotbar.SelectedIndex() = 0;
+		SetHotbar(hotbar);
 		SetHealth(Health{20});
 		SetHunger(Hunger{20});
 		SetExperience(Experience{0});
-		SetInventory(Inventory{});
+		SetPlayerInventory(Inventory{3, 9});
 	}
 
 	glm::vec3 Player::GetEyePosition() const

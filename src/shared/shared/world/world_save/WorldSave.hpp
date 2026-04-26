@@ -42,7 +42,8 @@ namespace onion::voxel
 		// ----- Private Members -----
 	  private:
 		// v1.2 : Add Player fields : Hotbar, Health, Hunger, Experience, Inventory
-		static inline const std::string s_CurrentVersion = "1.2";
+		// v1.3 : Change Inventories (Generic Inventory)
+		static inline const std::string s_CurrentVersion = "1.3";
 
 		const std::filesystem::path m_SaveDirectory;
 

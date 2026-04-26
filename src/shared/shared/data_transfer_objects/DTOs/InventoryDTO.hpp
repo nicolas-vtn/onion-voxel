@@ -4,7 +4,7 @@
 
 #include <cereal/archives/binary.hpp>
 #include <cereal/cereal.hpp>
-#include <cereal/types/array.hpp>
+#include <cereal/types/vector.hpp>
 
 #include <shared/world/block/BlockId.hpp>
 
@@ -12,8 +12,11 @@ namespace onion::voxel
 {
 	struct InventoryDTO
 	{
-		std::array<BlockId, 27> Slots{BlockId::Air};
+		int Rows = 0;
+		int Columns = 0;
+		std::vector<BlockId> Slots;
+		int SelectedIndex = -1;
 
-		template <class Archive> void serialize(Archive& ar) { ar(Slots); }
+		template <class Archive> void serialize(Archive& ar) { ar(Rows, Columns, Slots, SelectedIndex); }
 	};
 } // namespace onion::voxel

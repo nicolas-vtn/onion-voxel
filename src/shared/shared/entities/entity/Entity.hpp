@@ -10,7 +10,6 @@
 
 #include <shared/entities/components/Experience.hpp>
 #include <shared/entities/components/Health.hpp>
-#include <shared/entities/components/Hotbar.hpp>
 #include <shared/entities/components/Hunger.hpp>
 #include <shared/entities/components/Inventory.hpp>
 #include <shared/entities/components/PhysicsBody.hpp>
@@ -65,13 +64,13 @@ namespace onion::voxel
 		Experience GetExperience() const;
 		void SetExperience(const Experience& experience);
 
-		bool HasInventory() const;
-		Inventory GetInventory() const;
-		void SetInventory(const Inventory& inventory);
+		bool HasPlayerInventory() const;
+		Inventory GetPlayerInventory() const;
+		void SetPlayerInventory(const Inventory& inventory);
 
 		bool HasHotbar() const;
-		Hotbar GetHotbar() const;
-		void SetHotbar(const Hotbar& hotbar);
+		Inventory GetHotbar() const;
+		void SetHotbar(const Inventory& hotbar);
 
 		glm::vec3 GetPosition() const;
 		void SetPosition(const glm::vec3& position);
@@ -102,10 +101,10 @@ namespace onion::voxel
 		mutable std::shared_mutex m_MutexExperience;
 		std::optional<Experience> m_Experience;
 
-		mutable std::shared_mutex m_MutexInventory;
-		std::optional<Inventory> m_Inventory;
+		mutable std::shared_mutex m_MutexPlayerInventory;
+		std::optional<Inventory> m_PlayerInventory;
 
 		mutable std::shared_mutex m_MutexHotbar;
-		std::optional<Hotbar> m_Hotbar;
+		std::optional<Inventory> m_Hotbar;
 	};
 } // namespace onion::voxel

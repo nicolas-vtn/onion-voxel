@@ -10,7 +10,6 @@
 
 #include "ExperienceDTO.hpp"
 #include "HealthDTO.hpp"
-#include "HotbarDTO.hpp"
 #include "HungerDTO.hpp"
 #include "InventoryDTO.hpp"
 #include "PhysicsBodyDTO.hpp"
@@ -24,16 +23,15 @@ namespace onion::voxel
 		std::string UUID;
 		uint8_t State = 0;
 
-		std::optional<TransformDTO>   Transform;
+		std::optional<TransformDTO> Transform;
 		std::optional<PhysicsBodyDTO> PhysicsBody;
-		std::optional<HealthDTO>      Health;
-		std::optional<HungerDTO>      Hunger;
-		std::optional<ExperienceDTO>  Experience;
-		std::optional<HotbarDTO>      Hotbar;
-		std::optional<InventoryDTO>   Inventory;
+		std::optional<HealthDTO> Health;
+		std::optional<HungerDTO> Hunger;
+		std::optional<ExperienceDTO> Experience;
+		std::optional<InventoryDTO> Hotbar;
+		std::optional<InventoryDTO> Inventory;
 
-		template <class Archive>
-		void serialize(Archive& ar)
+		template <class Archive> void serialize(Archive& ar)
 		{
 			ar(Type, UUID, State, Transform, PhysicsBody, Health, Hunger, Experience, Hotbar, Inventory);
 		}

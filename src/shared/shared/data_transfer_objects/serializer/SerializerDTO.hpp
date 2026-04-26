@@ -54,8 +54,6 @@ namespace onion::voxel
 		static Hunger DeserializeHunger(const HungerDTO& dto);
 		static ExperienceDTO SerializeExperience(const Experience& experience);
 		static Experience DeserializeExperience(const ExperienceDTO& dto);
-		static HotbarDTO SerializeHotbar(const Hotbar& hotbar);
-		static Hotbar DeserializeHotbar(const HotbarDTO& dto);
 		static InventoryDTO SerializeInventory(const Inventory& inventory);
 		static Inventory DeserializeInventory(const InventoryDTO& dto);
 

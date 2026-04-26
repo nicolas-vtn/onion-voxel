@@ -56,18 +56,17 @@ namespace onion::voxel
 
 		if (scroll != 0 && !bypassScroll)
 		{
-			constexpr int maxSlots = static_cast<int>(Hotbar::MaxSlots);
-
 			auto playerHotbar = player->GetHotbar();
+			const int maxSlots = playerHotbar.Rows() * playerHotbar.Columns();
 
-			int current = static_cast<int>(playerHotbar.SelectedSlot);
+			int current = static_cast<int>(playerHotbar.SelectedIndex());
 
 			// Proper modulo wrapping (handles negative values correctly)
 			int newSlot = (current - scroll) % maxSlots;
 			if (newSlot < 0)
 				newSlot += maxSlots;
 
-			playerHotbar.SelectedSlot = static_cast<uint8_t>(newSlot);
+			playerHotbar.SelectedIndex() = static_cast<uint8_t>(newSlot);
 			player->SetHotbar(playerHotbar);
 		}
 
@@ -93,7 +92,7 @@ namespace onion::voxel
 		float hotbarBorderRatio = 4.f / 1920.f;
 		float spacingRatio = (hotbarWidthRatio - (2 * hotbarBorderRatio)) / 9.f;
 		float leftHotbarEdgeRatio = 0.5f - (hotbarWidthRatio - hotbarBorderRatio) * 0.5f;
-		int selectedSlotIndex = player->GetHotbar().SelectedSlot;
+		int selectedSlotIndex = player->GetHotbar().SelectedIndex();
 		float selectionXratio = leftHotbarEdgeRatio + (spacingRatio / 2.f) + (spacingRatio * selectedSlotIndex);
 		glm::vec2 hotbarSelectionPos = {s_ScreenWidth * selectionXratio, screenBottom - hotbarHeight / 2};
 		m_HotbarSelection_Sprite.SetPosition(hotbarSelectionPos);

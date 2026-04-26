@@ -605,8 +605,8 @@ namespace onion::voxel
 			return;
 
 		// ----- RETREVE USEFULL PLAYER INFO -----
-		Hotbar hotbar = player->GetHotbar();
-		size_t selectedSlot = hotbar.GetSelectedBlockIndex();
+		Inventory hotbar = player->GetHotbar();
+		size_t selectedSlot = hotbar.SelectedIndex();
 
 		// ----- RAYCASTING TO DETECT BLOCKS -----
 		glm::vec3 rayOrigin = m_Camera->GetPosition();
@@ -634,7 +634,7 @@ namespace onion::voxel
 		{
 			const Block& adjacentBlock = m_CurrentRaycastHit->AdjacentBlock;
 
-			Block blockToPlace = Block(adjacentBlock.Position, BlockState(hotbar.Slots[selectedSlot]));
+			Block blockToPlace = Block(adjacentBlock.Position, BlockState(hotbar.Content()[selectedSlot]));
 
 			bool success = m_WorldManager->SetBlock(
 				blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
@@ -651,7 +651,7 @@ namespace onion::voxel
 			std::cout << "Picking block at " << hitBlock.Position.x << ", " << hitBlock.Position.y << ", "
 					  << hitBlock.Position.z << " - Block : " << BlockIds::GetName(hitBlock.ID()) << std::endl;
 
-			hotbar.Slots[selectedSlot] = hitBlock.ID();
+			hotbar.Content()[selectedSlot] = hitBlock.ID();
 
 			player->SetHotbar(hotbar);
 		}
