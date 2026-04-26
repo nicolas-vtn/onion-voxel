@@ -116,6 +116,23 @@ namespace onion::voxel
 				elements.push_back(std::move(elem));
 			}
 		}
+
+		void ParseDisplayInfo(const nlohmann::json& displayJson, BlockModel::DisplayInfo& displayInfo)
+		{
+			if (displayJson.contains("rotation"))
+				ParseVec3(displayJson.at("rotation"), displayInfo.Rotation);
+			if (displayJson.contains("translation"))
+				ParseVec3(displayJson.at("translation"), displayInfo.Translation);
+			if (displayJson.contains("scale"))
+				ParseVec3(displayJson.at("scale"), displayInfo.Scale);
+		}
+
+		void ParseDisplay(const nlohmann::json& displayJson, BlockModel::Display& display)
+		{
+			if (displayJson.contains("gui"))
+				ParseDisplayInfo(displayJson.at("gui"), display.Gui);
+		}
+
 	} // namespace
 
 	void BlockModel::SetModelArchive(const std::filesystem::path& archiveFilePath)
@@ -185,6 +202,12 @@ namespace onion::voxel
 		if (json.contains("elements") && json["elements"].is_array())
 		{
 			ParseElements(json["elements"], model.Elements);
+		}
+
+		// ---- Display ----
+		if (json.contains("display") && json["display"].is_object())
+		{
+			ParseDisplay(json["display"], model.ModelDisplay);
 		}
 
 		return model;

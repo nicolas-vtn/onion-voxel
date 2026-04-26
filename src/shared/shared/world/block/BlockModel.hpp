@@ -48,6 +48,18 @@ namespace onion::voxel
 			// keys: "north", "south", etc.
 		};
 
+		struct DisplayInfo
+		{
+			glm::vec3 Rotation{0, 0, 0};
+			glm::vec3 Translation{0, 0, 0};
+			glm::vec3 Scale{1, 1, 1};
+		};
+
+		struct Display
+		{
+			DisplayInfo Gui;
+		};
+
 		// ----- Constructor / Destructor -----
 	  public:
 		BlockModel() = default;
@@ -64,6 +76,7 @@ namespace onion::voxel
 		bool AmbientOcclusion = true;
 		Textures ModelTextures;
 		std::vector<Element> Elements;
+		Display ModelDisplay;
 
 		// ----- Private Members -----
 	  private:
