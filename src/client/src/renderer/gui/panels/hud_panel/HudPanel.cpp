@@ -101,15 +101,22 @@ namespace onion::voxel
 		m_HotbarSelection_Sprite.Render();
 
 		// ---- Hotbar Item Rendering (overlaid on hotbar) ----
-		glm::vec2 slotSize = {static_cast<float>(slotSizeX), static_cast<float>(slotSizeY)};
-		glm::vec2 slotPadding = {10.f, 10.f}; // In pixels, padding between slots to prevent z-fighting
+		float blockSlotSizeRatioX = 64.f / 1920.f;
+		float blockSlotSizeRatioY = 64.f / 1009.f;
+		glm::vec2 slotSize = {s_ScreenWidth * blockSlotSizeRatioX, s_ScreenHeight * blockSlotSizeRatioY};
+		float slotPaddingRatioX = 16.f / 1920.f;
+		glm::vec2 slotPadding = {s_ScreenWidth * slotPaddingRatioX, 0.f};
+		float firstSlotLeftXborderRatio = 608.f / 1920.f;
+		float firstSlotTopYborderRatio = (956.f - 23.f) / 1009.f;
+		glm::vec2 firstSlotTopLeft = {s_ScreenWidth * firstSlotLeftXborderRatio,
+									  s_ScreenHeight * firstSlotTopYborderRatio};
 		m_UiBlockMesh->SetInventory(player->GetHotbar(), slotSize, slotPadding);
 		if (m_UiBlockMesh->IsDirty())
 		{
 			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
 			meshBuilder.UpdateUiBlockMesh(m_UiBlockMesh);
 		}
-		m_UiBlockMesh->Render({0.5f * s_ScreenWidth, 0.5f * s_ScreenHeight}, s_ScreenWidth, s_ScreenHeight);
+		m_UiBlockMesh->Render(firstSlotTopLeft, s_ScreenWidth, s_ScreenHeight);
 
 		// ---- Health (hearts, bottom-left above hotbar) ----
 		float health = player->GetHealth().CurrentHealth;
