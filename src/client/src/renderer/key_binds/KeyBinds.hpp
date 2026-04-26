@@ -20,6 +20,7 @@ namespace onion::voxel
 		ToggleFlyMode,
 		Pause,
 		Attack,
+		PickBlock,
 		Interact,
 		CloseMenu,
 		ToggleDebugMenus
@@ -57,8 +58,9 @@ namespace onion::voxel
 		{eAction::ToggleMouseCapture, "Toggle Mouse Capture"},
 		{eAction::ToggleFlyMode, "Toggle Fly Mode"},
 		{eAction::Pause, "Pause"},
-		{eAction::Attack, "Attack"},
-		{eAction::Interact, "Interact"},
+		{eAction::Attack, "Attack/Destroy"},
+		{eAction::PickBlock, "Pick Block"},
+		{eAction::Interact, "Use Item/Place Block"},
 		{eAction::CloseMenu, "Close Menu"},
 		{eAction::ToggleDebugMenus, "Toggle Debug Menus"},
 	};

@@ -23,6 +23,7 @@ namespace onion::voxel
 														{eAction::ToggleDebugMenus, Key::F3},
 
 														{eAction::Attack, Key::MouseButtonLeft},
+														{eAction::PickBlock, Key::MouseButtonMiddle},
 														{eAction::Interact, Key::MouseButtonRight},
 
 														{eAction::ToggleFlyMode, Key::Space}};

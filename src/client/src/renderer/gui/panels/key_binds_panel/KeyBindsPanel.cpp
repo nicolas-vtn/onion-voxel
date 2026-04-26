@@ -122,7 +122,7 @@ namespace onion::voxel
 		currentYPosition += otherElementsYOffset;
 
 		// ----- Render Gameplay Tiles -----
-		std::vector<eAction> gameplayActions = {eAction::Attack, eAction::Interact};
+		std::vector<eAction> gameplayActions = {eAction::Attack, eAction::PickBlock, eAction::Interact};
 
 		for (eAction action : gameplayActions)
 		{

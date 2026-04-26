@@ -534,6 +534,7 @@ namespace onion::voxel
 		m_KeyBinds.RemapAction(eAction::Pause, actionToKey.at(eAction::Pause), noRepeat);
 		m_KeyBinds.RemapAction(eAction::CloseMenu, actionToKey.at(eAction::CloseMenu), noRepeat);
 		m_KeyBinds.RemapAction(eAction::ToggleDebugMenus, actionToKey.at(eAction::ToggleDebugMenus), noRepeat);
+		m_KeyBinds.RemapAction(eAction::PickBlock, actionToKey.at(eAction::PickBlock), noRepeat);
 
 		m_KeyBinds.RemapAction(eAction::Attack, actionToKey.at(eAction::Attack), repeatWithDelay);
 		m_KeyBinds.RemapAction(eAction::Interact, actionToKey.at(eAction::Interact), repeatWithDelay);
@@ -597,12 +598,23 @@ namespace onion::voxel
 
 	void Renderer::ProcessGameplayInputs()
 	{
+		// ----- RETREVE PLAYER -----
+		std::shared_ptr<Player> player = EngineContext::Get().GetLocalPlayer();
+
+		if (!player)
+			return;
+
+		// ----- RETREVE USEFULL PLAYER INFO -----
+		Hotbar hotbar = player->GetHotbar();
+		size_t selectedSlot = hotbar.GetSelectedBlockIndex();
+
 		// ----- RAYCASTING TO DETECT BLOCKS -----
 		glm::vec3 rayOrigin = m_Camera->GetPosition();
 		glm::vec3 rayDirection = m_Camera->GetFront();
 
 		m_CurrentRaycastHit = Raycaster::Raycast(*m_WorldManager, rayOrigin, rayDirection, 10.0f, 300);
 
+		// ----- PROCESS BLOCK DESTROY -----
 		KeyState attackKeyState = m_KeyBinds.GetKeyState(eAction::Attack);
 		if (attackKeyState.IsPressed && m_CurrentRaycastHit.has_value())
 		{
@@ -616,17 +628,32 @@ namespace onion::voxel
 					  << hitBlock.Position.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
 		}
 
+		// ----- PROCESS BLOCK PLACE -----
 		KeyState interactKeyState = m_KeyBinds.GetKeyState(eAction::Interact);
 		if (interactKeyState.IsPressed && m_CurrentRaycastHit.has_value())
 		{
 			const Block& adjacentBlock = m_CurrentRaycastHit->AdjacentBlock;
-			Block blockToPlace = Block(adjacentBlock.Position, BlockState(BlockId::BirchStairs));
+
+			Block blockToPlace = Block(adjacentBlock.Position, BlockState(hotbar.Slots[selectedSlot]));
 
 			bool success = m_WorldManager->SetBlock(
 				blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
 
 			std::cout << "Attempting to place block at " << blockToPlace.Position.x << ", " << blockToPlace.Position.y
 					  << ", " << blockToPlace.Position.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
+		}
+
+		// ----- PROCESS BLOCK PICK -----
+		KeyState pickBlockKeyState = m_KeyBinds.GetKeyState(eAction::PickBlock);
+		if (pickBlockKeyState.IsPressed && m_CurrentRaycastHit.has_value())
+		{
+			const Block& hitBlock = m_CurrentRaycastHit->HitBlock;
+			std::cout << "Picking block at " << hitBlock.Position.x << ", " << hitBlock.Position.y << ", "
+					  << hitBlock.Position.z << " - Block : " << BlockIds::GetName(hitBlock.ID()) << std::endl;
+
+			hotbar.Slots[selectedSlot] = hitBlock.ID();
+
+			player->SetHotbar(hotbar);
 		}
 	}
 
