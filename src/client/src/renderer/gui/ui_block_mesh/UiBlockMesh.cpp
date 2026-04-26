@@ -144,6 +144,9 @@ namespace onion::voxel
 		s_Shader.setVec3("u_LightColor", s_LightColor);
 		s_Shader.setBool("u_UseFaceShading", true);
 
+		if (m_TextureAtlas)
+			m_TextureAtlas->Bind();
+
 		PrepareForRendering();
 
 		// Render Opaque Block Mesh
