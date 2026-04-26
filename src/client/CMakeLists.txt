@@ -35,6 +35,8 @@ add_executable(OnionVoxel
 	"src/renderer/gui/Gui.cpp"
 	"src/renderer/gui/GuiElement.cpp"
 
+	"src/renderer/gui/ui_block_mesh/UiBlockMesh.cpp"
+
 	"src/renderer/gui/nine_slice_sprite/NineSliceSprite.cpp"
 	"src/renderer/gui/font/Font.cpp"
 	"src/renderer/gui/colored_background/ColoredBackground.cpp"
