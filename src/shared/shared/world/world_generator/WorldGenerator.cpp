@@ -118,8 +118,12 @@ namespace onion::voxel
 		m_ThreadPool.Dispatch(
 			[this, chunkPosition]()
 			{
-				GenChunk genChunk = GenerateChunk(chunkPosition);
-				EvtChunkGenerated.Trigger(genChunk);
+				if (TryStartGeneratingChunk(chunkPosition))
+				{
+					GenChunk genChunk = GenerateChunk(chunkPosition);
+					EvtChunkGenerated.Trigger(genChunk);
+					FinishGeneratingChunk(chunkPosition);
+				}
 			});
 	}
 
@@ -287,8 +291,8 @@ namespace onion::voxel
 
 		// Pre-resolve palette indices
 		const uint16_t idxBedrock = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Bedrock));
-		const uint16_t idxDirt    = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Dirt));
-		const uint16_t idxGrass   = chunk->GetOrAddPaletteIndex(BlockState(BlockId::GrassBlock));
+		const uint16_t idxDirt = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Dirt));
+		const uint16_t idxGrass = chunk->GetOrAddPaletteIndex(BlockState(BlockId::GrassBlock));
 
 		// Fill all columns: bedrock(0), dirt(1-3), grass(4)
 		for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
@@ -359,18 +363,23 @@ namespace onion::voxel
 					Schematic tree = GenerateTree(
 						treeBlock, treeHeight, logId, leavesId); // Generate a tree at the top block position
 
-					std::unordered_set<BlockId> overwritables;
-					overwritables.insert(BlockId::Air);
-					overwritables.insert(BlockId::OakLeaves);
-					overwritables.insert(BlockId::SpruceLeaves);
-					overwritables.insert(BlockId::BirchLeaves);
-					overwritables.insert(BlockId::Bush);
-					overwritables.insert(BlockId::ShortGrass);
-					overwritables.insert(BlockId::TallGrass);
-					for (auto& blockId : BlockState::Flowers)
+					static const std::unordered_set<BlockId> overwritables = []
 					{
-						overwritables.insert(blockId);
-					}
+						std::unordered_set<BlockId> s;
+
+						s.insert(BlockId::Air);
+						s.insert(BlockId::OakLeaves);
+						s.insert(BlockId::SpruceLeaves);
+						s.insert(BlockId::BirchLeaves);
+						s.insert(BlockId::Bush);
+						s.insert(BlockId::ShortGrass);
+						s.insert(BlockId::TallGrass);
+
+						for (auto& blockId : BlockState::Flowers)
+							s.insert(blockId);
+
+						return s;
+					}();
 
 					MergeSchematicInChunk(tree, genChunk, overwritables);
 				}
@@ -432,9 +441,9 @@ namespace onion::voxel
 
 		// Fills the chunks with blocks based on the height map
 		const uint16_t idxGravel = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Gravel));
-		const uint16_t idxWater  = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Water));
-		const uint16_t idxDirt   = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Dirt));
-		const uint16_t idxIce    = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Ice));
+		const uint16_t idxWater = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Water));
+		const uint16_t idxDirt = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Dirt));
+		const uint16_t idxIce = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Ice));
 
 		for (uint8_t z = 0; z < CHUNK_SIZE; z++)
 		{
@@ -474,12 +483,13 @@ namespace onion::voxel
 				{
 					// Replace top solid block (grass/snow) with dirt if it's submerged
 					BlockState topBlock = chunk->GetBlock(glm::ivec3(x, height, z));
-					if ((topBlock.ID == BlockId::GrassBlock || topBlock.ID == BlockId::SnowBlock) && height < m_SeaLevel)
+					if ((topBlock.ID == BlockId::GrassBlock || topBlock.ID == BlockId::SnowBlock) &&
+						height < m_SeaLevel)
 						chunk->FillColumn_Unsafe(x, height, height, z, idxDirt);
 
 					// Flood-fill air column above terrain with water
 					if ((int) height + 1 <= m_SeaLevel - 1)
-						chunk->FillColumn_Unsafe(x, (uint16_t)(height + 1), (uint16_t)(m_SeaLevel - 1), z, idxWater);
+						chunk->FillColumn_Unsafe(x, (uint16_t) (height + 1), (uint16_t) (m_SeaLevel - 1), z, idxWater);
 
 					// Cap at sea level: water or ice (snow biome)
 					const uint16_t idxTop = (biome == Biome::Snow) ? idxIce : idxWater;
@@ -513,12 +523,12 @@ namespace onion::voxel
 
 		constexpr int CHUNK_SIZE = WorldConstants::CHUNK_SIZE;
 
-		Stopwatch swTotal;
-		swTotal.Start();
+		//Stopwatch swTotal;
+		//swTotal.Start();
 
 		// Gets the height map
-		Stopwatch swHeightMap;
-		swHeightMap.Start();
+		//Stopwatch swHeightMap;
+		//swHeightMap.Start();
 		uint16_t heightMap[CHUNK_SIZE][CHUNK_SIZE] = {0};
 		for (uint8_t z = 0; z < CHUNK_SIZE; z++)
 		{
@@ -564,12 +574,12 @@ namespace onion::voxel
 					static_cast<uint16_t>(std::clamp(height, 1.0f, static_cast<float>(m_WorldHeight - 1)));
 			}
 		}
-		double heightMapMs = swHeightMap.ElapsedMs();
+		//double heightMapMs = swHeightMap.ElapsedMs();
 
 		// Fills the chunks with blocks based on the height map
-		double foliageAccumMs = 0.0;
-		Stopwatch swBlockFill;
-		swBlockFill.Start();
+		//double foliageAccumMs = 0.0;
+		//Stopwatch swBlockFill;
+		//swBlockFill.Start();
 
 		// Pre-resolve palette indices once to avoid repeated linear scans inside the fill loops
 		const uint16_t idxBedrock = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Bedrock));
@@ -642,22 +652,22 @@ namespace onion::voxel
 				if (isAboveSeaLevel && !isBlockTransparent)
 				{
 					glm::ivec3 localPosAbove = {x, height + 1, z};
-					Stopwatch swFoliage;
-					swFoliage.Start();
+					//Stopwatch swFoliage;
+					//swFoliage.Start();
 					AddFoliage(genChunk, worldPos + glm::ivec3(0, 1, 0), localPosAbove, Biome::Forest);
-					foliageAccumMs += swFoliage.ElapsedMs();
+					//foliageAccumMs += swFoliage.ElapsedMs();
 				}
 			}
 		}
-		double blockFillMs = swBlockFill.ElapsedMs();
+		//double blockFillMs = swBlockFill.ElapsedMs();
 
 		// Optimize the chunk (less memory, faster to send to clients)
-		Stopwatch swOptimize;
-		swOptimize.Start();
+		//Stopwatch swOptimize;
+		//swOptimize.Start();
 		chunk->Optimize();
-		double optimizeMs = swOptimize.ElapsedMs();
+		//double optimizeMs = swOptimize.ElapsedMs();
 
-		double totalMs = swTotal.ElapsedMs();
+		//double totalMs = swTotal.ElapsedMs();
 		//std::cout << "[ClassicNoBiomes] Chunk (" << chunkPosition.x << ", " << chunkPosition.y << ")\n"
 		//		  << "  HeightMap:  " << heightMapMs << " ms\n"
 		//		  << "  BlockFill:  " << blockFillMs << " ms"
@@ -727,6 +737,25 @@ namespace onion::voxel
 		}
 
 		return genChunk;
+	}
+
+	bool WorldGenerator::IsChunkBeingGenerated(const glm::ivec2& chunkPosition) const
+	{
+		std::shared_lock lock(m_MutexChunksBeingGenerated);
+		return m_ChunksBeingGenerated.contains(chunkPosition);
+	}
+
+	bool WorldGenerator::TryStartGeneratingChunk(const glm::ivec2& chunkPosition)
+	{
+		std::unique_lock lock(m_MutexChunksBeingGenerated);
+		auto [it, inserted] = m_ChunksBeingGenerated.insert(chunkPosition);
+		return inserted; // true = we acquired generation responsibility
+	}
+
+	void WorldGenerator::FinishGeneratingChunk(const glm::ivec2& chunkPosition)
+	{
+		std::unique_lock lock(m_MutexChunksBeingGenerated);
+		m_ChunksBeingGenerated.erase(chunkPosition);
 	}
 
 	bool WorldGenerator::ShouldGenerateTree(const glm::ivec3& position, Biome biome) const
@@ -872,7 +901,10 @@ namespace onion::voxel
 			int yTop = y;
 			int yBot = std::max(1, y - layerHeight + 1);
 			if (yTop >= yBot)
-				chunk->FillColumn_Unsafe(x, static_cast<uint16_t>(yBot), static_cast<uint16_t>(yTop), z,
+				chunk->FillColumn_Unsafe(x,
+										 static_cast<uint16_t>(yBot),
+										 static_cast<uint16_t>(yTop),
+										 z,
 										 chunk->GetOrAddPaletteIndex(BlockState(blockId)));
 			y -= layerHeight;
 			if (y <= 0)
@@ -881,8 +913,8 @@ namespace onion::voxel
 
 		// Fill remaining height with the fill block
 		if (y > 1)
-			chunk->FillColumn_Unsafe(x, 1, static_cast<uint16_t>(y), z,
-									 chunk->GetOrAddPaletteIndex(BlockState(columnBlocks.fillBlock)));
+			chunk->FillColumn_Unsafe(
+				x, 1, static_cast<uint16_t>(y), z, chunk->GetOrAddPaletteIndex(BlockState(columnBlocks.fillBlock)));
 
 		// Ensure bedrock at the bottom
 		chunk->FillColumn_Unsafe(x, 0, 0, z, chunk->GetOrAddPaletteIndex(BlockState(BlockId::Bedrock)));
@@ -1181,18 +1213,24 @@ namespace onion::voxel
 				tree = GenerateTree(worldPos, treeHeight, logId, leavesId);
 			}
 
-			std::unordered_set<BlockId> overwritables;
-			overwritables.insert(BlockId::Air);
-			overwritables.insert(BlockId::OakLeaves);
-			overwritables.insert(BlockId::SpruceLeaves);
-			overwritables.insert(BlockId::BirchLeaves);
-			overwritables.insert(BlockId::Bush);
-			overwritables.insert(BlockId::ShortGrass);
-			overwritables.insert(BlockId::TallGrass);
-			for (auto& blockId : BlockState::Flowers)
+			static const std::unordered_set<BlockId> overwritables = []
 			{
-				overwritables.insert(blockId);
-			}
+				std::unordered_set<BlockId> s;
+
+				s.insert(BlockId::Air);
+				s.insert(BlockId::OakLeaves);
+				s.insert(BlockId::SpruceLeaves);
+				s.insert(BlockId::BirchLeaves);
+				s.insert(BlockId::Bush);
+				s.insert(BlockId::ShortGrass);
+				s.insert(BlockId::TallGrass);
+
+				for (auto& blockId : BlockState::Flowers)
+					s.insert(blockId);
+
+				return s;
+			}();
+
 			MergeSchematicInChunk(tree, genChunk, overwritables);
 
 			// Set dirt block under the tree

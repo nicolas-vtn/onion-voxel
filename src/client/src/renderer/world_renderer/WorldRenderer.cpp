@@ -219,8 +219,8 @@ namespace onion::voxel
 			m_ChunksInFrustum.clear();
 			for (const auto& [chunkPos, chunkMesh] : chunkMeshesSnapshot)
 			{
-				int chunkHeight = chunkMesh->GetHeight() + WorldConstants::CHUNK_SIZE;
-				if (IsChunkInFrustum(chunkPos, chunkHeight, planes) || !m_UseFrustumCulling)
+				int chunkHeight = chunkMesh->GetHeight() + (3 * WorldConstants::CHUNK_SIZE);
+				if (!m_UseFrustumCulling || IsChunkInFrustum(chunkPos, chunkHeight, planes))
 				{
 					m_ChunksInFrustum.insert(chunkPos);
 				}
