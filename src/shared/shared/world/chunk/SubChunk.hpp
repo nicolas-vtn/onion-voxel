@@ -44,6 +44,10 @@ namespace onion::voxel
 		void
 		SetBlockIndexInPalette_Unsafe(const uint8_t x, const uint8_t y, const uint8_t z, const uint16_t blockIndex);
 
+		/// @brief Fill a contiguous y-range [yMin, yMax] in a single (x, z) column with the given palette index.
+		/// All y values must be local to this SubChunk (0 to CHUNK_SIZE-1).
+		void FillColumnRange_Unsafe(uint8_t x, uint8_t yMin, uint8_t yMax, uint8_t z, uint16_t blockIndex);
+
 		// ----- Members -----
 	  protected:
 		bool m_IsMonoBlock = true;				// Whether the subchunk is made of a single block

@@ -88,7 +88,7 @@ namespace onion::voxel
 		}
 
 		// Add the block to the palette and get the block data index
-		uint16_t indexInPalette = AddBlockToPalette(block);
+		uint16_t indexInPalette = GetOrAddPaletteIndex(block);
 
 		// Get the subchunk
 		SubChunk& subChunk = m_SubChunks[subChunkIndex];
@@ -104,7 +104,7 @@ namespace onion::voxel
 	void voxel::Chunk::SetBlock_Unsafe(const uint8_t x, const uint16_t y, const uint8_t z, const BlockState& block)
 	{
 		// Add the block to the palette and get the block data index
-		const uint16_t indexInPalette = AddBlockToPalette(block);
+		const uint16_t indexInPalette = GetOrAddPaletteIndex(block);
 
 		// Calculate which subchunk the local position is in
 		const int subChunkIndex = y / WorldConstants::CHUNK_SIZE;
@@ -136,28 +136,39 @@ namespace onion::voxel
 		return m_SubChunks[subChunkIndex].IsMonoBlock();
 	}
 
-	uint16_t Chunk::AddBlockToPalette(const BlockState& block)
+	uint16_t Chunk::GetOrAddPaletteIndex(const BlockState& block)
 	{
-		// Checks if the block is already in the block palette, if not add it and get the new block data index
 		auto it = std::find(m_BlocksPalette.begin(), m_BlocksPalette.end(), block);
-
-		uint16_t indexInPalette;
 
 		if (it != m_BlocksPalette.end())
 		{
 			size_t index = std::distance(m_BlocksPalette.begin(), it);
-			assert(std::distance(m_BlocksPalette.begin(), it) <= UINT16_MAX); // Ensure the index can fit in a uint16_t
-			indexInPalette = static_cast<uint16_t>(index);
-		}
-		else
-		{
-			m_BlocksPalette.push_back(block);
-			size_t index = m_BlocksPalette.size() - 1;
-			assert(index <= UINT16_MAX); // Ensure the index can fit in a uint16_t
-			indexInPalette = static_cast<uint16_t>(index);
+			assert(index <= UINT16_MAX);
+			return static_cast<uint16_t>(index);
 		}
 
-		return indexInPalette;
+		m_BlocksPalette.push_back(block);
+		size_t index = m_BlocksPalette.size() - 1;
+		assert(index <= UINT16_MAX);
+		return static_cast<uint16_t>(index);
+	}
+
+	void Chunk::FillColumn_Unsafe(uint8_t x, uint16_t yMin, uint16_t yMax, uint8_t z, uint16_t paletteIndex)
+	{
+		if (yMin > yMax)
+			return;
+
+		const int CS = WorldConstants::CHUNK_SIZE;
+		const int firstSubChunk = yMin / CS;
+		const int lastSubChunk = yMax / CS;
+
+		for (int sci = firstSubChunk; sci <= lastSubChunk; ++sci)
+		{
+			uint8_t localYMin = (sci == firstSubChunk) ? static_cast<uint8_t>(yMin % CS) : 0;
+			uint8_t localYMax = (sci == lastSubChunk) ? static_cast<uint8_t>(yMax % CS) : static_cast<uint8_t>(CS - 1);
+
+			m_SubChunks[sci].FillColumnRange_Unsafe(x, localYMin, localYMax, z, paletteIndex);
+		}
 	}
 
 } // namespace onion::voxel

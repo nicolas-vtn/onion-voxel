@@ -38,6 +38,14 @@ namespace onion::voxel
 
 		void SetBlock_Unsafe(const uint8_t x, const uint16_t y, const uint8_t z, const BlockState& block);
 
+		/// @brief Pre-register a block in the palette and return its index. Useful to batch-resolve
+		/// palette indices before tight fill loops, avoiding repeated linear scans.
+		uint16_t GetOrAddPaletteIndex(const BlockState& block);
+
+		/// @brief Fill a world-local y-range [yMin, yMax] in a single (x, z) column with a pre-resolved
+		/// palette index. Handles spanning multiple SubChunks. No locking — caller must ensure thread safety.
+		void FillColumn_Unsafe(uint8_t x, uint16_t yMin, uint16_t yMax, uint8_t z, uint16_t paletteIndex);
+
 		int GetSubChunkCount() const;
 		int GetChunkHeight() const;
 
@@ -50,12 +58,5 @@ namespace onion::voxel
 		std::vector<SubChunk> m_SubChunks; // The subchunks that make up this chunk
 		std::vector<BlockState> m_BlocksPalette{BlockState(BlockId::Air)}; // The blocks palette that make up this chunk
 		int m_ChunkHeight = 0;											   // The height of the chunk in blocks
-
-		// ----- Private Methods -----
-	  private:
-		/// @brief Adds a block to the blocks palette if it doesn't already exist and returns the block data index for the block
-		/// @param block The block to add to the palette
-		/// @return The block data index for the block in the palette
-		uint16_t AddBlockToPalette(const BlockState& block);
 	};
 } // namespace onion::voxel
