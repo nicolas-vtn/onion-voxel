@@ -66,9 +66,12 @@ namespace onion::voxel
 		BlockState GetBlock(const glm::vec3& worldPosition) const;
 		bool SetBlock(const Block& block, BlocksChangedEventArgs::eOrigin origin, bool notify = true);
 		size_t SetBlocks(const std::vector<Block>& blocks, BlocksChangedEventArgs::eOrigin origin, bool notify = true);
+		int GetHeightAt(int x, int z) const;
+		glm::vec3 GetSpawnPosition() const;
 
 		bool IsChunkLoaded(const glm::ivec2& chunkPosition) const;
 		std::shared_ptr<Chunk> GetChunk(const glm::ivec2& chunkPosition) const;
+		std::shared_ptr<Chunk> GetSpawnChunk() const;
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> GetAllChunks() const;
 
 		void AddPlayer(const std::shared_ptr<Player>& player);
@@ -112,6 +115,8 @@ namespace onion::voxel
 		Event<const std::vector<glm::ivec2>&> EvtMissingChunksRequested;
 
 	  private:
+		void RemoveSpawnChunk();
+
 		std::vector<EventHandle> m_InternalEventHandles;
 		void SubscribeToInternalEvents();
 
@@ -129,6 +134,7 @@ namespace onion::voxel
 	  private:
 		std::atomic_uint8_t m_ChunkPersistanceDistance{5};
 		std::atomic_uint8_t m_ChunkLoadingDistance{5};
+		const glm::ivec2 m_SpawnChunkPosition{0, 0};
 
 		std::unique_ptr<WorldGenerator> m_WorldGenerator;
 		std::unique_ptr<WorldSave> m_WorldSave;

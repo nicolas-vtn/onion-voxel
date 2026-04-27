@@ -124,6 +124,21 @@ namespace onion::voxel
 		return m_ChunkHeight;
 	}
 
+	int Chunk::GetHeightAt(int x, int z) const
+	{
+		BlockId selectedBlockId = GetBlock({x, m_ChunkHeight - 1, z}).ID;
+		for (int i = m_ChunkHeight - 1; i >= 0; i--)
+		{
+			BlockId blockId = GetBlock({x, i, z}).ID;
+			if (blockId != BlockId::Air)
+			{
+				return i + 1;
+			}
+		}
+
+		return 0;
+	}
+
 	bool Chunk::IsSubchunkMonoBlock(const int subChunkIndex) const
 	{
 		std::shared_lock lock(m_Mutex);

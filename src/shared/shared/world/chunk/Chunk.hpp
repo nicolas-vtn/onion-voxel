@@ -48,6 +48,7 @@ namespace onion::voxel
 
 		int GetSubChunkCount() const;
 		int GetChunkHeight() const;
+		int GetHeightAt(int x, int z) const; // Get the height at (x, z) in local , or -1
 
 		bool IsSubchunkMonoBlock(const int subChunkIndex) const;
 

@@ -38,6 +38,13 @@ namespace onion::voxel
 	WorldManager::~WorldManager()
 	{
 		std::cout << "WorldManagerDtor" << std::endl;
+
+		// Clears chunks.
+		ClearWorld();
+
+		// Removes spawn chunk manually since ClearWorld does not remove it.
+		RemoveSpawnChunk();
+
 		m_InternalEventHandles.clear();
 		m_TimerRequestMissingChunks.Stop();
 	}
@@ -54,6 +61,11 @@ namespace onion::voxel
 		{
 			return nullptr; // Chunk not found
 		}
+	}
+
+	std::shared_ptr<Chunk> WorldManager::GetSpawnChunk() const
+	{
+		return GetChunk(m_SpawnChunkPosition);
 	}
 
 	std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> WorldManager::GetAllChunks() const
@@ -125,6 +137,12 @@ namespace onion::voxel
 
 	void WorldManager::RemoveChunk(const glm::ivec2& chunkPosition)
 	{
+		// Do not remove the spawn chunk.
+		if (chunkPosition == m_SpawnChunkPosition)
+		{
+			return;
+		}
+
 		std::unique_lock lock(m_MutexChunks);
 
 		auto it = m_Chunks.find(chunkPosition);
@@ -348,6 +366,27 @@ namespace onion::voxel
 		return m_SingleplayerPlayerUUID;
 	}
 
+	void WorldManager::RemoveSpawnChunk()
+	{
+		std::unique_lock lock(m_MutexChunks);
+
+		auto it = m_Chunks.find(m_SpawnChunkPosition);
+		if (it != m_Chunks.end())
+		{
+			// Copy chunk
+			std::shared_ptr<Chunk> chunk = it->second;
+
+			// Remove chunk from map
+			m_Chunks.erase(it);
+
+			// Unlock before triggering event
+			lock.unlock();
+
+			// Trigger event
+			EvtChunkRemoved.Trigger(chunk);
+		}
+	}
+
 	void WorldManager::SubscribeToInternalEvents()
 	{
 		m_InternalEventHandles.push_back(EvtPlayerChangedChunk.Subscribe([this](const PlayerChangedChunkEventArgs& args)
@@ -532,6 +571,66 @@ namespace onion::voxel
 		return numBlocksSet;
 	}
 
+	int WorldManager::GetHeightAt(int x, int z) const
+	{
+		const glm::ivec3 columnPos(x, 0, z);
+		std::shared_ptr<Chunk> chunk = GetChunk(Utils::WorldToChunkPosition(columnPos));
+
+		if (chunk)
+		{
+			const glm::ivec3 localPos = Utils::WorldToLocalPosition(columnPos);
+			return chunk->GetHeightAt(localPos.x, localPos.z);
+		}
+
+		return 0;
+	}
+
+	glm::vec3 WorldManager::GetSpawnPosition() const
+	{
+		// Checks if spawn chunk available
+		std::shared_ptr<Chunk> spawnChunk = GetSpawnChunk();
+
+		if (!spawnChunk)
+		{
+			// Waits for the spawn chunk to be generated
+			while (!spawnChunk)
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+				spawnChunk = GetSpawnChunk();
+			}
+		}
+
+		int baseX = m_SpawnChunkPosition.x * WorldConstants::CHUNK_SIZE + WorldConstants::CHUNK_SIZE / 2;
+		int baseZ = m_SpawnChunkPosition.y * WorldConstants::CHUNK_SIZE + WorldConstants::CHUNK_SIZE / 2;
+
+		glm::vec3 spawnPosition(baseX + 0.5f, 200.f, baseZ + 0.5f);
+
+		// Try to found available spawn position in the chunk.
+		for (int radius = 0; radius < WorldConstants::CHUNK_SIZE; radius++)
+		{
+			for (int dx = -radius; dx <= radius; dx++)
+			{
+				for (int dz = -radius; dz <= radius; dz++)
+				{
+					if (abs(dx) != radius && abs(dz) != radius)
+						continue; // only border (ring)
+
+					int worldX = static_cast<int>(spawnPosition.x) + dx;
+					int worldZ = static_cast<int>(spawnPosition.z) + dz;
+
+					int h = GetHeightAt(worldX, worldZ);
+					if (h > 0)
+					{
+						spawnPosition = {worldX + 0.5f, h + 0.1f, worldZ + 0.5f};
+						return spawnPosition;
+					}
+				}
+			}
+		}
+
+		return spawnPosition;
+	}
+
 	void WorldManager::RequestMissingChunksAsync(const std::vector<glm::ivec2>& chunkPositions)
 	{
 		// If in SinglePlayer : Trigger the event, and missing Chunks will be requested to Server.
@@ -676,6 +775,12 @@ namespace onion::voxel
 		std::vector<glm::ivec2> missingChunks;
 		std::unordered_map<std::string, glm::vec3> playersPosition;
 		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> chunks = GetAllChunks();
+
+		// Request the spawn chunk if missing.
+		if (GetChunk(m_SpawnChunkPosition) == nullptr)
+		{
+			missingChunks.push_back(m_SpawnChunkPosition);
+		}
 
 		if (!m_SingleplayerPlayerUUID.empty())
 		{
