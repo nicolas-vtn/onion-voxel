@@ -189,8 +189,8 @@ namespace onion::voxel
 
 			constexpr glm::vec4 highlightColor{1.f, 1.f, 1.f, 0.5f};
 			ColoredBackground::CornerOptions highlightOptions;
-			highlightOptions.TopLeftCorner = glm::ivec2(selectedSlotPos);
-			highlightOptions.BottomRightCorner = glm::ivec2(selectedSlotBottomRight);
+			highlightOptions.TopLeftCorner = glm::ivec2(selectedSlotPos + glm::vec2(m_SlotBorder));
+			highlightOptions.BottomRightCorner = glm::ivec2(selectedSlotBottomRight - glm::vec2(m_SlotBorder));
 			highlightOptions.Color = highlightColor;
 			highlightOptions.ZOffset = 0.7f;
 			ColoredBackground::Render(highlightOptions);
@@ -209,6 +209,19 @@ namespace onion::voxel
 
 		// Override inventory selected index anyway
 		m_Inventory.SelectedIndex() = inventory.SelectedIndex();
+	}
+
+	void UiBlockMesh::SetSlotBorder(float border)
+	{
+		if (border == m_SlotBorder)
+			return;
+		m_SlotBorder = border;
+		SetDirty(true);
+	}
+
+	float UiBlockMesh::GetSlotBorder() const
+	{
+		return m_SlotBorder;
 	}
 
 	void UiBlockMesh::Delete()

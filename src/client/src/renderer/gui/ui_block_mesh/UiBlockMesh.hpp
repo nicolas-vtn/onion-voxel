@@ -35,6 +35,11 @@ namespace onion::voxel
 
 		void SetInventory(const Inventory& inventory, const glm::vec2& slotSize, const glm::vec2& slotPadding);
 
+		/// @brief Sets the inner border in pixels. The block is scaled to fit slotSize - 2*border,
+		/// keeping it visually smaller than the full slot area. Marks the mesh dirty if changed.
+		void SetSlotBorder(float border);
+		float GetSlotBorder() const;
+
 		void Delete();
 
 		uint32_t GetVertexCount() const;
@@ -61,8 +66,9 @@ namespace onion::voxel
 		// ----- Members -----
 	  private:
 		Inventory m_Inventory;
-		glm::vec2 m_SlotSize{50.f, 50.f};	 // In pixels
+		glm::vec2 m_SlotSize{50.f, 50.f};    // In pixels
 		glm::vec2 m_SlotPadding{10.f, 10.f}; // In pixels
+		float     m_SlotBorder{4.f};          // Inner border in pixels — block renders at slotSize - 2*border
 
 		std::shared_ptr<TextureAtlas> m_TextureAtlas;
 

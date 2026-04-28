@@ -28,6 +28,7 @@ namespace onion::voxel
 		m_ExperienceLevel_Label.SetTextAlignment(Font::eTextAlignment::Center);
 
 		m_UiBlockMesh->SetRenderSelectedHighlight(false);
+		m_UiBlockMesh->SetSlotBorder(0.f);
 	}
 
 	void HudPanel::Render()

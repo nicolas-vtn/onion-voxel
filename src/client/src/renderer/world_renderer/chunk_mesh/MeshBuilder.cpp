@@ -606,8 +606,9 @@ namespace onion::voxel
 				// We apply: scale(slot) → scale(gui) → Rx → Ry → Rz → translate(gui) → translate(slot center)
 				// gui.Translation is in MC model units where 1 block = 16 units.
 				// gui.Scale is a direct multiplier on the block.
-				const glm::vec3 slotCenter(slotX + slotSize.x * 0.5f, slotY + slotSize.y * 0.5f, 0.0f);
-				const float blockScreenSize = slotSize.x; // assume square slots
+			const glm::vec3 slotCenter(slotX + slotSize.x * 0.5f, slotY + slotSize.y * 0.5f, 0.0f);
+			const float border = uiBlockMesh->GetSlotBorder();
+			const float blockScreenSize = slotSize.x - 2.f * border; // shrink block by inner border
 
 				glm::mat4 transform = glm::mat4(1.0f);
 				transform = glm::translate(transform, slotCenter);

@@ -92,17 +92,16 @@ namespace onion::voxel
 		m_Crafting_Label.Render();
 
 		// ---- Constants for Item Rendering ----
-		const float slotSizeRatioX = 64.f / 1920.f;
-		const float slotSizeRatioY = 64.f / 1009.f;
+		const float slotSizeRatioX = 72.f / 1920.f;
+		const float slotSizeRatioY = 72.f / 1009.f;
 		const glm::vec2 slotSize = {s_ScreenWidth * slotSizeRatioX, s_ScreenHeight * slotSizeRatioY};
-		const float slotPaddingRatioX = 8.f / 1920.f;
-		const float slotPaddingRatioY = 8.f / 1009.f;
-		const glm::vec2 slotPadding = {s_ScreenWidth * slotPaddingRatioX, s_ScreenHeight * slotPaddingRatioY};
+		const glm::vec2 slotPadding = {0.f, 0.f};
+		const float slotBorder = 4.f * (s_ScreenWidth / 1920.f);
 		const glm::vec2 cursorPosition{s_InputsSnapshot->Mouse.Xpos, s_InputsSnapshot->Mouse.Ypos};
 
 		// ---- Hotbar Item Rendering ----
-		const float firstHotbarSlotLeftXborderRatio = 640.f / 1920.f;
-		const float firstHotbarSlotTopYborderRatio = (763.f - 23.f) / 1009.f;
+		const float firstHotbarSlotLeftXborderRatio = 636.f / 1920.f;
+		const float firstHotbarSlotTopYborderRatio = (759.f - 23.f) / 1009.f;
 		const glm::vec2 firstHotbarSlotTopLeft = {s_ScreenWidth * firstHotbarSlotLeftXborderRatio,
 												  s_ScreenHeight * firstHotbarSlotTopYborderRatio};
 
@@ -110,6 +109,7 @@ namespace onion::voxel
 			m_HotbarBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstHotbarSlotTopLeft);
 		Inventory hotbar = player->GetHotbar();
 		hotbar.SelectedIndex() = hoveredHotbarSlotIndex;
+		m_HotbarBlockMesh->SetSlotBorder(slotBorder);
 		m_HotbarBlockMesh->SetInventory(hotbar, slotSize, slotPadding);
 		if (m_HotbarBlockMesh->IsDirty())
 		{
@@ -119,8 +119,8 @@ namespace onion::voxel
 		m_HotbarBlockMesh->Render(firstHotbarSlotTopLeft, s_ScreenWidth, s_ScreenHeight);
 
 		// ---- Inventory Item Rendering ----
-		const float firstInventorySlotLeftXborderRatio = 640.f / 1920.f;
-		const float firstInventorySlotTopYborderRatio = (531.f - 23.f) / 1009.f;
+		const float firstInventorySlotLeftXborderRatio = 636.f / 1920.f;
+		const float firstInventorySlotTopYborderRatio = (527.f - 23.f) / 1009.f;
 		const glm::vec2 firstInventorySlotTopLeft = {s_ScreenWidth * firstInventorySlotLeftXborderRatio,
 													 s_ScreenHeight * firstInventorySlotTopYborderRatio};
 
@@ -128,6 +128,7 @@ namespace onion::voxel
 			m_InventoryBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstInventorySlotTopLeft);
 		Inventory inventory = player->GetPlayerInventory();
 		inventory.SelectedIndex() = hoveredInventorySlotIndex;
+		m_InventoryBlockMesh->SetSlotBorder(slotBorder);
 		m_InventoryBlockMesh->SetInventory(inventory, slotSize, slotPadding);
 		if (m_InventoryBlockMesh->IsDirty())
 		{
