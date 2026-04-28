@@ -606,9 +606,9 @@ namespace onion::voxel
 				// We apply: scale(slot) → scale(gui) → Rx → Ry → Rz → translate(gui) → translate(slot center)
 				// gui.Translation is in MC model units where 1 block = 16 units.
 				// gui.Scale is a direct multiplier on the block.
-			const glm::vec3 slotCenter(slotX + slotSize.x * 0.5f, slotY + slotSize.y * 0.5f, 0.0f);
-			const float border = uiBlockMesh->GetSlotBorder();
-			const float blockScreenSize = slotSize.x - 2.f * border; // shrink block by inner border
+				const glm::vec3 slotCenter(slotX + slotSize.x * 0.5f, slotY + slotSize.y * 0.5f, 0.0f);
+				const float border = uiBlockMesh->GetSlotBorder();
+				const float blockScreenSize = slotSize.x - 2.f * border; // shrink block by inner border
 
 				glm::mat4 transform = glm::mat4(1.0f);
 				transform = glm::translate(transform, slotCenter);
@@ -623,23 +623,25 @@ namespace onion::voxel
 				auto tfm = [&](float x, float y, float z) -> glm::vec3
 				{ return glm::vec3(transform * glm::vec4(x, y, z, 1.0f)); };
 
-				PointsAndOcclusion pao;
-				// All occlusion values remain 0 (no AO for UI)
-				pao.p000 = tfm(-0.5f, -0.5f, -0.5f);
-				pao.p001 = tfm(-0.5f, -0.5f, +0.5f);
-				pao.p010 = tfm(-0.5f, +0.5f, -0.5f);
-				pao.p011 = tfm(-0.5f, +0.5f, +0.5f);
-				pao.p100 = tfm(+0.5f, -0.5f, -0.5f);
-				pao.p101 = tfm(+0.5f, -0.5f, +0.5f);
-				pao.p110 = tfm(+0.5f, +0.5f, -0.5f);
-				pao.p111 = tfm(+0.5f, +0.5f, +0.5f);
-
-				// Build face quads
-				const std::vector<FaceBuildDesc> faceDescs = GetBlockFaceBuildDescs(pao);
-
+				// Build face quads — one PAO per element since elements may differ in size (e.g. slabs)
 				const BlockTextures& blockTextures = m_BlockRegistry.Get(blockId, 0);
 
-				for (const FaceBuildDesc& f : faceDescs)
+				for (const FaceBuildDesc& f : GetBlockFaceBuildDescs(
+						 // Dummy full-cube PAO just to enumerate all 6 face directions;
+						 // actual per-element PAO is computed below per TextureInfo
+						 [&]()
+						 {
+							 PointsAndOcclusion cube;
+							 cube.p000 = tfm(-0.5f, -0.5f, -0.5f);
+							 cube.p001 = tfm(-0.5f, -0.5f, +0.5f);
+							 cube.p010 = tfm(-0.5f, +0.5f, -0.5f);
+							 cube.p011 = tfm(-0.5f, +0.5f, +0.5f);
+							 cube.p100 = tfm(+0.5f, -0.5f, -0.5f);
+							 cube.p101 = tfm(+0.5f, -0.5f, +0.5f);
+							 cube.p110 = tfm(+0.5f, +0.5f, -0.5f);
+							 cube.p111 = tfm(+0.5f, +0.5f, +0.5f);
+							 return cube;
+						 }()))
 				{
 					const int faceIdx = static_cast<int>(f.face);
 
@@ -650,8 +652,30 @@ namespace onion::voxel
 							continue;
 						if (faceTex.texture == UINT16_MAX)
 							continue;
-						const auto atlasEntry = m_TextureAtlas->GetAtlasEntry(faceTex.texture);
-						AddUiFace(*uiBlockMesh, f, faceTex, atlasEntry);
+
+						// Compute element-accurate PAO for this specific TextureInfo
+						const PointsAndOcclusion elemPao = [&]()
+						{
+							PointsAndOcclusion p = GetElementLocalPao(faceTex);
+							p.p000 = tfm(p.p000.x, p.p000.y, p.p000.z);
+							p.p001 = tfm(p.p001.x, p.p001.y, p.p001.z);
+							p.p010 = tfm(p.p010.x, p.p010.y, p.p010.z);
+							p.p011 = tfm(p.p011.x, p.p011.y, p.p011.z);
+							p.p100 = tfm(p.p100.x, p.p100.y, p.p100.z);
+							p.p101 = tfm(p.p101.x, p.p101.y, p.p101.z);
+							p.p110 = tfm(p.p110.x, p.p110.y, p.p110.z);
+							p.p111 = tfm(p.p111.x, p.p111.y, p.p111.z);
+							return p;
+						}();
+
+						const std::vector<FaceBuildDesc> elemDescs = GetBlockFaceBuildDescs(elemPao);
+						for (const FaceBuildDesc& ef : elemDescs)
+						{
+							if (static_cast<int>(ef.face) != faceIdx)
+								continue;
+							const auto atlasEntry = m_TextureAtlas->GetAtlasEntry(faceTex.texture);
+							AddUiFace(*uiBlockMesh, ef, faceTex, atlasEntry);
+						}
 					}
 
 					// Overlay pass
@@ -661,8 +685,29 @@ namespace onion::voxel
 							continue;
 						if (overlayTex.texture == UINT16_MAX)
 							continue;
-						const auto overlayAtlas = m_TextureAtlas->GetAtlasEntry(overlayTex.texture);
-						AddUiFace(*uiBlockMesh, f, overlayTex, overlayAtlas);
+
+						const PointsAndOcclusion elemPao = [&]()
+						{
+							PointsAndOcclusion p = GetElementLocalPao(overlayTex);
+							p.p000 = tfm(p.p000.x, p.p000.y, p.p000.z);
+							p.p001 = tfm(p.p001.x, p.p001.y, p.p001.z);
+							p.p010 = tfm(p.p010.x, p.p010.y, p.p010.z);
+							p.p011 = tfm(p.p011.x, p.p011.y, p.p011.z);
+							p.p100 = tfm(p.p100.x, p.p100.y, p.p100.z);
+							p.p101 = tfm(p.p101.x, p.p101.y, p.p101.z);
+							p.p110 = tfm(p.p110.x, p.p110.y, p.p110.z);
+							p.p111 = tfm(p.p111.x, p.p111.y, p.p111.z);
+							return p;
+						}();
+
+						const std::vector<FaceBuildDesc> elemDescs = GetBlockFaceBuildDescs(elemPao);
+						for (const FaceBuildDesc& ef : elemDescs)
+						{
+							if (static_cast<int>(ef.face) != faceIdx)
+								continue;
+							const auto overlayAtlas = m_TextureAtlas->GetAtlasEntry(overlayTex.texture);
+							AddUiFace(*uiBlockMesh, ef, overlayTex, overlayAtlas);
+						}
 					}
 				}
 			}
@@ -943,6 +988,94 @@ namespace onion::voxel
 			indices->push_back(startIndex + 1);
 			indices->push_back(startIndex + 0);
 		}
+	}
+
+	MeshBuilder::PointsAndOcclusion MeshBuilder::GetElementLocalPao(const TextureInfo& textureInfo)
+	{
+		// Map MC units (0-16) to local block space (-0.5 .. +0.5)
+		float nx = textureInfo.from.x / 16.0f - 0.5f;
+		float px = textureInfo.to.x / 16.0f - 0.5f;
+		float ny = textureInfo.from.y / 16.0f - 0.5f;
+		float py = textureInfo.to.y / 16.0f - 0.5f;
+		float nz = textureInfo.from.z / 16.0f - 0.5f;
+		float pz = textureInfo.to.z / 16.0f - 0.5f;
+
+		PointsAndOcclusion result;
+		result.p000 = glm::vec3(nx, ny, nz);
+		result.p001 = glm::vec3(nx, ny, pz);
+		result.p010 = glm::vec3(nx, py, nz);
+		result.p011 = glm::vec3(nx, py, pz);
+		result.p100 = glm::vec3(px, ny, nz);
+		result.p101 = glm::vec3(px, ny, pz);
+		result.p110 = glm::vec3(px, py, nz);
+		result.p111 = glm::vec3(px, py, pz);
+
+		// Apply element rotation if present
+		const auto& rotation = textureInfo.elemRotation;
+		if (rotation.Angle != 0.0f && !rotation.Axis.empty())
+		{
+			// Convert origin from MC units (0-16) to local [-0.5 .. +0.5] space
+			glm::vec3 origin(
+				rotation.Origin.x / 16.0f - 0.5f, rotation.Origin.y / 16.0f - 0.5f, rotation.Origin.z / 16.0f - 0.5f);
+
+			glm::vec3 axis(0.0f);
+			if (rotation.Axis == "x")
+				axis = {1, 0, 0};
+			else if (rotation.Axis == "y")
+				axis = {0, 1, 0};
+			else if (rotation.Axis == "z")
+				axis = {0, 0, 1};
+
+			float radians = glm::radians(rotation.Angle);
+			glm::mat4 rot = glm::rotate(glm::mat4(1.0f), radians, axis);
+
+			auto rotatePoint = [&](glm::vec3& p)
+			{
+				glm::vec3 local = p - origin;
+				local = glm::vec3(rot * glm::vec4(local, 0.0f));
+				p = local + origin;
+			};
+
+			rotatePoint(result.p000);
+			rotatePoint(result.p001);
+			rotatePoint(result.p010);
+			rotatePoint(result.p011);
+			rotatePoint(result.p100);
+			rotatePoint(result.p101);
+			rotatePoint(result.p110);
+			rotatePoint(result.p111);
+
+			if (rotation.Rescale)
+			{
+				float scale = 1.0f / std::cos(radians);
+
+				glm::vec3 scaleAxes(1.0f);
+				if (rotation.Axis == "x")
+					scaleAxes = {1.0f, scale, scale};
+				else if (rotation.Axis == "y")
+					scaleAxes = {scale, 1.0f, scale};
+				else if (rotation.Axis == "z")
+					scaleAxes = {scale, scale, 1.0f};
+
+				auto scalePoint = [&](glm::vec3& p)
+				{
+					glm::vec3 local = p - origin;
+					local *= scaleAxes;
+					p = local + origin;
+				};
+
+				scalePoint(result.p000);
+				scalePoint(result.p001);
+				scalePoint(result.p010);
+				scalePoint(result.p011);
+				scalePoint(result.p100);
+				scalePoint(result.p101);
+				scalePoint(result.p110);
+				scalePoint(result.p111);
+			}
+		}
+
+		return result;
 	}
 
 	MeshBuilder::PointsAndOcclusion MeshBuilder::GetPointsAndOcclusion(

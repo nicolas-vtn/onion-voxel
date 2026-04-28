@@ -114,6 +114,10 @@ namespace onion::voxel
 		PointsAndOcclusion GetPointsAndOcclusion(
 			SubChunkMesh* mesh, const int lx, const int wy, const int lz, const TextureInfo& textureInfo);
 
+		// Compute the 8 corners of a model element in local [-0.5 .. +0.5] space,
+		// including element rotation, for use in inventory (UI) rendering.
+		static PointsAndOcclusion GetElementLocalPao(const TextureInfo& textureInfo);
+
 		static std::vector<FaceBuildDesc> GetBlockFaceBuildDescs(const PointsAndOcclusion& pao);
 	};
 } // namespace onion::voxel
