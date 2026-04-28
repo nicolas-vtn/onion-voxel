@@ -6,6 +6,7 @@
 #include <renderer/gui/controls/slider/Slider.hpp>
 #include <renderer/gui/controls/sprite/Sprite.hpp>
 #include <renderer/gui/controls/text_field/TextField.hpp>
+#include <renderer/gui/controls/tooltip/Tooltip.hpp>
 
 namespace onion::voxel
 {
@@ -42,6 +43,7 @@ namespace onion::voxel
 		Checkbox m_Checkbox;
 		TextField m_TextField;
 		Slider m_Slider;
+		Tooltip m_Tooltip;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:

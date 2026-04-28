@@ -244,13 +244,9 @@ namespace onion::voxel
 	{
 		std::vector<TextSegment> segments = SegmentText(text);
 
-		glm::ivec2 size{0, 0};
-		for (const TextSegment& segment : segments)
-		{
-			glm::vec2 segmentSize = MeasureText(segment.text, textHeightPx);
-			size.x += static_cast<int>(round(segmentSize.x));
-			size.y = std::max(size.y, static_cast<int>(round(segmentSize.y)));
-		}
+		// Use full-text measurement for correct multiline size (segment-summing breaks on multi-line)
+		glm::vec2 fullSize = MeasureText(text, textHeightPx);
+		glm::ivec2 size = {static_cast<int>(round(fullSize.x)), static_cast<int>(round(fullSize.y))};
 
 		// Calculate Starting position based on alignment
 		float startX = 0.f, startY = 0.f;
@@ -283,7 +279,6 @@ namespace onion::voxel
 		glm::vec2 pivot = {topLeftCorner.x + size.x * 0.5f, topLeftCorner.y + size.y * 0.5f};
 
 		glm::vec2 currentPos = {startX, startY};
-		if (renderShadow)
 		{
 			currentPos = {startX, startY};
 			glm::ivec2 shadowOffset{static_cast<int>(round(textHeightPx / 8.f)),
@@ -292,14 +287,19 @@ namespace onion::voxel
 			for (const TextSegment& segment : segments)
 			{
 				const glm::vec3& shadowColor = s_ShadowColorMap.at(segment.color);
-				currentPos = RenderPartialText(segment.text,
-											   shadowColor,
-											   currentPos,
-											   segment.format,
-											   textHeightPx,
-											   zOffset - 0.01f,
-											   rotationDegrees,
-											   pivot);
+				glm::ivec2 result = RenderPartialText(segment.text,
+													  shadowColor,
+													  currentPos,
+													  segment.format,
+													  textHeightPx,
+													  zOffset - 0.01f,
+													  rotationDegrees,
+													  pivot,
+													  alignment,
+													  size.x);
+				// Carry Y (line advances) but reset X to startX so the next segment
+				// doesn't inherit a misaligned cursor from the previous segment's end.
+				currentPos = {startX + shadowOffset.x, static_cast<float>(result.y)};
 			}
 		}
 
@@ -307,14 +307,18 @@ namespace onion::voxel
 		for (const TextSegment& segment : segments)
 		{
 			const glm::vec3& foregroundColor = s_TextColorMap.at(segment.color);
-			currentPos = RenderPartialText(segment.text,
-										   foregroundColor,
-										   currentPos,
-										   segment.format,
-										   textHeightPx,
-										   zOffset,
-										   rotationDegrees,
-										   pivot);
+			glm::ivec2 result = RenderPartialText(segment.text,
+												  foregroundColor,
+												  currentPos,
+												  segment.format,
+												  textHeightPx,
+												  zOffset,
+												  rotationDegrees,
+												  pivot,
+												  alignment,
+												  size.x);
+			// Carry Y only — reset X to startX between segments.
+			currentPos = {startX, static_cast<float>(result.y)};
 		}
 	}
 
@@ -369,13 +373,21 @@ namespace onion::voxel
 									static_cast<int>(round(textHeightPx / 8.f))};
 			currentPos += shadowOffset;
 
-			currentPos = RenderPartialText(
-				text, shadowColor, currentPos, format, textHeightPx, zOffset - 0.01f, rotationDegrees, pivot);
+			currentPos = RenderPartialText(text,
+										   shadowColor,
+										   currentPos,
+										   format,
+										   textHeightPx,
+										   zOffset - 0.01f,
+										   rotationDegrees,
+										   pivot,
+										   alignment,
+										   size.x);
 		}
 
 		currentPos = {startX, startY};
-		currentPos =
-			RenderPartialText(text, textColor, currentPos, format, textHeightPx, zOffset, rotationDegrees, pivot);
+		currentPos = RenderPartialText(
+			text, textColor, currentPos, format, textHeightPx, zOffset, rotationDegrees, pivot, alignment, size.x);
 	}
 
 	glm::vec2 Font::MeasureText(const std::string& text, float textHeightPx) const
@@ -401,6 +413,12 @@ namespace onion::voxel
 			float scale = textHeightPx / refGlyphHeight;
 			char32_t c = text[i];
 
+			if (c == U'\u00A7' && i + 1 < (int) text.size())
+			{
+				i++; // skip the code character following § (e.g. §9, §o, §r)
+				continue;
+			}
+
 			if (c == '\n')
 			{
 				lines++;
@@ -422,8 +440,7 @@ namespace onion::voxel
 		}
 		maxLineWidth = std::max(maxLineWidth, width);
 
-		const float scale = textHeightPx / refGlyphHeight;
-		float height = refGlyphHeight * scale * lines;
+		float height = textHeightPx * (1.0f + 1.3f * (lines - 1));
 
 		return {maxLineWidth, height};
 	}
@@ -674,7 +691,9 @@ namespace onion::voxel
 									   float textHeightPx,
 									   float zOffset,
 									   float rotationDegrees,
-									   const glm::vec2& pivot)
+									   const glm::vec2& pivot,
+									   eTextAlignment alignment,
+									   float maxLineWidth)
 	{
 		if (text.empty())
 			return position;
@@ -682,6 +701,52 @@ namespace onion::voxel
 		glm::vec2 size = MeasureText(text, textHeightPx);
 
 		const float refGlyphHeight = m_UnicodeGlyphs['A'].height;
+		const float scale = textHeightPx / refGlyphHeight;
+
+		// Pre-measure each line's width for per-line X alignment
+		std::vector<float> lineWidths;
+		{
+			float w = 0.f;
+			bool skipNext = false;
+			for (char32_t c : text)
+			{
+				if (skipNext)
+				{
+					skipNext = false;
+					continue;
+				}
+				if (c == U'\u00A7')
+				{
+					skipNext = true;
+					continue;
+				}
+				if (c == '\n')
+				{
+					lineWidths.push_back(w);
+					w = 0.f;
+					continue;
+				}
+				auto it = m_UnicodeGlyphs.find(c);
+				w += (it != m_UnicodeGlyphs.end() ? it->second.advance : m_UnicodeGlyphs.at(' ').advance) * scale;
+			}
+			lineWidths.push_back(w);
+		}
+
+		// Returns the correct X start for a given line index based on alignment
+		auto lineStartX = [&](int lineIndex) -> float
+		{
+			float lw = lineWidths[lineIndex];
+			switch (alignment)
+			{
+				case eTextAlignment::Left:
+					return position.x;
+				case eTextAlignment::Right:
+					return position.x + maxLineWidth - lw;
+				case eTextAlignment::Center:
+					return position.x + (maxLineWidth - lw) * 0.5f;
+			}
+			return position.x;
+		};
 
 		float lastCursorX = position.x;
 		float lastCursorY = position.y;
@@ -689,16 +754,18 @@ namespace onion::voxel
 		// Build vertices
 		auto DrawGlyph = [&](float offsetX_px)
 		{
-			float cursorX = position.x;
+			int lineIndex = 0;
+			float cursorX = lineStartX(0) + offsetX_px;
 			float cursorY = position.y;
 
 			for (char32_t c : text)
 			{
-				// Move Down on newline characters
+				// Move down on newline characters, re-align X for the new line
 				if (c == '\n')
 				{
-					cursorX = position.x;
-					cursorY += refGlyphHeight * (textHeightPx / refGlyphHeight) * 1.3f; // Move down by one line
+					lineIndex++;
+					cursorX = lineStartX(lineIndex) + offsetX_px;
+					cursorY += textHeightPx * 1.3f;
 					continue;
 				}
 
@@ -709,11 +776,9 @@ namespace onion::voxel
 					glyph = it->second;
 				}
 
-				float scale = textHeightPx / refGlyphHeight;
-
 				float skew = textFormat.italic ? (glyph.height * scale * 0.25f) : 0.0f;
 
-				float x0 = cursorX + offsetX_px;
+				float x0 = cursorX;
 				float x1 = x0 + glyph.width * scale;
 
 				int deltaAscent = glyph.ascent - 7;
