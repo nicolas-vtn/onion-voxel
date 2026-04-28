@@ -230,7 +230,9 @@ namespace onion::voxel
 									 float textHeightPx,
 									 float zOffset,
 									 float rotationDegrees,
-									 const glm::vec2& pivot);
+									 const glm::vec2& pivot,
+									 eTextAlignment alignment,
+									 float maxLineWidth);
 
 		// ----- Static Resources -----
 	  private:
