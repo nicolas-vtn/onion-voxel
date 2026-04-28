@@ -30,10 +30,28 @@ namespace onion::voxel
 		m_Label.SetZOffset(m_ZOffset + 2.f * m_DeltaZ);
 
 		const glm::ivec2 textSize = m_Label.GetTextSize();
-		const glm::ivec2 size = {textSize.x + 2 * padding, (int) m_TextHeight + 2 * padding};
+		const glm::ivec2 size = {textSize.x + 2 * padding, textSize.y + 2 * padding};
 
-		// m_Position is left-center; NineSliceSprite expects center
-		const glm::ivec2 center = {(int) m_Position.x + size.x / 2, (int) m_Position.y};
+		// Flip to right-aligned when the tooltip would overflow the right edge of the screen.
+		// m_Position is always the anchor point (e.g. cursor tip) — the tooltip grows left when flipped.
+		const bool flipped = ((int) m_Position.x + size.x) > s_ScreenWidth;
+
+		glm::ivec2 center;
+		glm::vec2 labelPos;
+
+		if (!flipped)
+		{
+			// Default: m_Position is left-center anchor
+			center = {(int) m_Position.x + size.x / 2, (int) m_Position.y};
+			labelPos = {m_Position.x + padding, m_Position.y};
+		}
+		else
+		{
+			// Flipped: m_Position is right-center anchor, tooltip grows leftward.
+			// Label is left-aligned from the left inner edge of the box.
+			center = {(int) m_Position.x - size.x / 2, (int) m_Position.y};
+			labelPos = {(float) (center.x - size.x / 2 + padding), m_Position.y};
+		}
 
 		m_Background.SetPosition(center);
 		m_Background.SetSize(size);
@@ -45,8 +63,7 @@ namespace onion::voxel
 		m_Frame.SetZOffset(m_ZOffset + m_DeltaZ);
 		m_Frame.Render();
 
-		// Label left-center = left inner edge, vertically centered on m_Position.y
-		m_Label.SetPosition({m_Position.x + padding, m_Position.y});
+		m_Label.SetPosition(labelPos);
 		m_Label.Render();
 	}
 

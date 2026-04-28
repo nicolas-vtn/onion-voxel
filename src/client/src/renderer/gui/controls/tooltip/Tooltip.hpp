@@ -28,7 +28,11 @@ namespace onion::voxel
 		void SetText(const std::string& text);
 		std::string GetText() const;
 
-		/// @brief Sets the left-center position of the tooltip. (In Pixels)
+		/// @brief Sets the anchor position of the tooltip in pixels (screen space).
+		/// Normally the tooltip grows rightward from this point (left-center anchor).
+		/// If the tooltip would overflow the right screen edge, it automatically flips
+		/// and grows leftward (right-center anchor). The caller always passes the same
+		/// point (e.g. cursor tip) regardless of flip state.
 		void SetPosition(const glm::vec2& position);
 		glm::vec2 GetPosition() const;
 

@@ -44,7 +44,7 @@ namespace onion::voxel
 
 		m_ButtonTextsPanel.SetText("Demo Texts");
 
-		m_Tooltip.SetText("This is a tooltip!");
+		m_Tooltip.SetText("Grass Block\n§9§oOnion::Voxel§r§r");
 		m_Tooltip.SetZOffset(0.8f);
 	}
 
@@ -80,7 +80,8 @@ namespace onion::voxel
 		const glm::vec2 buttonPos{s_ScreenWidth * buttonXPosRatio, s_ScreenHeight * buttonYPosRatio};
 
 		m_Button.SetPosition(buttonPos);
-		m_Button.SetSize(buttonSize);
+		glm::vec2 widerButtonSize{s_ScreenWidth - 40, buttonSize.y};
+		m_Button.SetSize(widerButtonSize);
 		m_Button.Render();
 
 		// ---- Tooltip ----
