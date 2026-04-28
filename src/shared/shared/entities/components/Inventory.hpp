@@ -44,8 +44,7 @@ namespace onion::voxel
 	  public:
 		friend bool operator==(const Inventory& lhs, const Inventory& rhs)
 		{
-			return lhs.Rows() == rhs.Rows() && lhs.Columns() == rhs.Columns() &&
-				lhs.SelectedIndex() == rhs.SelectedIndex() && lhs.Content() == rhs.Content();
+			return lhs.Rows() == rhs.Rows() && lhs.Columns() == rhs.Columns() && lhs.Content() == rhs.Content();
 		}
 
 		friend bool operator!=(const Inventory& lhs, const Inventory& rhs) { return !(lhs == rhs); }

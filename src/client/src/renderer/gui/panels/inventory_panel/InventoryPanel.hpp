@@ -4,6 +4,8 @@
 #include <renderer/gui/controls/label/Label.hpp>
 #include <renderer/gui/controls/sprite/Sprite.hpp>
 
+#include <renderer/gui/ui_block_mesh/UiBlockMesh.hpp>
+
 namespace onion::voxel
 {
 	class InventoryPanel : public GuiElement
@@ -28,6 +30,8 @@ namespace onion::voxel
 	  private:
 		Sprite m_InventoryBackground_Sprite;
 		Label m_Crafting_Label;
+
+		std::shared_ptr<UiBlockMesh> m_HotbarBlockMesh = std::make_shared<UiBlockMesh>(Inventory{1, 9});
 
 		// ----- Textures -----
 	  private:

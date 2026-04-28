@@ -2,6 +2,8 @@
 
 #include <renderer/gui/colored_background/ColoredBackground.hpp>
 
+#include <renderer/world_renderer/WorldRenderer.hpp>
+
 namespace onion::voxel
 {
 	InventoryPanel::InventoryPanel(const std::string& name)
@@ -32,6 +34,15 @@ namespace onion::voxel
 		{
 			EvtRequestBackNavigation.Trigger(this);
 			return;
+		}
+
+		// Retreve Player State
+		std::shared_ptr<Player> player = EngineContext::Get().GetLocalPlayer();
+
+		if (player == nullptr)
+		{
+			// Create an empty player as placeholder
+			player = std::make_shared<Player>("HudPlaceholderPlayer");
 		}
 
 		// ----- Gray Background -----
@@ -65,6 +76,25 @@ namespace onion::voxel
 		m_Crafting_Label.SetPosition(labelPos);
 		m_Crafting_Label.SetTextHeight(s_TextHeight);
 		m_Crafting_Label.Render();
+
+		// ---- Hotbar Item Rendering ----
+		float blockSlotSizeRatioX = 64.f / 1920.f;
+		float blockSlotSizeRatioY = 64.f / 1009.f;
+		glm::vec2 slotSize = {s_ScreenWidth * blockSlotSizeRatioX, s_ScreenHeight * blockSlotSizeRatioY};
+		float slotPaddingRatioX = 8.f / 1920.f;
+		float slotPaddingRatioY = 8.f / 1009.f;
+		glm::vec2 slotPadding = {s_ScreenWidth * slotPaddingRatioX, s_ScreenHeight * slotPaddingRatioY};
+		float firstSlotLeftXborderRatio = 640.f / 1920.f;
+		float firstSlotTopYborderRatio = (763.f - 23.f) / 1009.f;
+		glm::vec2 firstSlotTopLeft = {s_ScreenWidth * firstSlotLeftXborderRatio,
+									  s_ScreenHeight * firstSlotTopYborderRatio};
+		m_HotbarBlockMesh->SetInventory(player->GetHotbar(), slotSize, slotPadding);
+		if (m_HotbarBlockMesh->IsDirty())
+		{
+			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
+			meshBuilder.UpdateUiBlockMesh(m_HotbarBlockMesh);
+		}
+		m_HotbarBlockMesh->Render(firstSlotTopLeft, s_ScreenWidth, s_ScreenHeight);
 	}
 
 	void InventoryPanel::Initialize()
