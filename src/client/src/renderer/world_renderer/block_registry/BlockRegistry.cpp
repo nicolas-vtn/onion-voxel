@@ -79,6 +79,18 @@ namespace onion::voxel
 		m_Registrations.push_back(std::move(reg));
 	}
 
+	void BlockRegistry::RegisterModelInventory(BlockId id, const std::vector<TextureInfo>& textures)
+	{
+		for (const auto& texture : textures)
+			if (!texture.name.empty())
+				m_AllTextureNames.insert(texture.name);
+
+		PreRegistration reg;
+		reg.id = id;
+		reg.textures = textures;
+		m_InventoryRegistrations.push_back(std::move(reg));
+	}
+
 	void BlockRegistry::RegisterModelOverlay(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex)
 	{
 		for (const auto& texture : textures)
@@ -93,6 +105,19 @@ namespace onion::voxel
 		m_RegistrationsOverlays.push_back(std::move(reg));
 	}
 
+	void BlockRegistry::RegisterModelInventoryOverlay(BlockId id, const std::vector<TextureInfo>& textures)
+	{
+		for (const auto& texture : textures)
+			if (!texture.name.empty())
+				m_AllTextureNames.insert(texture.name);
+
+		PreOverlayRegistration reg;
+		reg.id = id;
+		reg.textures = textures;
+
+		m_InventoryRegistrationsOverlays.push_back(std::move(reg));
+	}
+
 	// ---- Register one VariantModel for a block ----
 	void BlockRegistry::RegisterVariant(BlockId id, const VariantModel& variant, size_t variantIndex)
 	{
@@ -101,7 +126,7 @@ namespace onion::voxel
 		// ----- Special-case magic -----
 		if (id == BlockId::Water)
 		{
-			BlockModel stoneModel = BlockModel::FromFile("stone.json");
+			BlockModel stoneModel = BlockModel::FromFile("block/stone.json");
 			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"];
 			blockModel = stoneModel;
 			for (auto& elem : blockModel.Elements)
@@ -110,7 +135,7 @@ namespace onion::voxel
 		}
 		else if (id == BlockId::Lava)
 		{
-			BlockModel stoneModel = BlockModel::FromFile("stone.json");
+			BlockModel stoneModel = BlockModel::FromFile("block/stone.json");
 			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"];
 			blockModel = stoneModel;
 		}
@@ -119,7 +144,7 @@ namespace onion::voxel
 		{
 			std::cout << "Warning: BlockModel for block ID " << static_cast<uint16_t>(id) << " ("
 					  << BlockIds::GetName(id) << ") has no elements." << std::endl;
-			blockModel = BlockModel::FromFile("bubble_coral_block.json");
+			blockModel = BlockModel::FromFile("block/bubble_coral_block.json");
 		}
 
 		// ----- Convert elements to TextureInfo -----
@@ -184,10 +209,105 @@ namespace onion::voxel
 			RegisterModelOverlay(id, overlayTextures, variantIndex);
 	}
 
+	void BlockRegistry::RegisterInventoryModel(BlockId id, const BlockModel& model)
+	{
+		BlockModel blockModel = model;
+
+		// ----- Special-case magic -----
+		if (id == BlockId::Water)
+		{
+			BlockModel stoneModel = BlockModel::FromFile("block/stone.json");
+			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"];
+			blockModel = stoneModel;
+			for (auto& elem : blockModel.Elements)
+				for (auto& [fn, face] : elem.Faces)
+					face.TintIndex = 1; // Water tint
+		}
+		else if (id == BlockId::Lava)
+		{
+			BlockModel stoneModel = BlockModel::FromFile("block/stone.json");
+			stoneModel.ModelTextures["all"] = blockModel.ModelTextures["particle"];
+			blockModel = stoneModel;
+		}
+
+		if (blockModel.Elements.empty())
+		{
+			std::cout << "Warning: BlockModel for block ID " << static_cast<uint16_t>(id) << " ("
+					  << BlockIds::GetName(id) << ") has no elements." << std::endl;
+			blockModel = BlockModel::FromFile("block/bubble_coral_block.json");
+		}
+
+		// ----- Convert elements to TextureInfo -----
+		std::vector<TextureInfo> baseTextures;
+		baseTextures.reserve(6);
+		bool baseInitialized = false;
+
+		std::vector<TextureInfo> overlayTextures;
+		overlayTextures.reserve(6);
+		bool overlayInitialized = false;
+
+		for (const auto& elem : blockModel.Elements)
+		{
+			bool isOverlay = IsOverlayElem(elem);
+
+			for (const auto& [faceName, face] : elem.Faces)
+			{
+				Face f = ToFace(faceName);
+
+				std::string resolved = ResolveTexture(face.Texture, blockModel.ModelTextures);
+				if (resolved.empty())
+				{
+					//throw std::runtime_error("Failed to resolve texture reference: " + face.Texture);
+					std::cout << "Warning: Failed to resolve texture reference: " << face.Texture << std::endl;
+					continue;
+				}
+
+				Tint tint = Tint::None;
+				if (face.TintIndex.has_value())
+				{
+					if (face.TintIndex.value() == 0)
+						tint = Tint::Grass;
+					else if (face.TintIndex.value() == 1)
+						tint = Tint::Water;
+				}
+
+				TextureInfo info{UINT16_MAX,
+								 resolved,
+								 f,
+								 tint,
+								 Transparency::Opaque,
+								 elem.From,
+								 elem.To,
+								 face.UV,
+								 static_cast<int>(face.Rotation.value_or(0.f)),
+								 elem.Rotation,
+								 elem.Shade};
+
+				if (!isOverlay)
+				{
+					baseTextures.push_back(std::move(info));
+					baseInitialized = true;
+				}
+				else
+				{
+					overlayTextures.push_back(std::move(info));
+					overlayInitialized = true;
+				}
+			}
+		}
+
+		if (baseInitialized)
+			RegisterModelInventory(id, baseTextures);
+
+		if (overlayInitialized)
+			RegisterModelInventoryOverlay(id, overlayTextures);
+	}
+
 	// ---- Register all variants parsed from a blockstate JSON ----
 	void BlockRegistry::RegisterModel(BlockId id)
 	{
 		const auto& blockstates = BlockstateRegistry::Get();
+		const auto& inventoryModels = BlockstateRegistry::GetInventoryModels();
 
 		const auto it = blockstates.find(id);
 		if (it == blockstates.end())
@@ -197,6 +317,16 @@ namespace onion::voxel
 
 			VariantModel defaultVariant;
 			RegisterVariant(id, defaultVariant, 0);
+
+			bool hasInventoryModel = inventoryModels.find(id) != inventoryModels.end();
+			if (hasInventoryModel)
+			{
+				RegisterInventoryModel(id, inventoryModels.at(id));
+			}
+			else
+			{
+				RegisterInventoryModel(id, defaultVariant.Model);
+			}
 
 			return;
 
@@ -208,6 +338,8 @@ namespace onion::voxel
 
 		for (int i = 0; i < variants.size(); i++)
 			RegisterVariant(id, variants[i], i);
+
+		RegisterInventoryModel(id, inventoryModels.at(id));
 	}
 
 	// ---- Finalize: resolve TextureIDs from atlas ----
@@ -240,9 +372,11 @@ namespace onion::voxel
 		}
 
 		auto& variants = m_Blocks[id];
+
 		// Grow the vector to fit this variant index
 		if (variantIndex >= variants.size())
 			variants.resize(variantIndex + 1);
+
 		variants[variantIndex] = tex;
 	}
 
@@ -274,6 +408,65 @@ namespace onion::voxel
 		}
 	}
 
+	void BlockRegistry::RegisterInventory(BlockId id, const std::vector<TextureInfo>& textures)
+	{
+		BlockTextures tex;
+
+		for (const auto& textureInfo : textures)
+		{
+			const std::string& textureName = textureInfo.name;
+
+			if (textureName.empty())
+				continue;
+
+			TextureInfo resolvedInfo = textureInfo;
+			resolvedInfo.texture = m_Atlas->GetTextureID(textureName);
+
+			const Transparency transparency = m_Atlas->GetTextureTransparency(textureName);
+			resolvedInfo.textureType = transparency;
+
+			// Update the transparency type of the block
+			if (transparency == Transparency::Transparent || transparency == Transparency::Cutout)
+			{
+				BlockState::SetTransparency(id, true);
+			}
+
+			tex.faces.push_back(resolvedInfo);
+
+			m_AllTextureNames.insert(textureName);
+		}
+
+		m_InventoryBlocks[id] = tex;
+	}
+
+	void BlockRegistry::RegisterInventoryOverlay(BlockId id, const std::vector<TextureInfo>& textures)
+	{
+		auto it = m_InventoryBlocks.find(id);
+		if (it == m_InventoryBlocks.end())
+		{
+			throw std::runtime_error("BlockRegistry::SetInventoryOverlay: Block ID not found: " +
+									 std::to_string(static_cast<uint16_t>(id)));
+		}
+
+		// Extract the corresponding variant
+		BlockTextures& blockTex = it->second;
+
+		for (const auto& textureInfo : textures)
+		{
+			const std::string& textureName = textureInfo.name;
+
+			if (textureName.empty())
+				continue;
+
+			TextureInfo resolvedInfo = textureInfo;
+			resolvedInfo.texture = m_Atlas->GetTextureID(textureName);
+			resolvedInfo.textureType = m_Atlas->GetTextureTransparency(textureName);
+
+			blockTex.overlay.push_back(resolvedInfo);
+			m_AllTextureNames.insert(textureName);
+		}
+	}
+
 	void BlockRegistry::Initialize()
 	{
 		ReloadTextures();
@@ -284,12 +477,19 @@ namespace onion::voxel
 		ReloadModels();
 
 		m_Blocks.clear();
+		m_InventoryBlocks.clear();
 
 		for (const auto& registration : m_Registrations)
 			Register(registration.id, registration.variantIndex, registration.textures);
 
 		for (const auto& overlay : m_RegistrationsOverlays)
 			RegisterOverlay(overlay.id, overlay.variantIndex, overlay.textures);
+
+		for (const auto& registration : m_InventoryRegistrations)
+			RegisterInventory(registration.id, registration.textures);
+
+		for (const auto& overlay : m_InventoryRegistrationsOverlays)
+			RegisterInventoryOverlay(overlay.id, overlay.textures);
 	}
 
 	const std::unordered_set<std::string>& BlockRegistry::GetAllTextureNames() const
@@ -315,6 +515,18 @@ namespace onion::voxel
 		const auto& variants = it->second;
 		const size_t idx = std::min(static_cast<size_t>(variantIndex), variants.size() - 1);
 		return variants[idx];
+	}
+
+	const BlockTextures& BlockRegistry::GetInventory(BlockId id) const
+	{
+		auto it = m_InventoryBlocks.find(id);
+		if (it == m_InventoryBlocks.end())
+		{
+			throw std::runtime_error("BlockRegistry::GetInventory: Block ID not found: " +
+									 std::to_string(static_cast<uint16_t>(id)));
+		}
+
+		return it->second;
 	}
 
 	size_t BlockRegistry::GetVariantCount(BlockId id) const

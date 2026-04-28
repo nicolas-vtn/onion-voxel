@@ -68,6 +68,7 @@ namespace onion::voxel
 		// ----- Public API -----
 	  public:
 		static void SetModelArchive(const std::filesystem::path& archiveFilePath);
+		static bool Exists(const std::string& filename);
 		static BlockModel FromFile(const std::string& filename);
 		static void ClearCache();
 

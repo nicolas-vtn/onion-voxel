@@ -2,6 +2,8 @@
 
 #include <shared/zip_archive/ZipArchive.hpp>
 
+#include <iostream>
+
 namespace
 {
 	static std::string ToBlockName(const std::string& blockstateName)
@@ -209,10 +211,20 @@ namespace
 
 namespace onion::voxel
 {
+	// Static Members
+	std::unordered_map<BlockId, BlockModel> BlockstateRegistry::s_InventoryModels;
+
 	const std::unordered_map<BlockId, std::vector<VariantModel>>& BlockstateRegistry::Get()
 	{
 		static const std::unordered_map<BlockId, std::vector<VariantModel>> blockstateMap = LoadVariantsModel();
 		return blockstateMap;
+	}
+
+	const std::unordered_map<BlockId, BlockModel>& BlockstateRegistry::GetInventoryModels()
+	{
+		// Force load blockstate variants to ensure models are loaded
+		static const auto& forceLoad = Get();
+		return s_InventoryModels;
 	}
 
 	bool BlockstateRegistry::IsTallPlant(BlockId blockId)
@@ -295,6 +307,9 @@ namespace onion::voxel
 		// Init BlockModel archive first since VariantModel depends on it (same directory, but different file name)
 		BlockModel::SetModelArchive(s_ModelArchiveFilePath);
 
+		// Clears previous inventory models
+		s_InventoryModels.clear();
+
 		std::unordered_map<BlockId, std::vector<VariantModel>> blockstateMap;
 
 		ZipArchive archive(s_BlockstateArchiveFilePath);
@@ -305,14 +320,38 @@ namespace onion::voxel
 			std::string jsonText = archive.GetFileText(blockstateFile);
 			nlohmann::json json = nlohmann::json::parse(jsonText);
 
+			const std::string blockName = ToBlockName(blockstateFile.filename().string());
+			BlockId blockId = BlockIds::GetId(blockName);
+
+			// Check if a dedicated inventory model exists.
+			const std::string itemModelName = "item/" + blockstateFile.stem().string() + ".json";
+			const std::string blockInventoryModelName = "block/" + blockstateFile.stem().string() + "_inventory.json";
+			const std::string blockModelName = "block/" + blockstateFile.stem().string() + ".json";
+
+			// 1. Search in the Items
+			if (BlockModel::Exists(itemModelName))
+			{
+				BlockModel inventoryModel = BlockModel::FromFile(itemModelName);
+				s_InventoryModels[blockId] = std::move(inventoryModel);
+			}
+			// 2. If not found, search in the Blocks
+			else if (BlockModel::Exists(blockInventoryModelName))
+			{
+				BlockModel inventoryModel = BlockModel::FromFile(blockInventoryModelName);
+				s_InventoryModels[blockId] = std::move(inventoryModel);
+			}
+			//// 3. If not found search block name
+			//else if (BlockModel::Exists(blockModelName))
+			//{
+			//	BlockModel inventoryModel = BlockModel::FromFile(blockModelName);
+			//	s_InventoryModels[blockId] = std::move(inventoryModel);
+			//}
+
 			// ---- Ignore multipart blockstates for now ----
 			if (!json.contains("variants") || !json.at("variants").is_object())
 			{
 				continue;
 			}
-
-			const std::string blockName = ToBlockName(blockstateFile.filename().string());
-			BlockId blockId = BlockIds::GetId(blockName);
 
 			const auto& variants = json.at("variants");
 
@@ -362,6 +401,21 @@ namespace onion::voxel
 					}
 				}
 			}
+
+			// 4. If inventory texture not found, use the first variant's model as inventory model (fallback)
+			bool hasInventoryModel = s_InventoryModels.find(blockId) != s_InventoryModels.end();
+			if (!hasInventoryModel)
+			{
+				if (!blockstateMap[blockId].empty())
+				{
+					s_InventoryModels[blockId] = blockstateMap[blockId][0].Model;
+				}
+				else
+				{
+					std::cout << "Warning: No model found for inventory of block ID " << static_cast<uint16_t>(blockId)
+							  << " (" << BlockIds::GetName(blockId) << ")." << std::endl;
+				}
+			}
 		}
 
 		return blockstateMap;
@@ -375,8 +429,8 @@ namespace onion::voxel
 		{
 			std::string modelPath = json.at("model").get<std::string>();
 
-			// Strip everithing before "/"
-			const size_t slashPos = modelPath.find('/');
+			// Strip everithing before ":"
+			const size_t slashPos = modelPath.find(':');
 			if (slashPos != std::string::npos)
 			{
 				modelPath = modelPath.substr(slashPos + 1);

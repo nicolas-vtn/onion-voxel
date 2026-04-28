@@ -30,6 +30,8 @@ namespace onion::voxel
 	  public:
 		static const std::unordered_map<BlockId, std::vector<VariantModel>>& Get();
 
+		static const std::unordered_map<BlockId, BlockModel>& GetInventoryModels();
+
 		static bool IsTallPlant(BlockId flowerId);
 		static uint8_t GetVariantIndex(BlockId id, const std::map<std::string, std::string>& properties);
 
@@ -43,6 +45,7 @@ namespace onion::voxel
 			Utils::GetExecutableDirectory() / "assets" / "models.zip";
 
 		static std::unordered_map<BlockId, std::vector<VariantModel>> LoadVariantsModel();
+		static std::unordered_map<BlockId, BlockModel> s_InventoryModels;
 
 		static VariantModel VariantModelFromJson(const nlohmann::json& json);
 	};

@@ -74,6 +74,9 @@ namespace onion::voxel
 		// Get BlockTextures for a specific variant index (clamped to valid range)
 		const BlockTextures& Get(BlockId id, uint8_t variantIndex) const;
 
+		// Get Inventory textures for a block
+		const BlockTextures& GetInventory(BlockId id) const;
+
 		// Returns the number of registered variants for a block (at least 1 if the block exists)
 		size_t GetVariantCount(BlockId id) const;
 
@@ -85,15 +88,21 @@ namespace onion::voxel
 		void RegisterModel(BlockId id);
 		// Register a specific variant (by VariantModel) — used internally
 		void RegisterVariant(BlockId id, const VariantModel& variant, size_t variantIndex);
+		void RegisterInventoryModel(BlockId id, const BlockModel& model);
 		// Register a direct texture array (used by hand-crafted special cases)
 		void RegisterModel(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex);
+		void RegisterModelInventory(BlockId id, const std::vector<TextureInfo>& textures);
 
 		void RegisterModelOverlay(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex);
+		void RegisterModelInventoryOverlay(BlockId id, const std::vector<TextureInfo>& textures);
 
 		// ----- Real Registrations -----
 	  private:
 		void Register(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures);
 		void RegisterOverlay(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures);
+
+		void RegisterInventory(BlockId id, const std::vector<TextureInfo>& textures);
+		void RegisterInventoryOverlay(BlockId id, const std::vector<TextureInfo>& textures);
 
 		// ----- Private Members -----
 	  private:
@@ -114,8 +123,12 @@ namespace onion::voxel
 		std::vector<PreRegistration> m_Registrations;
 		std::vector<PreOverlayRegistration> m_RegistrationsOverlays;
 
+		std::vector<PreRegistration> m_InventoryRegistrations;
+		std::vector<PreOverlayRegistration> m_InventoryRegistrationsOverlays;
+
 		// Each block can have multiple variants; index 0 is always the default
 		std::unordered_map<BlockId, std::vector<BlockTextures>> m_Blocks;
+		std::unordered_map<BlockId, BlockTextures> m_InventoryBlocks;
 		std::shared_ptr<TextureAtlas> m_Atlas;
 		std::unordered_set<std::string> m_AllTextureNames;
 	};

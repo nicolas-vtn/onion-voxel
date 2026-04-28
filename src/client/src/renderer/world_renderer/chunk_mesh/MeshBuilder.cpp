@@ -624,7 +624,7 @@ namespace onion::voxel
 				{ return glm::vec3(transform * glm::vec4(x, y, z, 1.0f)); };
 
 				// Build face quads — one PAO per element since elements may differ in size (e.g. slabs)
-				const BlockTextures& blockTextures = m_BlockRegistry.Get(blockId, 0);
+				const BlockTextures& blockTextures = m_BlockRegistry.GetInventory(blockId);
 
 				for (const FaceBuildDesc& f : GetBlockFaceBuildDescs(
 						 // Dummy full-cube PAO just to enumerate all 6 face directions;

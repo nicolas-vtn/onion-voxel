@@ -140,9 +140,15 @@ namespace onion::voxel
 		s_ModelArchive = std::make_unique<ZipArchive>(archiveFilePath);
 	}
 
+	bool BlockModel::Exists(const std::string& filename)
+	{
+		const std::filesystem::path pathInsideArchive = std::filesystem::path(filename);
+		return s_ModelArchive->FileExists(pathInsideArchive);
+	}
+
 	BlockModel BlockModel::FromFile(const std::string& filename)
 	{
-		const std::filesystem::path pathInsideArchive = std::filesystem::path("block") / filename;
+		const std::filesystem::path pathInsideArchive = std::filesystem::path(filename);
 		return GetModel(pathInsideArchive);
 	}
 
@@ -215,6 +221,10 @@ namespace onion::voxel
 
 	BlockModel BlockModel::LoadModelRecursive(const std::filesystem::path& modelPath)
 	{
+		// If starts with "builtin/", return empty model
+		if (modelPath.string().starts_with("builtin/"))
+			return BlockModel();
+
 		BlockModel model = LoadRawModel(modelPath);
 
 		if (!model.ParentPath.empty())
