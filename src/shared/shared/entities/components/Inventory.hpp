@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 
 #include <shared/world/block/BlockId.hpp>
@@ -26,6 +27,13 @@ namespace onion::voxel
 
 		int& SelectedIndex() { return m_SelectedIndex; }
 		const int& SelectedIndex() const { return m_SelectedIndex; }
+
+		std::pair<int, int> GetRowColumnFromIndex(int index) const
+		{
+			int row = index / m_Columns;
+			int column = index % m_Columns;
+			return {row, column};
+		}
 
 		std::vector<BlockId>& Content() { return m_Data; }
 		const std::vector<BlockId>& Content() const { return m_Data; }

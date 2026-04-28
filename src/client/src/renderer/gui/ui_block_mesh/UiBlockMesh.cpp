@@ -6,6 +6,8 @@
 
 #include <renderer/assets_manager/AssetsManager.hpp>
 
+#include <renderer/gui/colored_background/ColoredBackground.hpp>
+
 namespace onion::voxel
 {
 	// ----- Static Initialization -----
@@ -171,6 +173,26 @@ namespace onion::voxel
 		RenderTransparent();
 
 		ResetOpenGLState();
+
+		// Render Selected Highlight
+		if (m_RenderSelectedHighlight && m_Inventory.SelectedIndex() >= 0)
+		{
+			// Retreves coordinates of the selected slot
+			const int& selectedIndex = m_Inventory.SelectedIndex();
+			const auto& [selectedRow, selectedColumn] = m_Inventory.GetRowColumnFromIndex(selectedIndex);
+			glm::vec2 selectedSlotPos = topLeftPosition +
+				glm::vec2(selectedColumn * (m_SlotSize.x + m_SlotPadding.x),
+						  selectedRow * (m_SlotSize.y + m_SlotPadding.y));
+			glm::vec2 selectedSlotBottomRight = selectedSlotPos + m_SlotSize;
+
+			constexpr glm::vec4 highlightColor{1.f, 1.f, 1.f, 0.5f};
+			ColoredBackground::CornerOptions highlightOptions;
+			highlightOptions.TopLeftCorner = glm::ivec2(selectedSlotPos);
+			highlightOptions.BottomRightCorner = glm::ivec2(selectedSlotBottomRight);
+			highlightOptions.Color = highlightColor;
+			highlightOptions.ZOffset = 0.7f;
+			ColoredBackground::Render(highlightOptions);
+		}
 	}
 
 	void UiBlockMesh::SetInventory(const Inventory& inventory, const glm::vec2& slotSize, const glm::vec2& slotPadding)
@@ -182,6 +204,9 @@ namespace onion::voxel
 			m_SlotPadding = slotPadding;
 			SetDirty(true);
 		}
+
+		// Override inventory selected index anyway
+		m_Inventory.SelectedIndex() = inventory.SelectedIndex();
 	}
 
 	void UiBlockMesh::Delete()
@@ -202,6 +227,42 @@ namespace onion::voxel
 	void UiBlockMesh::SetDirty(bool isDirty)
 	{
 		m_IsDirty = isDirty;
+	}
+
+	bool UiBlockMesh::GetRenderSelectedHighlight() const
+	{
+		return m_RenderSelectedHighlight;
+	}
+
+	void UiBlockMesh::SetRenderSelectedHighlight(bool renderSelectedHighlight)
+	{
+		m_RenderSelectedHighlight = renderSelectedHighlight;
+	}
+
+	int UiBlockMesh::GetSelectedIndexFromCursorPosition(const glm::vec2& cursorPosition,
+														const glm::vec2& topLeftPosition) const
+	{
+		glm::vec2 localPos = cursorPosition - topLeftPosition;
+
+		if (localPos.x < 0.f || localPos.y < 0.f)
+			return -1;
+
+		const float cellW = m_SlotSize.x + m_SlotPadding.x;
+		const float cellH = m_SlotSize.y + m_SlotPadding.y;
+
+		int col = (int) (localPos.x / cellW);
+		int row = (int) (localPos.y / cellH);
+
+		if (col < 0 || col >= m_Inventory.Columns() || row < 0 || row >= m_Inventory.Rows())
+			return -1;
+
+		// Exclude the padding region within the cell
+		float withinCellX = localPos.x - col * cellW;
+		float withinCellY = localPos.y - row * cellH;
+		if (withinCellX >= m_SlotSize.x || withinCellY >= m_SlotSize.y)
+			return -1;
+
+		return row * m_Inventory.Columns() + col;
 	}
 
 	void UiBlockMesh::SetLightColor(const glm::vec3& lightColor)

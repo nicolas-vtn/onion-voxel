@@ -26,6 +26,8 @@ namespace onion::voxel
 		m_ExperienceLevel_Label.SetZOffset(0.5f);
 		m_ExperienceLevel_Label.SetTextColor(Font::eColor::Green);
 		m_ExperienceLevel_Label.SetTextAlignment(Font::eTextAlignment::Center);
+
+		m_UiBlockMesh->SetRenderSelectedHighlight(false);
 	}
 
 	void HudPanel::Render()

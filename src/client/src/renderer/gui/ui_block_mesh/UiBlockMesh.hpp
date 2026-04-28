@@ -44,6 +44,11 @@ namespace onion::voxel
 		bool IsDirty() const;
 		void SetDirty(bool isDirty);
 
+		bool GetRenderSelectedHighlight() const;
+		void SetRenderSelectedHighlight(bool renderSelectedHighlight);
+
+		int GetSelectedIndexFromCursorPosition(const glm::vec2& cursorPosition, const glm::vec2& topLeftPosition) const;
+
 		static void SetLightColor(const glm::vec3& lightColor);
 		static glm::vec3 GetLightColor();
 
@@ -56,8 +61,8 @@ namespace onion::voxel
 		// ----- Members -----
 	  private:
 		Inventory m_Inventory;
-		glm::vec2 m_SlotSize{50.f, 50.f};	   // In pixels
-		glm::vec2 m_SlotPadding{10.f, 10.f};   // In pixels
+		glm::vec2 m_SlotSize{50.f, 50.f};	 // In pixels
+		glm::vec2 m_SlotPadding{10.f, 10.f}; // In pixels
 
 		std::shared_ptr<TextureAtlas> m_TextureAtlas;
 
@@ -68,6 +73,8 @@ namespace onion::voxel
 
 		std::atomic_bool m_AreBuffersGenerated{false};
 		std::atomic_bool m_AreBuffersDataUpToDate{true};
+
+		std::atomic_bool m_RenderSelectedHighlight{true};
 
 		std::atomic_uint32_t m_VertexCount = 0; // The total vertex count for this subchunk mesh
 

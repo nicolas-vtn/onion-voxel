@@ -88,7 +88,12 @@ namespace onion::voxel
 		float firstSlotTopYborderRatio = (763.f - 23.f) / 1009.f;
 		glm::vec2 firstSlotTopLeft = {s_ScreenWidth * firstSlotLeftXborderRatio,
 									  s_ScreenHeight * firstSlotTopYborderRatio};
-		m_HotbarBlockMesh->SetInventory(player->GetHotbar(), slotSize, slotPadding);
+
+		glm::vec2 cursorPosition{s_InputsSnapshot->Mouse.Xpos, s_InputsSnapshot->Mouse.Ypos};
+		int hoveredSlotIndex = m_HotbarBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstSlotTopLeft);
+		Inventory inventory = player->GetHotbar();
+		inventory.SelectedIndex() = hoveredSlotIndex;
+		m_HotbarBlockMesh->SetInventory(inventory, slotSize, slotPadding);
 		if (m_HotbarBlockMesh->IsDirty())
 		{
 			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
