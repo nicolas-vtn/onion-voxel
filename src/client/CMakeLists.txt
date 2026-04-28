@@ -48,6 +48,7 @@ add_executable(OnionVoxel
 	"src/renderer/gui/controls/text_field/TextField.cpp"
 	"src/renderer/gui/controls/slider/Slider.cpp"
 	"src/renderer/gui/controls/scroller/Scroller.cpp"
+	"src/renderer/gui/controls/tooltip/Tooltip.cpp"
 
 	"src/renderer/gui/panels/demo_panel/DemoPanel.cpp"
 	"src/renderer/gui/panels/demo_scrolling_panel/DemoScrollingPanel.cpp"
