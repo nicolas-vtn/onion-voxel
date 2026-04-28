@@ -77,29 +77,50 @@ namespace onion::voxel
 		m_Crafting_Label.SetTextHeight(s_TextHeight);
 		m_Crafting_Label.Render();
 
-		// ---- Hotbar Item Rendering ----
-		float blockSlotSizeRatioX = 64.f / 1920.f;
-		float blockSlotSizeRatioY = 64.f / 1009.f;
-		glm::vec2 slotSize = {s_ScreenWidth * blockSlotSizeRatioX, s_ScreenHeight * blockSlotSizeRatioY};
-		float slotPaddingRatioX = 8.f / 1920.f;
-		float slotPaddingRatioY = 8.f / 1009.f;
-		glm::vec2 slotPadding = {s_ScreenWidth * slotPaddingRatioX, s_ScreenHeight * slotPaddingRatioY};
-		float firstSlotLeftXborderRatio = 640.f / 1920.f;
-		float firstSlotTopYborderRatio = (763.f - 23.f) / 1009.f;
-		glm::vec2 firstSlotTopLeft = {s_ScreenWidth * firstSlotLeftXborderRatio,
-									  s_ScreenHeight * firstSlotTopYborderRatio};
+		// ---- Constants for Item Rendering ----
+		const float slotSizeRatioX = 64.f / 1920.f;
+		const float slotSizeRatioY = 64.f / 1009.f;
+		const glm::vec2 slotSize = {s_ScreenWidth * slotSizeRatioX, s_ScreenHeight * slotSizeRatioY};
+		const float slotPaddingRatioX = 8.f / 1920.f;
+		const float slotPaddingRatioY = 8.f / 1009.f;
+		const glm::vec2 slotPadding = {s_ScreenWidth * slotPaddingRatioX, s_ScreenHeight * slotPaddingRatioY};
+		const glm::vec2 cursorPosition{s_InputsSnapshot->Mouse.Xpos, s_InputsSnapshot->Mouse.Ypos};
 
-		glm::vec2 cursorPosition{s_InputsSnapshot->Mouse.Xpos, s_InputsSnapshot->Mouse.Ypos};
-		int hoveredSlotIndex = m_HotbarBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstSlotTopLeft);
-		Inventory inventory = player->GetHotbar();
-		inventory.SelectedIndex() = hoveredSlotIndex;
-		m_HotbarBlockMesh->SetInventory(inventory, slotSize, slotPadding);
+		// ---- Hotbar Item Rendering ----
+		const float firstHotbarSlotLeftXborderRatio = 640.f / 1920.f;
+		const float firstHotbarSlotTopYborderRatio = (763.f - 23.f) / 1009.f;
+		const glm::vec2 firstHotbarSlotTopLeft = {s_ScreenWidth * firstHotbarSlotLeftXborderRatio,
+												  s_ScreenHeight * firstHotbarSlotTopYborderRatio};
+
+		const int hoveredHotbarSlotIndex =
+			m_HotbarBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstHotbarSlotTopLeft);
+		Inventory hotbar = player->GetHotbar();
+		hotbar.SelectedIndex() = hoveredHotbarSlotIndex;
+		m_HotbarBlockMesh->SetInventory(hotbar, slotSize, slotPadding);
 		if (m_HotbarBlockMesh->IsDirty())
 		{
 			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
 			meshBuilder.UpdateUiBlockMesh(m_HotbarBlockMesh);
 		}
-		m_HotbarBlockMesh->Render(firstSlotTopLeft, s_ScreenWidth, s_ScreenHeight);
+		m_HotbarBlockMesh->Render(firstHotbarSlotTopLeft, s_ScreenWidth, s_ScreenHeight);
+
+		// ---- Inventory Item Rendering ----
+		const float firstInventorySlotLeftXborderRatio = 640.f / 1920.f;
+		const float firstInventorySlotTopYborderRatio = (531.f - 23.f) / 1009.f;
+		const glm::vec2 firstInventorySlotTopLeft = {s_ScreenWidth * firstInventorySlotLeftXborderRatio,
+													 s_ScreenHeight * firstInventorySlotTopYborderRatio};
+
+		const int hoveredInventorySlotIndex =
+			m_InventoryBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstInventorySlotTopLeft);
+		Inventory inventory = player->GetPlayerInventory();
+		inventory.SelectedIndex() = hoveredInventorySlotIndex;
+		m_InventoryBlockMesh->SetInventory(inventory, slotSize, slotPadding);
+		if (m_InventoryBlockMesh->IsDirty())
+		{
+			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
+			meshBuilder.UpdateUiBlockMesh(m_InventoryBlockMesh);
+		}
+		m_InventoryBlockMesh->Render(firstInventorySlotTopLeft, s_ScreenWidth, s_ScreenHeight);
 	}
 
 	void InventoryPanel::Initialize()

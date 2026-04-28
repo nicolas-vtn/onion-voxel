@@ -32,6 +32,7 @@ namespace onion::voxel
 		Label m_Crafting_Label;
 
 		std::shared_ptr<UiBlockMesh> m_HotbarBlockMesh = std::make_shared<UiBlockMesh>(Inventory{1, 9});
+		std::shared_ptr<UiBlockMesh> m_InventoryBlockMesh = std::make_shared<UiBlockMesh>(Inventory{3, 9});
 
 		// ----- Textures -----
 	  private:

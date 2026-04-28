@@ -135,8 +135,10 @@ namespace onion::voxel
 		//if (EngineContext::Get().ShowDebugMenus)
 		//	RenderDebugPanel();
 
+		glm::vec2 roundedPosition = glm::round(topLeftPosition);
+
 		s_Shader.Use();
-		s_Shader.setVec2("u_PositionOffset", topLeftPosition);
+		s_Shader.setVec2("u_PositionOffset", roundedPosition);
 		s_Shader.setMat4("u_ViewProjMatrix", viewProjMatrix);
 		s_Shader.setVec3("u_LightColor", s_LightColor);
 		s_Shader.setBool("u_UseFaceShading", true);
@@ -180,7 +182,7 @@ namespace onion::voxel
 			// Retreves coordinates of the selected slot
 			const int& selectedIndex = m_Inventory.SelectedIndex();
 			const auto& [selectedRow, selectedColumn] = m_Inventory.GetRowColumnFromIndex(selectedIndex);
-			glm::vec2 selectedSlotPos = topLeftPosition +
+			glm::vec2 selectedSlotPos = roundedPosition +
 				glm::vec2(selectedColumn * (m_SlotSize.x + m_SlotPadding.x),
 						  selectedRow * (m_SlotSize.y + m_SlotPadding.y));
 			glm::vec2 selectedSlotBottomRight = selectedSlotPos + m_SlotSize;

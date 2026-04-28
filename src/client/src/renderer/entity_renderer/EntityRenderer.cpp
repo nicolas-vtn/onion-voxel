@@ -806,6 +806,13 @@ namespace onion::voxel
 
 					ImGui::Text("Selected ID:     %d", (int) hotbar.Content()[hotbar.SelectedIndex()]);
 					ImGui::Text("Non-empty slots: %d / 9", nonEmpty);
+
+					if (ImGui::Button("Clear Hotbar"))
+					{
+						for (BlockId& id : hotbar.Content())
+							id = BlockId::Air;
+						player->SetHotbar(hotbar);
+					}
 				}
 				else
 				{
@@ -823,6 +830,23 @@ namespace onion::voxel
 						if (id != BlockId::Air)
 							used++;
 					ImGui::Text("Used slots: %d / 27", used);
+
+					if (ImGui::Button("Fill with Random Items"))
+					{
+						const int blockCount = BlockIds::GetBlockIdCount();
+						for (BlockId& id : inventory.Content())
+							id = static_cast<BlockId>(rand() % blockCount);
+						player->SetPlayerInventory(inventory);
+					}
+
+					ImGui::SameLine();
+
+					if (ImGui::Button("Clear Inventory"))
+					{
+						for (BlockId& id : inventory.Content())
+							id = BlockId::Air;
+						player->SetPlayerInventory(inventory);
+					}
 				}
 				else
 				{
