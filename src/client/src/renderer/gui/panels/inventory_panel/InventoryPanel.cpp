@@ -118,20 +118,6 @@ namespace onion::voxel
 		}
 		m_HotbarBlockMesh->Render(firstHotbarSlotTopLeft, s_ScreenWidth, s_ScreenHeight);
 
-		// ---- Tooltip Rendering for Hotbar (if needed) ----
-		if (hoveredHotbarSlotIndex != -1)
-		{
-			BlockId hoveredBlockId = hotbar.At(hoveredHotbarSlotIndex);
-			if (hoveredBlockId != BlockId::Air) // Only show tooltip for non-empty slots
-			{
-				const std::string tooltipText = BuildTooltipText(hoveredBlockId);
-				m_Tooltip.SetText(tooltipText);
-				m_Tooltip.SetTextHeight(s_TextHeight);
-				m_Tooltip.SetPosition(cursorPosition);
-				m_Tooltip.Render();
-			}
-		}
-
 		// ---- Inventory Item Rendering ----
 		const float firstInventorySlotLeftXborderRatio = 640.f / 1920.f;
 		const float firstInventorySlotTopYborderRatio = (531.f - 23.f) / 1009.f;
@@ -149,6 +135,20 @@ namespace onion::voxel
 			meshBuilder.UpdateUiBlockMesh(m_InventoryBlockMesh);
 		}
 		m_InventoryBlockMesh->Render(firstInventorySlotTopLeft, s_ScreenWidth, s_ScreenHeight);
+
+		// ---- Tooltip Rendering for Hotbar (if needed) ----
+		if (hoveredHotbarSlotIndex != -1)
+		{
+			BlockId hoveredBlockId = hotbar.At(hoveredHotbarSlotIndex);
+			if (hoveredBlockId != BlockId::Air) // Only show tooltip for non-empty slots
+			{
+				const std::string tooltipText = BuildTooltipText(hoveredBlockId);
+				m_Tooltip.SetText(tooltipText);
+				m_Tooltip.SetTextHeight(s_TextHeight);
+				m_Tooltip.SetPosition(cursorPosition);
+				m_Tooltip.Render();
+			}
+		}
 
 		// ---- Tooltip Rendering for Inventory (if needed) ----
 		if (hoveredInventorySlotIndex != -1)

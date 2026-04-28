@@ -99,6 +99,13 @@ namespace onion::voxel
 
 		glActiveTexture(GL_TEXTURE0);
 
+		// GUI sprites are 2D overlays — disable depth writes/test so they never occlude
+		// or get occluded by 3D geometry, and enable blending for alpha transparency.
+		glDepthMask(GL_FALSE);
+		glDisable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 		// Top Left
 		glBindVertexArray(m_VAO_TopLeft);
 		m_TextureTopLeft.Bind();
@@ -154,6 +161,11 @@ namespace onion::voxel
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_Indices.size()), GL_UNSIGNED_INT, 0);
 
 		glBindVertexArray(0);
+
+		// Restore GL state.
+		glDisable(GL_BLEND);
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
 	}
 
 	void NineSliceSprite::Delete()
