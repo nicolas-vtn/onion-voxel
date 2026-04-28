@@ -126,7 +126,6 @@ namespace onion::voxel
 
 	int Chunk::GetHeightAt(int x, int z) const
 	{
-		BlockId selectedBlockId = GetBlock({x, m_ChunkHeight - 1, z}).ID;
 		for (int i = m_ChunkHeight - 1; i >= 0; i--)
 		{
 			BlockId blockId = GetBlock({x, i, z}).ID;

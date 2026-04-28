@@ -1,6 +1,7 @@
 #pragma once
 
 #include <renderer/gui/GuiElement.hpp>
+#include <renderer/gui/controls/label/Label.hpp>
 #include <renderer/gui/controls/sprite/Sprite.hpp>
 
 namespace onion::voxel
@@ -26,6 +27,7 @@ namespace onion::voxel
 		// ----- Controls -----
 	  private:
 		Sprite m_InventoryBackground_Sprite;
+		Label m_Crafting_Label;
 
 		// ----- Textures -----
 	  private:

@@ -6,11 +6,19 @@ namespace onion::voxel
 {
 	InventoryPanel::InventoryPanel(const std::string& name)
 		: GuiElement(name), m_InventoryBackground_Sprite(
-								"InventoryBackground_Sprite", s_PathInventoryBackground, Sprite::eOrigin::ResourcePack)
+								"InventoryBackground_Sprite", s_PathInventoryBackground, Sprite::eOrigin::ResourcePack),
+		  m_Crafting_Label("Crafting_Label")
 	{
 		SubscribeToControlEvents();
 
 		m_InventoryBackground_Sprite.SetZOffset(0.55f); // Ensure it's in front of the Hotbar
+
+		m_Crafting_Label.SetZOffset(0.6f); // Ensure it's in front of the inventory background
+		m_Crafting_Label.SetText("Crafting");
+		glm::vec3 craftingTextColor = {63 / 255.f, 63 / 255.f, 63 / 255.f}; // Light gray color
+		m_Crafting_Label.SetCustomTextColor(craftingTextColor);
+		m_Crafting_Label.EnableShadow(false);
+		m_Crafting_Label.SetTextAlignment(Font::eTextAlignment::Left);
 	}
 
 	InventoryPanel::~InventoryPanel()
@@ -49,11 +57,20 @@ namespace onion::voxel
 		m_InventoryBackground_Sprite.SetPosition(backgroundPos);
 		m_InventoryBackground_Sprite.SetSize(backgroundSize);
 		m_InventoryBackground_Sprite.Render();
+
+		// ---- Crafting Label ----
+		float labelXratio = 996.f / 1920.f;
+		float labelYratio = (235.f - 23.f) / 1009.f;
+		glm::vec2 labelPos = {s_ScreenWidth * labelXratio, s_ScreenHeight * labelYratio};
+		m_Crafting_Label.SetPosition(labelPos);
+		m_Crafting_Label.SetTextHeight(s_TextHeight);
+		m_Crafting_Label.Render();
 	}
 
 	void InventoryPanel::Initialize()
 	{
 		m_InventoryBackground_Sprite.Initialize();
+		m_Crafting_Label.Initialize();
 
 		SetInitState(true);
 	}
@@ -61,6 +78,7 @@ namespace onion::voxel
 	void InventoryPanel::Delete()
 	{
 		m_InventoryBackground_Sprite.Delete();
+		m_Crafting_Label.Delete();
 
 		SetDeletedState(true);
 	}
@@ -68,6 +86,7 @@ namespace onion::voxel
 	void InventoryPanel::ReloadTextures()
 	{
 		m_InventoryBackground_Sprite.ReloadTextures();
+		m_Crafting_Label.ReloadTextures();
 	}
 
 	void InventoryPanel::SubscribeToControlEvents()
