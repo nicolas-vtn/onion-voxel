@@ -512,6 +512,77 @@ namespace
 		return name;
 	}
 
+	static size_t PickCanonicalGuiVariantIndex(const std::vector<onion::voxel::VariantModel>& variants)
+	{
+		for (size_t i = 0; i < variants.size(); i++)
+		{
+			const auto& props = variants[i].Properties;
+			auto shapeIt = props.find("shape");
+			if (shapeIt != props.end() && shapeIt->second == "straight")
+				return i;
+		}
+		return 0;
+	}
+
+	static void InjectGuiVariant(const std::string& blockResourceName,
+								 const onion::voxel::ZipArchive& modelArchive,
+								 std::vector<onion::voxel::VariantModel>& variants)
+	{
+		using namespace onion::voxel;
+
+		for (const auto& variant : variants)
+		{
+			auto it = variant.Properties.find("gui");
+			if (it != variant.Properties.end() && it->second == "true")
+				return;
+		}
+
+		VariantModel guiVariant;
+		bool guiModelResolved = false;
+
+		const std::filesystem::path itemModelPath = std::filesystem::path("item") / (blockResourceName + ".json");
+		if (modelArchive.FileExists(itemModelPath))
+		{
+			guiVariant.Model =
+				BlockModel::FromFile((std::filesystem::path("item") / blockResourceName).generic_string());
+			guiModelResolved = true;
+		}
+
+		if (!guiModelResolved)
+		{
+			const std::filesystem::path inventoryModelPath =
+				std::filesystem::path("block") / (blockResourceName + "_inventory.json");
+			if (modelArchive.FileExists(inventoryModelPath))
+			{
+				guiVariant.Model = BlockModel::FromFile(blockResourceName + "_inventory");
+				guiModelResolved = true;
+			}
+		}
+
+		if (!guiModelResolved && !variants.empty())
+		{
+			const size_t canonicalVariantIndex = PickCanonicalGuiVariantIndex(variants);
+			guiVariant.Model = variants[canonicalVariantIndex].Model;
+			guiModelResolved = true;
+		}
+
+		if (!guiModelResolved)
+		{
+			const std::filesystem::path blockModelPath = std::filesystem::path("block") / (blockResourceName + ".json");
+			if (modelArchive.FileExists(blockModelPath))
+			{
+				guiVariant.Model = BlockModel::FromFile(blockResourceName);
+				guiModelResolved = true;
+			}
+		}
+
+		if (!guiModelResolved)
+			return;
+
+		guiVariant.Properties["gui"] = "true";
+		variants.push_back(std::move(guiVariant));
+	}
+
 	// Parse "axis=x,waterlogged=false" → { "axis" -> "x", "waterlogged" -> "false" }
 	// An empty key string → empty map (matches-all variant)
 	static std::map<std::string, std::string> ParseProperties(const std::string& key)
@@ -625,6 +696,7 @@ namespace onion::voxel
 		std::unordered_map<BlockId, std::vector<VariantModel>> blockstateMap;
 
 		ZipArchive archive(s_BlockstateArchiveFilePath);
+		ZipArchive modelArchive(s_ModelArchiveFilePath);
 		std::vector<std::filesystem::path> blockstateFiles = archive.GetFileList();
 
 		for (const auto& blockstateFile : blockstateFiles)
@@ -634,6 +706,7 @@ namespace onion::voxel
 
 			const std::string blockName = ToBlockName(blockstateFile.filename().string());
 			BlockId blockId = BlockIds::GetId(blockName);
+			const std::string blockResourceName = blockstateFile.stem().string();
 
 			if (json.contains("variants") && json.at("variants").is_object())
 			{
@@ -721,6 +794,10 @@ namespace onion::voxel
 											 blockstateMap[blockId].push_back(std::move(variant));
 									 });
 			}
+
+			auto blockIt = blockstateMap.find(blockId);
+			if (blockIt != blockstateMap.end())
+				InjectGuiVariant(blockResourceName, modelArchive, blockIt->second);
 		}
 
 		return blockstateMap;

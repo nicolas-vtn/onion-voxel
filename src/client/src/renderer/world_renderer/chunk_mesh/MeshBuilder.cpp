@@ -599,22 +599,10 @@ namespace onion::voxel
 				if (registryIt == blockstateRegistry.end() || registryIt->second.empty())
 					continue;
 
-				// Pick the best variant for inventory display.
-				// Prefer a variant with shape=straight (stairs, walls, fences) so the inventory icon
-				// shows a canonical shape rather than an inner/outer corner or rotated variant.
-				// Falls back to variant 0 for blocks that have no shape property.
 				const auto& variants = registryIt->second;
-				size_t bestVariantIdx = 0;
-				for (size_t vi = 0; vi < variants.size(); ++vi)
-				{
-					const auto& props = variants[vi].Properties;
-					auto shapeIt = props.find("shape");
-					if (shapeIt != props.end() && shapeIt->second == "straight")
-					{
-						bestVariantIdx = vi;
-						break;
-					}
-				}
+				const uint8_t guiVariantIdx = BlockstateRegistry::GetVariantIndex(blockId, {{"gui", "true"}});
+				const size_t bestVariantIdx =
+					static_cast<size_t>(guiVariantIdx) < variants.size() ? static_cast<size_t>(guiVariantIdx) : 0;
 
 				const BlockModel::DisplayInfo& gui = variants[bestVariantIdx].Model.ModelDisplay.Gui;
 
