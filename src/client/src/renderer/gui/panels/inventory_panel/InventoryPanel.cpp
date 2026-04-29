@@ -21,7 +21,9 @@ namespace onion::voxel
 	InventoryPanel::InventoryPanel(const std::string& name)
 		: GuiElement(name), m_InventoryBackground_Sprite(
 								"InventoryBackground_Sprite", s_PathInventoryBackground, Sprite::eOrigin::ResourcePack),
-		  m_Crafting_Label("Crafting_Label"), m_Tooltip("InventoryTooltip")
+		  m_Crafting_Label("Crafting_Label"), m_Tooltip("InventoryTooltip"),
+		  m_PreviousPage_Button("PreviousPage_Button"), m_NextPage_Button("NextPage_Button"),
+		  m_PageIndicator_Label("PageIndicator_Label"), m_Search_TextField("Search_TextField")
 	{
 		SubscribeToControlEvents();
 
@@ -35,6 +37,15 @@ namespace onion::voxel
 		m_Crafting_Label.SetTextAlignment(Font::eTextAlignment::Left);
 
 		m_Tooltip.SetZOffset(0.85f);
+
+		m_PreviousPage_Button.SetText("◀");
+
+		m_NextPage_Button.SetText("▶");
+
+		m_PageIndicator_Label.SetTextAlignment(Font::eTextAlignment::Center);
+		m_PageIndicator_Label.SetZOffset(0.6f); // Ensure it's in front of the inventory background
+
+		m_Search_TextField.SetPlaceholderText("Search...");
 	}
 
 	InventoryPanel::~InventoryPanel()
@@ -137,6 +148,103 @@ namespace onion::voxel
 		}
 		m_InventoryBlockMesh->Render(firstInventorySlotTopLeft, s_ScreenWidth, s_ScreenHeight);
 
+		// ----- Button Constants -----
+		const float pageButtonYratio = (88.f - 23.f) / 1009.f;
+		const int pageButtonY = static_cast<int>(std::round(s_ScreenHeight * pageButtonYratio));
+		const float pageButtonWidthRatio = 80.f / 1920.f;
+		const int pageButtonWidth = static_cast<int>(std::round(s_ScreenWidth * pageButtonWidthRatio));
+		const float pageButtonHeightRatio = 80.f / 1009.f;
+		const int pageButtonHeight = static_cast<int>(std::round(s_ScreenHeight * pageButtonHeightRatio));
+		const glm::ivec2 pageButtonSize = {pageButtonWidth, pageButtonHeight};
+
+		const float prevPageButtonXratio = 1432.f / 1920.f;
+		const int prevPageButtonX = static_cast<int>(std::round(s_ScreenWidth * prevPageButtonXratio));
+		const float nextPageButtonXratio = 1858.f / 1920.f;
+		const int nextPageButtonX = static_cast<int>(std::round(s_ScreenWidth * nextPageButtonXratio));
+
+		// ---- Render Previous Page Button ----
+		const glm::ivec2 prevPageButtonPos{prevPageButtonX, pageButtonY};
+		m_PreviousPage_Button.SetPosition(prevPageButtonPos);
+		m_PreviousPage_Button.SetSize(pageButtonSize);
+		m_PreviousPage_Button.Render();
+
+		// ---- Render Next Page Button ----
+		const glm::ivec2 nextPageButtonPos{nextPageButtonX, pageButtonY};
+		m_NextPage_Button.SetPosition(nextPageButtonPos);
+		m_NextPage_Button.SetSize(pageButtonSize);
+		m_NextPage_Button.Render();
+
+		// ---- Render darker background behind page indicator ----
+		const int bgTopLeftX = prevPageButtonX + (pageButtonWidth / 2.f);
+		const int bgTopLeftY = pageButtonY - (pageButtonHeight / 2.f);
+		const glm::ivec2 pageIndicatorBgTopLeft = {bgTopLeftX, bgTopLeftY};
+		const int bgBottomRightX = nextPageButtonX - (pageButtonWidth / 2.f);
+		const int bgBottomRightY = pageButtonY + (pageButtonHeight / 2.f);
+		const glm::ivec2 pageIndicatorBgBottomRight = {bgBottomRightX, bgBottomRightY};
+
+		ColoredBackground::CornerOptions pageIndicatorBgOptions;
+		pageIndicatorBgOptions.TopLeftCorner = pageIndicatorBgTopLeft;
+		pageIndicatorBgOptions.BottomRightCorner = pageIndicatorBgBottomRight;
+		pageIndicatorBgOptions.ZOffset = 0.53f;
+		pageIndicatorBgOptions.Color = {0.f, 0.f, 0.f, 0.5f};
+		ColoredBackground::Render(pageIndicatorBgOptions);
+
+		// ---- Render Page Indicator Label ----
+		const int pageIndicatorX = (nextPageButtonX - prevPageButtonX) / 2.f + prevPageButtonX;
+		const int pageIndicatorY = pageButtonY;
+		const glm::ivec2 pageIndicatorPos = {pageIndicatorX, pageIndicatorY};
+		m_PageIndicator_Label.SetText("1/25");
+		m_PageIndicator_Label.SetPosition(pageIndicatorPos);
+		m_PageIndicator_Label.SetTextHeight(s_TextHeight);
+		m_PageIndicator_Label.Render();
+
+		// ---- Render Search Text Field ----
+		const float searchFieldYratio = (972.f - 23.f) / 1009.f;
+		const int searchFieldY = static_cast<int>(std::round(s_ScreenHeight * searchFieldYratio));
+		const glm::ivec2 searchFieldPos = {pageIndicatorX, searchFieldY};
+		// From left of first button, to right of second.
+		const int searchFieldWidth =
+			(nextPageButtonX + (pageButtonWidth / 2.f)) - (prevPageButtonX - (pageButtonWidth / 2.f));
+		m_Search_TextField.SetPosition(searchFieldPos);
+		m_Search_TextField.SetSize({searchFieldWidth, pageButtonHeight});
+		m_Search_TextField.Render();
+
+		// ----- Render Creative Tab Blocks -----
+		const float firstCreativeTabSlotLeftXborderRatio = 1392.f / 1920.f;
+		const int firstCreativeTabSlotLeftXborder =
+			static_cast<int>(std::round(s_ScreenWidth * firstCreativeTabSlotLeftXborderRatio));
+		const float firstCreativeTabSlotTopYborderRatio = (136.f - 23.f) / 1009.f;
+		const int firstCreativeTabSlotTopYborder =
+			static_cast<int>(std::round(s_ScreenHeight * firstCreativeTabSlotTopYborderRatio));
+		const glm::vec2 firstCreativeTabSlotBorder = {firstCreativeTabSlotLeftXborder, firstCreativeTabSlotTopYborder};
+
+		const int hoveredCreativeSlotIndex =
+			m_CreativeBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstCreativeTabSlotBorder);
+		m_CreativeTabInventory.SelectedIndex() = hoveredCreativeSlotIndex;
+		const std::vector<BlockId>& creativeTabBlockIds = GetCreativeTabBlockIds();
+		// Populate with first 70 block IDs for demonstration (you can implement pagination later)
+		const int slotsPerPage = m_CreativeTabInventory.Rows() * m_CreativeTabInventory.Columns();
+		for (int i = 0; i < slotsPerPage; i++)
+		{
+			if (i < static_cast<int>(creativeTabBlockIds.size()))
+			{
+				m_CreativeTabInventory.At(i) = creativeTabBlockIds[i];
+			}
+			else
+			{
+				m_CreativeTabInventory.At(i) = BlockId::Air; // Empty slot
+			}
+		}
+
+		m_CreativeBlockMesh->SetSlotBorder(slotBorder);
+		m_CreativeBlockMesh->SetInventory(m_CreativeTabInventory, slotSize, slotPadding);
+		if (m_CreativeBlockMesh->IsDirty())
+		{
+			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
+			meshBuilder.UpdateUiBlockMesh(m_CreativeBlockMesh);
+		}
+		m_CreativeBlockMesh->Render(firstCreativeTabSlotBorder, s_ScreenWidth, s_ScreenHeight);
+
 		// ---- Tooltip Rendering for Hotbar (if needed) ----
 		if (hoveredHotbarSlotIndex != -1)
 		{
@@ -164,6 +272,20 @@ namespace onion::voxel
 				m_Tooltip.Render();
 			}
 		}
+
+		// ---- Tooltip Rendering for Creative Tab (if needed) ----
+		if (hoveredCreativeSlotIndex != -1)
+		{
+			BlockId hoveredBlockId = m_CreativeTabInventory.At(hoveredCreativeSlotIndex);
+			if (hoveredBlockId != BlockId::Air) // Only show tooltip for non-empty slots
+			{
+				const std::string tooltipText = BuildTooltipText(hoveredBlockId);
+				m_Tooltip.SetText(tooltipText);
+				m_Tooltip.SetTextHeight(s_TextHeight);
+				m_Tooltip.SetPosition(cursorPosition);
+				m_Tooltip.Render();
+			}
+		}
 	}
 
 	void InventoryPanel::Initialize()
@@ -171,6 +293,10 @@ namespace onion::voxel
 		m_InventoryBackground_Sprite.Initialize();
 		m_Crafting_Label.Initialize();
 		m_Tooltip.Initialize();
+		m_PreviousPage_Button.Initialize();
+		m_NextPage_Button.Initialize();
+		m_PageIndicator_Label.Initialize();
+		m_Search_TextField.Initialize();
 
 		SetInitState(true);
 	}
@@ -180,6 +306,10 @@ namespace onion::voxel
 		m_InventoryBackground_Sprite.Delete();
 		m_Crafting_Label.Delete();
 		m_Tooltip.Delete();
+		m_PreviousPage_Button.Delete();
+		m_NextPage_Button.Delete();
+		m_PageIndicator_Label.Delete();
+		m_Search_TextField.Delete();
 
 		SetDeletedState(true);
 	}
@@ -189,6 +319,26 @@ namespace onion::voxel
 		m_InventoryBackground_Sprite.ReloadTextures();
 		m_Crafting_Label.ReloadTextures();
 		m_Tooltip.ReloadTextures();
+		m_PreviousPage_Button.ReloadTextures();
+		m_NextPage_Button.ReloadTextures();
+		m_PageIndicator_Label.ReloadTextures();
+		m_Search_TextField.ReloadTextures();
+	}
+
+	const std::vector<BlockId>& InventoryPanel::GetCreativeTabBlockIds()
+	{
+		static std::vector<BlockId> creativeTabBlockIds = []
+		{
+			std::vector<BlockId> blockIds;
+			blockIds.reserve(static_cast<size_t>(BlockId::Count) + 1);
+			for (int blockIdInt = 0; blockIdInt <= static_cast<int>(BlockId::Count); blockIdInt++)
+			{
+				blockIds.push_back(static_cast<BlockId>(blockIdInt));
+			}
+			return blockIds;
+		}();
+
+		return creativeTabBlockIds;
 	}
 
 	void InventoryPanel::SubscribeToControlEvents()
