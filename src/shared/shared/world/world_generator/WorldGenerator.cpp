@@ -248,9 +248,27 @@ namespace onion::voxel
 			}
 
 			const auto& variants = blockstates.at(id);
-			uint8_t variantCount = static_cast<uint8_t>(variants.size());
 
-			for (uint8_t variantIndex = 0; variantIndex < variantCount; variantIndex++)
+			auto isDemoEligibleVariant = [](const VariantModel& variant) -> bool
+			{
+				auto guiIt = variant.Properties.find("gui");
+				if (guiIt != variant.Properties.end() && guiIt->second == "true")
+					return false;
+				return true;
+			};
+
+			std::vector<uint8_t> demoVariantIndices;
+			demoVariantIndices.reserve(variants.size());
+			for (size_t i = 0; i < variants.size(); i++)
+			{
+				if (isDemoEligibleVariant(variants[i]))
+					demoVariantIndices.push_back(static_cast<uint8_t>(i));
+			}
+
+			if (demoVariantIndices.empty() && !variants.empty())
+				demoVariantIndices.push_back(0);
+
+			for (uint8_t variantIndex : demoVariantIndices)
 			{
 				if (x >= max)
 				{
