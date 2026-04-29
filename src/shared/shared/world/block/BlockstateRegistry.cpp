@@ -1,5 +1,6 @@
 #include "BlockstateRegistry.hpp"
 
+#include <limits>
 #include <set>
 #include <sstream>
 
@@ -647,11 +648,18 @@ namespace onion::voxel
 		auto it = blockstateMap.find(id);
 		if (it != blockstateMap.end())
 		{
-			// Searches for the first variant that fits all the given properties.
 			const auto& variants = it->second;
+
+			size_t bestSubsetIndex = std::numeric_limits<size_t>::max();
+			size_t bestSubsetScore = 0;
+
 			for (size_t i = 0; i < variants.size(); i++)
 			{
 				const auto& variant = variants[i];
+
+				if (variant.Properties == properties)
+					return static_cast<uint8_t>(i);
+
 				bool matches = true;
 
 				for (const auto& [key, value] : variant.Properties)
@@ -665,8 +673,18 @@ namespace onion::voxel
 				}
 
 				if (matches)
-					return static_cast<uint8_t>(i);
+				{
+					const size_t score = variant.Properties.size();
+					if (bestSubsetIndex == std::numeric_limits<size_t>::max() || score > bestSubsetScore)
+					{
+						bestSubsetIndex = i;
+						bestSubsetScore = score;
+					}
+				}
 			}
+
+			if (bestSubsetIndex != std::numeric_limits<size_t>::max())
+				return static_cast<uint8_t>(bestSubsetIndex);
 		}
 
 		return 0;
