@@ -406,14 +406,29 @@ namespace onion::voxel
 			bool hasInventoryModel = s_InventoryModels.find(blockId) != s_InventoryModels.end();
 			if (!hasInventoryModel)
 			{
-				if (!blockstateMap[blockId].empty())
+				const auto& variants = blockstateMap[blockId];
+
+				if (!variants.empty())
 				{
-					s_InventoryModels[blockId] = blockstateMap[blockId][0].Model;
+					size_t bestVariantIdx = 0;
+					for (size_t vi = 0; vi < variants.size(); ++vi)
+					{
+						const auto& props = variants[vi].Properties;
+						auto shapeIt = props.find("shape");
+						if (shapeIt != props.end() && shapeIt->second == "straight")
+						{
+							bestVariantIdx = vi;
+							break;
+						}
+					}
+
+					const BlockModel& inventoryModel = variants[bestVariantIdx].Model;
+					s_InventoryModels[blockId] = inventoryModel;
 				}
 				else
 				{
-					std::cout << "Warning: No model found for inventory of block ID " << static_cast<uint16_t>(blockId)
-							  << " (" << BlockIds::GetName(blockId) << ")." << std::endl;
+					std::cout << "Warning: No variants found for block " << blockName << " ("
+							  << static_cast<int>(blockId) << ")" << std::endl;
 				}
 			}
 		}
