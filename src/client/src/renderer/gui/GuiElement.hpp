@@ -116,7 +116,10 @@ namespace onion::voxel
 	  public:
 		static void SetScreenSize(int screenWidth, int screenHeight);
 		static void SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot);
-		static inline std::atomic_bool s_IsBackPressed;
+		static bool AreKeyInputsValid();
+		static bool IsBackPressed();
+
+		static inline std::atomic<uint64_t> s_KeyInputsValidFromFrame{0};
 
 		// ----- Static Methods ----- (for Initialization and Unload)
 	  public:

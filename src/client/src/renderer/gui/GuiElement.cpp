@@ -128,6 +128,16 @@ namespace onion::voxel
 		s_InputsSnapshot = inputsSnapshot;
 	}
 
+	bool GuiElement::AreKeyInputsValid()
+	{
+		return EngineContext::Get().FrameCount >= s_KeyInputsValidFromFrame;
+	}
+
+	bool GuiElement::IsBackPressed()
+	{
+		return AreKeyInputsValid() && EngineContext::Get().Keys->GetKeyState(eAction::CloseMenu).IsPressed;
+	}
+
 	void GuiElement::Load()
 	{
 		Font::StaticInitialize();

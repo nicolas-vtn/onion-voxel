@@ -55,7 +55,7 @@ namespace onion::voxel
 			tileToDelete->Delete();
 		}
 
-		if (s_IsBackPressed)
+		if (IsBackPressed())
 		{
 			m_TimerScanResourcePacksFolder.Stop();
 			EvtRequestBackNavigation.Trigger(this);

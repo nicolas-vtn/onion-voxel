@@ -60,7 +60,7 @@ namespace onion::voxel
 
 	void OptionsPanel::Render()
 	{
-		if (s_IsBackPressed)
+		if (IsBackPressed())
 		{
 			EvtRequestBackNavigation.Trigger(this);
 			return;
@@ -256,22 +256,22 @@ namespace onion::voxel
 	void OptionsPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(m_MusicAndSounds_Button.EvtClick.Subscribe([this](const Button& sender)
-																		   { Handle_MusicAndSounds_Click(sender); }));
+																			{ Handle_MusicAndSounds_Click(sender); }));
 
 		m_EventHandles.push_back(
 			m_Controls_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Controls_Click(sender); }));
 
 		m_EventHandles.push_back(m_ResourcePacks_Button.EvtClick.Subscribe([this](const Button& sender)
-																		  { Handle_ResourcePacks_Click(sender); }));
+																		   { Handle_ResourcePacks_Click(sender); }));
 
 		m_EventHandles.push_back(
 			m_Done_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Done_Click(sender); }));
 
 		m_EventHandles.push_back(m_Fov_Slider.EvtValueChanged.Subscribe([this](const Slider& sender)
-																	   { Handle_Fov_Slider_ValueChanged(sender); }));
+																		{ Handle_Fov_Slider_ValueChanged(sender); }));
 
 		m_EventHandles.push_back(m_VideoSettings_Button.EvtClick.Subscribe([this](const Button& sender)
-																		  { Handle_VideoSettings_Click(sender); }));
+																		   { Handle_VideoSettings_Click(sender); }));
 	}
 
 	void OptionsPanel::Handle_MusicAndSounds_Click(const Button& sender)

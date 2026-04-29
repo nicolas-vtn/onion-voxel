@@ -44,7 +44,8 @@ namespace onion::voxel
 		}
 
 		// Sets the Engine Context
-		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager, &m_KeyBinds, settings, &m_WorldRenderer);
+		EngineContext::Initialize(
+			worldManager.get(), &m_AssetsManager, &m_InputsManager, &m_KeyBinds, settings, &m_WorldRenderer);
 
 		UserSettingsChangedEventArgs args(settings, true);
 
@@ -261,6 +262,9 @@ namespace onion::voxel
 
 			// Pool inputs
 			m_InputsManager.PoolInputs();
+
+			// Increment frame counter
+			EngineContext::Get().FrameCount++;
 
 			// Process Global Inputs
 			ProcessInputs();
@@ -580,8 +584,6 @@ namespace onion::voxel
 
 		auto inputs = m_InputsManager.GetInputsSnapshot();
 		GuiElement::SetInputsSnapshot(inputs);
-		KeyState closeMenuKeyState = m_KeyBinds.GetKeyState(eAction::CloseMenu);
-		GuiElement::s_IsBackPressed = closeMenuKeyState.IsPressed;
 
 		if (m_RenderState == eRenderState::InGame && !m_IsPaused)
 		{
@@ -620,18 +622,11 @@ namespace onion::voxel
 			return;
 
 		// ----- INVENTORY ------
-		bool inInventory = m_Gui.GetActiveMenu() == eMenu::Inventory;
-		KeyState toggleInventoryKeyState = m_KeyBinds.GetKeyState(eAction::OpenInventory);
-		if (inInventory)
-		{
-			if (toggleInventoryKeyState.IsPressed)
-			{
-				m_Gui.SetActiveMenu(eMenu::Gameplay);
-			}
-
+		if (m_Gui.GetActiveMenu() == eMenu::Inventory)
 			return;
-		}
-		else if (toggleInventoryKeyState.IsPressed)
+
+		KeyState toggleInventoryKeyState = m_KeyBinds.GetKeyState(eAction::OpenInventory);
+		if (toggleInventoryKeyState.IsPressed)
 		{
 			m_Gui.SetActiveMenu(eMenu::Inventory);
 			return;

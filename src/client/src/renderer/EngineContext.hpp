@@ -26,6 +26,7 @@ namespace onion::voxel
 		KeyBinds* Keys;
 		WorldRenderer* WrldRenderer;
 		std::atomic_bool ShowDebugMenus{true};
+		std::atomic<uint64_t> FrameCount{0};
 
 		UserSettings Settings() const
 		{

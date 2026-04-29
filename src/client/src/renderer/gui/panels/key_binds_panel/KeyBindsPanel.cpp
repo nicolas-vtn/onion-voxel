@@ -38,7 +38,7 @@ namespace onion::voxel
 
 	void KeyBindsPanel::Render()
 	{
-		if (s_IsBackPressed && !IsAnyTileCapturingKey())
+		if (IsBackPressed() && !IsAnyTileCapturingKey())
 		{
 			Handle_Done_Click(m_Done_Button);
 			return;

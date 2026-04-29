@@ -54,7 +54,7 @@ namespace onion::voxel
 
 	void ControlsPanel::Render()
 	{
-		if (s_IsBackPressed)
+		if (IsBackPressed())
 		{
 			Handle_Done_Click(m_Done_Button);
 			return;
@@ -260,7 +260,7 @@ namespace onion::voxel
 	void ControlsPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(m_MouseSettings_Button.EvtClick.Subscribe([this](const Button& sender)
-																		  { Handle_MouseSettings_Click(sender); }));
+																		   { Handle_MouseSettings_Click(sender); }));
 
 		m_EventHandles.push_back(
 			m_KeyBinds_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_KeyBinds_Click(sender); }));

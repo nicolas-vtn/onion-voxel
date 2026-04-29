@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include <renderer/EngineContext.hpp>
 #include <renderer/gui/colored_background/ColoredBackground.hpp>
 
 #include <renderer/world_renderer/WorldRenderer.hpp>
@@ -57,10 +58,19 @@ namespace onion::voxel
 
 	void InventoryPanel::Render()
 	{
-		if (s_IsBackPressed)
+		if (IsBackPressed())
 		{
 			EvtRequestBackNavigation.Trigger(this);
 			return;
+		}
+
+		if (AreKeyInputsValid() && !m_Search_TextField.IsActive())
+		{
+			if (EngineContext::Get().Keys->GetKeyState(eAction::OpenInventory).IsPressed)
+			{
+				EvtRequestBackNavigation.Trigger(this);
+				return;
+			}
 		}
 
 		// Retreve Player State

@@ -135,7 +135,7 @@ namespace onion::voxel
 
 	void DemoTextsPanel::Render()
 	{
-		if (s_IsBackPressed)
+		if (IsBackPressed())
 		{
 			Handle_BackButtonClick(m_BackButton);
 			return;

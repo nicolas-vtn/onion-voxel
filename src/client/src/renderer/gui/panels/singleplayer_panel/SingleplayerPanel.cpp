@@ -223,7 +223,7 @@ namespace onion::voxel
 
 	void SingleplayerPanel::RenderWorldTiles()
 	{
-		if (s_IsBackPressed)
+		if (IsBackPressed())
 		{
 			Handle_ButtonBackClick(m_ButtonBack);
 			return;
@@ -370,7 +370,7 @@ namespace onion::voxel
 
 	void SingleplayerPanel::RenderDeleteConfirmation()
 	{
-		if (s_IsBackPressed || m_SelectedWorldIndex == -1)
+		if (IsBackPressed() || m_SelectedWorldIndex == -1)
 		{
 			m_CurrentRenderModule = eRenderModule::WorldTiles;
 			return;
@@ -430,7 +430,7 @@ namespace onion::voxel
 
 	void SingleplayerPanel::RenderCreateNewWorld()
 	{
-		if (s_IsBackPressed)
+		if (IsBackPressed())
 		{
 			m_CurrentRenderModule = eRenderModule::WorldTiles;
 			return;
@@ -599,10 +599,10 @@ namespace onion::voxel
 			[this](const Button& button) { Handle_ButtonRefreshWorldTilesClick(button); }));
 
 		m_EventHandles.push_back(m_ButtonDeleteConfirm.EvtClick.Subscribe([this](const Button& button)
-																		 { Handle_DeleteConfirmClick(button); }));
+																		  { Handle_DeleteConfirmClick(button); }));
 
-		m_EventHandles.push_back(
-			m_ButtonDeleteCancel.EvtClick.Subscribe([this](const Button& button) { Handle_DeleteCancelClick(button); }));
+		m_EventHandles.push_back(m_ButtonDeleteCancel.EvtClick.Subscribe([this](const Button& button)
+																		 { Handle_DeleteCancelClick(button); }));
 
 		m_EventHandles.push_back(m_ButtonCreateNewWorldSelectType.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_CreateNewWorldSelectTypeClick(button); }));
