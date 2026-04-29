@@ -297,9 +297,9 @@ namespace onion::voxel
 			const bool countsInAO = BlockstateRegistry::CountsInAO(mono.ID, mono.VariantIndex);
 			if (countsInAO)
 			{
-				const Row FULL_X = Row((1ull << SX) - 1ull);
-				const Row FULL_Z = Row((1ull << SZ) - 1ull);
-				const Row FULL_Y = Row((1ull << SY) - 1ull);
+				const Row FULL_X = ~Row(0);
+				const Row FULL_Z = ~Row(0);
+				const Row FULL_Y = ~Row(0);
 
 				for (int y = 0; y < SY; y++)
 				{

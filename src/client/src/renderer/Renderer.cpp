@@ -527,6 +527,7 @@ namespace onion::voxel
 		InputConfig everyFrame(false, 0, 0, 0);
 		InputConfig noRepeat(true, 9999999, 0, 0);
 		InputConfig repeatWithDelay(true, 0.6f, 0.4f, 0.5f);
+		InputConfig repeatFast(true, 0.6f, 0.03f, 0.5f);
 
 		m_KeyBinds.RemapAction(eAction::WalkForward, actionToKey.at(eAction::WalkForward), everyFrame);
 		m_KeyBinds.RemapAction(eAction::WalkBackward, actionToKey.at(eAction::WalkBackward), everyFrame);
@@ -555,7 +556,7 @@ namespace onion::voxel
 		m_KeyBinds.RemapAction(eAction::Attack, actionToKey.at(eAction::Attack), repeatWithDelay);
 		m_KeyBinds.RemapAction(eAction::Interact, actionToKey.at(eAction::Interact), repeatWithDelay);
 		m_KeyBinds.RemapAction(eAction::ToggleFlyMode, actionToKey.at(eAction::ToggleFlyMode), repeatWithDelay);
-		m_KeyBinds.RemapAction(eAction::DropItem, actionToKey.at(eAction::DropItem), repeatWithDelay);
+		m_KeyBinds.RemapAction(eAction::DropItem, actionToKey.at(eAction::DropItem), repeatFast);
 	}
 
 	void Renderer::ProcessInputs()

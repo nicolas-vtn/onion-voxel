@@ -279,6 +279,9 @@ namespace onion::voxel
 		glm::vec2 pivot = {topLeftCorner.x + size.x * 0.5f, topLeftCorner.y + size.y * 0.5f};
 
 		glm::vec2 currentPos = {startX, startY};
+
+		// Render shadow first
+		if (renderShadow)
 		{
 			currentPos = {startX, startY};
 			glm::ivec2 shadowOffset{static_cast<int>(round(textHeightPx / 8.f)),
@@ -296,13 +299,14 @@ namespace onion::voxel
 													  rotationDegrees,
 													  pivot,
 													  alignment,
-													  size.x);
+													  static_cast<float>(size.x));
 				// Carry Y (line advances) but reset X to startX so the next segment
 				// doesn't inherit a misaligned cursor from the previous segment's end.
 				currentPos = {startX + shadowOffset.x, static_cast<float>(result.y)};
 			}
 		}
 
+		// Render main text
 		currentPos = {startX, startY};
 		for (const TextSegment& segment : segments)
 		{
@@ -316,7 +320,7 @@ namespace onion::voxel
 												  rotationDegrees,
 												  pivot,
 												  alignment,
-												  size.x);
+												  static_cast<float>(size.x));
 			// Carry Y only — reset X to startX between segments.
 			currentPos = {startX, static_cast<float>(result.y)};
 		}
@@ -382,12 +386,20 @@ namespace onion::voxel
 										   rotationDegrees,
 										   pivot,
 										   alignment,
-										   size.x);
+										   static_cast<float>(size.x));
 		}
 
 		currentPos = {startX, startY};
-		currentPos = RenderPartialText(
-			text, textColor, currentPos, format, textHeightPx, zOffset, rotationDegrees, pivot, alignment, size.x);
+		currentPos = RenderPartialText(text,
+									   textColor,
+									   currentPos,
+									   format,
+									   textHeightPx,
+									   zOffset,
+									   rotationDegrees,
+									   pivot,
+									   alignment,
+									   static_cast<float>(size.x));
 	}
 
 	glm::vec2 Font::MeasureText(const std::string& text, float textHeightPx) const

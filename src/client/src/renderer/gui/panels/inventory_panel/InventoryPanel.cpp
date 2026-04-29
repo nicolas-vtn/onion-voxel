@@ -191,11 +191,11 @@ namespace onion::voxel
 		m_NextPage_Button.Render();
 
 		// ---- Render darker background behind page indicator ----
-		const int bgTopLeftX = prevPageButtonX + (pageButtonWidth / 2.f);
-		const int bgTopLeftY = pageButtonY - (pageButtonHeight / 2.f);
+		const int bgTopLeftX = static_cast<int>(std::round(prevPageButtonX + (pageButtonWidth / 2.f)));
+		const int bgTopLeftY = static_cast<int>(std::round(pageButtonY - (pageButtonHeight / 2.f)));
 		const glm::ivec2 pageIndicatorBgTopLeft = {bgTopLeftX, bgTopLeftY};
-		const int bgBottomRightX = nextPageButtonX - (pageButtonWidth / 2.f);
-		const int bgBottomRightY = pageButtonY + (pageButtonHeight / 2.f);
+		const int bgBottomRightX = static_cast<int>(std::round(nextPageButtonX - (pageButtonWidth / 2.f)));
+		const int bgBottomRightY = static_cast<int>(std::round(pageButtonY + (pageButtonHeight / 2.f)));
 		const glm::ivec2 pageIndicatorBgBottomRight = {bgBottomRightX, bgBottomRightY};
 
 		ColoredBackground::CornerOptions pageIndicatorBgOptions;
@@ -206,7 +206,8 @@ namespace onion::voxel
 		ColoredBackground::Render(pageIndicatorBgOptions);
 
 		// ---- Render Page Indicator Label ----
-		const int pageIndicatorX = (nextPageButtonX - prevPageButtonX) / 2.f + prevPageButtonX;
+		const int pageIndicatorX =
+			static_cast<int>(std::round((nextPageButtonX - prevPageButtonX) / 2.f + prevPageButtonX));
 		const int pageIndicatorY = pageButtonY;
 		const glm::ivec2 pageIndicatorPos = {pageIndicatorX, pageIndicatorY};
 		const std::string pageIndicatorText =
@@ -221,8 +222,8 @@ namespace onion::voxel
 		const int searchFieldY = static_cast<int>(std::round(s_ScreenHeight * searchFieldYratio));
 		const glm::ivec2 searchFieldPos = {pageIndicatorX, searchFieldY};
 		// From left of first button, to right of second.
-		const int searchFieldWidth =
-			(nextPageButtonX + (pageButtonWidth / 2.f)) - (prevPageButtonX - (pageButtonWidth / 2.f));
+		const int searchFieldWidth = static_cast<int>(
+			std::round((nextPageButtonX + (pageButtonWidth / 2.f)) - (prevPageButtonX - (pageButtonWidth / 2.f))));
 		m_Search_TextField.SetPosition(searchFieldPos);
 		m_Search_TextField.SetSize({searchFieldWidth, pageButtonHeight});
 		m_Search_TextField.Render();
@@ -262,17 +263,28 @@ namespace onion::voxel
 		}
 		m_CreativeBlockMesh->Render(firstCreativeTabSlotBorder, s_ScreenWidth, s_ScreenHeight);
 
+		// ---- Key Drop Input Handling ----
+		bool dropKeyPressed = EngineContext::Get().Keys->GetKeyState(eAction::DropItem).IsPressed;
+
 		// ---- Tooltip Rendering for Hotbar (if needed) ----
 		if (hoveredHotbarSlotIndex != -1)
 		{
 			BlockId hoveredBlockId = hotbar.At(hoveredHotbarSlotIndex);
 			if (hoveredBlockId != BlockId::Air) // Only show tooltip for non-empty slots
 			{
-				const std::string tooltipText = BuildTooltipText(hoveredBlockId);
-				m_Tooltip.SetText(tooltipText);
-				m_Tooltip.SetTextHeight(s_TextHeight);
-				m_Tooltip.SetPosition(cursorPosition);
-				m_Tooltip.Render();
+				if (dropKeyPressed)
+				{
+					hotbar.At(hoveredHotbarSlotIndex) = BlockId::Air; // Simulate dropping the item by clearing the slot
+					player->SetHotbar(hotbar); // Update the player's hotbar with the modified inventory
+				}
+				else
+				{
+					const std::string tooltipText = BuildTooltipText(hoveredBlockId);
+					m_Tooltip.SetText(tooltipText);
+					m_Tooltip.SetTextHeight(s_TextHeight);
+					m_Tooltip.SetPosition(cursorPosition);
+					m_Tooltip.Render();
+				}
 			}
 		}
 
@@ -282,11 +294,19 @@ namespace onion::voxel
 			BlockId hoveredBlockId = inventory.At(hoveredInventorySlotIndex);
 			if (hoveredBlockId != BlockId::Air) // Only show tooltip for non-empty slots
 			{
-				const std::string tooltipText = BuildTooltipText(hoveredBlockId);
-				m_Tooltip.SetText(tooltipText);
-				m_Tooltip.SetTextHeight(s_TextHeight);
-				m_Tooltip.SetPosition(cursorPosition);
-				m_Tooltip.Render();
+				if (dropKeyPressed)
+				{
+					inventory.At(hoveredInventorySlotIndex) = BlockId::Air; // Clear the slot
+					player->SetPlayerInventory(inventory); // Update the player's inventory with the modified inventory
+				}
+				else
+				{
+					const std::string tooltipText = BuildTooltipText(hoveredBlockId);
+					m_Tooltip.SetText(tooltipText);
+					m_Tooltip.SetTextHeight(s_TextHeight);
+					m_Tooltip.SetPosition(cursorPosition);
+					m_Tooltip.Render();
+				}
 			}
 		}
 
@@ -383,7 +403,8 @@ namespace onion::voxel
 
 		auto toLower = [](std::string s)
 		{
-			std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+			std::transform(
+				s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(::tolower(c)); });
 			return s;
 		};
 
@@ -427,6 +448,7 @@ namespace onion::voxel
 
 	void InventoryPanel::Handle_PreviousPageButtonClick(const Button& button)
 	{
+		(void) button;
 		if (m_MaxPageIndex == 0)
 			return;
 
@@ -435,6 +457,7 @@ namespace onion::voxel
 
 	void InventoryPanel::Handle_NextPageButtonClick(const Button& button)
 	{
+		(void) button;
 		if (m_MaxPageIndex == 0)
 			return;
 
