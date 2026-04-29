@@ -4,6 +4,7 @@
 
 #include <renderer/assets_manager/AssetsManager.hpp>
 #include <renderer/inputs_manager/inputs_manager.hpp>
+#include <renderer/key_binds/KeyBinds.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 #include <user_settings/UserSettings.hpp>
 
@@ -22,6 +23,7 @@ namespace onion::voxel
 		WorldManager* World;
 		AssetsManager* Assets;
 		InputsManager* Inputs;
+		KeyBinds* Keys;
 		WorldRenderer* WrldRenderer;
 		std::atomic_bool ShowDebugMenus{true};
 
@@ -48,13 +50,14 @@ namespace onion::voxel
 		static void Initialize(WorldManager* world,
 							   AssetsManager* assets,
 							   InputsManager* inputs,
+							   onion::voxel::KeyBinds* keyBinds,
 							   const UserSettings& settings,
 							   WorldRenderer* worldRenderer)
 		{
 			if (s_Instance)
 				throw std::runtime_error("EngineContext already initialized");
 
-			s_Instance = new EngineContext(world, assets, inputs, settings, worldRenderer);
+			s_Instance = new EngineContext(world, assets, inputs, keyBinds, settings, worldRenderer);
 		}
 
 		static EngineContext& Get()
@@ -74,9 +77,11 @@ namespace onion::voxel
 		EngineContext(WorldManager* world,
 					  AssetsManager* assets,
 					  InputsManager* inputs,
+					  onion::voxel::KeyBinds* keyBinds,
 					  const UserSettings& settings,
 					  WorldRenderer* worldRenderer)
-			: World(world), Assets(assets), Inputs(inputs), m_Settings(settings), WrldRenderer(worldRenderer)
+			: World(world), Assets(assets), Inputs(inputs), Keys(keyBinds), m_Settings(settings),
+			  WrldRenderer(worldRenderer)
 		{
 		}
 
