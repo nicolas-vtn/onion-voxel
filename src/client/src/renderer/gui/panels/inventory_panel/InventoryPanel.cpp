@@ -162,6 +162,10 @@ namespace onion::voxel
 		const float nextPageButtonXratio = 1858.f / 1920.f;
 		const int nextPageButtonX = static_cast<int>(std::round(s_ScreenWidth * nextPageButtonXratio));
 
+		// ---- Creative Tab Variables ----
+		std::string searchQuery = m_Search_TextField.GetText();
+		UpdateFilteredCreativeTabBlockIds(searchQuery);
+
 		// ---- Render Previous Page Button ----
 		const glm::ivec2 prevPageButtonPos{prevPageButtonX, pageButtonY};
 		m_PreviousPage_Button.SetPosition(prevPageButtonPos);
@@ -193,7 +197,9 @@ namespace onion::voxel
 		const int pageIndicatorX = (nextPageButtonX - prevPageButtonX) / 2.f + prevPageButtonX;
 		const int pageIndicatorY = pageButtonY;
 		const glm::ivec2 pageIndicatorPos = {pageIndicatorX, pageIndicatorY};
-		m_PageIndicator_Label.SetText("1/25");
+		const std::string pageIndicatorText =
+			std::to_string(m_CurrentPageIndex + 1) + "/" + std::to_string(m_MaxPageIndex + 1);
+		m_PageIndicator_Label.SetText(pageIndicatorText);
 		m_PageIndicator_Label.SetPosition(pageIndicatorPos);
 		m_PageIndicator_Label.SetTextHeight(s_TextHeight);
 		m_PageIndicator_Label.Render();
@@ -221,14 +227,13 @@ namespace onion::voxel
 		const int hoveredCreativeSlotIndex =
 			m_CreativeBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstCreativeTabSlotBorder);
 		m_CreativeTabInventory.SelectedIndex() = hoveredCreativeSlotIndex;
-		const std::vector<BlockId>& creativeTabBlockIds = GetCreativeTabBlockIds();
-		// Populate with first 70 block IDs for demonstration (you can implement pagination later)
 		const int slotsPerPage = m_CreativeTabInventory.Rows() * m_CreativeTabInventory.Columns();
+		int startIndex = m_CurrentPageIndex * slotsPerPage;
 		for (int i = 0; i < slotsPerPage; i++)
 		{
-			if (i < static_cast<int>(creativeTabBlockIds.size()))
+			if (startIndex + i < static_cast<int>(m_FilteredCreativeTabBlockIds.size()))
 			{
-				m_CreativeTabInventory.At(i) = creativeTabBlockIds[i];
+				m_CreativeTabInventory.At(i) = m_FilteredCreativeTabBlockIds[startIndex + i];
 			}
 			else
 			{
@@ -331,7 +336,7 @@ namespace onion::voxel
 		{
 			std::vector<BlockId> blockIds;
 			blockIds.reserve(static_cast<size_t>(BlockId::Count) + 1);
-			for (int blockIdInt = 0; blockIdInt <= static_cast<int>(BlockId::Count); blockIdInt++)
+			for (int blockIdInt = 1; blockIdInt < static_cast<int>(BlockId::Count); blockIdInt++)
 			{
 				blockIds.push_back(static_cast<BlockId>(blockIdInt));
 			}
@@ -341,9 +346,76 @@ namespace onion::voxel
 		return creativeTabBlockIds;
 	}
 
+	void InventoryPanel::UpdateFilteredCreativeTabBlockIds(const std::string& search)
+	{
+		// If the search query hasn't changed, no need to update
+		if (m_LastSearchQuery == search)
+			return;
+
+		// If search is empty, show all blocks
+		if (search.empty())
+		{
+			m_FilteredCreativeTabBlockIds = GetCreativeTabBlockIds();
+			m_LastSearchQuery = search;
+
+			// Update Max Page Index based on full list
+			m_MaxPageIndex =
+				static_cast<int>(std::ceil(static_cast<float>(m_FilteredCreativeTabBlockIds.size()) /
+										   (m_CreativeTabInventory.Rows() * m_CreativeTabInventory.Columns()))) -
+				1;
+
+			if (m_CurrentPageIndex > m_MaxPageIndex)
+				m_CurrentPageIndex = 0;
+
+			return;
+		}
+
+		m_FilteredCreativeTabBlockIds.clear();
+
+		for (const BlockId blockId : GetCreativeTabBlockIds())
+		{
+			const std::string blockName = BlockIds::GetName(blockId);
+			if (blockName.find(search) != std::string::npos)
+			{
+				m_FilteredCreativeTabBlockIds.push_back(blockId);
+			}
+		}
+
+		// Update Max Page Index based on filtered results
+		m_MaxPageIndex =
+			static_cast<int>(std::ceil(static_cast<float>(m_FilteredCreativeTabBlockIds.size()) /
+									   (m_CreativeTabInventory.Rows() * m_CreativeTabInventory.Columns()))) -
+			1;
+
+		if (m_CurrentPageIndex > m_MaxPageIndex)
+			m_CurrentPageIndex = 0;
+
+		m_LastSearchQuery = search;
+	}
+
 	void InventoryPanel::SubscribeToControlEvents()
 	{
-		// No button controls yet — Escape (s_IsBackPressed) is handled directly in Render()
+		m_EventHandles.push_back(m_PreviousPage_Button.EvtClick.Subscribe([this](const Button& button)
+																		  { Handle_PreviousPageButtonClick(button); }));
+
+		m_EventHandles.push_back(
+			m_NextPage_Button.EvtClick.Subscribe([this](const Button& button) { Handle_NextPageButtonClick(button); }));
+	}
+
+	void InventoryPanel::Handle_PreviousPageButtonClick(const Button& button)
+	{
+		if (m_MaxPageIndex == 0)
+			return;
+
+		m_CurrentPageIndex = (m_CurrentPageIndex - 1 + (m_MaxPageIndex + 1)) % (m_MaxPageIndex + 1);
+	}
+
+	void InventoryPanel::Handle_NextPageButtonClick(const Button& button)
+	{
+		if (m_MaxPageIndex == 0)
+			return;
+
+		m_CurrentPageIndex = (m_CurrentPageIndex + 1) % (m_MaxPageIndex + 1);
 	}
 
 } // namespace onion::voxel

@@ -52,10 +52,19 @@ namespace onion::voxel
 	  private:
 		static const std::vector<BlockId>& GetCreativeTabBlockIds();
 		Inventory m_CreativeTabInventory{10, 7};
+		std::vector<BlockId> m_FilteredCreativeTabBlockIds;
+		int m_CurrentPageIndex = 0;
+		int m_MaxPageIndex = 0;
+		std::string m_LastSearchQuery = "hqsdfdjshfgjdhsgfdhsgfds";
+
+		void UpdateFilteredCreativeTabBlockIds(const std::string& search);
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:
 		std::vector<EventHandle> m_EventHandles;
 		void SubscribeToControlEvents();
+
+		void Handle_PreviousPageButtonClick(const Button& button);
+		void Handle_NextPageButtonClick(const Button& button);
 	};
 } // namespace onion::voxel
