@@ -298,11 +298,13 @@ namespace onion::voxel
 													  zOffset - 0.01f,
 													  rotationDegrees,
 													  pivot,
-													  alignment,
-													  static_cast<float>(size.x));
-				// Carry Y (line advances) but reset X to startX so the next segment
-				// doesn't inherit a misaligned cursor from the previous segment's end.
-				currentPos = {startX + shadowOffset.x, static_cast<float>(result.y)};
+													  eTextAlignment::Left,
+													  0.f);
+				// Carry X forward if on same line; reset to startX only on newline
+				if (result.y == static_cast<int>(currentPos.y))
+					currentPos = {static_cast<float>(result.x), static_cast<float>(result.y)};
+				else
+					currentPos = {startX + shadowOffset.x, static_cast<float>(result.y)};
 			}
 		}
 
@@ -319,10 +321,13 @@ namespace onion::voxel
 												  zOffset,
 												  rotationDegrees,
 												  pivot,
-												  alignment,
-												  static_cast<float>(size.x));
-			// Carry Y only — reset X to startX between segments.
-			currentPos = {startX, static_cast<float>(result.y)};
+												  eTextAlignment::Left,
+												  0.f);
+			// Carry X forward if on same line; reset to startX only on newline
+			if (result.y == static_cast<int>(currentPos.y))
+				currentPos = {static_cast<float>(result.x), static_cast<float>(result.y)};
+			else
+				currentPos = {startX, static_cast<float>(result.y)};
 		}
 	}
 
