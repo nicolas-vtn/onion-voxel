@@ -22,7 +22,8 @@ namespace
 namespace onion::voxel
 {
 	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager)
-		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), 800, 600)),
+		: m_WorldManager(worldManager),
+		  m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), m_WindowWidth, m_WindowHeight)),
 		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager),
 		  m_EntityRenderer(m_Camera), m_FovSmoother(m_Camera)
 	{
