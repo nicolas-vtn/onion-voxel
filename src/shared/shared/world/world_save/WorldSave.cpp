@@ -229,13 +229,23 @@ namespace onion::voxel
 		{
 			std::lock_guard lock(m_MutexDiskAccess);
 			std::filesystem::create_directories(filePath.parent_path());
-			std::ofstream file(filePath, std::ios::binary);
+
+			std::filesystem::path tempFilePath = filePath;
+			tempFilePath += ".tmp";
+
+			std::ofstream file(tempFilePath, std::ios::binary);
 			if (!file.is_open())
 			{
-				std::cerr << "Failed to open out of bounds blocks file for writing: " << filePath << "\n";
-				throw std::runtime_error("Failed to open out of bounds blocks file for writing: " + filePath.string());
+				std::cerr << "Failed to open out of bounds blocks file for writing: " << tempFilePath << "\n";
+				throw std::runtime_error("Failed to open out of bounds blocks file for writing: " +
+										 tempFilePath.string());
 			}
 			file.write(reinterpret_cast<const char*>(data.data()), data.size());
+			file.flush();
+			file.close();
+
+			// Atomically replace the old file with the new file
+			Utils::ReplaceFileAtomic(filePath, tempFilePath);
 		}
 	}
 
@@ -358,13 +368,22 @@ namespace onion::voxel
 			for (const auto& [playerFilePath, playerData] : playersDataToWrite)
 			{
 				std::filesystem::create_directories(playerFilePath.parent_path());
-				std::ofstream file(playerFilePath, std::ios::binary);
+
+				std::filesystem::path tempFilePath = playerFilePath;
+				tempFilePath += ".tmp";
+
+				std::ofstream file(tempFilePath, std::ios::binary);
 				if (!file.is_open())
 				{
-					std::cerr << "Failed to open player file for writing: " << playerFilePath << "\n";
-					throw std::runtime_error("Failed to open player file for writing: " + playerFilePath.string());
+					std::cerr << "Failed to open player file for writing: " << tempFilePath << "\n";
+					throw std::runtime_error("Failed to open player file for writing: " + tempFilePath.string());
 				}
 				file.write(reinterpret_cast<const char*>(playerData.data()), playerData.size());
+				file.flush();
+				file.close();
+
+				// Atomically replace the old file with the new file
+				Utils::ReplaceFileAtomic(playerFilePath, tempFilePath);
 			}
 		}
 	}
@@ -378,6 +397,8 @@ namespace onion::voxel
 	void WorldSave::SaveInfos(const std::filesystem::path& saveDirectory, const WorldInfos& infos)
 	{
 		std::filesystem::path infosFilePath = saveDirectory / s_InfosFileName;
+		std::filesystem::path tempFilePath = infosFilePath;
+		tempFilePath += ".tmp";
 
 		nlohmann::ordered_json json;
 		json["Version"] = s_CurrentVersion;
@@ -387,14 +408,18 @@ namespace onion::voxel
 		json["LastPlayedDate"] = infos.LastPlayedDate.toUnixTimestamp();
 		json["WorldGenerationType"] = WorldGenerator::WorldGenerationTypeToString(infos.WorldGenerationType);
 
-		std::ofstream file(infosFilePath);
+		std::ofstream file(tempFilePath);
 		if (!file.is_open())
 		{
-			std::cerr << "Failed to open infos file for writing: " << infosFilePath << "\n";
-			throw std::runtime_error("Failed to open infos file for writing: " + infosFilePath.string());
+			std::cerr << "Failed to open infos file for writing: " << tempFilePath << "\n";
+			throw std::runtime_error("Failed to open infos file for writing: " + tempFilePath.string());
 		}
 
 		file << json.dump(4);
+		file.flush();
+		file.close();
+
+		Utils::ReplaceFileAtomic(infosFilePath, tempFilePath);
 	}
 
 	WorldInfos WorldSave::LoadInfos(const std::filesystem::path& saveDirectory)
