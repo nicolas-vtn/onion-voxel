@@ -103,3 +103,10 @@ install(FILES
     "${CMAKE_SOURCE_DIR}/assets/textures/ServerThumbnail.png"
     DESTINATION server
 )
+
+# Install blockstates and models for server
+install(FILES
+    "${CMAKE_SOURCE_DIR}/assets/blockstates.zip"
+    "${CMAKE_SOURCE_DIR}/assets/models.zip"
+    DESTINATION server/assets
+)
