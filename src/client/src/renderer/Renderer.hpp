@@ -120,7 +120,7 @@ namespace onion::voxel
 		GLFWwindow* m_Window = nullptr;
 		int m_WindowWidth = 960;
 		int m_WindowHeight = 540;
-		std::string m_WindowTitle = "Onion Voxel";
+		std::string m_WindowTitle = "Onion Voxel " + std::string(GetProjectVersion());
 		std::filesystem::path m_WindowIconPath = AssetsManager::GetAppIconsDirectory() / "Vox_Client_Title.png";
 		void SetupWindowIcon();
 

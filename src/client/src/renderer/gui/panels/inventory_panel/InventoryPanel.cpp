@@ -348,6 +348,10 @@ namespace onion::voxel
 		m_PageIndicator_Label.Delete();
 		m_Search_TextField.Delete();
 
+		m_HotbarBlockMesh->Delete();
+		m_InventoryBlockMesh->Delete();
+		m_CreativeBlockMesh->Delete();
+
 		SetDeletedState(true);
 	}
 

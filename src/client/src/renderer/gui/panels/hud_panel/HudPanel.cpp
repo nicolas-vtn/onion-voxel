@@ -298,6 +298,7 @@ namespace onion::voxel
 		m_ExperienceBarBackground_Sprite.Delete();
 		m_ExperienceBarProgress_Sprite.Delete();
 		m_ExperienceLevel_Label.Delete();
+		m_UiBlockMesh->Delete();
 
 		SetDeletedState(true);
 	}
