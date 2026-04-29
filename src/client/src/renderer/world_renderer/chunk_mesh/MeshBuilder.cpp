@@ -599,7 +599,24 @@ namespace onion::voxel
 				if (registryIt == blockstateRegistry.end() || registryIt->second.empty())
 					continue;
 
-				const BlockModel::DisplayInfo& gui = registryIt->second[0].Model.ModelDisplay.Gui;
+				// Pick the best variant for inventory display.
+				// Prefer a variant with shape=straight (stairs, walls, fences) so the inventory icon
+				// shows a canonical shape rather than an inner/outer corner or rotated variant.
+				// Falls back to variant 0 for blocks that have no shape property.
+				const auto& variants = registryIt->second;
+				size_t bestVariantIdx = 0;
+				for (size_t vi = 0; vi < variants.size(); ++vi)
+				{
+					const auto& props = variants[vi].Properties;
+					auto shapeIt = props.find("shape");
+					if (shapeIt != props.end() && shapeIt->second == "straight")
+					{
+						bestVariantIdx = vi;
+						break;
+					}
+				}
+
+				const BlockModel::DisplayInfo& gui = variants[bestVariantIdx].Model.ModelDisplay.Gui;
 
 				// Build transform matrix.
 				// The unit cube spans [-0.5 .. 0.5] on each axis.
@@ -624,7 +641,7 @@ namespace onion::voxel
 				{ return glm::vec3(transform * glm::vec4(x, y, z, 1.0f)); };
 
 				// Build face quads — one PAO per element since elements may differ in size (e.g. slabs)
-				const BlockTextures& blockTextures = m_BlockRegistry.Get(blockId, 0);
+				const BlockTextures& blockTextures = m_BlockRegistry.Get(blockId, static_cast<uint8_t>(bestVariantIdx));
 
 				for (const FaceBuildDesc& f : GetBlockFaceBuildDescs(
 						 // Dummy full-cube PAO just to enumerate all 6 face directions;
