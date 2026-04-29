@@ -1,5 +1,7 @@
 #include "InventoryPanel.hpp"
 
+#include <algorithm>
+
 #include <renderer/gui/colored_background/ColoredBackground.hpp>
 
 #include <renderer/world_renderer/WorldRenderer.hpp>
@@ -335,7 +337,7 @@ namespace onion::voxel
 		static std::vector<BlockId> creativeTabBlockIds = []
 		{
 			std::vector<BlockId> blockIds;
-			blockIds.reserve(static_cast<size_t>(BlockId::Count) + 1);
+			blockIds.reserve(static_cast<size_t>(BlockId::Count));
 			for (int blockIdInt = 1; blockIdInt < static_cast<int>(BlockId::Count); blockIdInt++)
 			{
 				blockIds.push_back(static_cast<BlockId>(blockIdInt));
@@ -359,10 +361,7 @@ namespace onion::voxel
 			m_LastSearchQuery = search;
 
 			// Update Max Page Index based on full list
-			m_MaxPageIndex =
-				static_cast<int>(std::ceil(static_cast<float>(m_FilteredCreativeTabBlockIds.size()) /
-										   (m_CreativeTabInventory.Rows() * m_CreativeTabInventory.Columns()))) -
-				1;
+			m_MaxPageIndex = ComputeMaxPageIndex(static_cast<int>(m_FilteredCreativeTabBlockIds.size()));
 
 			if (m_CurrentPageIndex > m_MaxPageIndex)
 				m_CurrentPageIndex = 0;
@@ -372,25 +371,39 @@ namespace onion::voxel
 
 		m_FilteredCreativeTabBlockIds.clear();
 
+		auto toLower = [](std::string s)
+		{
+			std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+			return s;
+		};
+
+		const std::string searchLower = toLower(search);
+
 		for (const BlockId blockId : GetCreativeTabBlockIds())
 		{
-			const std::string blockName = BlockIds::GetName(blockId);
-			if (blockName.find(search) != std::string::npos)
+			const std::string blockNameLower = toLower(BlockIds::GetName(blockId));
+			if (blockNameLower.find(searchLower) != std::string::npos)
 			{
 				m_FilteredCreativeTabBlockIds.push_back(blockId);
 			}
 		}
 
 		// Update Max Page Index based on filtered results
-		m_MaxPageIndex =
-			static_cast<int>(std::ceil(static_cast<float>(m_FilteredCreativeTabBlockIds.size()) /
-									   (m_CreativeTabInventory.Rows() * m_CreativeTabInventory.Columns()))) -
-			1;
+		m_MaxPageIndex = ComputeMaxPageIndex(static_cast<int>(m_FilteredCreativeTabBlockIds.size()));
 
 		if (m_CurrentPageIndex > m_MaxPageIndex)
 			m_CurrentPageIndex = 0;
 
 		m_LastSearchQuery = search;
+	}
+
+	int InventoryPanel::ComputeMaxPageIndex(int itemCount) const
+	{
+		const int slotsPerPage = m_CreativeTabInventory.Rows() * m_CreativeTabInventory.Columns();
+		const int totalPages = static_cast<int>(std::ceil(static_cast<float>(itemCount) / slotsPerPage));
+		const int maxPageIndex = totalPages - 1;
+
+		return std::max(0, maxPageIndex);
 	}
 
 	void InventoryPanel::SubscribeToControlEvents()

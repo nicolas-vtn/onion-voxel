@@ -58,6 +58,7 @@ namespace onion::voxel
 		std::string m_LastSearchQuery = "hqsdfdjshfgjdhsgfdhsgfds";
 
 		void UpdateFilteredCreativeTabBlockIds(const std::string& search);
+		int ComputeMaxPageIndex(int itemCount) const;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:
