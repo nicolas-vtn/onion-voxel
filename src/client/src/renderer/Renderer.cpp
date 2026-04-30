@@ -703,14 +703,15 @@ namespace onion::voxel
 			ctx.Id = placedId;
 			ctx.PlayerLookDir = m_Camera->GetFront();
 			ctx.HitFaceNormal = m_CurrentRaycastHit->HitFaceNormal;
-			ctx.HitPosition   = m_CurrentRaycastHit->HitPosition;
+			ctx.HitPosition = m_CurrentRaycastHit->HitPosition;
+			ctx.HitBlock = m_CurrentRaycastHit->HitBlock;
 			ctx.PlacePosition = adjacentBlock.Position;
 			ctx.World = m_WorldManager.get();
 
-			auto properties = BlockPlacementResolver::Resolve(ctx);
-			uint8_t variantIndex = BlockstateRegistry::GetVariantIndex(placedId, properties);
+			PlacementResult placement = BlockPlacementResolver::Resolve(ctx);
+			uint8_t variantIndex = BlockstateRegistry::GetVariantIndex(placement.Id, placement.Properties);
 
-			Block blockToPlace = Block(adjacentBlock.Position, BlockState(placedId, variantIndex));
+			Block blockToPlace = Block(placement.Position, BlockState(placement.Id, variantIndex));
 
 			bool success = m_WorldManager->SetBlock(
 				blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);

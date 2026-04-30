@@ -8,24 +8,25 @@ namespace onion::voxel
 	// Public
 	// -------------------------------------------------------------------------
 
-	std::map<std::string, std::string> BlockPlacementResolver::Resolve(const PlacementContext& ctx)
+	PlacementResult BlockPlacementResolver::Resolve(const PlacementContext& ctx)
 	{
-		std::map<std::string, std::string> props;
+		PlacementResult result;
+		result.Position = ctx.PlacePosition;
+		result.Id = ctx.Id;
 
-		ResolveDirectionalFacing(ctx, props);
-		ResolveAxis(ctx, props);
-		ResolveHalf(ctx, props);
-		ResolveType(ctx, props);
+		ResolveDirectionalFacing(ctx, result);
+		ResolveAxis(ctx, result);
+		ResolveHalf(ctx, result);
+		ResolveType(ctx, result); // last — may redirect Position and Id
 
-		return props;
+		return result;
 	}
 
 	// -------------------------------------------------------------------------
 	// Private
 	// -------------------------------------------------------------------------
 
-	void BlockPlacementResolver::ResolveDirectionalFacing(const PlacementContext& ctx,
-														  std::map<std::string, std::string>& props)
+	void BlockPlacementResolver::ResolveDirectionalFacing(const PlacementContext& ctx, PlacementResult& result)
 	{
 		if (!BlockHasProperty(ctx.Id, "facing"))
 			return;
@@ -58,12 +59,12 @@ namespace onion::voxel
 			// the block it was placed on). This matches Minecraft's hopper behaviour.
 			if (ctx.HitFaceNormal.y == 1)
 			{
-				props["facing"] = "down";
+				result.Properties["facing"] = "down";
 				return;
 			}
 			if (ctx.HitFaceNormal.y == -1)
 			{
-				props["facing"] = "up";
+				result.Properties["facing"] = "up";
 				return;
 			}
 
@@ -73,12 +74,12 @@ namespace onion::voxel
 			float pitchY = ctx.PlayerLookDir.y;
 			if (pitchY > 0.707f)
 			{
-				props["facing"] = "up";
+				result.Properties["facing"] = "up";
 				return;
 			}
 			if (pitchY < -0.707f)
 			{
-				props["facing"] = "down";
+				result.Properties["facing"] = "down";
 				return;
 			}
 		}
@@ -91,18 +92,12 @@ namespace onion::voxel
 		float z = ctx.PlayerLookDir.z;
 
 		if (std::abs(x) >= std::abs(z))
-		{
-			// Dominant east/west axis
-			props["facing"] = (x > 0.f) ? "west" : "east";
-		}
+			result.Properties["facing"] = (x > 0.f) ? "west" : "east";
 		else
-		{
-			// Dominant north/south axis
-			props["facing"] = (z > 0.f) ? "north" : "south";
-		}
+			result.Properties["facing"] = (z > 0.f) ? "north" : "south";
 	}
 
-	void BlockPlacementResolver::ResolveAxis(const PlacementContext& ctx, std::map<std::string, std::string>& props)
+	void BlockPlacementResolver::ResolveAxis(const PlacementContext& ctx, PlacementResult& result)
 	{
 		if (!BlockHasProperty(ctx.Id, "axis"))
 			return;
@@ -112,14 +107,14 @@ namespace onion::voxel
 		//   Hit north or south face (z normal) → axis=z  (log lies along Z)
 		//   Hit east or west face  (x normal) → axis=x  (log lies along X)
 		if (ctx.HitFaceNormal.y != 0)
-			props["axis"] = "y";
+			result.Properties["axis"] = "y";
 		else if (ctx.HitFaceNormal.z != 0)
-			props["axis"] = "z";
+			result.Properties["axis"] = "z";
 		else
-			props["axis"] = "x";
+			result.Properties["axis"] = "x";
 	}
 
-	void BlockPlacementResolver::ResolveHalf(const PlacementContext& ctx, std::map<std::string, std::string>& props)
+	void BlockPlacementResolver::ResolveHalf(const PlacementContext& ctx, PlacementResult& result)
 	{
 		if (!BlockHasProperty(ctx.Id, "half"))
 			return;
@@ -127,44 +122,80 @@ namespace onion::voxel
 		// Hit top face → place in bottom half (sits on surface)
 		if (ctx.HitFaceNormal.y == 1)
 		{
-			props["half"] = "bottom";
+			result.Properties["half"] = "bottom";
 			return;
 		}
 		// Hit bottom face → place in top half (hangs from ceiling)
 		if (ctx.HitFaceNormal.y == -1)
 		{
-			props["half"] = "top";
+			result.Properties["half"] = "top";
 			return;
 		}
 
 		// Side face hit — use fractional Y of the hit position within the block:
 		// upper half of the face (≥ 0.5) → top, lower half → bottom
 		float fracY = ctx.HitPosition.y - std::floor(ctx.HitPosition.y);
-		props["half"] = (fracY >= 0.5f) ? "top" : "bottom";
+		result.Properties["half"] = (fracY >= 0.5f) ? "top" : "bottom";
 	}
 
-	void BlockPlacementResolver::ResolveType(const PlacementContext& ctx, std::map<std::string, std::string>& props)
+	void BlockPlacementResolver::ResolveType(const PlacementContext& ctx, PlacementResult& result)
 	{
 		if (!BlockHasProperty(ctx.Id, "type"))
 			return;
 
+		// --- Promotion: placing a slab onto an existing slab of the same type ---
+		// Conditions:
+		//   - World is available for querying
+		//   - The hit block is the same BlockId as what's being placed
+		//   - The existing slab is bottom or top (not already double)
+		if (ctx.World != nullptr && ctx.HitBlock.ID() == ctx.Id)
+		{
+			const auto& registry = BlockstateRegistry::Get();
+			auto it = registry.find(ctx.HitBlock.ID());
+			if (it != registry.end())
+			{
+				const auto& hitVariant = it->second[ctx.HitBlock.State.VariantIndex];
+				auto typeIt = hitVariant.Properties.find("type");
+				if (typeIt != hitVariant.Properties.end())
+				{
+					const std::string& existingType = typeIt->second;
+
+					// bottom slab hit on top face → promote to double
+					if (existingType == "bottom" && ctx.HitFaceNormal.y == 1)
+					{
+						result.Position = ctx.HitBlock.Position;
+						result.Properties["type"] = "double";
+						return;
+					}
+
+					// top slab hit on bottom face → promote to double
+					if (existingType == "top" && ctx.HitFaceNormal.y == -1)
+					{
+						result.Position = ctx.HitBlock.Position;
+						result.Properties["type"] = "double";
+						return;
+					}
+				}
+			}
+		}
+
+		// --- Normal resolution ---
 		// Hit top face → bottom slab (sits on surface)
 		if (ctx.HitFaceNormal.y == 1)
 		{
-			props["type"] = "bottom";
+			result.Properties["type"] = "bottom";
 			return;
 		}
 		// Hit bottom face → top slab (pressed against ceiling)
 		if (ctx.HitFaceNormal.y == -1)
 		{
-			props["type"] = "top";
+			result.Properties["type"] = "top";
 			return;
 		}
 
-		// Side face hit — use fractional Y of the hit position within the block:
-		// upper half of the face (≥ 0.5) → top, lower half → bottom
+		// Side face hit — use fractional Y of the hit position within the block
 		float fracY = ctx.HitPosition.y - std::floor(ctx.HitPosition.y);
-		props["type"] = (fracY >= 0.5f) ? "top" : "bottom";
+		result.Properties["type"] = (fracY >= 0.5f) ? "top" : "bottom";
 	}
 
 	bool BlockPlacementResolver::BlockHasProperty(BlockId id, const std::string& propertyKey)
