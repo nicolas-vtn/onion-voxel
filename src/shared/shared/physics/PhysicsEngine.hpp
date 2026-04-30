@@ -19,6 +19,10 @@ namespace onion::voxel
 	  public:
 		void Update(float deltaTime);
 
+		bool IsPlayerCollidingWithBlock(const std::shared_ptr<Entity>& player,
+										const BlockState& state,
+										const glm::ivec3& blockPos);
+
 		// ----- Getters / Setters -----
 	  public:
 		float GetGravity() const;

@@ -713,9 +713,17 @@ namespace onion::voxel
 
 			Block blockToPlace = Block(placement.Position, BlockState(placement.Id, variantIndex));
 
-			// Only place into air, unless the resolver explicitly flagged a promotion
-			// (e.g. slab stacking to double) which intentionally overwrites a non-air block.
-			bool canPlace = placement.IsPromotion || m_WorldManager->GetBlock(placement.Position).ID == BlockId::Air;
+			bool isAir = m_WorldManager->GetBlock(placement.Position).ID == BlockId::Air;
+			bool collidesWithAnyPlayer = false;
+			for (const auto& [uuid, aPlayer] : m_WorldManager->GetAllPlayers())
+			{
+				if (m_PhysicsEngine.IsPlayerCollidingWithBlock(aPlayer, blockToPlace.State, blockToPlace.Position))
+				{
+					collidesWithAnyPlayer = true;
+					break;
+				}
+			}
+			bool canPlace = (placement.IsPromotion || isAir) && !collidesWithAnyPlayer;
 
 			if (canPlace)
 			{
