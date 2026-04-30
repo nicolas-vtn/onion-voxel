@@ -84,6 +84,11 @@ namespace onion::voxel
 			}
 		}
 
+		// Pool Inputs
+		const glm::vec2 cursorPosition{s_InputsSnapshot->Mouse.Xpos, s_InputsSnapshot->Mouse.Ypos};
+		bool mouseDown = s_InputsSnapshot->Mouse.LeftButtonPressed;
+		bool mouseClicked = (mouseDown && !m_WasMouseDown);
+
 		// Retreve Player State
 		std::shared_ptr<Player> player = EngineContext::Get().GetLocalPlayer();
 
@@ -131,7 +136,6 @@ namespace onion::voxel
 		const glm::vec2 slotSize = {s_ScreenWidth * slotSizeRatioX, s_ScreenHeight * slotSizeRatioY};
 		const glm::vec2 slotPadding = {0.f, 0.f};
 		const float slotBorder = 4.f * (s_ScreenWidth / 1920.f);
-		const glm::vec2 cursorPosition{s_InputsSnapshot->Mouse.Xpos, s_InputsSnapshot->Mouse.Ypos};
 
 		// ---- Hotbar Item Rendering ----
 		const float firstHotbarSlotLeftXborderRatio = 636.f / 1920.f;
@@ -142,6 +146,14 @@ namespace onion::voxel
 		const int hoveredHotbarSlotIndex =
 			m_HotbarBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstHotbarSlotTopLeft);
 		Inventory hotbar = player->GetHotbar();
+		if (hoveredHotbarSlotIndex >= 0 && mouseClicked)
+		{
+			// Swap the hovered hotbar slot with the moved item slot
+			BlockId hotbarItem = hotbar.At(hoveredHotbarSlotIndex);
+			hotbar.At(hoveredHotbarSlotIndex) = m_InventoryMovedItem.At(0);
+			m_InventoryMovedItem.At(0) = hotbarItem;
+			player->SetHotbar(hotbar);
+		}
 		hotbar.SelectedIndex() = hoveredHotbarSlotIndex;
 		m_HotbarBlockMesh->SetSlotBorder(slotBorder);
 		m_HotbarBlockMesh->SetInventory(hotbar, slotSize, slotPadding);
@@ -161,6 +173,14 @@ namespace onion::voxel
 		const int hoveredInventorySlotIndex =
 			m_InventoryBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstInventorySlotTopLeft);
 		Inventory inventory = player->GetPlayerInventory();
+		if (hoveredInventorySlotIndex >= 0 && mouseClicked)
+		{
+			// Swap the hovered inventory slot with the moved item slot
+			BlockId inventoryItem = inventory.At(hoveredInventorySlotIndex);
+			inventory.At(hoveredInventorySlotIndex) = m_InventoryMovedItem.At(0);
+			m_InventoryMovedItem.At(0) = inventoryItem;
+			player->SetPlayerInventory(inventory);
+		}
 		inventory.SelectedIndex() = hoveredInventorySlotIndex;
 		m_InventoryBlockMesh->SetSlotBorder(slotBorder);
 		m_InventoryBlockMesh->SetInventory(inventory, slotSize, slotPadding);
@@ -265,6 +285,12 @@ namespace onion::voxel
 			}
 		}
 
+		if (m_CreativeTabInventory.SelectedIndex() >= 0 && mouseClicked)
+		{
+			// Pick the item if clicked
+			m_InventoryMovedItem.At(0) = m_CreativeTabInventory.At(m_CreativeTabInventory.SelectedIndex());
+		}
+
 		m_CreativeBlockMesh->SetSlotBorder(slotBorder);
 		m_CreativeBlockMesh->SetInventory(m_CreativeTabInventory, slotSize, slotPadding);
 		if (m_CreativeBlockMesh->IsDirty())
@@ -348,9 +374,11 @@ namespace onion::voxel
 
 		// ----- Render Crafting Grid Slots -----
 		const float firstCraftingGridSlotXleftRatio = 996.f / 1920.f;
-		const int firstCraftingGridSlotXleft = static_cast<int>(std::round(s_ScreenWidth * firstCraftingGridSlotXleftRatio));
+		const int firstCraftingGridSlotXleft =
+			static_cast<int>(std::round(s_ScreenWidth * firstCraftingGridSlotXleftRatio));
 		const float firstCraftingGridSlotYtopRatio = (263.f - 23.f) / 1009.f;
-		const int firstCraftingGridSlotYtop = static_cast<int>(std::round(s_ScreenHeight * firstCraftingGridSlotYtopRatio));
+		const int firstCraftingGridSlotYtop =
+			static_cast<int>(std::round(s_ScreenHeight * firstCraftingGridSlotYtopRatio));
 		const glm::vec2 firstCraftingGridSlotTopLeft = {firstCraftingGridSlotXleft, firstCraftingGridSlotYtop};
 		const int hoveredCraftingGridSlotIndex =
 			m_CraftingGridBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstCraftingGridSlotTopLeft);
@@ -381,6 +409,20 @@ namespace onion::voxel
 			meshBuilder.UpdateUiBlockMesh(m_CraftingOutputBlockMesh);
 		}
 		m_CraftingOutputBlockMesh->Render(craftingOutputSlotTopLeft, s_ScreenWidth, s_ScreenHeight);
+
+		// ----- Render Moved Item Slot (the item being moved by the cursor) -----
+		if (m_InventoryMovedItem.At(0) != BlockId::Air)
+		{
+			const glm::vec2 movedItemSlotPos = cursorPosition - (slotSize / 2.f);
+			m_MovedItemBlockMesh->SetSlotBorder(slotBorder);
+			m_MovedItemBlockMesh->SetInventory(m_InventoryMovedItem, slotSize, slotPadding);
+			if (m_MovedItemBlockMesh->IsDirty())
+			{
+				auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
+				meshBuilder.UpdateUiBlockMesh(m_MovedItemBlockMesh);
+			}
+			m_MovedItemBlockMesh->Render(movedItemSlotPos, s_ScreenWidth, s_ScreenHeight);
+		}
 
 		// ---- Key Drop Input Handling ----
 		bool dropKeyPressed = EngineContext::Get().Keys->GetKeyState(eAction::DropItem).IsPressed;
@@ -442,6 +484,9 @@ namespace onion::voxel
 				m_Tooltip.Render();
 			}
 		}
+
+		// Update Inputs
+		m_WasMouseDown = mouseDown;
 	}
 
 	void InventoryPanel::Initialize()
@@ -484,6 +529,7 @@ namespace onion::voxel
 		m_OffhandBlockMesh->Delete();
 		m_CraftingGridBlockMesh->Delete();
 		m_CraftingOutputBlockMesh->Delete();
+		m_MovedItemBlockMesh->Delete();
 
 		SetDeletedState(true);
 	}
@@ -510,6 +556,7 @@ namespace onion::voxel
 		m_OffhandBlockMesh->SetDirty(true);
 		m_CraftingGridBlockMesh->SetDirty(true);
 		m_CraftingOutputBlockMesh->SetDirty(true);
+		m_MovedItemBlockMesh->SetDirty(true);
 	}
 
 	const std::vector<BlockId>& InventoryPanel::GetCreativeTabBlockIds()
@@ -585,6 +632,13 @@ namespace onion::voxel
 		const int maxPageIndex = totalPages - 1;
 
 		return std::max(0, maxPageIndex);
+	}
+
+	void InventoryPanel::ClosePanel()
+	{
+		m_InventoryMovedItem.At(0) = BlockId::Air; // Clear the moved item when closing the panel
+
+		EvtRequestBackNavigation.Trigger(this);
 	}
 
 	void InventoryPanel::SubscribeToControlEvents()

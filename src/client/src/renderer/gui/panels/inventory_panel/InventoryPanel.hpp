@@ -29,11 +29,6 @@ namespace onion::voxel
 	  public:
 		Event<const GuiElement*> EvtRequestBackNavigation;
 
-		// ----- Private Members -----
-	  private:
-		Inventory m_CraftingInventory{2, 2};
-		Inventory m_CraftingOutputInventory{1, 1};
-
 		// ----- Controls -----
 	  private:
 		Sprite m_InventoryBackground_Sprite;
@@ -57,6 +52,7 @@ namespace onion::voxel
 		std::shared_ptr<UiBlockMesh> m_OffhandBlockMesh = std::make_shared<UiBlockMesh>(Inventory{1, 1});
 		std::shared_ptr<UiBlockMesh> m_CraftingGridBlockMesh = std::make_shared<UiBlockMesh>(Inventory{2, 2});
 		std::shared_ptr<UiBlockMesh> m_CraftingOutputBlockMesh = std::make_shared<UiBlockMesh>(Inventory{1, 1});
+		std::shared_ptr<UiBlockMesh> m_MovedItemBlockMesh = std::make_shared<UiBlockMesh>(Inventory{1, 1});
 
 		// ----- Textures -----
 	  private:
@@ -81,8 +77,16 @@ namespace onion::voxel
 		int m_MaxPageIndex = 0;
 		std::string m_LastSearchQuery = "hqsdfdjshfgjdhsgfdhsgfds";
 
+		bool m_WasMouseDown = false;
+
+		Inventory m_CraftingInventory{2, 2};
+		Inventory m_CraftingOutputInventory{1, 1};
+		Inventory m_InventoryMovedItem{1, 1};
+
 		void UpdateFilteredCreativeTabBlockIds(const std::string& search);
 		int ComputeMaxPageIndex(int itemCount) const;
+
+		void ClosePanel();
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:
