@@ -1400,6 +1400,38 @@ namespace onion::voxel
 			if (ImGui::DragFloat3("Front", &front.x, 0.01f))
 				m_Camera->SetFront(front);
 
+			{
+				const char* facingName;
+				const char* facingAxis;
+				if (std::abs(front.x) >= std::abs(front.z))
+				{
+					if (front.x > 0.f)
+					{
+						facingName = "East";
+						facingAxis = "(+X)";
+					}
+					else
+					{
+						facingName = "West";
+						facingAxis = "(-X)";
+					}
+				}
+				else
+				{
+					if (front.z > 0.f)
+					{
+						facingName = "South";
+						facingAxis = "(+Z)";
+					}
+					else
+					{
+						facingName = "North";
+						facingAxis = "(-Z)";
+					}
+				}
+				ImGui::Text("Facing : %s %s", facingName, facingAxis);
+			}
+
 			if (ImGui::DragFloat("Yaw", &yaw, 0.5f))
 				m_Camera->SetYaw(yaw);
 
@@ -1427,6 +1459,50 @@ namespace onion::voxel
 				ImGui::Text("Name: %s", BlockIds::GetName(hitBlock.ID()).c_str());
 				int variantIndex = hitBlock.State.VariantIndex;
 				ImGui::Text("Variant Index: %d", variantIndex);
+
+				const auto& registry = BlockstateRegistry::Get();
+				auto it = registry.find(hitBlock.ID());
+				if (it != registry.end() && !it->second.empty())
+				{
+					// Active variant inline
+					const auto& activeVariant = it->second[variantIndex];
+					std::string activeProps;
+					for (const auto& [key, val] : activeVariant.Properties)
+					{
+						if (!activeProps.empty())
+							activeProps += ", ";
+						activeProps += key + "=" + val;
+					}
+					if (activeProps.empty())
+						activeProps = "(default)";
+					ImGui::Text("Variant : %s", activeProps.c_str());
+
+					// All variants in a collapsible
+					if (ImGui::CollapsingHeader("All Variants"))
+					{
+						ImGui::BeginChild("##variants", ImVec2(0, 120), true);
+						for (size_t i = 0; i < it->second.size(); i++)
+						{
+							const auto& variant = it->second[i];
+							std::string line;
+							for (const auto& [key, val] : variant.Properties)
+							{
+								if (!line.empty())
+									line += ", ";
+								line += key + "=" + val;
+							}
+							if (line.empty())
+								line = "(default)";
+							bool active = (static_cast<int>(i) == variantIndex);
+							if (active)
+								ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.85f, 0.f, 1.f));
+							ImGui::Text("%s[%zu] %s", active ? ">>> " : "    ", i, line.c_str());
+							if (active)
+								ImGui::PopStyleColor();
+						}
+						ImGui::EndChild();
+					}
+				}
 			}
 		}
 
