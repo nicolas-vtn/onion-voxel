@@ -38,9 +38,9 @@ namespace onion::voxel
 	///
 	/// Currently supports:
 	///   - Directional facing (facing=north/south/east/west/up/down)
+	///   - Axis-aligned blocks (logs, pillars — axis=x/y/z)
 	///
 	/// Designed for extension: add more Resolve* private methods for:
-	///   - Axis-aligned blocks (logs, pillars)
 	///   - Slabs/stairs (half)
 	///   - Wall-mounted blocks (torches, buttons, levers)
 	///   - Connected blocks (fences, walls, panes)
@@ -54,6 +54,9 @@ namespace onion::voxel
 	  private:
 		/// Populate facing= based on player look direction / hit face.
 		static void ResolveDirectionalFacing(const PlacementContext& ctx, std::map<std::string, std::string>& props);
+
+		/// Populate axis= (x/y/z) based on the hit face normal — for logs, pillars, etc.
+		static void ResolveAxis(const PlacementContext& ctx, std::map<std::string, std::string>& props);
 
 		/// Returns true if any variant of the given block has the specified property key.
 		static bool BlockHasProperty(BlockId id, const std::string& propertyKey);

@@ -13,7 +13,7 @@ namespace onion::voxel
 		std::map<std::string, std::string> props;
 
 		ResolveDirectionalFacing(ctx, props);
-		// Future: ResolveAxis(ctx, props);
+		ResolveAxis(ctx, props);
 		// Future: ResolveHalf(ctx, props);
 		// Future: ResolveWallMounted(ctx, props);
 		// Future: ResolveConnected(ctx, props);
@@ -101,6 +101,23 @@ namespace onion::voxel
 			// Dominant north/south axis
 			props["facing"] = (z > 0.f) ? "north" : "south";
 		}
+	}
+
+	void BlockPlacementResolver::ResolveAxis(const PlacementContext& ctx, std::map<std::string, std::string>& props)
+	{
+		if (!BlockHasProperty(ctx.Id, "axis"))
+			return;
+
+		// The axis of a log/pillar aligns with the face that was clicked:
+		//   Hit top or bottom face (y normal) → axis=y  (log stands vertically)
+		//   Hit north or south face (z normal) → axis=z  (log lies along Z)
+		//   Hit east or west face  (x normal) → axis=x  (log lies along X)
+		if (ctx.HitFaceNormal.y != 0)
+			props["axis"] = "y";
+		else if (ctx.HitFaceNormal.z != 0)
+			props["axis"] = "z";
+		else
+			props["axis"] = "x";
 	}
 
 	bool BlockPlacementResolver::BlockHasProperty(BlockId id, const std::string& propertyKey)
