@@ -29,79 +29,90 @@ namespace onion::voxel
 				lastBlock = worldManager.GetBlock(cellPos);
 			}
 
-			BlockState block = lastBlock;
-
-			if (block.ID != BlockId::Air)
+			if (lastBlock.ID == BlockId::Air)
 			{
-				RaycastHit hit;
-
-				Block& hitBlock = hit.HitBlock;
-				hitBlock.Position = cellPos;
-				hitBlock.State = block;
-
-				glm::ivec3 faceNormal{0};
-				glm::vec3 hitPosition = currentPos; // fallback: first sample inside cell
-
-				// Single registry fetch + slab ray-AABB test over all elements.
-				// Replaces both the point-in-AABB test in GetBlock(vec3) and the
-				// cell-delta face heuristic, giving correct results for non-full blocks.
-				const auto& blockstates = BlockstateRegistry::Get();
-				auto it = blockstates.find(block.ID);
-				if (it != blockstates.end())
-				{
-					const auto& elements = it->second[block.VariantIndex].Model.Elements;
-					float bestT = std::numeric_limits<float>::max();
-
-					for (const auto& element : elements)
-					{
-						glm::vec3 aabbMin = glm::vec3(cellPos) + element.From / 16.f;
-						glm::vec3 aabbMax = glm::vec3(cellPos) + element.To / 16.f;
-
-						glm::vec3 invDir = 1.f / dirNormalized;
-						glm::vec3 t1 = glm::min((aabbMin - origin) * invDir, (aabbMax - origin) * invDir);
-						glm::vec3 t2 = glm::max((aabbMin - origin) * invDir, (aabbMax - origin) * invDir);
-
-						float tEntry = glm::max(glm::max(t1.x, t1.y), t1.z);
-						float tExit = glm::min(glm::min(t2.x, t2.y), t2.z);
-
-						if (tEntry <= tExit && tEntry >= 0.f && tEntry < bestT)
-						{
-							bestT = tEntry;
-
-							// Axis with the largest t1 is the entry face
-							int axis = 0;
-							if (t1.y >= t1.x && t1.y >= t1.z)
-								axis = 1;
-							else if (t1.z >= t1.x)
-								axis = 2;
-
-							glm::ivec3 n{0};
-							n[axis] = (dirNormalized[axis] < 0.f) ? 1 : -1;
-							faceNormal = n;
-							hitPosition = origin + dirNormalized * bestT;
-						}
-					}
-				}
-
-				// Fallback: registry gap or zero elements — use cell-delta heuristic
-				if (faceNormal == glm::ivec3{0})
-				{
-					glm::vec3 delta = glm::vec3(cellPos) - glm::floor(previousPos);
-					faceNormal = glm::ivec3(-delta);
-					hitPosition = currentPos;
-				}
-
-				hit.HitPosition = hitPosition;
-				hit.HitFaceNormal = faceNormal;
-
-				Block& adjacent = hit.AdjacentBlock;
-				adjacent.Position = cellPos + faceNormal;
-				adjacent.State = worldManager.GetBlock(adjacent.Position);
-
-				return hit;
+				previousPos = currentPos;
+				continue;
 			}
 
-			previousPos = currentPos;
+			// Non-air cell — run slab ray-AABB test against each element.
+			// The cell may contain empty space (non-full blocks), so a geometry
+			// hit is not guaranteed just because the cell is non-air.
+			glm::ivec3 faceNormal{0};
+			glm::vec3 hitPosition = currentPos;
+			bool geometryHit = false;
+
+			const auto& blockstates = BlockstateRegistry::Get();
+			auto it = blockstates.find(lastBlock.ID);
+			if (it != blockstates.end())
+			{
+				const auto& elements = it->second[lastBlock.VariantIndex].Model.Elements;
+				float bestT = std::numeric_limits<float>::max();
+
+				glm::vec3 invDir = 1.f / dirNormalized;
+
+				for (const auto& element : elements)
+				{
+					glm::vec3 aabbMin = glm::vec3(cellPos) + element.From / 16.f;
+					glm::vec3 aabbMax = glm::vec3(cellPos) + element.To / 16.f;
+
+					glm::vec3 t1 = glm::min((aabbMin - origin) * invDir, (aabbMax - origin) * invDir);
+					glm::vec3 t2 = glm::max((aabbMin - origin) * invDir, (aabbMax - origin) * invDir);
+
+					float tEntry = glm::max(glm::max(t1.x, t1.y), t1.z);
+					float tExit = glm::min(glm::min(t2.x, t2.y), t2.z);
+
+					// Small epsilon handles the case where the ray origin sits exactly
+					// on the element surface due to floating-point precision.
+					if (tEntry <= tExit && tEntry >= -1e-4f && tEntry < bestT)
+					{
+						bestT = tEntry;
+						geometryHit = true;
+
+						// Axis with the largest t1 is the entry face
+						int axis = 0;
+						if (t1.y >= t1.x && t1.y >= t1.z)
+							axis = 1;
+						else if (t1.z >= t1.x)
+							axis = 2;
+
+						glm::ivec3 n{0};
+						n[axis] = (dirNormalized[axis] < 0.f) ? 1 : -1;
+						faceNormal = n;
+						hitPosition = origin + dirNormalized * bestT;
+					}
+				}
+			}
+			else
+			{
+				// Registry gap — unknown block, treat cell as a full cube hit
+				geometryHit = true;
+				glm::vec3 delta = glm::vec3(cellPos) - glm::floor(previousPos);
+				faceNormal = glm::ivec3(-delta);
+				hitPosition = currentPos;
+			}
+
+			if (!geometryHit)
+			{
+				// Ray is passing through the empty space of a non-full block cell — keep marching
+				previousPos = currentPos;
+				continue;
+			}
+
+			RaycastHit hit;
+
+			hit.HitPosition = hitPosition;
+			hit.HitFaceNormal = faceNormal;
+
+			Block& hitBlock = hit.HitBlock;
+			hitBlock.Position = cellPos;
+			hitBlock.State = lastBlock;
+
+			Block& adjacent = hit.AdjacentBlock;
+			adjacent.Position = cellPos + faceNormal;
+			adjacent.State = worldManager.GetBlock(adjacent.Position);
+
+			return hit;
 		}
 
 		return std::nullopt; // No hit
