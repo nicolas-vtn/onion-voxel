@@ -99,7 +99,7 @@ namespace onion::voxel
 		else
 		{
 			// Dominant north/south axis
-			props["facing"] = (z > 0.f) ? "south" : "north";
+			props["facing"] = (z > 0.f) ? "north" : "south";
 		}
 	}
 

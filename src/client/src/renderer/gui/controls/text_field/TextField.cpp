@@ -62,6 +62,14 @@ namespace onion::voxel
 		glm::ivec2 textPos = pos - glm::ivec2(size.x / m_TextStartXratio, 0);
 		float textHeight = size.y * m_TextScaleFactor;
 
+		// Clear text field on right click if enabled
+		bool isHovered = IsHovered();
+		bool isRightClickPressed = s_InputsSnapshot->Mouse.RightButtonPressed;
+		if (m_ClearOnRightClick && isHovered && isRightClickPressed)
+		{
+			SetText("");
+		}
+
 		// Add trailing '_' or Render Cursor
 		std::u32string drawnText = m_Text;
 		bool visible = fmod(glfwGetTime(), 0.6) < 0.3;
@@ -320,16 +328,31 @@ namespace onion::voxel
 		m_ReadOnly = readOnly;
 	}
 
+	bool TextField::IsHovered() const
+	{
+		return m_NineSliceSprite_TextField.IsHovered();
+	}
+
+	bool TextField::DoesClearOnRightClick() const
+	{
+		return m_ClearOnRightClick;
+	}
+
+	void TextField::SetClearOnRightClick(bool clearOnRightClick)
+	{
+		m_ClearOnRightClick = clearOnRightClick;
+	}
+
 	void TextField::SubscribeToSpriteEvents()
 	{
-		m_EventHandles.push_back(m_NineSliceSprite_TextField.EvtMouseDown.Subscribe([this](const NineSliceSprite& sprite)
-																				   { Handle_MouseDown(sprite); }));
+		m_EventHandles.push_back(m_NineSliceSprite_TextField.EvtMouseDown.Subscribe(
+			[this](const NineSliceSprite& sprite) { Handle_MouseDown(sprite); }));
 
 		m_EventHandles.push_back(m_NineSliceSprite_TextField.EvtMouseUp.Subscribe([this](const NineSliceSprite& sprite)
-																				 { Handle_MouseUp(sprite); }));
+																				  { Handle_MouseUp(sprite); }));
 
 		m_EventHandles.push_back(m_NineSliceSprite_TextField.EvtClick.Subscribe([this](const NineSliceSprite& sprite)
-																			   { Handle_SpriteClick(sprite); }));
+																				{ Handle_SpriteClick(sprite); }));
 
 		m_EventHandles.push_back(m_NineSliceSprite_TextField.EvtHoverEnter.Subscribe(
 			[this](const NineSliceSprite& sprite) { Handle_SpriteHoverEnter(sprite); }));
@@ -342,7 +365,7 @@ namespace onion::voxel
 	{
 		const auto& InputsManager = EngineContext::Get().Inputs;
 		m_HandleCharInput = InputsManager->EvtCharInput.Subscribe([this](const unsigned int& codepoint)
-																	{ Handle_CharInput(codepoint); });
+																  { Handle_CharInput(codepoint); });
 	}
 
 	void TextField::RegisterInputsToInputsManager()
