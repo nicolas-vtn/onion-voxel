@@ -1,4 +1,4 @@
-#include "BlockRegistry.hpp"
+#include "BlockRenderRegistry.hpp"
 
 #include <algorithm>
 #include <cmath>

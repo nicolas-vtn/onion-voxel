@@ -12,7 +12,7 @@
 #include <shared/world/world_manager/WorldManager.hpp>
 
 #include <renderer/gui/ui_block_mesh/UiBlockMesh.hpp>
-#include <renderer/world_renderer/block_registry/BlockRegistry.hpp>
+#include <renderer/world_renderer/block_render_registry/BlockRenderRegistry.hpp>
 
 #include "ChunkMesh.hpp"
 
