@@ -26,11 +26,22 @@ namespace onion::voxel
 								"InventoryBackground_Sprite", s_PathInventoryBackground, Sprite::eOrigin::ResourcePack),
 		  m_Crafting_Label("Crafting_Label"), m_Tooltip("InventoryTooltip"),
 		  m_PreviousPage_Button("PreviousPage_Button"), m_NextPage_Button("NextPage_Button"),
-		  m_PageIndicator_Label("PageIndicator_Label"), m_Search_TextField("Search_TextField")
+		  m_PageIndicator_Label("PageIndicator_Label"), m_Search_TextField("Search_TextField"),
+		  m_ArmorHelmet_Sprite("ArmorHelmet_Sprite", s_PathArmorHelmet, Sprite::eOrigin::ResourcePack),
+		  m_ArmorChestplate_Sprite("ArmorChestplate_Sprite", s_PathArmorChestplate, Sprite::eOrigin::ResourcePack),
+		  m_ArmorLeggings_Sprite("ArmorLeggings_Sprite", s_PathArmorLeggings, Sprite::eOrigin::ResourcePack),
+		  m_ArmorBoots_Sprite("ArmorBoots_Sprite", s_PathArmorBoots, Sprite::eOrigin::ResourcePack),
+		  m_Offhand_Sprite("Offhand_Sprite", s_PathOffhand, Sprite::eOrigin::ResourcePack)
 	{
 		SubscribeToControlEvents();
 
 		m_InventoryBackground_Sprite.SetZOffset(0.55f); // Ensure it's in front of the Hotbar
+
+		m_ArmorHelmet_Sprite.SetZOffset(0.56f);
+		m_ArmorChestplate_Sprite.SetZOffset(0.56f);
+		m_ArmorLeggings_Sprite.SetZOffset(0.56f);
+		m_ArmorBoots_Sprite.SetZOffset(0.56f);
+		m_Offhand_Sprite.SetZOffset(0.56f);
 
 		m_Crafting_Label.SetZOffset(0.6f); // Ensure it's in front of the inventory background
 		m_Crafting_Label.SetText("Crafting");
@@ -263,6 +274,114 @@ namespace onion::voxel
 		}
 		m_CreativeBlockMesh->Render(firstCreativeTabSlotBorder, s_ScreenWidth, s_ScreenHeight);
 
+		// ----- Renders armor slots sprites (not inventory blocks) -----
+		const float firstArmorSlotXleftRatio = 636.f / 1920.f;
+		const int firstArmorSlotXleft = static_cast<int>(std::round(s_ScreenWidth * firstArmorSlotXleftRatio));
+		const float firstArmorSlotYtopRatio = (223.f - 23.f) / 1009.f;
+		const int firstArmorSlotYtop = static_cast<int>(std::round(s_ScreenHeight * firstArmorSlotYtopRatio));
+		const int firstArmorYcenter = static_cast<int>(glm::round(firstArmorSlotYtop + (slotSize.y / 2)));
+		glm::ivec2 armorSlotCenter = {firstArmorSlotXleft + slotSize.x / 2, firstArmorYcenter};
+		const glm::vec2 spriteSlotSize = slotSize - glm::vec2{2 * slotBorder};
+		// Helmet Slot
+		m_ArmorHelmet_Sprite.SetPosition(armorSlotCenter);
+		m_ArmorHelmet_Sprite.SetSize(slotSize);
+		m_ArmorHelmet_Sprite.Render();
+
+		// Chestplate Slot
+		armorSlotCenter.y = firstArmorYcenter + static_cast<int>(glm::round(slotSize.y));
+		m_ArmorChestplate_Sprite.SetPosition(armorSlotCenter);
+		m_ArmorChestplate_Sprite.SetSize(spriteSlotSize);
+		m_ArmorChestplate_Sprite.Render();
+
+		// Leggings Slot
+		armorSlotCenter.y = firstArmorYcenter + static_cast<int>(glm::round(slotSize.y * 2));
+		m_ArmorLeggings_Sprite.SetPosition(armorSlotCenter);
+		m_ArmorLeggings_Sprite.SetSize(spriteSlotSize);
+		m_ArmorLeggings_Sprite.Render();
+
+		// Boots Slot
+		armorSlotCenter.y = firstArmorYcenter + static_cast<int>(glm::round(slotSize.y * 3));
+		m_ArmorBoots_Sprite.SetPosition(armorSlotCenter);
+		m_ArmorBoots_Sprite.SetSize(spriteSlotSize);
+		m_ArmorBoots_Sprite.Render();
+
+		// ----- Render Armor Slots Inventory Blocks -----
+		// Player has no armor inventory yet.
+		const glm::vec2 firstArmorSlotTopLeft = {firstArmorSlotXleft, firstArmorSlotYtop};
+		const int hoveredArmorSlotIndex =
+			m_ArmorBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstArmorSlotTopLeft);
+		Inventory armorInventory(4, 1);
+		armorInventory.SelectedIndex() = hoveredArmorSlotIndex;
+		m_ArmorBlockMesh->SetSlotBorder(slotBorder);
+		m_ArmorBlockMesh->SetInventory(armorInventory, slotSize, slotPadding);
+		if (m_ArmorBlockMesh->IsDirty())
+		{
+			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
+			meshBuilder.UpdateUiBlockMesh(m_ArmorBlockMesh);
+		}
+		m_ArmorBlockMesh->Render(firstArmorSlotTopLeft, s_ScreenWidth, s_ScreenHeight);
+
+		// ----- Render Offhand Slot Sprite -----
+		const float offhandSlotXleftRatio = 912.f / 1920.f;
+		const int offhandSlotXleft = static_cast<int>(std::round(s_ScreenWidth * offhandSlotXleftRatio));
+		const float offhandSlotYtopRatio = (440.f - 23.f) / 1009.f;
+		const int offhandSlotYtop = static_cast<int>(std::round(s_ScreenHeight * offhandSlotYtopRatio));
+		glm::ivec2 offhandSlotCenter = {offhandSlotXleft + slotSize.x / 2, offhandSlotYtop + slotSize.y / 2};
+		m_Offhand_Sprite.SetPosition(offhandSlotCenter);
+		m_Offhand_Sprite.SetSize(spriteSlotSize);
+		m_Offhand_Sprite.Render();
+
+		// ---- Render Offhand Slot Inventory Block ----
+		const glm::vec2 offhandSlotTopLeft = {offhandSlotXleft, offhandSlotYtop};
+		const int hoveredOffhandSlotIndex =
+			m_OffhandBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, offhandSlotTopLeft);
+		Inventory offhandInventory(1, 1);
+		offhandInventory.SelectedIndex() = hoveredOffhandSlotIndex;
+		m_OffhandBlockMesh->SetSlotBorder(slotBorder);
+		m_OffhandBlockMesh->SetInventory(offhandInventory, slotSize, slotPadding);
+		if (m_OffhandBlockMesh->IsDirty())
+		{
+			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
+			meshBuilder.UpdateUiBlockMesh(m_OffhandBlockMesh);
+		}
+		m_OffhandBlockMesh->Render(offhandSlotTopLeft, s_ScreenWidth, s_ScreenHeight);
+
+		// ----- Render Crafting Grid Slots -----
+		const float firstCraftingGridSlotXleftRatio = 996.f / 1920.f;
+		const int firstCraftingGridSlotXleft = static_cast<int>(std::round(s_ScreenWidth * firstCraftingGridSlotXleftRatio));
+		const float firstCraftingGridSlotYtopRatio = (263.f - 23.f) / 1009.f;
+		const int firstCraftingGridSlotYtop = static_cast<int>(std::round(s_ScreenHeight * firstCraftingGridSlotYtopRatio));
+		const glm::vec2 firstCraftingGridSlotTopLeft = {firstCraftingGridSlotXleft, firstCraftingGridSlotYtop};
+		const int hoveredCraftingGridSlotIndex =
+			m_CraftingGridBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstCraftingGridSlotTopLeft);
+		m_CraftingInventory.SelectedIndex() = hoveredCraftingGridSlotIndex;
+		m_CraftingGridBlockMesh->SetSlotBorder(slotBorder);
+		m_CraftingGridBlockMesh->SetInventory(m_CraftingInventory, slotSize, slotPadding);
+		if (m_CraftingGridBlockMesh->IsDirty())
+		{
+			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
+			meshBuilder.UpdateUiBlockMesh(m_CraftingGridBlockMesh);
+		}
+		m_CraftingGridBlockMesh->Render(firstCraftingGridSlotTopLeft, s_ScreenWidth, s_ScreenHeight);
+
+		// ----- Render Crafting Output Slot -----
+		const float craftingOutputSlotXleftRatio = 1220.f / 1920.f;
+		const int craftingOutputSlotXleft = static_cast<int>(std::round(s_ScreenWidth * craftingOutputSlotXleftRatio));
+		const float craftingOutputSlotYtopRatio = (303.f - 23.f) / 1009.f;
+		const int craftingOutputSlotYtop = static_cast<int>(std::round(s_ScreenHeight * craftingOutputSlotYtopRatio));
+		const glm::vec2 craftingOutputSlotTopLeft = {craftingOutputSlotXleft, craftingOutputSlotYtop};
+		const int hoveredCraftingOutputSlotIndex =
+			m_CraftingOutputBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, craftingOutputSlotTopLeft);
+		m_CraftingOutputInventory.SelectedIndex() = hoveredCraftingOutputSlotIndex;
+		m_CraftingOutputBlockMesh->SetSlotBorder(slotBorder);
+		m_CraftingOutputBlockMesh->SetInventory(m_CraftingOutputInventory, slotSize, slotPadding);
+		if (m_CraftingOutputBlockMesh->IsDirty())
+		{
+			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
+			meshBuilder.UpdateUiBlockMesh(m_CraftingOutputBlockMesh);
+		}
+		m_CraftingOutputBlockMesh->Render(craftingOutputSlotTopLeft, s_ScreenWidth, s_ScreenHeight);
+
 		// ---- Key Drop Input Handling ----
 		bool dropKeyPressed = EngineContext::Get().Keys->GetKeyState(eAction::DropItem).IsPressed;
 
@@ -334,6 +453,11 @@ namespace onion::voxel
 		m_NextPage_Button.Initialize();
 		m_PageIndicator_Label.Initialize();
 		m_Search_TextField.Initialize();
+		m_ArmorHelmet_Sprite.Initialize();
+		m_ArmorChestplate_Sprite.Initialize();
+		m_ArmorLeggings_Sprite.Initialize();
+		m_ArmorBoots_Sprite.Initialize();
+		m_Offhand_Sprite.Initialize();
 
 		SetInitState(true);
 	}
@@ -347,10 +471,19 @@ namespace onion::voxel
 		m_NextPage_Button.Delete();
 		m_PageIndicator_Label.Delete();
 		m_Search_TextField.Delete();
+		m_ArmorHelmet_Sprite.Delete();
+		m_ArmorChestplate_Sprite.Delete();
+		m_ArmorLeggings_Sprite.Delete();
+		m_ArmorBoots_Sprite.Delete();
+		m_Offhand_Sprite.Delete();
 
 		m_HotbarBlockMesh->Delete();
 		m_InventoryBlockMesh->Delete();
 		m_CreativeBlockMesh->Delete();
+		m_ArmorBlockMesh->Delete();
+		m_OffhandBlockMesh->Delete();
+		m_CraftingGridBlockMesh->Delete();
+		m_CraftingOutputBlockMesh->Delete();
 
 		SetDeletedState(true);
 	}
@@ -364,6 +497,19 @@ namespace onion::voxel
 		m_NextPage_Button.ReloadTextures();
 		m_PageIndicator_Label.ReloadTextures();
 		m_Search_TextField.ReloadTextures();
+		m_ArmorHelmet_Sprite.ReloadTextures();
+		m_ArmorChestplate_Sprite.ReloadTextures();
+		m_ArmorLeggings_Sprite.ReloadTextures();
+		m_ArmorBoots_Sprite.ReloadTextures();
+		m_Offhand_Sprite.ReloadTextures();
+
+		m_HotbarBlockMesh->SetDirty(true);
+		m_InventoryBlockMesh->SetDirty(true);
+		m_CreativeBlockMesh->SetDirty(true);
+		m_ArmorBlockMesh->SetDirty(true);
+		m_OffhandBlockMesh->SetDirty(true);
+		m_CraftingGridBlockMesh->SetDirty(true);
+		m_CraftingOutputBlockMesh->SetDirty(true);
 	}
 
 	const std::vector<BlockId>& InventoryPanel::GetCreativeTabBlockIds()
