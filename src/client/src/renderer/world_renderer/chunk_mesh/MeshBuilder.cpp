@@ -620,7 +620,7 @@ namespace onion::voxel
 				transform = glm::translate(transform, gui.Translation / 16.0f * blockScreenSize);
 				transform = glm::rotate(transform, glm::radians(gui.Rotation.z), glm::vec3(0, 0, 1));
 				transform = glm::rotate(transform, glm::radians(-gui.Rotation.x), glm::vec3(1, 0, 0));
-				transform = glm::rotate(transform, glm::radians(gui.Rotation.y), glm::vec3(0, 1, 0));
+				transform = glm::rotate(transform, glm::radians(-gui.Rotation.y), glm::vec3(0, 1, 0));
 				transform = glm::scale(transform, gui.Scale * (-blockScreenSize));
 
 				// Compute the 8 corners of the unit cube through the transform.

@@ -515,14 +515,51 @@ namespace
 
 	static size_t PickCanonicalGuiVariantIndex(const std::vector<onion::voxel::VariantModel>& variants)
 	{
+		static const std::pair<std::string, std::string> kPreferred[] = {
+			{"half", "bottom"},
+			{"shape", "straight"},
+			{"type", "bottom"},
+			{"axis", "y"},
+			{"orientation", "east_up"},
+		};
+
+		size_t bestIndex = 0;
+		int bestScore = 0;
+
 		for (size_t i = 0; i < variants.size(); i++)
 		{
 			const auto& props = variants[i].Properties;
-			auto shapeIt = props.find("shape");
-			if (shapeIt != props.end() && shapeIt->second == "straight")
-				return i;
+			int score = 0;
+			bool matchedHalf = false;
+			bool matchedShape = false;
+
+			for (const auto& [key, value] : kPreferred)
+			{
+				auto it = props.find(key);
+				if (it != props.end() && it->second == value)
+				{
+					++score;
+					if (key == "half")
+						matchedHalf = true;
+					if (key == "shape")
+						matchedShape = true;
+				}
+			}
+
+			// Prefer facing=west if matched both half=bottom and shape=straight, else facing=east
+			const std::string preferredFacing = (matchedHalf && matchedShape) ? "west" : "east";
+			auto facingIt = props.find("facing");
+			if (facingIt != props.end() && facingIt->second == preferredFacing)
+				++score;
+
+			if (score > bestScore)
+			{
+				bestScore = score;
+				bestIndex = i;
+			}
 		}
-		return 0;
+
+		return bestIndex;
 	}
 
 	static void InjectGuiVariant(const std::string& blockResourceName,
