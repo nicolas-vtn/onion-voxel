@@ -35,8 +35,18 @@ namespace onion::voxel
 		Sprite m_ExperienceBarBackground_Sprite;
 		Sprite m_ExperienceBarProgress_Sprite;
 		Label m_ExperienceLevel_Label;
+		Label m_SelectedBlockName_Label;
 
 		std::shared_ptr<UiBlockMesh> m_UiBlockMesh = std::make_shared<UiBlockMesh>(Inventory{1, 9});
+
+		// ----- State -----
+	  private:
+		int m_PreviousSelectedHotbarIndex = -1; // The previously selected hotbar index
+		double m_SelectedBlockTime = 0.0;		// Time in seconds that the currently selected block has been selected.
+
+		// ----- Private Helpers -----
+	  private:
+		float GetSelectedBlockNameFadeInFactor() const;
 
 		// ----- Textures -----
 	  private:
