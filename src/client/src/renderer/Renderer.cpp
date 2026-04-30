@@ -666,7 +666,7 @@ namespace onion::voxel
 		glm::vec3 rayOrigin = m_Camera->GetPosition();
 		glm::vec3 rayDirection = m_Camera->GetFront();
 
-		m_CurrentRaycastHit = Raycaster::Raycast(*m_WorldManager, rayOrigin, rayDirection, 10.0f, 300);
+		m_CurrentRaycastHit = Raycaster::Raycast(*m_WorldManager, rayOrigin, rayDirection, 10.0f, 500);
 
 		// ----- DROP ITEM -----
 		KeyState dropItemKeyState = m_KeyBinds.GetKeyState(eAction::DropItem);
