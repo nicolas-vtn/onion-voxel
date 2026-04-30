@@ -143,11 +143,7 @@ namespace onion::voxel
 		if (!BlockHasProperty(ctx.Id, "type"))
 			return;
 
-		// --- Promotion: placing a slab onto an existing slab of the same type ---
-		// Conditions:
-		//   - World is available for querying
-		//   - The hit block is the same BlockId as what's being placed
-		//   - The existing slab is bottom or top (not already double)
+		// --- Promotion: placing a slab onto the hit slab directly (hit block is same type) ---
 		if (ctx.World != nullptr && ctx.HitBlock.ID() == ctx.Id)
 		{
 			const auto& registry = BlockstateRegistry::Get();
@@ -165,6 +161,7 @@ namespace onion::voxel
 					{
 						result.Position = ctx.HitBlock.Position;
 						result.Properties["type"] = "double";
+						result.IsPromotion = true;
 						return;
 					}
 
@@ -173,27 +170,70 @@ namespace onion::voxel
 					{
 						result.Position = ctx.HitBlock.Position;
 						result.Properties["type"] = "double";
+						result.IsPromotion = true;
 						return;
 					}
 				}
 			}
 		}
 
+		// --- Promotion: PlacePosition already contains a slab of the same BlockId ---
+		// Resolve what type would normally be placed, then check for a complement.
+		// Complementary types (bottom+top) promote to double.
+		// Same type falls through — blocked by the air-only guard in the caller.
+		if (ctx.World != nullptr)
+		{
+			BlockState existingState = ctx.World->GetBlock(ctx.PlacePosition);
+			if (existingState.ID == ctx.Id)
+			{
+				const auto& registry = BlockstateRegistry::Get();
+				auto it = registry.find(existingState.ID);
+				if (it != registry.end())
+				{
+					const auto& existingVariant = it->second[existingState.VariantIndex];
+					auto typeIt = existingVariant.Properties.find("type");
+					if (typeIt != existingVariant.Properties.end())
+					{
+						const std::string& existingType = typeIt->second;
+
+						std::string resolvedType;
+						if (ctx.HitFaceNormal.y == 1)
+							resolvedType = "bottom";
+						else if (ctx.HitFaceNormal.y == -1)
+							resolvedType = "top";
+						else
+						{
+							float fracY = ctx.HitPosition.y - std::floor(ctx.HitPosition.y);
+							resolvedType = (fracY >= 0.5f) ? "top" : "bottom";
+						}
+
+						if ((existingType == "bottom" && resolvedType == "top") ||
+							(existingType == "top" && resolvedType == "bottom"))
+						{
+							result.Position = ctx.PlacePosition;
+							result.Properties["type"] = "double";
+							result.IsPromotion = true;
+							return;
+						}
+
+						// Same type or double → fall through; air-only guard will block
+					}
+				}
+			}
+		}
+
 		// --- Normal resolution ---
-		// Hit top face → bottom slab (sits on surface)
 		if (ctx.HitFaceNormal.y == 1)
 		{
 			result.Properties["type"] = "bottom";
 			return;
 		}
-		// Hit bottom face → top slab (pressed against ceiling)
-		if (ctx.HitFaceNormal.y == -1)
+		else if (ctx.HitFaceNormal.y == -1)
 		{
 			result.Properties["type"] = "top";
 			return;
 		}
 
-		// Side face hit — use fractional Y of the hit position within the block
 		float fracY = ctx.HitPosition.y - std::floor(ctx.HitPosition.y);
 		result.Properties["type"] = (fracY >= 0.5f) ? "top" : "bottom";
 	}

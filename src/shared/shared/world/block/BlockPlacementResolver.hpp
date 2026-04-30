@@ -15,7 +15,7 @@ namespace onion::voxel
 	struct PlacementContext
 	{
 		/// The block type being placed.
-		BlockId Id;
+		BlockId Id = BlockId::Air;
 
 		/// Normalized camera forward vector (player look direction).
 		glm::vec3 PlayerLookDir{0.f};
@@ -53,6 +53,10 @@ namespace onion::voxel
 
 		/// Resolved blockstate properties. Pass to BlockstateRegistry::GetVariantIndex.
 		std::map<std::string, std::string> Properties;
+
+		/// True when the placement intentionally overwrites an existing non-air block
+		/// (e.g. slab promotion to double). Used by the caller to bypass the air-only guard.
+		bool IsPromotion = false;
 	};
 
 	/// Resolves the correct blockstate properties for a block being placed.

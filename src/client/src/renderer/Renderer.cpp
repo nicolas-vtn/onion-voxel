@@ -713,11 +713,19 @@ namespace onion::voxel
 
 			Block blockToPlace = Block(placement.Position, BlockState(placement.Id, variantIndex));
 
-			bool success = m_WorldManager->SetBlock(
-				blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
+			// Only place into air, unless the resolver explicitly flagged a promotion
+			// (e.g. slab stacking to double) which intentionally overwrites a non-air block.
+			bool canPlace = placement.IsPromotion || m_WorldManager->GetBlock(placement.Position).ID == BlockId::Air;
 
-			std::cout << "Attempting to place block at " << blockToPlace.Position.x << ", " << blockToPlace.Position.y
-					  << ", " << blockToPlace.Position.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
+			if (canPlace)
+			{
+				bool success = m_WorldManager->SetBlock(
+					blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
+
+				std::cout << "Attempting to place block at " << blockToPlace.Position.x << ", "
+						  << blockToPlace.Position.y << ", " << blockToPlace.Position.z
+						  << " - Success: " << (success ? "Yes" : "No") << std::endl;
+			}
 		}
 
 		// ----- PROCESS BLOCK PICK -----
