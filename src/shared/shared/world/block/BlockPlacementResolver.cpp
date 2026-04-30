@@ -18,6 +18,7 @@ namespace onion::voxel
 		ResolveAxis(ctx, result);
 		ResolveHalf(ctx, result);
 		ResolveType(ctx, result); // last — may redirect Position and Id
+		ResolveOrientation(ctx, result);
 
 		return result;
 	}
@@ -236,6 +237,64 @@ namespace onion::voxel
 
 		float fracY = ctx.HitPosition.y - std::floor(ctx.HitPosition.y);
 		result.Properties["type"] = (fracY >= 0.5f) ? "top" : "bottom";
+	}
+
+	// Returns the opposite cardinal horizontal direction.
+	static std::string Opposite(const std::string& dir)
+	{
+		if (dir == "north")
+			return "south";
+		if (dir == "south")
+			return "north";
+		if (dir == "east")
+			return "west";
+		if (dir == "west")
+			return "east";
+		return dir;
+	}
+
+	// Returns the dominant horizontal direction from an XZ look vector.
+	static std::string DominantHorizontal(float x, float z)
+	{
+		if (std::abs(x) >= std::abs(z))
+			return (x > 0.f) ? "west" : "east";
+		else
+			return (z > 0.f) ? "north" : "south";
+	}
+
+	void BlockPlacementResolver::ResolveOrientation(const PlacementContext& ctx, PlacementResult& result)
+	{
+		if (!BlockHasProperty(ctx.Id, "orientation"))
+			return;
+
+		const float x = ctx.PlayerLookDir.x;
+		const float y = ctx.PlayerLookDir.y;
+		const float z = ctx.PlayerLookDir.z;
+
+		// Step 1: pointing direction from camera look
+		std::string pointing;
+		if (y < -0.707f)
+			pointing = "down";
+		else if (y > 0.707f)
+			pointing = "up";
+		else
+			pointing = DominantHorizontal(x, z);
+
+		// Step 2: top direction
+		std::string top;
+		if (pointing == "north" || pointing == "south" || pointing == "east" || pointing == "west")
+		{
+			// Horizontal pointing — block sits upright naturally
+			top = "up";
+		}
+		else
+		{
+			// Vertical pointing — top follows horizontal look direction
+			const std::string lookH = DominantHorizontal(x, z);
+			top = (pointing == "down") ? lookH : Opposite(lookH);
+		}
+
+		result.Properties["orientation"] = pointing + "_" + top;
 	}
 
 	bool BlockPlacementResolver::BlockHasProperty(BlockId id, const std::string& propertyKey)

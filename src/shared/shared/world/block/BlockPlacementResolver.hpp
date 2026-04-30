@@ -95,6 +95,10 @@ namespace onion::voxel
 		/// Promotes to type=double when placing a matching slab onto an existing one.
 		static void ResolveType(const PlacementContext& ctx, PlacementResult& result);
 
+		/// Populate orientation= (e.g. east_up, down_north) based on player look direction.
+		/// Used by jigsaw blocks and similar two-axis-directional blocks.
+		static void ResolveOrientation(const PlacementContext& ctx, PlacementResult& result);
+
 		/// Returns true if any variant of the given block has the specified property key.
 		static bool BlockHasProperty(BlockId id, const std::string& propertyKey);
 	};
