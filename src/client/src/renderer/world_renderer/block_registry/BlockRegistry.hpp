@@ -56,11 +56,11 @@ namespace onion::voxel
 		std::vector<TextureInfo> overlay;
 	};
 
-	class BlockRegistry
+	class BlockRenderRegistry
 	{
 		// ----- Constructor / Destructor -----
 	  public:
-		BlockRegistry(std::shared_ptr<TextureAtlas> atlas);
+		BlockRenderRegistry(std::shared_ptr<TextureAtlas> atlas);
 
 		// ----- Public API -----
 	  public:
@@ -71,48 +71,48 @@ namespace onion::voxel
 		// Get BlockTextures for the default (first) variant
 		const BlockTextures& Get(BlockId id) const;
 
-		// Get BlockTextures for a specific variant index (clamped to valid range)
+		// Get BlockTextures for a specific variant index
 		const BlockTextures& Get(BlockId id, uint8_t variantIndex) const;
 
-		// Returns the number of registered variants for a block (at least 1 if the block exists)
+		// Returns the number of registered variants for a block
 		size_t GetVariantCount(BlockId id) const;
 
 		// ----- Private Methods -----
 	  private:
 		void ReloadModels();
 
-		// Register all variants for a block
-		void RegisterModel(BlockId id);
-		// Register a specific variant (by VariantModel) — used internally
-		void RegisterVariant(BlockId id, const VariantModel& variant, size_t variantIndex);
-		// Register a direct texture array (used by hand-crafted special cases)
-		void RegisterModel(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex);
+		// Load and stage all variants for a block from its blockstate JSON
+		void LoadBlockModel(BlockId id);
+		// Load and stage a specific variant (by VariantModel) — used internally
+		void LoadVariant(BlockId id, const VariantModel& variant, size_t variantIndex);
+		// Stage a direct texture array (used by hand-crafted special cases)
+		void StageTextures(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex);
 
-		void RegisterModelOverlay(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex);
+		void StageOverlayTextures(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex);
 
-		// ----- Real Registrations -----
+		// ----- Atlas Commit (resolves texture IDs from atlas) -----
 	  private:
-		void Register(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures);
-		void RegisterOverlay(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures);
+		void CommitTextures(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures);
+		void CommitOverlayTextures(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures);
 
 		// ----- Private Members -----
 	  private:
-		struct PreRegistration
+		struct StagedTextures
 		{
 			BlockId id;
 			uint8_t variantIndex; // which slot within m_Blocks[id]
 			std::vector<TextureInfo> textures;
 		};
 
-		struct PreOverlayRegistration
+		struct StagedOverlayTextures
 		{
 			BlockId id;
 			uint8_t variantIndex; // which slot within m_Blocks[id]
 			std::vector<TextureInfo> textures;
 		};
 
-		std::vector<PreRegistration> m_Registrations;
-		std::vector<PreOverlayRegistration> m_RegistrationsOverlays;
+		std::vector<StagedTextures> m_StagedTextures;
+		std::vector<StagedOverlayTextures> m_StagedOverlayTextures;
 
 		// Each block can have multiple variants; index 0 is always the default
 		std::unordered_map<BlockId, std::vector<BlockTextures>> m_Blocks;

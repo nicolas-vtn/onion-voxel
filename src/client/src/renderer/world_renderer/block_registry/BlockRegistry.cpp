@@ -59,42 +59,43 @@ namespace
 } // anonymous namespace
 
 // ---------------------------------------------------------------------------
-// onion::voxel::BlockRegistry implementation
+// onion::voxel::BlockRenderRegistry implementation
 // ---------------------------------------------------------------------------
 namespace onion::voxel
 {
-	BlockRegistry::BlockRegistry(std::shared_ptr<TextureAtlas> atlas) : m_Atlas(atlas) {}
+	BlockRenderRegistry::BlockRenderRegistry(std::shared_ptr<TextureAtlas> atlas) : m_Atlas(atlas) {}
 
-	// ---- Direct texture-array registration (used by special-case blocks) ----
-	void BlockRegistry::RegisterModel(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex)
+	// ---- Stage a direct texture array (used by special-case blocks) ----
+	void BlockRenderRegistry::StageTextures(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex)
 	{
 		for (const auto& texture : textures)
 			if (!texture.name.empty())
 				m_AllTextureNames.insert(texture.name);
 
-		PreRegistration reg;
-		reg.id = id;
-		reg.variantIndex = static_cast<uint8_t>(variantIndex);
-		reg.textures = textures;
-		m_Registrations.push_back(std::move(reg));
+		StagedTextures staged;
+		staged.id = id;
+		staged.variantIndex = static_cast<uint8_t>(variantIndex);
+		staged.textures = textures;
+		m_StagedTextures.push_back(std::move(staged));
 	}
 
-	void BlockRegistry::RegisterModelOverlay(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex)
+	void
+	BlockRenderRegistry::StageOverlayTextures(BlockId id, const std::vector<TextureInfo>& textures, size_t variantIndex)
 	{
 		for (const auto& texture : textures)
 			if (!texture.name.empty())
 				m_AllTextureNames.insert(texture.name);
 
-		PreOverlayRegistration reg;
-		reg.id = id;
-		reg.variantIndex = static_cast<uint8_t>(variantIndex);
-		reg.textures = textures;
+		StagedOverlayTextures staged;
+		staged.id = id;
+		staged.variantIndex = static_cast<uint8_t>(variantIndex);
+		staged.textures = textures;
 
-		m_RegistrationsOverlays.push_back(std::move(reg));
+		m_StagedOverlayTextures.push_back(std::move(staged));
 	}
 
-	// ---- Register one VariantModel for a block ----
-	void BlockRegistry::RegisterVariant(BlockId id, const VariantModel& variant, size_t variantIndex)
+	// ---- Load one VariantModel for a block ----
+	void BlockRenderRegistry::LoadVariant(BlockId id, const VariantModel& variant, size_t variantIndex)
 	{
 		BlockModel blockModel = variant.Model;
 
@@ -178,14 +179,14 @@ namespace onion::voxel
 		}
 
 		if (baseInitialized)
-			RegisterModel(id, baseTextures, variantIndex);
+			StageTextures(id, baseTextures, variantIndex);
 
 		if (overlayInitialized)
-			RegisterModelOverlay(id, overlayTextures, variantIndex);
+			StageOverlayTextures(id, overlayTextures, variantIndex);
 	}
 
-	// ---- Register all variants parsed from a blockstate JSON ----
-	void BlockRegistry::RegisterModel(BlockId id)
+	// ---- Load all variants parsed from a blockstate JSON ----
+	void BlockRenderRegistry::LoadBlockModel(BlockId id)
 	{
 		const auto& blockstates = BlockstateRegistry::Get();
 
@@ -196,22 +197,19 @@ namespace onion::voxel
 					  << BlockIds::GetName(id) << ")." << std::endl;
 
 			VariantModel defaultVariant;
-			RegisterVariant(id, defaultVariant, 0);
+			LoadVariant(id, defaultVariant, 0);
 
 			return;
-
-			//throw std::runtime_error("BlockRegistry::RegisterModel: No blockstate found for block ID " +
-			//						 std::to_string(static_cast<uint16_t>(id)));
 		}
 
 		const auto& variants = it->second;
 
 		for (int i = 0; i < variants.size(); i++)
-			RegisterVariant(id, variants[i], i);
+			LoadVariant(id, variants[i], i);
 	}
 
-	// ---- Finalize: resolve TextureIDs from atlas ----
-	void BlockRegistry::Register(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures)
+	// ---- Commit: resolve TextureIDs from atlas ----
+	void BlockRenderRegistry::CommitTextures(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures)
 	{
 		BlockTextures tex;
 
@@ -246,12 +244,14 @@ namespace onion::voxel
 		variants[variantIndex] = tex;
 	}
 
-	void BlockRegistry::RegisterOverlay(BlockId id, uint8_t variantIndex, const std::vector<TextureInfo>& textures)
+	void BlockRenderRegistry::CommitOverlayTextures(BlockId id,
+													uint8_t variantIndex,
+													const std::vector<TextureInfo>& textures)
 	{
 		auto it = m_Blocks.find(id);
 		if (it == m_Blocks.end() || it->second.empty())
 		{
-			throw std::runtime_error("BlockRegistry::SetOverlay: Block ID not found: " +
+			throw std::runtime_error("BlockRenderRegistry::CommitOverlayTextures: Block ID not found: " +
 									 std::to_string(static_cast<uint16_t>(id)));
 		}
 
@@ -274,50 +274,48 @@ namespace onion::voxel
 		}
 	}
 
-	void BlockRegistry::Initialize()
+	void BlockRenderRegistry::Initialize()
 	{
 		ReloadTextures();
 	}
 
-	void BlockRegistry::ReloadTextures()
+	void BlockRenderRegistry::ReloadTextures()
 	{
 		ReloadModels();
 
 		m_Blocks.clear();
 
-		for (const auto& registration : m_Registrations)
-			Register(registration.id, registration.variantIndex, registration.textures);
+		for (const auto& staged : m_StagedTextures)
+			CommitTextures(staged.id, staged.variantIndex, staged.textures);
 
-		for (const auto& overlay : m_RegistrationsOverlays)
-			RegisterOverlay(overlay.id, overlay.variantIndex, overlay.textures);
+		for (const auto& staged : m_StagedOverlayTextures)
+			CommitOverlayTextures(staged.id, staged.variantIndex, staged.textures);
 	}
 
-	const std::unordered_set<std::string>& BlockRegistry::GetAllTextureNames() const
+	const std::unordered_set<std::string>& BlockRenderRegistry::GetAllTextureNames() const
 	{
 		return m_AllTextureNames;
 	}
 
-	const BlockTextures& BlockRegistry::Get(BlockId id) const
+	const BlockTextures& BlockRenderRegistry::Get(BlockId id) const
 	{
 		return Get(id, 0);
 	}
 
-	const BlockTextures& BlockRegistry::Get(BlockId id, uint8_t variantIndex) const
+	const BlockTextures& BlockRenderRegistry::Get(BlockId id, uint8_t variantIndex) const
 	{
 		auto it = m_Blocks.find(id);
 		if (it == m_Blocks.end() || it->second.empty())
 		{
-			throw std::runtime_error("BlockRegistry::Get: Block ID not found: " +
+			throw std::runtime_error("BlockRenderRegistry::Get: Block ID not found: " +
 									 std::to_string(static_cast<uint16_t>(id)));
 		}
 
-		// Clamp to valid range — prevents crashes from stale variant indices
 		const auto& variants = it->second;
-		const size_t idx = std::min(static_cast<size_t>(variantIndex), variants.size() - 1);
-		return variants[idx];
+		return variants[variantIndex];
 	}
 
-	size_t BlockRegistry::GetVariantCount(BlockId id) const
+	size_t BlockRenderRegistry::GetVariantCount(BlockId id) const
 	{
 		auto it = m_Blocks.find(id);
 		if (it == m_Blocks.end())
@@ -325,30 +323,19 @@ namespace onion::voxel
 		return it->second.size();
 	}
 
-	void BlockRegistry::ReloadModels()
+	void BlockRenderRegistry::ReloadModels()
 	{
 		BlockModel::ClearCache();
 
 		m_AllTextureNames.clear();
-		m_Registrations.clear();
-		m_RegistrationsOverlays.clear();
+		m_StagedTextures.clear();
+		m_StagedOverlayTextures.clear();
 
 		for (uint16_t id = 0; id < static_cast<uint16_t>(BlockId::Count); id++)
 		{
 			BlockId blockId = static_cast<BlockId>(id);
-			RegisterModel(blockId);
+			LoadBlockModel(blockId);
 		}
-
-		//// ---- Custom Blocks (not in Minecraft, or with special texture requirements) ----
-		//RegisterModel(BlockId::SnowGrassBlock,
-		//			  {TextureInfo{"block/snow.png", Tint::None},
-		//			   TextureInfo{"block/dirt.png", Tint::None},
-		//			   TextureInfo{"block/grass_block_snow.png", Tint::None},
-		//			   TextureInfo{"block/grass_block_snow.png", Tint::None},
-		//			   TextureInfo{"block/grass_block_snow.png", Tint::None},
-		//			   TextureInfo{"block/grass_block_snow.png", Tint::None}},
-		//			  eTextureModel::Block,
-		//			  0);
 
 		// ---- Reload Atlas Textures ----
 		m_Atlas->ReloadTextures(m_AllTextureNames);

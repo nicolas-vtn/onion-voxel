@@ -8,7 +8,7 @@
 namespace onion::voxel
 {
 	MeshBuilder::MeshBuilder(std::shared_ptr<WorldManager> worldManager, std::shared_ptr<TextureAtlas> textureAtlas)
-		: m_WorldManager(worldManager), m_BlockRegistry(textureAtlas), m_TextureAtlas(textureAtlas)
+		: m_WorldManager(worldManager), m_BlockRenderRegistry(textureAtlas), m_TextureAtlas(textureAtlas)
 	{
 	}
 
@@ -203,7 +203,7 @@ namespace onion::voxel
 							continue;
 
 						// ------ Get Block Textures ------
-						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.ID, block.VariantIndex);
+						const BlockTextures& blockTextures = m_BlockRenderRegistry.Get(block.ID, block.VariantIndex);
 
 						// ------ Build Mesh ------
 						// Build each face individually using its own element geometry (from/to)
@@ -523,12 +523,12 @@ namespace onion::voxel
 
 	void MeshBuilder::Initialize()
 	{
-		m_BlockRegistry.Initialize();
+		m_BlockRenderRegistry.Initialize();
 	}
 
 	void MeshBuilder::ReloadTextures()
 	{
-		m_BlockRegistry.ReloadTextures();
+		m_BlockRenderRegistry.ReloadTextures();
 	}
 
 	void MeshBuilder::UpdateChunkMeshAsync(const std::shared_ptr<ChunkMesh> chunkMesh)
@@ -629,7 +629,8 @@ namespace onion::voxel
 				{ return glm::vec3(transform * glm::vec4(x, y, z, 1.0f)); };
 
 				// Build face quads — one PAO per element since elements may differ in size (e.g. slabs)
-				const BlockTextures& blockTextures = m_BlockRegistry.Get(blockId, static_cast<uint8_t>(bestVariantIdx));
+				const BlockTextures& blockTextures =
+					m_BlockRenderRegistry.Get(blockId, static_cast<uint8_t>(bestVariantIdx));
 
 				for (const FaceBuildDesc& f : GetBlockFaceBuildDescs(
 						 // Dummy full-cube PAO just to enumerate all 6 face directions;
@@ -734,7 +735,7 @@ namespace onion::voxel
 
 	const std::unordered_set<std::string>& MeshBuilder::GetAllRegisteredTextureNames() const
 	{
-		return m_BlockRegistry.GetAllTextureNames();
+		return m_BlockRenderRegistry.GetAllTextureNames();
 	}
 
 	void MeshBuilder::RecordExecution()

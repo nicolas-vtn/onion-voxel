@@ -45,7 +45,7 @@ namespace onion::voxel
 		// ----- Private Members -----
 	  private:
 		std::shared_ptr<WorldManager> m_WorldManager;
-		BlockRegistry m_BlockRegistry;
+		BlockRenderRegistry m_BlockRenderRegistry;
 		std::shared_ptr<TextureAtlas> m_TextureAtlas;
 
 		ThreadPool m_ThreadPool{4};
