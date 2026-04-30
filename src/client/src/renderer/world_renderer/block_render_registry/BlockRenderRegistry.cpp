@@ -290,6 +290,10 @@ namespace onion::voxel
 
 		for (const auto& staged : m_StagedOverlayTextures)
 			CommitOverlayTextures(staged.id, staged.variantIndex, staged.textures);
+
+		// Build the per-variant full-block lookup now that all variants are committed
+		// and the registry is fully populated.
+		BlockState::BuildFullBlockLookup();
 	}
 
 	const std::unordered_set<std::string>& BlockRenderRegistry::GetAllTextureNames() const

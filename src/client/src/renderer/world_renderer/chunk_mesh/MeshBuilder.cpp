@@ -46,8 +46,14 @@ namespace onion::voxel
 			//	continue;
 			//}
 
-			// A face is visible if the neighboring block in that direction is transparent
-			visibility[i] = BlockState::IsTransparent(block.ID) || BlockState::IsTransparent(neighbors[i].ID);
+			// A face is visible if the neighbor does not fully occlude it.
+			// Transparency alone is insufficient — a non-full block (slab, stair, fence, etc.)
+			// is opaque but does not fill its cell, so adjacent faces must remain visible.
+			bool currentIsFullBlock = BlockState::IsFullBlock(block.ID, block.VariantIndex);
+			bool neighborOccludesFace = currentIsFullBlock && !BlockState::IsTransparent(neighbors[i].ID) &&
+				BlockState::IsFullBlock(neighbors[i].ID, neighbors[i].VariantIndex);
+
+			visibility[i] = !neighborOccludesFace;
 		}
 
 		return visibility;
