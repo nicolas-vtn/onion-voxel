@@ -26,6 +26,10 @@ namespace onion::voxel
 		/// World position where the block will be placed.
 		glm::ivec3 PlacePosition{0};
 
+		/// Exact world-space position where the ray hit the block surface.
+		/// Used for half= resolution on side face hits.
+		glm::vec3 HitPosition{0.f};
+
 		/// World manager for neighbor queries (may be nullptr — unused for now).
 		const WorldManager* World = nullptr;
 	};
@@ -39,9 +43,10 @@ namespace onion::voxel
 	/// Currently supports:
 	///   - Directional facing (facing=north/south/east/west/up/down)
 	///   - Axis-aligned blocks (logs, pillars — axis=x/y/z)
+	///   - Vertical half (stairs, trapdoors, doors — half=bottom/top)
+	///   - Slab type (slabs — type=bottom/top)
 	///
 	/// Designed for extension: add more Resolve* private methods for:
-	///   - Slabs/stairs (half)
 	///   - Wall-mounted blocks (torches, buttons, levers)
 	///   - Connected blocks (fences, walls, panes)
 	class BlockPlacementResolver
@@ -57,6 +62,12 @@ namespace onion::voxel
 
 		/// Populate axis= (x/y/z) based on the hit face normal — for logs, pillars, etc.
 		static void ResolveAxis(const PlacementContext& ctx, std::map<std::string, std::string>& props);
+
+		/// Populate half= (bottom/top) based on the hit face normal and hit position Y fraction.
+		static void ResolveHalf(const PlacementContext& ctx, std::map<std::string, std::string>& props);
+
+		/// Populate type= (bottom/top) based on the hit face normal and hit position Y fraction — for slabs.
+		static void ResolveType(const PlacementContext& ctx, std::map<std::string, std::string>& props);
 
 		/// Returns true if any variant of the given block has the specified property key.
 		static bool BlockHasProperty(BlockId id, const std::string& propertyKey);

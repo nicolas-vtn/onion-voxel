@@ -703,6 +703,7 @@ namespace onion::voxel
 			ctx.Id = placedId;
 			ctx.PlayerLookDir = m_Camera->GetFront();
 			ctx.HitFaceNormal = m_CurrentRaycastHit->HitFaceNormal;
+			ctx.HitPosition   = m_CurrentRaycastHit->HitPosition;
 			ctx.PlacePosition = adjacentBlock.Position;
 			ctx.World = m_WorldManager.get();
 

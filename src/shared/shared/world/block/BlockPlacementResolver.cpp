@@ -14,9 +14,8 @@ namespace onion::voxel
 
 		ResolveDirectionalFacing(ctx, props);
 		ResolveAxis(ctx, props);
-		// Future: ResolveHalf(ctx, props);
-		// Future: ResolveWallMounted(ctx, props);
-		// Future: ResolveConnected(ctx, props);
+		ResolveHalf(ctx, props);
+		ResolveType(ctx, props);
 
 		return props;
 	}
@@ -118,6 +117,54 @@ namespace onion::voxel
 			props["axis"] = "z";
 		else
 			props["axis"] = "x";
+	}
+
+	void BlockPlacementResolver::ResolveHalf(const PlacementContext& ctx, std::map<std::string, std::string>& props)
+	{
+		if (!BlockHasProperty(ctx.Id, "half"))
+			return;
+
+		// Hit top face → place in bottom half (sits on surface)
+		if (ctx.HitFaceNormal.y == 1)
+		{
+			props["half"] = "bottom";
+			return;
+		}
+		// Hit bottom face → place in top half (hangs from ceiling)
+		if (ctx.HitFaceNormal.y == -1)
+		{
+			props["half"] = "top";
+			return;
+		}
+
+		// Side face hit — use fractional Y of the hit position within the block:
+		// upper half of the face (≥ 0.5) → top, lower half → bottom
+		float fracY = ctx.HitPosition.y - std::floor(ctx.HitPosition.y);
+		props["half"] = (fracY >= 0.5f) ? "top" : "bottom";
+	}
+
+	void BlockPlacementResolver::ResolveType(const PlacementContext& ctx, std::map<std::string, std::string>& props)
+	{
+		if (!BlockHasProperty(ctx.Id, "type"))
+			return;
+
+		// Hit top face → bottom slab (sits on surface)
+		if (ctx.HitFaceNormal.y == 1)
+		{
+			props["type"] = "bottom";
+			return;
+		}
+		// Hit bottom face → top slab (pressed against ceiling)
+		if (ctx.HitFaceNormal.y == -1)
+		{
+			props["type"] = "top";
+			return;
+		}
+
+		// Side face hit — use fractional Y of the hit position within the block:
+		// upper half of the face (≥ 0.5) → top, lower half → bottom
+		float fracY = ctx.HitPosition.y - std::floor(ctx.HitPosition.y);
+		props["type"] = (fracY >= 0.5f) ? "top" : "bottom";
 	}
 
 	bool BlockPlacementResolver::BlockHasProperty(BlockId id, const std::string& propertyKey)
