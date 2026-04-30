@@ -4,12 +4,11 @@
 		----- ENHANCEMENTS -----
 - Add Sounds / Musics
 - Animated textures (water, lava, ...) and lower texture
-- Add a "Creative" UI with Block selection and inventory management
 - Add Player position interpolation in multiplayer
 - Add a Chat system
 - Add Player Names display on top of head in Multiplayer
 - Add Player list display (tab)
-- Add UI Tooltip on hovering something
+- Add UI Tooltip on hovering options
 - Particules (breaking blocks, footsteps, ...)
 - First person view : Arm and selected block. (+ Movement on walking, placing and breaking)
 - Support model face culling ( Can optimize face cutout culling issue (double cutout render pass))

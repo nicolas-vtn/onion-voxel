@@ -1264,7 +1264,7 @@ namespace onion::voxel
 				double randomVal = m_SeededRandom.GetValue(worldPos + glm::ivec3(75, 24, 199));
 				bool tall = randomVal > 0.8; // 20% chance to generate tall grass instead of short grass
 
-				Schematic grassSchematic = GenerateGrass(worldPos + glm::ivec3{0, 1, 0}, biome, tall);
+				Schematic grassSchematic = GenerateGrass(worldPos, biome, tall);
 
 				MergeSchematicInChunk(grassSchematic, genChunk);
 			}
