@@ -66,9 +66,9 @@ namespace onion::voxel
 		// ----- Members -----
 	  private:
 		Inventory m_Inventory;
-		glm::vec2 m_SlotSize{50.f, 50.f};    // In pixels
+		glm::vec2 m_SlotSize{50.f, 50.f};	 // In pixels
 		glm::vec2 m_SlotPadding{10.f, 10.f}; // In pixels
-		float     m_SlotBorder{4.f};          // Inner border in pixels — block renders at slotSize - 2*border
+		float m_SlotBorder{4.f};			 // Inner border in pixels — block renders at slotSize - 2*border
 
 		std::shared_ptr<TextureAtlas> m_TextureAtlas;
 

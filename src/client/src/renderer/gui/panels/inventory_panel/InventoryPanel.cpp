@@ -52,6 +52,8 @@ namespace onion::voxel
 
 		m_Tooltip.SetZOffset(0.85f);
 
+		m_MovedItemBlockMesh->SetRenderSelectedHighlight(false);
+
 		m_PreviousPage_Button.SetText("◀");
 
 		m_NextPage_Button.SetText("▶");
@@ -414,6 +416,21 @@ namespace onion::voxel
 		if (m_InventoryMovedItem.At(0) != BlockId::Air)
 		{
 			const glm::vec2 movedItemSlotPos = cursorPosition - (slotSize / 2.f);
+
+			// Clear depth only in the slot region so the moved item always renders
+			// on top of everything drawn before it, while still using depth testing
+			// internally for correct cube face ordering.
+			const int scissorX = static_cast<int>(std::floor(movedItemSlotPos.x));
+			const int scissorY = static_cast<int>(std::floor(movedItemSlotPos.y));
+			const int scissorW = static_cast<int>(std::ceil(slotSize.x));
+			const int scissorH = static_cast<int>(std::ceil(slotSize.y));
+			// OpenGL scissor Y is bottom-left origin
+			const int scissorYgl = s_ScreenHeight - scissorY - scissorH;
+			glEnable(GL_SCISSOR_TEST);
+			glScissor(scissorX, scissorYgl, scissorW, scissorH);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			glDisable(GL_SCISSOR_TEST);
+
 			m_MovedItemBlockMesh->SetSlotBorder(slotBorder);
 			m_MovedItemBlockMesh->SetInventory(m_InventoryMovedItem, slotSize, slotPadding);
 			if (m_MovedItemBlockMesh->IsDirty())
