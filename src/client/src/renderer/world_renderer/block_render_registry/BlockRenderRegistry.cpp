@@ -34,17 +34,17 @@ namespace
 	{
 		using namespace onion::voxel;
 		if (name == "up")
-			return Face::Top;
+			return Face::Up;
 		if (name == "down")
-			return Face::Bottom;
+			return Face::Down;
 		if (name == "north")
-			return Face::Back;
+			return Face::North;
 		if (name == "south")
-			return Face::Front;
+			return Face::South;
 		if (name == "west")
-			return Face::Left;
+			return Face::West;
 		if (name == "east")
-			return Face::Right;
+			return Face::East;
 		throw std::runtime_error("Unknown face: " + name);
 	}
 

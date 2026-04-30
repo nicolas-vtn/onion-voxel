@@ -32,7 +32,7 @@ namespace onion::voxel
 		const float hy = 0.5f * std::abs(m_Height);
 		const float hz = 0.5f * std::abs(m_Depth);
 
-		// --- 2) Local-space corners (centered at origin): +Z=Front, +Y=Top, +X=Right
+		// --- 2) Local-space corners (centered at origin): +Z=Front, +Y=Up, +X=Right
 		const glm::vec3 LBB(-hx, -hy, -hz);
 		const glm::vec3 LBT(-hx, +hy, -hz);
 		const glm::vec3 LFB(-hx, -hy, +hz);
