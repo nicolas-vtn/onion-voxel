@@ -38,6 +38,9 @@ namespace onion::voxel
 				adjacent.Position = hitBlockPos - delta;
 				adjacent.State = worldManager.GetBlock(adjacent.Position);
 
+				// Face normal points from hit block toward adjacent block
+				hit.HitFaceNormal = glm::ivec3(-delta);
+
 				return hit;
 			}
 

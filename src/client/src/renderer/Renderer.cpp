@@ -8,6 +8,8 @@
 #include "version.hpp"
 
 #include <shared/utils/Utils.hpp>
+#include <shared/world/block/BlockPlacementResolver.hpp>
+#include <shared/world/block/BlockstateRegistry.hpp>
 
 #include "debug_draws/DebugDraws.hpp"
 
@@ -694,8 +696,20 @@ namespace onion::voxel
 		if (interactKeyState.IsPressed && m_CurrentRaycastHit.has_value())
 		{
 			const Block& adjacentBlock = m_CurrentRaycastHit->AdjacentBlock;
+			BlockId placedId = hotbar.Content()[selectedSlot];
 
-			Block blockToPlace = Block(adjacentBlock.Position, BlockState(hotbar.Content()[selectedSlot]));
+			// Resolve the correct variant based on player orientation and hit face.
+			PlacementContext ctx;
+			ctx.Id = placedId;
+			ctx.PlayerLookDir = m_Camera->GetFront();
+			ctx.HitFaceNormal = m_CurrentRaycastHit->HitFaceNormal;
+			ctx.PlacePosition = adjacentBlock.Position;
+			ctx.World = m_WorldManager.get();
+
+			auto properties = BlockPlacementResolver::Resolve(ctx);
+			uint8_t variantIndex = BlockstateRegistry::GetVariantIndex(placedId, properties);
+
+			Block blockToPlace = Block(adjacentBlock.Position, BlockState(placedId, variantIndex));
 
 			bool success = m_WorldManager->SetBlock(
 				blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);

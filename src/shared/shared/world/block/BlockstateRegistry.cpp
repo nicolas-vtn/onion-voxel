@@ -662,10 +662,10 @@ namespace onion::voxel
 
 				bool matches = true;
 
-				for (const auto& [key, value] : variant.Properties)
+				for (const auto& [key, value] : properties)
 				{
-					auto itprop = properties.find(key);
-					if (itprop == properties.end() || itprop->second != value)
+					auto itprop = variant.Properties.find(key);
+					if (itprop == variant.Properties.end() || itprop->second != value)
 					{
 						matches = false;
 						break;

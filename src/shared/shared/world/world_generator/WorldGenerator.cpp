@@ -303,8 +303,8 @@ namespace onion::voxel
 		genChunk.chunk = std::make_shared<Chunk>(chunkPosition, 1);
 		auto& chunk = genChunk.chunk;
 
-		constexpr bool GENERATE_GRASS = true;
-		constexpr bool GENERATE_FLOWERS = true;
+		constexpr bool GENERATE_GRASS = false;
+		constexpr bool GENERATE_FLOWERS = false;
 		constexpr bool GENERATE_TREES = true;
 
 		// Pre-resolve palette indices

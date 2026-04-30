@@ -38,9 +38,9 @@ namespace
 		if (name == "down")
 			return Face::Bottom;
 		if (name == "north")
-			return Face::Front;
-		if (name == "south")
 			return Face::Back;
+		if (name == "south")
+			return Face::Front;
 		if (name == "west")
 			return Face::Left;
 		if (name == "east")
