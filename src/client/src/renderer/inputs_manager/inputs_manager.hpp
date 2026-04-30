@@ -126,6 +126,9 @@ namespace onion::voxel
 		/// @throws std::runtime_error if the InputsSnapshot is not initialized, which can occur if PoolInputs() has not been called before this method.
 		std::shared_ptr<InputsSnapshot> GetInputsSnapshot();
 
+		/// @brief Checks whether a specific key is currently pressed. This method provides a convenient way to check the state of a key without needing to access the InputsSnapshot directly.
+		bool IsKeyPressed(Key key);
+
 		/// @brief Enables or disables mouse capture. When enabled, the mouse cursor is hidden and its movement is captured for relative motion, which is typically used in first-person camera controls. When disabled, the mouse cursor is visible and its position is not captured for relative motion.
 		void SetMouseCaptureEnabled(bool enabled);
 		/// @brief Checks whether mouse capture is currently enabled. When mouse capture is enabled, the mouse cursor is hidden and its movement is captured for relative motion.

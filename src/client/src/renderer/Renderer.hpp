@@ -118,9 +118,9 @@ namespace onion::voxel
 		// ----- GLFW -----
 	  private:
 		GLFWwindow* m_Window = nullptr;
-		int m_WindowWidth = 800;
-		int m_WindowHeight = 600;
-		std::string m_WindowTitle = "Onion Voxel";
+		int m_WindowWidth = 960;
+		int m_WindowHeight = 540;
+		std::string m_WindowTitle = "Onion Voxel " + std::string(GetProjectVersion());
 		std::filesystem::path m_WindowIconPath = AssetsManager::GetAppIconsDirectory() / "Vox_Client_Title.png";
 		void SetupWindowIcon();
 
@@ -164,7 +164,7 @@ namespace onion::voxel
 		std::shared_ptr<WorldManager> m_WorldManager;
 
 		void UpdatePlayerFromInputs();
-		float m_PlayerFlySpeed = 5.0f;
+		float m_PlayerFlySpeed = 20.0f;
 		float m_JumpCooldown = 0.0f;
 		bool m_JumpKeyWasPressed = false;
 

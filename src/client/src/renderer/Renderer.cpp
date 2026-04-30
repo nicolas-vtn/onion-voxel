@@ -22,7 +22,8 @@ namespace
 namespace onion::voxel
 {
 	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager)
-		: m_WorldManager(worldManager), m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), 800, 600)),
+		: m_WorldManager(worldManager),
+		  m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), m_WindowWidth, m_WindowHeight)),
 		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager),
 		  m_EntityRenderer(m_Camera), m_FovSmoother(m_Camera)
 	{
@@ -43,7 +44,8 @@ namespace onion::voxel
 		}
 
 		// Sets the Engine Context
-		EngineContext::Initialize(worldManager.get(), &m_AssetsManager, &m_InputsManager, settings);
+		EngineContext::Initialize(
+			worldManager.get(), &m_AssetsManager, &m_InputsManager, &m_KeyBinds, settings, &m_WorldRenderer);
 
 		UserSettingsChangedEventArgs args(settings, true);
 
@@ -261,6 +263,9 @@ namespace onion::voxel
 			// Pool inputs
 			m_InputsManager.PoolInputs();
 
+			// Increment frame counter
+			EngineContext::Get().FrameCount++;
+
 			// Process Global Inputs
 			ProcessInputs();
 
@@ -283,7 +288,8 @@ namespace onion::voxel
 			eMenu activeMenu = m_Gui.GetActiveMenu();
 			bool isMainMenu = activeMenu == eMenu::MainMenu;
 			bool isInGameplay = activeMenu == eMenu::Gameplay;
-			bool blurry = (!isMainMenu && !isInGameplay);
+			bool isInInventory = activeMenu == eMenu::Inventory;
+			bool blurry = (!isMainMenu && !isInGameplay && !isInInventory);
 			if (blurry)
 			{
 				finalTexture = ApplyBlur(m_SceneColorTexture);
@@ -521,6 +527,7 @@ namespace onion::voxel
 		InputConfig everyFrame(false, 0, 0, 0);
 		InputConfig noRepeat(true, 9999999, 0, 0);
 		InputConfig repeatWithDelay(true, 0.6f, 0.4f, 0.5f);
+		InputConfig repeatFast(true, 0.6f, 0.03f, 0.5f);
 
 		m_KeyBinds.RemapAction(eAction::WalkForward, actionToKey.at(eAction::WalkForward), everyFrame);
 		m_KeyBinds.RemapAction(eAction::WalkBackward, actionToKey.at(eAction::WalkBackward), everyFrame);
@@ -534,10 +541,22 @@ namespace onion::voxel
 		m_KeyBinds.RemapAction(eAction::Pause, actionToKey.at(eAction::Pause), noRepeat);
 		m_KeyBinds.RemapAction(eAction::CloseMenu, actionToKey.at(eAction::CloseMenu), noRepeat);
 		m_KeyBinds.RemapAction(eAction::ToggleDebugMenus, actionToKey.at(eAction::ToggleDebugMenus), noRepeat);
+		m_KeyBinds.RemapAction(eAction::PickBlock, actionToKey.at(eAction::PickBlock), noRepeat);
+		m_KeyBinds.RemapAction(eAction::OpenInventory, actionToKey.at(eAction::OpenInventory), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot1, actionToKey.at(eAction::HotbarSlot1), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot2, actionToKey.at(eAction::HotbarSlot2), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot3, actionToKey.at(eAction::HotbarSlot3), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot4, actionToKey.at(eAction::HotbarSlot4), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot5, actionToKey.at(eAction::HotbarSlot5), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot6, actionToKey.at(eAction::HotbarSlot6), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot7, actionToKey.at(eAction::HotbarSlot7), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot8, actionToKey.at(eAction::HotbarSlot8), noRepeat);
+		m_KeyBinds.RemapAction(eAction::HotbarSlot9, actionToKey.at(eAction::HotbarSlot9), noRepeat);
 
 		m_KeyBinds.RemapAction(eAction::Attack, actionToKey.at(eAction::Attack), repeatWithDelay);
 		m_KeyBinds.RemapAction(eAction::Interact, actionToKey.at(eAction::Interact), repeatWithDelay);
 		m_KeyBinds.RemapAction(eAction::ToggleFlyMode, actionToKey.at(eAction::ToggleFlyMode), repeatWithDelay);
+		m_KeyBinds.RemapAction(eAction::DropItem, actionToKey.at(eAction::DropItem), repeatFast);
 	}
 
 	void Renderer::ProcessInputs()
@@ -557,15 +576,15 @@ namespace onion::voxel
 		}
 
 		KeyState pauseKeyState = m_KeyBinds.GetKeyState(eAction::Pause);
-		if (pauseKeyState.IsPressed && GetRenderState() == eRenderState::InGame)
+		bool inGame = GetRenderState() == eRenderState::InGame;
+		bool inInventory = m_Gui.GetActiveMenu() == eMenu::Inventory;
+		if (pauseKeyState.IsPressed && inGame && !inInventory)
 		{
 			PauseGame(true);
 		}
 
 		auto inputs = m_InputsManager.GetInputsSnapshot();
 		GuiElement::SetInputsSnapshot(inputs);
-		KeyState closeMenuKeyState = m_KeyBinds.GetKeyState(eAction::CloseMenu);
-		GuiElement::s_IsBackPressed = closeMenuKeyState.IsPressed;
 
 		if (m_RenderState == eRenderState::InGame && !m_IsPaused)
 		{
@@ -597,12 +616,66 @@ namespace onion::voxel
 
 	void Renderer::ProcessGameplayInputs()
 	{
+		// ----- RETREVE PLAYER -----
+		std::shared_ptr<Player> player = EngineContext::Get().GetLocalPlayer();
+
+		if (!player)
+			return;
+
+		// ----- INVENTORY ------
+		if (m_Gui.GetActiveMenu() == eMenu::Inventory)
+			return;
+
+		KeyState toggleInventoryKeyState = m_KeyBinds.GetKeyState(eAction::OpenInventory);
+		if (toggleInventoryKeyState.IsPressed)
+		{
+			m_Gui.SetActiveMenu(eMenu::Inventory);
+			return;
+		}
+
+		// ----- RETREVE USEFULL PLAYER INFO -----
+		Inventory hotbar = player->GetHotbar();
+		size_t selectedSlot = hotbar.SelectedIndex();
+
+		// ----- HOTBAR SELECTION -----
+		static constexpr std::array<eAction, 9> hotbarActions = {
+			eAction::HotbarSlot1,
+			eAction::HotbarSlot2,
+			eAction::HotbarSlot3,
+			eAction::HotbarSlot4,
+			eAction::HotbarSlot5,
+			eAction::HotbarSlot6,
+			eAction::HotbarSlot7,
+			eAction::HotbarSlot8,
+			eAction::HotbarSlot9,
+		};
+
+		for (size_t i = 0; i < hotbarActions.size(); ++i)
+		{
+			if (m_KeyBinds.GetKeyState(hotbarActions[i]).IsPressed)
+			{
+				hotbar.SelectedIndex() = static_cast<int>(i);
+				player->SetHotbar(hotbar);
+				break;
+			}
+		}
+
 		// ----- RAYCASTING TO DETECT BLOCKS -----
 		glm::vec3 rayOrigin = m_Camera->GetPosition();
 		glm::vec3 rayDirection = m_Camera->GetFront();
 
 		m_CurrentRaycastHit = Raycaster::Raycast(*m_WorldManager, rayOrigin, rayDirection, 10.0f, 300);
 
+		// ----- DROP ITEM -----
+		KeyState dropItemKeyState = m_KeyBinds.GetKeyState(eAction::DropItem);
+		if (dropItemKeyState.IsPressed)
+		{
+			// Set air as the selected Hotbar slot
+			hotbar.Content()[selectedSlot] = BlockId::Air;
+			player->SetHotbar(hotbar);
+		}
+
+		// ----- PROCESS BLOCK DESTROY -----
 		KeyState attackKeyState = m_KeyBinds.GetKeyState(eAction::Attack);
 		if (attackKeyState.IsPressed && m_CurrentRaycastHit.has_value())
 		{
@@ -616,17 +689,32 @@ namespace onion::voxel
 					  << hitBlock.Position.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
 		}
 
+		// ----- PROCESS BLOCK PLACE -----
 		KeyState interactKeyState = m_KeyBinds.GetKeyState(eAction::Interact);
 		if (interactKeyState.IsPressed && m_CurrentRaycastHit.has_value())
 		{
 			const Block& adjacentBlock = m_CurrentRaycastHit->AdjacentBlock;
-			Block blockToPlace = Block(adjacentBlock.Position, BlockState(BlockId::BirchStairs));
+
+			Block blockToPlace = Block(adjacentBlock.Position, BlockState(hotbar.Content()[selectedSlot]));
 
 			bool success = m_WorldManager->SetBlock(
 				blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
 
 			std::cout << "Attempting to place block at " << blockToPlace.Position.x << ", " << blockToPlace.Position.y
 					  << ", " << blockToPlace.Position.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
+		}
+
+		// ----- PROCESS BLOCK PICK -----
+		KeyState pickBlockKeyState = m_KeyBinds.GetKeyState(eAction::PickBlock);
+		if (pickBlockKeyState.IsPressed && m_CurrentRaycastHit.has_value())
+		{
+			const Block& hitBlock = m_CurrentRaycastHit->HitBlock;
+			std::cout << "Picking block at " << hitBlock.Position.x << ", " << hitBlock.Position.y << ", "
+					  << hitBlock.Position.z << " - Block : " << BlockIds::GetName(hitBlock.ID()) << std::endl;
+
+			hotbar.Content()[selectedSlot] = hitBlock.ID();
+
+			player->SetHotbar(hotbar);
 		}
 	}
 
@@ -772,7 +860,11 @@ namespace onion::voxel
 
 		// ----- PLAYER FLYING SPEED -----
 		float flyVelocity = m_PlayerFlySpeed * (float) m_DeltaTime;
-		if (physics.IsFlying && inputs->Mouse.ScrollOffsetChanged)
+		bool spacePressed = EngineContext::Get().Inputs->IsKeyPressed(Key::Space);
+		bool shiftPressed = EngineContext::Get().Inputs->IsKeyPressed(Key::LeftShift) ||
+			EngineContext::Get().Inputs->IsKeyPressed(Key::RightShift);
+		bool canSpeedUp = spacePressed && shiftPressed;
+		if (physics.IsFlying && canSpeedUp && inputs->Mouse.ScrollOffsetChanged)
 		{
 			const double yoffset = inputs->Mouse.ScrollYoffset;
 			if (yoffset != 0.f)
@@ -1235,6 +1327,21 @@ namespace onion::voxel
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
+		// Prevents ImGui to capture cursor when mouse capture is enabled (no hover, clicks, ...)
+		if (m_InputsManager.IsMouseCaptureEnabled())
+		{
+			ImGuiIO& io = ImGui::GetIO();
+
+			io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
+			io.MouseDelta = ImVec2(0, 0);
+
+			for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); ++i)
+				io.MouseDown[i] = false;
+
+			io.MouseWheel = 0.0f;
+			io.MouseWheelH = 0.0f;
+		}
 	}
 
 	void Renderer::RenderDebugPanel()
@@ -1243,7 +1350,7 @@ namespace onion::voxel
 
 		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 
-		ImGui::Text("Client Version: %s", PROJECT_VERSION);
+		ImGui::Text("Client Version: %s", GetProjectVersion());
 
 		// ----- Server Info Debug -----
 		if (ImGui::CollapsingHeader("Server Info", ImGuiTreeNodeFlags_DefaultOpen))
@@ -1446,6 +1553,8 @@ namespace onion::voxel
 			}
 
 			m_WorldRenderer.Render();
+
+			m_Gui.RenderGameHUD();
 
 			// Render the Player entity only when in freecam mode.
 			std::vector<std::string> hiddenEntities;

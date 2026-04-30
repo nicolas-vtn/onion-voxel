@@ -7,7 +7,7 @@ namespace onion::voxel
 		: GuiElement(name), m_Button("DemoButton"), m_Sprite("DemoSprite", m_SpritePath, Sprite::eOrigin::Asset),
 		  m_Button2("DemoButton2"), m_ButtonMainMenu("MainMenuButton"), m_Checkbox("DemoCheckbox"),
 		  m_TextField("DemoTextField"), m_Slider("DemoSlider"), m_ButtonScrollingPanel("DemoScrollingPanelButton"),
-		  m_ButtonTextsPanel("DemoTextsPanelButton")
+		  m_ButtonTextsPanel("DemoTextsPanelButton"), m_Tooltip("DemoTooltip")
 	{
 
 		SubscribeToControlEvents();
@@ -19,8 +19,8 @@ namespace onion::voxel
 
 		m_Button2.SetPosition({400, 500});
 		m_Button2.SetSize({200.f, 40.f});
-		m_Button2.SetText("Dummy");
-		m_Button2.SetEnabled(false);
+		m_Button2.SetText("▶ → ⇒ ▷");
+		m_Button2.SetEnabled(true);
 
 		m_ButtonMainMenu.SetPosition({400, 500});
 		m_ButtonMainMenu.SetSize({200.f, 40.f});
@@ -43,6 +43,9 @@ namespace onion::voxel
 		m_ButtonScrollingPanel.SetEnabled(true);
 
 		m_ButtonTextsPanel.SetText("Demo Texts");
+
+		m_Tooltip.SetText("Grass Block\n§9§oOnion::Voxel§r§r");
+		m_Tooltip.SetZOffset(0.8f);
 	}
 
 	DemoPanel::~DemoPanel()
@@ -77,8 +80,18 @@ namespace onion::voxel
 		const glm::vec2 buttonPos{s_ScreenWidth * buttonXPosRatio, s_ScreenHeight * buttonYPosRatio};
 
 		m_Button.SetPosition(buttonPos);
-		m_Button.SetSize(buttonSize);
+		glm::vec2 widerButtonSize{s_ScreenWidth - 40, buttonSize.y};
+		m_Button.SetSize(widerButtonSize);
 		m_Button.Render();
+
+		// ---- Tooltip ----
+		if (m_Button.IsHovered())
+		{
+			const glm::vec2 cursorPosition{s_InputsSnapshot->Mouse.Xpos, s_InputsSnapshot->Mouse.Ypos};
+			m_Tooltip.SetPosition(cursorPosition);
+			m_Tooltip.SetTextHeight(s_TextHeight);
+			m_Tooltip.Render();
+		}
 
 		// ---- Render Button 2 ----
 		float button2XPosRatio = 0.5f;
@@ -177,6 +190,7 @@ namespace onion::voxel
 		m_Checkbox.Initialize();
 		m_TextField.Initialize();
 		m_Slider.Initialize();
+		m_Tooltip.Initialize();
 
 		SetInitState(true);
 	}
@@ -192,6 +206,7 @@ namespace onion::voxel
 		m_Checkbox.Delete();
 		m_TextField.Delete();
 		m_Slider.Delete();
+		m_Tooltip.Delete();
 
 		SetDeletedState(true);
 	}
@@ -207,6 +222,7 @@ namespace onion::voxel
 		m_Checkbox.ReloadTextures();
 		m_TextField.ReloadTextures();
 		m_Slider.ReloadTextures();
+		m_Tooltip.ReloadTextures();
 	}
 
 	void DemoPanel::SubscribeToControlEvents()
@@ -224,7 +240,7 @@ namespace onion::voxel
 			m_ButtonMainMenu.EvtClick.Subscribe([this](const Button& button) { Handle_ButtonMainMenuClick(button); }));
 
 		m_EventHandles.push_back(m_Checkbox.EvtCheckedChanged.Subscribe([this](const Checkbox& checkbox)
-																	   { Handle_CheckboxCheckedChanged(checkbox); }));
+																		{ Handle_CheckboxCheckedChanged(checkbox); }));
 		m_EventHandles.push_back(
 			m_Slider.EvtValueChanged.Subscribe([this](const Slider& slider) { Handle_SliderValueChanged(slider); }));
 
@@ -232,7 +248,7 @@ namespace onion::voxel
 			[this](const Button& button) { Handle_ButtonScrollingPanelClick(button); }));
 
 		m_EventHandles.push_back(m_ButtonTextsPanel.EvtClick.Subscribe([this](const Button& button)
-																	  { Handle_ButtonTextsPanelClick(button); }));
+																	   { Handle_ButtonTextsPanelClick(button); }));
 	}
 
 	void DemoPanel::Handle_CheckboxCheckedChanged(const Checkbox& checkbox)

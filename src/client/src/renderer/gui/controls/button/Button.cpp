@@ -151,6 +151,11 @@ namespace onion::voxel
 		return m_Position;
 	}
 
+	bool Button::IsHovered() const
+	{
+		return m_NineSliceSprite_Basic.IsHovered();
+	}
+
 	void Button::SetVisibility(const Visibility& visibility)
 	{
 		GuiElement::SetVisibility(visibility);
@@ -177,19 +182,19 @@ namespace onion::voxel
 		// We subscribe to only ONE sprite, since they all share the same position and size, so their hovered state will always be the same.
 
 		m_EventHandles.push_back(m_NineSliceSprite_Basic.EvtMouseDown.Subscribe([this](const NineSliceSprite& sprite)
-																			   { HandleMouseDown(sprite); }));
+																				{ HandleMouseDown(sprite); }));
 
 		m_EventHandles.push_back(m_NineSliceSprite_Basic.EvtMouseUp.Subscribe([this](const NineSliceSprite& sprite)
-																			 { HandleMouseUp(sprite); }));
+																			  { HandleMouseUp(sprite); }));
 
 		m_EventHandles.push_back(m_NineSliceSprite_Basic.EvtClick.Subscribe([this](const NineSliceSprite& sprite)
-																		   { HandleSpriteClick(sprite); }));
+																			{ HandleSpriteClick(sprite); }));
 
 		m_EventHandles.push_back(m_NineSliceSprite_Basic.EvtHoverEnter.Subscribe([this](const NineSliceSprite& sprite)
-																				{ HandleSpriteHoverEnter(sprite); }));
+																				 { HandleSpriteHoverEnter(sprite); }));
 
 		m_EventHandles.push_back(m_NineSliceSprite_Basic.EvtHoverLeave.Subscribe([this](const NineSliceSprite& sprite)
-																				{ HandleSpriteHoverLeave(sprite); }));
+																				 { HandleSpriteHoverLeave(sprite); }));
 	}
 
 	void Button::HandleMouseDown(const NineSliceSprite& sprite)

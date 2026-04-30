@@ -45,6 +45,8 @@ namespace onion::voxel
 		void SetPosition(const glm::ivec2& pos);
 		glm::ivec2 GetPosition() const;
 
+		bool IsHovered() const;
+
 		void SetVisibility(const Visibility& visibility) override;
 
 		bool IsEnabled() const;

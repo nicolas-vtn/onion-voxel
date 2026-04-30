@@ -33,7 +33,7 @@ namespace onion::voxel
 		m_SplashText_Label.SetRotationDegrees(-25.f);
 		m_SplashText_Label.SetTextAlignment(Font::eTextAlignment::Center);
 
-		std::string versionText = "Voxel::Onion " + std::string(PROJECT_VERSION);
+		std::string versionText = "Onion::Voxel " + std::string(GetProjectVersion());
 		m_Version_Label.SetText(versionText);
 		m_Version_Label.SetTextAlignment(Font::eTextAlignment::Left);
 
@@ -56,9 +56,9 @@ namespace onion::voxel
 		float firstButtonYPosRatio = 484.f / 1009.f;
 
 		// ---- Render Title Sprite ----
-		float spriteXScaleFacor = 0.5f;
+		float spriteXScaleFacor = 0.55f;
 		float spriteXRatio = 0.5f;
-		float spriteYRatio = 0.2f;
+		float spriteYRatio = 0.25f;
 		float aspectRatio = (float) m_Title_Sprite.GetTextureHeight() / m_Title_Sprite.GetTextureWidth();
 
 		const glm::vec2 spritePos{s_ScreenWidth * spriteXRatio, s_ScreenHeight * spriteYRatio};
@@ -239,10 +239,10 @@ namespace onion::voxel
 	void MainMenuPanel::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(m_Singleplayer_Button.EvtClick.Subscribe([this](const Button& sender)
-																		 { Handle_Singleplayer_Click(sender); }));
+																		  { Handle_Singleplayer_Click(sender); }));
 
-		m_EventHandles.push_back(
-			m_Multiplayer_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Multiplayer_Click(sender); }));
+		m_EventHandles.push_back(m_Multiplayer_Button.EvtClick.Subscribe([this](const Button& sender)
+																		 { Handle_Multiplayer_Click(sender); }));
 
 		m_EventHandles.push_back(
 			m_DemoPanel_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_DemoButton_Click(sender); }));

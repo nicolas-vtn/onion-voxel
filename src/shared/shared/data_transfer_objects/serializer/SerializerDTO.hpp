@@ -46,6 +46,17 @@ namespace onion::voxel
 		static PhysicsBodyDTO SerializePhysicsBody(const PhysicsBody& physicsBody);
 		static PhysicsBody DeserializePhysicsBody(const PhysicsBodyDTO& dto);
 
+		// ----- Player Components -----
+	  public:
+		static HealthDTO SerializeHealth(const Health& health);
+		static Health DeserializeHealth(const HealthDTO& dto);
+		static HungerDTO SerializeHunger(const Hunger& hunger);
+		static Hunger DeserializeHunger(const HungerDTO& dto);
+		static ExperienceDTO SerializeExperience(const Experience& experience);
+		static Experience DeserializeExperience(const ExperienceDTO& dto);
+		static InventoryDTO SerializeInventory(const Inventory& inventory);
+		static Inventory DeserializeInventory(const InventoryDTO& dto);
+
 		static void ApplyEntityDTO(const EntityDTO& dto, std::shared_ptr<Entity> entity);
 		static EntityDTO SerializeEntity(const Entity& entity);
 		static std::shared_ptr<Entity> DeserializeEntity(const EntityDTO& dto);

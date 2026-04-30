@@ -45,7 +45,7 @@ namespace onion::voxel
 
 	void PausePanel::Render()
 	{
-		if (s_IsBackPressed)
+		if (IsBackPressed())
 		{
 			EvtRequestBackToGame.Trigger(this);
 			return;

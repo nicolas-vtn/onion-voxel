@@ -258,19 +258,94 @@ namespace onion::voxel
 		return physicsBody;
 	}
 
+	HealthDTO SerializerDTO::SerializeHealth(const Health& health)
+	{
+		HealthDTO dto;
+		dto.CurrentHealth = health.CurrentHealth;
+		return dto;
+	}
+
+	Health SerializerDTO::DeserializeHealth(const HealthDTO& dto)
+	{
+		Health health;
+		health.CurrentHealth = dto.CurrentHealth;
+		return health;
+	}
+
+	HungerDTO SerializerDTO::SerializeHunger(const Hunger& hunger)
+	{
+		HungerDTO dto;
+		dto.CurrentHunger = hunger.CurrentHunger;
+		return dto;
+	}
+
+	Hunger SerializerDTO::DeserializeHunger(const HungerDTO& dto)
+	{
+		Hunger hunger;
+		hunger.CurrentHunger = dto.CurrentHunger;
+		return hunger;
+	}
+
+	ExperienceDTO SerializerDTO::SerializeExperience(const Experience& experience)
+	{
+		ExperienceDTO dto;
+		dto.Value = experience.Value;
+		return dto;
+	}
+
+	Experience SerializerDTO::DeserializeExperience(const ExperienceDTO& dto)
+	{
+		Experience experience;
+		experience.Value = dto.Value;
+		return experience;
+	}
+
+	InventoryDTO SerializerDTO::SerializeInventory(const Inventory& inventory)
+	{
+		InventoryDTO dto;
+		dto.Rows = inventory.Rows();
+		dto.Columns = inventory.Columns();
+		dto.Slots = inventory.Content();
+		dto.SelectedIndex = inventory.SelectedIndex();
+		return dto;
+	}
+
+	Inventory SerializerDTO::DeserializeInventory(const InventoryDTO& dto)
+	{
+		Inventory inventory(dto.Rows, dto.Columns);
+
+		// Safety check
+		if (dto.Slots.size() == static_cast<size_t>(dto.Rows * dto.Columns))
+		{
+			inventory.Content() = dto.Slots;
+			inventory.SelectedIndex() = dto.SelectedIndex;
+		}
+		else
+		{
+			throw std::runtime_error("Invalid InventoryDTO: Slots size does not match Rows * Columns.");
+		}
+
+		return inventory;
+	}
+
 	void SerializerDTO::ApplyEntityDTO(const EntityDTO& dto, std::shared_ptr<Entity> entity)
 	{
 		entity->SetState(static_cast<Entity::State>(dto.State));
 
 		if (dto.PhysicsBody)
-		{
 			entity->SetPhysicsBody(DeserializePhysicsBody(*dto.PhysicsBody));
-		}
-
 		if (dto.Transform)
-		{
 			entity->SetTransform(DeserializeTransform(*dto.Transform));
-		}
+		if (dto.Health)
+			entity->SetHealth(DeserializeHealth(*dto.Health));
+		if (dto.Hunger)
+			entity->SetHunger(DeserializeHunger(*dto.Hunger));
+		if (dto.Experience)
+			entity->SetExperience(DeserializeExperience(*dto.Experience));
+		if (dto.Hotbar)
+			entity->SetHotbar(DeserializeInventory(*dto.Hotbar));
+		if (dto.Inventory)
+			entity->SetPlayerInventory(DeserializeInventory(*dto.Inventory));
 	}
 
 	EntityDTO SerializerDTO::SerializeEntity(const Entity& entity)
@@ -283,6 +358,16 @@ namespace onion::voxel
 			dto.PhysicsBody = SerializePhysicsBody(entity.GetPhysicsBody());
 		if (entity.HasTransform())
 			dto.Transform = SerializeTransform(entity.GetTransform());
+		if (entity.HasHealth())
+			dto.Health = SerializeHealth(entity.GetHealth());
+		if (entity.HasHunger())
+			dto.Hunger = SerializeHunger(entity.GetHunger());
+		if (entity.HasExperience())
+			dto.Experience = SerializeExperience(entity.GetExperience());
+		if (entity.HasHotbar())
+			dto.Hotbar = SerializeInventory(entity.GetHotbar());
+		if (entity.HasPlayerInventory())
+			dto.Inventory = SerializeInventory(entity.GetPlayerInventory());
 		return dto;
 	}
 

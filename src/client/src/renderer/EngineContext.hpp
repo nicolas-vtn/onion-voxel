@@ -4,8 +4,14 @@
 
 #include <renderer/assets_manager/AssetsManager.hpp>
 #include <renderer/inputs_manager/inputs_manager.hpp>
+#include <renderer/key_binds/KeyBinds.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 #include <user_settings/UserSettings.hpp>
+
+namespace onion::voxel
+{
+	class WorldRenderer;
+}
 
 namespace onion::voxel
 {
@@ -17,7 +23,10 @@ namespace onion::voxel
 		WorldManager* World;
 		AssetsManager* Assets;
 		InputsManager* Inputs;
+		KeyBinds* Keys;
+		WorldRenderer* WrldRenderer;
 		std::atomic_bool ShowDebugMenus{true};
+		std::atomic<uint64_t> FrameCount{0};
 
 		UserSettings Settings() const
 		{
@@ -39,13 +48,17 @@ namespace onion::voxel
 
 		// ----- Public Static API -----
 	  public:
-		static void
-		Initialize(WorldManager* world, AssetsManager* assets, InputsManager* inputs, const UserSettings& settings)
+		static void Initialize(WorldManager* world,
+							   AssetsManager* assets,
+							   InputsManager* inputs,
+							   onion::voxel::KeyBinds* keyBinds,
+							   const UserSettings& settings,
+							   WorldRenderer* worldRenderer)
 		{
 			if (s_Instance)
 				throw std::runtime_error("EngineContext already initialized");
 
-			s_Instance = new EngineContext(world, assets, inputs, settings);
+			s_Instance = new EngineContext(world, assets, inputs, keyBinds, settings, worldRenderer);
 		}
 
 		static EngineContext& Get()
@@ -62,8 +75,14 @@ namespace onion::voxel
 
 		// ----- Constructor / Destructor -----
 	  private:
-		EngineContext(WorldManager* world, AssetsManager* assets, InputsManager* inputs, const UserSettings& settings)
-			: World(world), Assets(assets), Inputs(inputs), m_Settings(settings)
+		EngineContext(WorldManager* world,
+					  AssetsManager* assets,
+					  InputsManager* inputs,
+					  onion::voxel::KeyBinds* keyBinds,
+					  const UserSettings& settings,
+					  WorldRenderer* worldRenderer)
+			: World(world), Assets(assets), Inputs(inputs), Keys(keyBinds), m_Settings(settings),
+			  WrldRenderer(worldRenderer)
 		{
 		}
 

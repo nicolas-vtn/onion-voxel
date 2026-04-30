@@ -30,6 +30,8 @@ namespace onion::voxel
 		if (!s_IsInitialized)
 			Initialize();
 
+		glEnable(GL_BLEND);
+
 		// --- Rotation Matrix ---
 		glm::mat4 model(1.0f);
 

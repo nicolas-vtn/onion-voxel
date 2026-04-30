@@ -112,6 +112,13 @@ namespace onion::voxel
 		GenChunk GenerateChunk_ClassicNoBiomes(const glm::ivec2& chunkPosition);
 		GenChunk GenerateChunk_BiomeVisualizer(const glm::ivec2& chunkPosition);
 
+		mutable std::shared_mutex m_MutexChunksBeingGenerated;
+		std::unordered_set<glm::ivec2> m_ChunksBeingGenerated;
+
+		bool IsChunkBeingGenerated(const glm::ivec2& chunkPosition) const;
+		bool TryStartGeneratingChunk(const glm::ivec2& chunkPosition);
+		void FinishGeneratingChunk(const glm::ivec2& chunkPosition);
+
 		// ----- Structures Generation -----
 	  private:
 		bool ShouldGenerateTree(const glm::ivec3& position, Biome biome = Biome::Plains) const;

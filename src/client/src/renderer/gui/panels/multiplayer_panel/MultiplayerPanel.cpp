@@ -226,8 +226,8 @@ namespace onion::voxel
 		m_EventHandles.push_back(m_NetworkClient.EvtConnected.Subscribe(
 			[this](const ServerInfoMsg& serverInfoMsg) { Handle_NetworkClient_Connected(serverInfoMsg); }));
 
-		m_EventHandles.push_back(m_NetworkClient.EvtDisconnected.Subscribe([this](const bool& val)
-																		{ Handle_NetworkClient_Disconnected(val); }));
+		m_EventHandles.push_back(m_NetworkClient.EvtDisconnected.Subscribe(
+			[this](const bool& val) { Handle_NetworkClient_Disconnected(val); }));
 
 		m_EventHandles.push_back(m_NetworkClient.EvtMessageReceived.Subscribe(
 			[this](const NetworkMessage& message) { Handle_NetworkClient_MessageReceived(message); }));
@@ -277,7 +277,7 @@ namespace onion::voxel
 
 	void MultiplayerPanel::RenderServerTiles()
 	{
-		if (s_IsBackPressed)
+		if (IsBackPressed())
 		{
 			Handle_ButtonBack_Clicked(m_Button_Back);
 			return;
@@ -420,7 +420,7 @@ namespace onion::voxel
 			}
 		}
 
-		if (s_IsBackPressed || selectedServerTile == nullptr)
+		if (IsBackPressed() || selectedServerTile == nullptr)
 		{
 			m_CurrentRenderModule = eRenderModule::ServerTiles;
 			return;
@@ -479,7 +479,7 @@ namespace onion::voxel
 
 	void MultiplayerPanel::RenderAddEditServer()
 	{
-		if (s_IsBackPressed)
+		if (IsBackPressed())
 		{
 			m_CurrentRenderModule = eRenderModule::ServerTiles;
 			return;
@@ -544,7 +544,7 @@ namespace onion::voxel
 
 	void MultiplayerPanel::RenderDirectConnect()
 	{
-		if (s_IsBackPressed)
+		if (IsBackPressed())
 		{
 			m_CurrentRenderModule = eRenderModule::ServerTiles;
 			return;
@@ -677,16 +677,16 @@ namespace onion::voxel
 			}));
 
 		m_EventHandles.push_back(m_Button_JoinServer.EvtClick.Subscribe([this](const Button& button)
-																	   { Handle_ButtonJoinServer_Clicked(button); }));
+																		{ Handle_ButtonJoinServer_Clicked(button); }));
 
 		m_EventHandles.push_back(m_Button_DirectConnect.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_ButtonDirectConnect_Clicked(button); }));
 
 		m_EventHandles.push_back(m_Button_AddServer.EvtClick.Subscribe([this](const Button& button)
-																	  { Handle_ButtonAddServer_Clicked(button); }));
+																	   { Handle_ButtonAddServer_Clicked(button); }));
 
 		m_EventHandles.push_back(m_Button_EditServer.EvtClick.Subscribe([this](const Button& button)
-																	   { Handle_ButtonEditServer_Clicked(button); }));
+																		{ Handle_ButtonEditServer_Clicked(button); }));
 
 		m_EventHandles.push_back(m_Button_DeleteServer.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_ButtonDeleteServer_Clicked(button); }));
@@ -695,16 +695,16 @@ namespace onion::voxel
 			[this](const Button& button) { Handle_ButtonRefreshServerTiles_Clicked(button); }));
 
 		m_EventHandles.push_back(m_ButtonAddEditDone.EvtClick.Subscribe([this](const Button& button)
-																	   { Handle_AddEditDone_Clicked(button); }));
+																		{ Handle_AddEditDone_Clicked(button); }));
 
 		m_EventHandles.push_back(m_ButtonAddEditCancel.EvtClick.Subscribe([this](const Button& button)
-																		 { Handle_AddEditCancel_Clicked(button); }));
+																		  { Handle_AddEditCancel_Clicked(button); }));
 
 		m_EventHandles.push_back(m_ButtonDeleteConfirm.EvtClick.Subscribe([this](const Button& button)
-																		 { Handle_DeleteConfirm_Clicked(button); }));
+																		  { Handle_DeleteConfirm_Clicked(button); }));
 
 		m_EventHandles.push_back(m_ButtonDeleteCancel.EvtClick.Subscribe([this](const Button& button)
-																		{ Handle_DeleteCancel_Clicked(button); }));
+																		 { Handle_DeleteCancel_Clicked(button); }));
 
 		m_EventHandles.push_back(m_ButtonDirectConnectJoin.EvtClick.Subscribe(
 			[this](const Button& button) { Handle_DirectConnectJoin_Clicked(button); }));

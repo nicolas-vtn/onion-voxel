@@ -729,6 +729,130 @@ namespace onion::voxel
 					ImGui::Text("Player has no physics body component");
 				}
 			}
+			if (ImGui::CollapsingHeader("Player Health"))
+			{
+				if (player->HasHealth())
+				{
+					Health health = player->GetHealth();
+					if (ImGui::SliderFloat("Current Health", &health.CurrentHealth, 0.0f, 20.0f))
+					{
+						player->SetHealth(health);
+					}
+				}
+				else
+				{
+					ImGui::Text("Player has no health component");
+				}
+			}
+
+			if (ImGui::CollapsingHeader("Player Hunger"))
+			{
+				if (player->HasHunger())
+				{
+					Hunger hunger = player->GetHunger();
+					if (ImGui::SliderFloat("Current Hunger", &hunger.CurrentHunger, 0.0f, 20.0f))
+					{
+						player->SetHunger(hunger);
+					}
+				}
+				else
+				{
+					ImGui::Text("Player has no hunger component");
+				}
+			}
+
+			if (ImGui::CollapsingHeader("Player Experience"))
+			{
+				if (player->HasExperience())
+				{
+					Experience experience = player->GetExperience();
+					Experience::LevelInfo levelInfo = experience.GetLevel();
+
+					int xp = static_cast<int>(experience.Value);
+					if (ImGui::InputInt("XP Value", &xp))
+					{
+						xp = std::max(0, xp); // clamp to valid range
+						experience.Value = static_cast<uint32_t>(xp);
+						player->SetExperience(experience);
+					}
+
+					ImGui::Text("Current Level: %d", levelInfo.Level);
+					ImGui::Text("XP for Next Level: %d", levelInfo.ExperienceForNextLevel);
+					ImGui::Text("XP of Current Level: %d", levelInfo.TotalExperienceForCurrentLevel);
+				}
+				else
+				{
+					ImGui::Text("Player has no experience component");
+				}
+			}
+
+			if (ImGui::CollapsingHeader("Player Hotbar"))
+			{
+				if (player->HasHotbar())
+				{
+					Inventory hotbar = player->GetHotbar();
+
+					int nonEmpty = 0;
+					for (const BlockId id : hotbar.Content())
+						if (id != BlockId::Air)
+							nonEmpty++;
+
+					int selectedSlot = hotbar.SelectedIndex();
+					if (ImGui::SliderInt("Selected Slot", &selectedSlot, 0, 8))
+					{
+						hotbar.SelectedIndex() = static_cast<uint8_t>(selectedSlot);
+						player->SetHotbar(hotbar);
+					}
+
+					ImGui::Text("Selected ID:     %d", (int) hotbar.Content()[hotbar.SelectedIndex()]);
+					ImGui::Text("Non-empty slots: %d / 9", nonEmpty);
+
+					if (ImGui::Button("Clear Hotbar"))
+					{
+						for (BlockId& id : hotbar.Content())
+							id = BlockId::Air;
+						player->SetHotbar(hotbar);
+					}
+				}
+				else
+				{
+					ImGui::Text("Player has no hotbar component");
+				}
+			}
+
+			if (ImGui::CollapsingHeader("Player Inventory"))
+			{
+				if (player->HasPlayerInventory())
+				{
+					Inventory inventory = player->GetPlayerInventory();
+					int used = 0;
+					for (const BlockId id : inventory.Content())
+						if (id != BlockId::Air)
+							used++;
+					ImGui::Text("Used slots: %d / 27", used);
+
+					if (ImGui::Button("Fill with Random Items"))
+					{
+						const int blockCount = BlockIds::GetBlockIdCount();
+						for (BlockId& id : inventory.Content())
+							id = static_cast<BlockId>(rand() % blockCount);
+						player->SetPlayerInventory(inventory);
+					}
+
+					ImGui::SameLine();
+
+					if (ImGui::Button("Clear Inventory"))
+					{
+						for (BlockId& id : inventory.Content())
+							id = BlockId::Air;
+						player->SetPlayerInventory(inventory);
+					}
+				}
+				else
+				{
+					ImGui::Text("Player has no inventory component");
+				}
+			}
 		}
 		else
 		{

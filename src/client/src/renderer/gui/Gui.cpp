@@ -24,6 +24,7 @@ namespace onion::voxel
 	void Gui::StaticShutdown()
 	{
 		GuiElement::Unload();
+		UiBlockMesh::s_Shader.Delete();
 	}
 
 	Gui::Gui()
@@ -32,7 +33,8 @@ namespace onion::voxel
 		  m_DemoScrollingPanel("DemoScrollingPanel"), m_SingleplayerPanel("SingleplayerPanel"),
 		  m_VideoSettingsPanel("VideoSettingsPanel"), m_ControlsPanel("ControlsPanel"),
 		  m_MouseSettingsPanel("MouseSettingsPanel"), m_KeyBindsPanel("KeyBindsPanel"),
-		  m_DemoTextsPanel("DemoTextsPanel"), m_MultiplayerPanel("MultiplayerPanel")
+		  m_DemoTextsPanel("DemoTextsPanel"), m_MultiplayerPanel("MultiplayerPanel"), m_HudPanel("HudPanel"),
+		  m_InventoryPanel("InventoryPanel")
 	{
 		SubscribeToPanelsEvents();
 	}
@@ -154,6 +156,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_MultiplayerPanel.EvtConnectToServer.Subscribe(
 			[this](const ServerInfos& serverInfos) { Handle_ConnectToServerRequest(serverInfos); }));
+
+		m_EventHandles.push_back(m_InventoryPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
+																					 { Handle_BackRequest(sender); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -303,6 +308,18 @@ namespace onion::voxel
 		{
 			m_MultiplayerPanel.RefreshServerTilesAsync();
 		}
+
+		// Handle the MouseCapture state
+		bool inGame = m_ActiveMenu == eMenu::Gameplay;
+		const auto& inputsManager = EngineContext::Get().Inputs;
+		if (inGame)
+		{
+			inputsManager->SetMouseCaptureEnabled(true);
+		}
+		else
+		{
+			inputsManager->SetMouseCaptureEnabled(false);
+		}
 	}
 
 	void Gui::GoBackToPreviousMenu()
@@ -362,6 +379,8 @@ namespace onion::voxel
 		m_MouseSettingsPanel.Initialize();
 		m_KeyBindsPanel.Initialize();
 		m_MultiplayerPanel.Initialize();
+		m_HudPanel.Initialize();
+		m_InventoryPanel.Initialize();
 
 		ReloadSkyboxTextures();
 	}
@@ -372,12 +391,12 @@ namespace onion::voxel
 			RenderDebugPanel();
 
 		{
-			// Reset the back button state if we have switched to a different menu since the last frame.
-			// Prevents the Pause menu from immediately navigating back to the game when we open it while the back button is pressed.
+			// Block key inputs for one frame after a menu transition.
+			// Prevents the key that triggered a menu change from being read by the new panel on the same frame.
 			std::lock_guard lock(m_MutexState);
 			if (m_ActiveMenu != m_MenuPreviousFrame)
 			{
-				GuiElement::s_IsBackPressed = false;
+				GuiElement::s_KeyInputsValidFromFrame = EngineContext::Get().FrameCount + 1;
 			}
 		}
 
@@ -423,12 +442,20 @@ namespace onion::voxel
 			case eMenu::KeyBinds:
 				m_KeyBindsPanel.Render();
 				break;
+			case eMenu::Inventory:
+				m_InventoryPanel.Render();
+				break;
 			default:
 				break;
 		}
 
 		std::lock_guard lock(m_MutexState);
 		m_MenuPreviousFrame = m_ActiveMenu;
+	}
+
+	void Gui::RenderGameHUD()
+	{
+		m_HudPanel.Render();
 	}
 
 	void Gui::RenderBackground()
@@ -470,6 +497,8 @@ namespace onion::voxel
 		m_MouseSettingsPanel.Delete();
 		m_KeyBindsPanel.Delete();
 		m_MultiplayerPanel.Delete();
+		m_HudPanel.Delete();
+		m_InventoryPanel.Delete();
 
 		m_Skybox.Unload();
 	}
@@ -491,6 +520,8 @@ namespace onion::voxel
 		m_MouseSettingsPanel.ReloadTextures();
 		m_KeyBindsPanel.ReloadTextures();
 		m_MultiplayerPanel.ReloadTextures();
+		m_HudPanel.ReloadTextures();
+		m_InventoryPanel.ReloadTextures();
 
 		ReloadSkyboxTextures();
 	}

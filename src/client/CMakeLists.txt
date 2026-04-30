@@ -35,6 +35,8 @@ add_executable(OnionVoxel
 	"src/renderer/gui/Gui.cpp"
 	"src/renderer/gui/GuiElement.cpp"
 
+	"src/renderer/gui/ui_block_mesh/UiBlockMesh.cpp"
+
 	"src/renderer/gui/nine_slice_sprite/NineSliceSprite.cpp"
 	"src/renderer/gui/font/Font.cpp"
 	"src/renderer/gui/colored_background/ColoredBackground.cpp"
@@ -46,6 +48,7 @@ add_executable(OnionVoxel
 	"src/renderer/gui/controls/text_field/TextField.cpp"
 	"src/renderer/gui/controls/slider/Slider.cpp"
 	"src/renderer/gui/controls/scroller/Scroller.cpp"
+	"src/renderer/gui/controls/tooltip/Tooltip.cpp"
 
 	"src/renderer/gui/panels/demo_panel/DemoPanel.cpp"
 	"src/renderer/gui/panels/demo_scrolling_panel/DemoScrollingPanel.cpp"
@@ -64,6 +67,8 @@ add_executable(OnionVoxel
 	"src/renderer/gui/panels/mouse_settings_panel/MouseSettingsPanel.cpp"
     "src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.cpp"
 	"src/renderer/gui/panels/key_binds_panel/KeyBindsTile.cpp"
+	"src/renderer/gui/panels/hud_panel/HudPanel.cpp"
+	"src/renderer/gui/panels/inventory_panel/InventoryPanel.cpp"
 
 	"src/renderer/world_renderer/WorldRenderer.cpp"
 	"src/renderer/camera/Camera.cpp"
@@ -71,7 +76,7 @@ add_executable(OnionVoxel
 	"src/renderer/world_renderer/chunk_mesh/SubChunkMesh.cpp"
 
 	"src/renderer/texture_atlas/TextureAtlas.cpp"
-	"src/renderer/world_renderer/block_registry/BlockRegistry.cpp"
+	"src/renderer/world_renderer/block_render_registry/BlockRenderRegistry.cpp"
 	"../shared/shared/world/block/BlockModel.cpp"
 	
 

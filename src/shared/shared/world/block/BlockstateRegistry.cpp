@@ -1,63 +1,230 @@
 #include "BlockstateRegistry.hpp"
 
+#include <limits>
+#include <set>
+#include <sstream>
+
 #include <shared/zip_archive/ZipArchive.hpp>
 
 namespace
 {
-	static std::string ToBlockName(const std::string& blockstateName)
+	struct ApplySpec
 	{
-		std::string name = blockstateName;
+		std::string ModelPath;
+		int RotationX = 0;
+		int RotationY = 0;
+		bool UVLock = false;
+	};
 
-		// ---- Remove ".json" extension ----
-		const std::string ext = ".json";
-		if (name.size() >= ext.size() && name.substr(name.size() - ext.size()) == ext)
+	struct WhenPredicate
+	{
+		enum class Type
 		{
-			name.erase(name.size() - ext.size());
-		}
+			MatchAll,
+			PropertyEqualsAny,
+			And,
+			Or,
+		};
 
-		// ---- Replace '_' with ' ' ----
-		std::replace(name.begin(), name.end(), '_', ' ');
+		Type PredicateType = Type::MatchAll;
+		std::string PropertyKey;
+		std::set<std::string> PropertyValues;
+		std::vector<WhenPredicate> Children;
+	};
 
-		// ---- Capitalize each word ----
-		bool capitalizeNext = true;
-		for (char& c : name)
-		{
-			if (std::isspace(static_cast<unsigned char>(c)))
-			{
-				capitalizeNext = true;
-			}
-			else if (capitalizeNext)
-			{
-				c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-				capitalizeNext = false;
-			}
-			else
-			{
-				c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-			}
-		}
+	struct MultipartEntry
+	{
+		WhenPredicate When;
+		std::vector<ApplySpec> Applies;
+	};
 
-		return name;
+	static std::string JsonScalarToString(const nlohmann::json& value)
+	{
+		if (value.is_string())
+			return value.get<std::string>();
+		if (value.is_boolean())
+			return value.get<bool>() ? "true" : "false";
+		if (value.is_number_integer())
+			return std::to_string(value.get<int>());
+		if (value.is_number_unsigned())
+			return std::to_string(value.get<unsigned int>());
+		if (value.is_number_float())
+			return std::to_string(value.get<float>());
+		return value.dump();
 	}
 
-	// Parse "axis=x,waterlogged=false" → { "axis" -> "x", "waterlogged" -> "false" }
-	// An empty key string → empty map (matches-all variant)
-	static std::map<std::string, std::string> ParseProperties(const std::string& key)
+	static std::set<std::string> ParseOrSeparatedValues(const std::string& value)
 	{
-		std::map<std::string, std::string> properties;
-		if (key.empty())
-			return properties;
-
-		std::istringstream stream(key);
+		std::set<std::string> values;
+		std::istringstream stream(value);
 		std::string token;
-		while (std::getline(stream, token, ','))
+		while (std::getline(stream, token, '|'))
 		{
-			const size_t eq = token.find('=');
-			if (eq == std::string::npos)
-				continue;
-			properties[token.substr(0, eq)] = token.substr(eq + 1);
+			if (!token.empty())
+				values.insert(token);
 		}
-		return properties;
+		if (values.empty())
+			values.insert(value);
+		return values;
+	}
+
+	static std::string StripModelNamespace(const std::string& modelPath)
+	{
+		std::string stripped = modelPath;
+
+		const size_t namespacePos = stripped.find(':');
+		if (namespacePos != std::string::npos)
+			stripped = stripped.substr(namespacePos + 1);
+
+		const std::string blockPrefix = "block/";
+		if (stripped.rfind(blockPrefix, 0) == 0)
+			stripped = stripped.substr(blockPrefix.size());
+
+		return stripped;
+	}
+
+	static ApplySpec ApplySpecFromJson(const nlohmann::json& applyJson)
+	{
+		ApplySpec spec;
+
+		if (applyJson.contains("model") && applyJson.at("model").is_string())
+			spec.ModelPath = StripModelNamespace(applyJson.at("model").get<std::string>());
+
+		if (applyJson.contains("x") && applyJson.at("x").is_number_integer())
+			spec.RotationX = applyJson.at("x").get<int>();
+
+		if (applyJson.contains("y") && applyJson.at("y").is_number_integer())
+			spec.RotationY = applyJson.at("y").get<int>();
+
+		if (applyJson.contains("uvlock") && applyJson.at("uvlock").is_boolean())
+			spec.UVLock = applyJson.at("uvlock").get<bool>();
+
+		return spec;
+	}
+
+	static std::vector<ApplySpec> ParseApplySpecs(const nlohmann::json& applyJson)
+	{
+		std::vector<ApplySpec> applies;
+
+		if (applyJson.is_object())
+		{
+			applies.push_back(ApplySpecFromJson(applyJson));
+		}
+		else if (applyJson.is_array() && !applyJson.empty() && applyJson.front().is_object())
+		{
+			applies.push_back(ApplySpecFromJson(applyJson.front()));
+		}
+
+		return applies;
+	}
+
+	static WhenPredicate ParseWhenPredicate(const nlohmann::json& whenJson)
+	{
+		WhenPredicate predicate;
+
+		if (whenJson.is_null())
+		{
+			predicate.PredicateType = WhenPredicate::Type::MatchAll;
+			return predicate;
+		}
+
+		if (!whenJson.is_object())
+		{
+			predicate.PredicateType = WhenPredicate::Type::MatchAll;
+			return predicate;
+		}
+
+		if (whenJson.contains("OR") && whenJson.at("OR").is_array())
+		{
+			predicate.PredicateType = WhenPredicate::Type::Or;
+			for (const auto& entry : whenJson.at("OR"))
+				predicate.Children.push_back(ParseWhenPredicate(entry));
+			return predicate;
+		}
+
+		if (whenJson.contains("AND") && whenJson.at("AND").is_array())
+		{
+			predicate.PredicateType = WhenPredicate::Type::And;
+			for (const auto& entry : whenJson.at("AND"))
+				predicate.Children.push_back(ParseWhenPredicate(entry));
+			return predicate;
+		}
+
+		predicate.PredicateType = WhenPredicate::Type::And;
+		for (const auto& [key, value] : whenJson.items())
+		{
+			WhenPredicate propPredicate;
+			propPredicate.PredicateType = WhenPredicate::Type::PropertyEqualsAny;
+			propPredicate.PropertyKey = key;
+			propPredicate.PropertyValues = ParseOrSeparatedValues(JsonScalarToString(value));
+			predicate.Children.push_back(std::move(propPredicate));
+		}
+
+		if (predicate.Children.empty())
+			predicate.PredicateType = WhenPredicate::Type::MatchAll;
+
+		return predicate;
+	}
+
+	static bool EvaluateWhenPredicate(const WhenPredicate& predicate,
+									  const std::map<std::string, std::string>& properties)
+	{
+		switch (predicate.PredicateType)
+		{
+			case WhenPredicate::Type::MatchAll:
+				return true;
+			case WhenPredicate::Type::PropertyEqualsAny:
+				{
+					auto it = properties.find(predicate.PropertyKey);
+					if (it == properties.end())
+						return false;
+					return predicate.PropertyValues.contains(it->second);
+				}
+			case WhenPredicate::Type::And:
+				{
+					for (const auto& child : predicate.Children)
+						if (!EvaluateWhenPredicate(child, properties))
+							return false;
+					return true;
+				}
+			case WhenPredicate::Type::Or:
+				{
+					for (const auto& child : predicate.Children)
+						if (EvaluateWhenPredicate(child, properties))
+							return true;
+					return false;
+				}
+		}
+
+		return true;
+	}
+
+	static void CollectPropertyDomainFromPredicate(const WhenPredicate& predicate,
+												   std::map<std::string, std::set<std::string>>& propertyDomain)
+	{
+		if (predicate.PredicateType == WhenPredicate::Type::PropertyEqualsAny)
+		{
+			auto& values = propertyDomain[predicate.PropertyKey];
+			values.insert(predicate.PropertyValues.begin(), predicate.PropertyValues.end());
+			return;
+		}
+
+		for (const auto& child : predicate.Children)
+			CollectPropertyDomainFromPredicate(child, propertyDomain);
+	}
+
+	static std::string BuildPropertiesSignature(const std::map<std::string, std::string>& properties)
+	{
+		std::string signature;
+		for (const auto& [key, value] : properties)
+		{
+			if (!signature.empty())
+				signature.push_back(',');
+			signature += key;
+			signature.push_back('=');
+			signature += value;
+		}
+		return signature;
 	}
 
 	// ---------------------------------------------------------------------------
@@ -205,6 +372,238 @@ namespace
 		return;
 	}
 
+	static onion::voxel::VariantModel ComposeMultipartVariant(const std::vector<ApplySpec>& applies,
+															  const std::map<std::string, std::string>& properties)
+	{
+		using namespace onion::voxel;
+		VariantModel variant;
+		variant.Properties = properties;
+		variant.Model.AmbientOcclusion = true;
+
+		for (const auto& apply : applies)
+		{
+			if (apply.ModelPath.empty())
+				continue;
+
+			BlockModel model = BlockModel::FromFile(apply.ModelPath);
+
+			const int stepsX = ((apply.RotationX / 90) % 4 + 4) % 4;
+			const int stepsY = ((apply.RotationY / 90) % 4 + 4) % 4;
+			if (stepsX != 0 || stepsY != 0)
+				RotateModel(model, stepsX, stepsY);
+
+			variant.Model.AmbientOcclusion = variant.Model.AmbientOcclusion && model.AmbientOcclusion;
+
+			for (const auto& [textureKey, textureValue] : model.ModelTextures)
+				variant.Model.ModelTextures[textureKey] = textureValue;
+
+			variant.Model.Elements.insert(variant.Model.Elements.end(),
+										  std::make_move_iterator(model.Elements.begin()),
+										  std::make_move_iterator(model.Elements.end()));
+		}
+
+		variant.RotationX = 0;
+		variant.RotationY = 0;
+		variant.UVLock = false;
+		return variant;
+	}
+
+	template <typename F>
+	static void
+	EnumerateAssignmentsRecursive(const std::vector<std::pair<std::string, std::vector<std::string>>>& dimensions,
+								  size_t index,
+								  std::map<std::string, std::string>& current,
+								  F&& callback)
+	{
+		if (index >= dimensions.size())
+		{
+			callback(current);
+			return;
+		}
+
+		const auto& [key, values] = dimensions[index];
+		for (const auto& value : values)
+		{
+			current[key] = value;
+			EnumerateAssignmentsRecursive(dimensions, index + 1, current, callback);
+		}
+	}
+
+	template <typename F>
+	static void EnumerateAssignments(const std::map<std::string, std::set<std::string>>& propertyDomain, F&& callback)
+	{
+		if (propertyDomain.empty())
+		{
+			std::map<std::string, std::string> empty;
+			callback(empty);
+			return;
+		}
+
+		std::vector<std::pair<std::string, std::vector<std::string>>> dimensions;
+		dimensions.reserve(propertyDomain.size());
+		for (const auto& [key, values] : propertyDomain)
+		{
+			dimensions.emplace_back(key, std::vector<std::string>(values.begin(), values.end()));
+		}
+
+		std::map<std::string, std::string> current;
+		EnumerateAssignmentsRecursive(dimensions, 0, current, callback);
+	}
+
+	static std::vector<MultipartEntry> ParseMultipartEntries(const nlohmann::json& multipartJson)
+	{
+		std::vector<MultipartEntry> entries;
+		if (!multipartJson.is_array())
+			return entries;
+
+		for (const auto& part : multipartJson)
+		{
+			if (!part.is_object() || !part.contains("apply"))
+				continue;
+
+			MultipartEntry entry;
+			entry.Applies = ParseApplySpecs(part.at("apply"));
+			if (entry.Applies.empty())
+				continue;
+
+			if (part.contains("when"))
+				entry.When = ParseWhenPredicate(part.at("when"));
+			else
+				entry.When.PredicateType = WhenPredicate::Type::MatchAll;
+
+			entries.push_back(std::move(entry));
+		}
+
+		return entries;
+	}
+
+	static std::string ToBlockName(const std::string& blockstateName)
+	{
+		std::string name = blockstateName;
+
+		// ---- Remove ".json" extension ----
+		const std::string ext = ".json";
+		if (name.size() >= ext.size() && name.substr(name.size() - ext.size()) == ext)
+		{
+			name.erase(name.size() - ext.size());
+		}
+
+		// ---- Replace '_' with ' ' ----
+		std::replace(name.begin(), name.end(), '_', ' ');
+
+		// ---- Capitalize each word ----
+		bool capitalizeNext = true;
+		for (char& c : name)
+		{
+			if (std::isspace(static_cast<unsigned char>(c)))
+			{
+				capitalizeNext = true;
+			}
+			else if (capitalizeNext)
+			{
+				c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+				capitalizeNext = false;
+			}
+			else
+			{
+				c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+			}
+		}
+
+		return name;
+	}
+
+	static size_t PickCanonicalGuiVariantIndex(const std::vector<onion::voxel::VariantModel>& variants)
+	{
+		for (size_t i = 0; i < variants.size(); i++)
+		{
+			const auto& props = variants[i].Properties;
+			auto shapeIt = props.find("shape");
+			if (shapeIt != props.end() && shapeIt->second == "straight")
+				return i;
+		}
+		return 0;
+	}
+
+	static void InjectGuiVariant(const std::string& blockResourceName,
+								 const onion::voxel::ZipArchive& modelArchive,
+								 std::vector<onion::voxel::VariantModel>& variants)
+	{
+		using namespace onion::voxel;
+
+		for (const auto& variant : variants)
+		{
+			auto it = variant.Properties.find("gui");
+			if (it != variant.Properties.end() && it->second == "true")
+				return;
+		}
+
+		VariantModel guiVariant;
+		bool guiModelResolved = false;
+
+		const std::filesystem::path itemModelPath = std::filesystem::path("item") / (blockResourceName + ".json");
+		if (modelArchive.FileExists(itemModelPath))
+		{
+			guiVariant.Model =
+				BlockModel::FromFile((std::filesystem::path("item") / blockResourceName).generic_string());
+			guiModelResolved = true;
+		}
+
+		if (!guiModelResolved)
+		{
+			const std::filesystem::path inventoryModelPath =
+				std::filesystem::path("block") / (blockResourceName + "_inventory.json");
+			if (modelArchive.FileExists(inventoryModelPath))
+			{
+				guiVariant.Model = BlockModel::FromFile(blockResourceName + "_inventory");
+				guiModelResolved = true;
+			}
+		}
+
+		if (!guiModelResolved && !variants.empty())
+		{
+			const size_t canonicalVariantIndex = PickCanonicalGuiVariantIndex(variants);
+			guiVariant.Model = variants[canonicalVariantIndex].Model;
+			guiModelResolved = true;
+		}
+
+		if (!guiModelResolved)
+		{
+			const std::filesystem::path blockModelPath = std::filesystem::path("block") / (blockResourceName + ".json");
+			if (modelArchive.FileExists(blockModelPath))
+			{
+				guiVariant.Model = BlockModel::FromFile(blockResourceName);
+				guiModelResolved = true;
+			}
+		}
+
+		if (!guiModelResolved)
+			return;
+
+		guiVariant.Properties["gui"] = "true";
+		variants.push_back(std::move(guiVariant));
+	}
+
+	// Parse "axis=x,waterlogged=false" → { "axis" -> "x", "waterlogged" -> "false" }
+	// An empty key string → empty map (matches-all variant)
+	static std::map<std::string, std::string> ParseProperties(const std::string& key)
+	{
+		std::map<std::string, std::string> properties;
+		if (key.empty())
+			return properties;
+
+		std::istringstream stream(key);
+		std::string token;
+		while (std::getline(stream, token, ','))
+		{
+			const size_t eq = token.find('=');
+			if (eq == std::string::npos)
+				continue;
+			properties[token.substr(0, eq)] = token.substr(eq + 1);
+		}
+		return properties;
+	}
+
 } // namespace
 
 namespace onion::voxel
@@ -249,11 +648,18 @@ namespace onion::voxel
 		auto it = blockstateMap.find(id);
 		if (it != blockstateMap.end())
 		{
-			// Searches for the first variant that fits all the given properties.
 			const auto& variants = it->second;
+
+			size_t bestSubsetIndex = std::numeric_limits<size_t>::max();
+			size_t bestSubsetScore = 0;
+
 			for (size_t i = 0; i < variants.size(); i++)
 			{
 				const auto& variant = variants[i];
+
+				if (variant.Properties == properties)
+					return static_cast<uint8_t>(i);
+
 				bool matches = true;
 
 				for (const auto& [key, value] : variant.Properties)
@@ -267,8 +673,18 @@ namespace onion::voxel
 				}
 
 				if (matches)
-					return static_cast<uint8_t>(i);
+				{
+					const size_t score = variant.Properties.size();
+					if (bestSubsetIndex == std::numeric_limits<size_t>::max() || score > bestSubsetScore)
+					{
+						bestSubsetIndex = i;
+						bestSubsetScore = score;
+					}
+				}
 			}
+
+			if (bestSubsetIndex != std::numeric_limits<size_t>::max())
+				return static_cast<uint8_t>(bestSubsetIndex);
 		}
 
 		return 0;
@@ -298,6 +714,7 @@ namespace onion::voxel
 		std::unordered_map<BlockId, std::vector<VariantModel>> blockstateMap;
 
 		ZipArchive archive(s_BlockstateArchiveFilePath);
+		ZipArchive modelArchive(s_ModelArchiveFilePath);
 		std::vector<std::filesystem::path> blockstateFiles = archive.GetFileList();
 
 		for (const auto& blockstateFile : blockstateFiles)
@@ -305,47 +722,25 @@ namespace onion::voxel
 			std::string jsonText = archive.GetFileText(blockstateFile);
 			nlohmann::json json = nlohmann::json::parse(jsonText);
 
-			// ---- Ignore multipart blockstates for now ----
-			if (!json.contains("variants") || !json.at("variants").is_object())
-			{
-				continue;
-			}
-
 			const std::string blockName = ToBlockName(blockstateFile.filename().string());
 			BlockId blockId = BlockIds::GetId(blockName);
+			const std::string blockResourceName = blockstateFile.stem().string();
 
-			const auto& variants = json.at("variants");
-
-			// ---- Iterate variants ----
-			for (auto it = variants.begin(); it != variants.end(); it++)
+			if (json.contains("variants") && json.at("variants").is_object())
 			{
-				const std::string& variantKey = it.key();
-				const nlohmann::json& variantValue = it.value();
+				const auto& variants = json.at("variants");
 
-				auto properties = ParseProperties(variantKey);
-
-				if (variantValue.is_object())
+				// ---- Iterate variants ----
+				for (auto it = variants.begin(); it != variants.end(); it++)
 				{
-					VariantModel variantModel = VariantModelFromJson(variantValue);
-					variantModel.Properties = properties;
+					const std::string& variantKey = it.key();
+					const nlohmann::json& variantValue = it.value();
 
-					// ----- Bake blockstate rotation into element geometry -----
-					const int stepsX = ((variantModel.RotationX / 90) % 4 + 4) % 4;
-					const int stepsY = ((variantModel.RotationY / 90) % 4 + 4) % 4;
-					if (stepsX != 0 || stepsY != 0)
-						RotateModel(variantModel.Model, stepsX, stepsY);
+					auto properties = ParseProperties(variantKey);
 
-					// Resets rotation because it's already baked into the model geometry.
-					variantModel.RotationX = 0;
-					variantModel.RotationY = 0;
-
-					blockstateMap[blockId].push_back(std::move(variantModel));
-				}
-				else if (variantValue.is_array())
-				{
-					for (const auto& entry : variantValue)
+					if (variantValue.is_object())
 					{
-						VariantModel variantModel = VariantModelFromJson(entry);
+						VariantModel variantModel = VariantModelFromJson(variantValue);
 						variantModel.Properties = properties;
 
 						// ----- Bake blockstate rotation into element geometry -----
@@ -360,8 +755,67 @@ namespace onion::voxel
 
 						blockstateMap[blockId].push_back(std::move(variantModel));
 					}
+					else if (variantValue.is_array())
+					{
+						for (const auto& entry : variantValue)
+						{
+							VariantModel variantModel = VariantModelFromJson(entry);
+							variantModel.Properties = properties;
+
+							// ----- Bake blockstate rotation into element geometry -----
+							const int stepsX = ((variantModel.RotationX / 90) % 4 + 4) % 4;
+							const int stepsY = ((variantModel.RotationY / 90) % 4 + 4) % 4;
+							if (stepsX != 0 || stepsY != 0)
+								RotateModel(variantModel.Model, stepsX, stepsY);
+
+							// Resets rotation because it's already baked into the model geometry.
+							variantModel.RotationX = 0;
+							variantModel.RotationY = 0;
+
+							blockstateMap[blockId].push_back(std::move(variantModel));
+						}
+					}
 				}
 			}
+			else if (json.contains("multipart") && json.at("multipart").is_array())
+			{
+				const std::vector<MultipartEntry> multipartEntries = ParseMultipartEntries(json.at("multipart"));
+				if (multipartEntries.empty())
+					continue;
+
+				std::map<std::string, std::set<std::string>> propertyDomain;
+				for (const auto& entry : multipartEntries)
+					CollectPropertyDomainFromPredicate(entry.When, propertyDomain);
+
+				std::set<std::string> seenSignatures;
+				EnumerateAssignments(propertyDomain,
+									 [&](const std::map<std::string, std::string>& assignment)
+									 {
+										 std::vector<ApplySpec> matchedApplies;
+										 for (const auto& entry : multipartEntries)
+										 {
+											 if (!EvaluateWhenPredicate(entry.When, assignment))
+												 continue;
+											 matchedApplies.insert(
+												 matchedApplies.end(), entry.Applies.begin(), entry.Applies.end());
+										 }
+
+										 if (matchedApplies.empty())
+											 return;
+
+										 const std::string signature = BuildPropertiesSignature(assignment);
+										 if (!seenSignatures.insert(signature).second)
+											 return;
+
+										 VariantModel variant = ComposeMultipartVariant(matchedApplies, assignment);
+										 if (!variant.Model.Elements.empty())
+											 blockstateMap[blockId].push_back(std::move(variant));
+									 });
+			}
+
+			auto blockIt = blockstateMap.find(blockId);
+			if (blockIt != blockstateMap.end())
+				InjectGuiVariant(blockResourceName, modelArchive, blockIt->second);
 		}
 
 		return blockstateMap;

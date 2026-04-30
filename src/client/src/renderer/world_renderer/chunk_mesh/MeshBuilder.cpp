@@ -8,7 +8,7 @@
 namespace onion::voxel
 {
 	MeshBuilder::MeshBuilder(std::shared_ptr<WorldManager> worldManager, std::shared_ptr<TextureAtlas> textureAtlas)
-		: m_WorldManager(worldManager), m_BlockRegistry(textureAtlas), m_TextureAtlas(textureAtlas)
+		: m_WorldManager(worldManager), m_BlockRenderRegistry(textureAtlas), m_TextureAtlas(textureAtlas)
 	{
 	}
 
@@ -203,7 +203,7 @@ namespace onion::voxel
 							continue;
 
 						// ------ Get Block Textures ------
-						const BlockTextures& blockTextures = m_BlockRegistry.Get(block.ID, block.VariantIndex);
+						const BlockTextures& blockTextures = m_BlockRenderRegistry.Get(block.ID, block.VariantIndex);
 
 						// ------ Build Mesh ------
 						// Build each face individually using its own element geometry (from/to)
@@ -297,9 +297,9 @@ namespace onion::voxel
 			const bool countsInAO = BlockstateRegistry::CountsInAO(mono.ID, mono.VariantIndex);
 			if (countsInAO)
 			{
-				const Row FULL_X = Row((1ull << SX) - 1ull);
-				const Row FULL_Z = Row((1ull << SZ) - 1ull);
-				const Row FULL_Y = Row((1ull << SY) - 1ull);
+				const Row FULL_X = ~Row(0);
+				const Row FULL_Z = ~Row(0);
+				const Row FULL_Y = ~Row(0);
 
 				for (int y = 0; y < SY; y++)
 				{
@@ -523,12 +523,12 @@ namespace onion::voxel
 
 	void MeshBuilder::Initialize()
 	{
-		m_BlockRegistry.Initialize();
+		m_BlockRenderRegistry.Initialize();
 	}
 
 	void MeshBuilder::ReloadTextures()
 	{
-		m_BlockRegistry.ReloadTextures();
+		m_BlockRenderRegistry.ReloadTextures();
 	}
 
 	void MeshBuilder::UpdateChunkMeshAsync(const std::shared_ptr<ChunkMesh> chunkMesh)
@@ -558,6 +558,171 @@ namespace onion::voxel
 		return m_ExecutionTimes.size() / duration;
 	}
 
+	void MeshBuilder::UpdateUiBlockMesh(const std::shared_ptr<UiBlockMesh> uiBlockMesh) const
+	{
+		std::unique_lock lock(uiBlockMesh->m_Mutex);
+
+		// Store the atlas so Render() can bind it
+		uiBlockMesh->m_TextureAtlas = m_TextureAtlas;
+
+		// Clear existing geometry
+		uiBlockMesh->m_VerticesOpaque.clear();
+		uiBlockMesh->m_IndicesOpaque.clear();
+		uiBlockMesh->m_VerticesCutout.clear();
+		uiBlockMesh->m_IndicesCutout.clear();
+		uiBlockMesh->m_VerticesTransparent.clear();
+		uiBlockMesh->m_IndicesTransparent.clear();
+
+		const Inventory& inventory = uiBlockMesh->m_Inventory;
+		const glm::vec2& slotSize = uiBlockMesh->m_SlotSize;
+		const glm::vec2& slotPadding = uiBlockMesh->m_SlotPadding;
+
+		const auto& blockstateRegistry = BlockstateRegistry::Get();
+
+		const int rows = inventory.Rows();
+		const int cols = inventory.Columns();
+
+		for (int row = 0; row < rows; ++row)
+		{
+			for (int col = 0; col < cols; ++col)
+			{
+				const BlockId blockId = inventory.At(row, col);
+				if (blockId == BlockId::Air)
+					continue;
+
+				// Slot top-left in normalized screen space
+				const float slotX = col * (slotSize.x + slotPadding.x);
+				const float slotY = row * (slotSize.y + slotPadding.y);
+
+				// Fetch Gui display transform from block model
+				auto registryIt = blockstateRegistry.find(blockId);
+				if (registryIt == blockstateRegistry.end() || registryIt->second.empty())
+					continue;
+
+				const auto& variants = registryIt->second;
+				const uint8_t guiVariantIdx = BlockstateRegistry::GetVariantIndex(blockId, {{"gui", "true"}});
+				const size_t bestVariantIdx =
+					static_cast<size_t>(guiVariantIdx) < variants.size() ? static_cast<size_t>(guiVariantIdx) : 0;
+
+				const BlockModel::DisplayInfo& gui = variants[bestVariantIdx].Model.ModelDisplay.Gui;
+
+				// Build transform matrix.
+				// The unit cube spans [-0.5 .. 0.5] on each axis.
+				// We apply: scale(slot) → scale(gui) → Rx → Ry → Rz → translate(gui) → translate(slot center)
+				// gui.Translation is in MC model units where 1 block = 16 units.
+				// gui.Scale is a direct multiplier on the block.
+				const glm::vec3 slotCenter(slotX + slotSize.x * 0.5f, slotY + slotSize.y * 0.5f, 0.0f);
+				const float border = uiBlockMesh->GetSlotBorder();
+				const float blockScreenSize = slotSize.x - 2.f * border; // shrink block by inner border
+
+				glm::mat4 transform = glm::mat4(1.0f);
+				transform = glm::translate(transform, slotCenter);
+				transform = glm::translate(transform, gui.Translation / 16.0f * blockScreenSize);
+				transform = glm::rotate(transform, glm::radians(gui.Rotation.z), glm::vec3(0, 0, 1));
+				transform = glm::rotate(transform, glm::radians(-gui.Rotation.x), glm::vec3(1, 0, 0));
+				transform = glm::rotate(transform, glm::radians(gui.Rotation.y), glm::vec3(0, 1, 0));
+				transform = glm::scale(transform, gui.Scale * (-blockScreenSize));
+
+				// Compute the 8 corners of the unit cube through the transform.
+				// Convention matches GetPointsAndOcclusion: pXYZ where X=+x,Y=+y,Z=+z (1=max, 0=min)
+				auto tfm = [&](float x, float y, float z) -> glm::vec3
+				{ return glm::vec3(transform * glm::vec4(x, y, z, 1.0f)); };
+
+				// Build face quads — one PAO per element since elements may differ in size (e.g. slabs)
+				const BlockTextures& blockTextures =
+					m_BlockRenderRegistry.Get(blockId, static_cast<uint8_t>(bestVariantIdx));
+
+				for (const FaceBuildDesc& f : GetBlockFaceBuildDescs(
+						 // Dummy full-cube PAO just to enumerate all 6 face directions;
+						 // actual per-element PAO is computed below per TextureInfo
+						 [&]()
+						 {
+							 PointsAndOcclusion cube;
+							 cube.p000 = tfm(-0.5f, -0.5f, -0.5f);
+							 cube.p001 = tfm(-0.5f, -0.5f, +0.5f);
+							 cube.p010 = tfm(-0.5f, +0.5f, -0.5f);
+							 cube.p011 = tfm(-0.5f, +0.5f, +0.5f);
+							 cube.p100 = tfm(+0.5f, -0.5f, -0.5f);
+							 cube.p101 = tfm(+0.5f, -0.5f, +0.5f);
+							 cube.p110 = tfm(+0.5f, +0.5f, -0.5f);
+							 cube.p111 = tfm(+0.5f, +0.5f, +0.5f);
+							 return cube;
+						 }()))
+				{
+					const int faceIdx = static_cast<int>(f.face);
+
+					// Normal pass
+					for (const TextureInfo& faceTex : blockTextures.faces)
+					{
+						if (static_cast<int>(faceTex.face) != faceIdx)
+							continue;
+						if (faceTex.texture == UINT16_MAX)
+							continue;
+
+						// Compute element-accurate PAO for this specific TextureInfo
+						const PointsAndOcclusion elemPao = [&]()
+						{
+							PointsAndOcclusion p = GetElementLocalPao(faceTex);
+							p.p000 = tfm(p.p000.x, p.p000.y, p.p000.z);
+							p.p001 = tfm(p.p001.x, p.p001.y, p.p001.z);
+							p.p010 = tfm(p.p010.x, p.p010.y, p.p010.z);
+							p.p011 = tfm(p.p011.x, p.p011.y, p.p011.z);
+							p.p100 = tfm(p.p100.x, p.p100.y, p.p100.z);
+							p.p101 = tfm(p.p101.x, p.p101.y, p.p101.z);
+							p.p110 = tfm(p.p110.x, p.p110.y, p.p110.z);
+							p.p111 = tfm(p.p111.x, p.p111.y, p.p111.z);
+							return p;
+						}();
+
+						const std::vector<FaceBuildDesc> elemDescs = GetBlockFaceBuildDescs(elemPao);
+						for (const FaceBuildDesc& ef : elemDescs)
+						{
+							if (static_cast<int>(ef.face) != faceIdx)
+								continue;
+							const auto atlasEntry = m_TextureAtlas->GetAtlasEntry(faceTex.texture);
+							AddUiFace(*uiBlockMesh, ef, faceTex, atlasEntry);
+						}
+					}
+
+					// Overlay pass
+					for (const TextureInfo& overlayTex : blockTextures.overlay)
+					{
+						if (static_cast<int>(overlayTex.face) != faceIdx)
+							continue;
+						if (overlayTex.texture == UINT16_MAX)
+							continue;
+
+						const PointsAndOcclusion elemPao = [&]()
+						{
+							PointsAndOcclusion p = GetElementLocalPao(overlayTex);
+							p.p000 = tfm(p.p000.x, p.p000.y, p.p000.z);
+							p.p001 = tfm(p.p001.x, p.p001.y, p.p001.z);
+							p.p010 = tfm(p.p010.x, p.p010.y, p.p010.z);
+							p.p011 = tfm(p.p011.x, p.p011.y, p.p011.z);
+							p.p100 = tfm(p.p100.x, p.p100.y, p.p100.z);
+							p.p101 = tfm(p.p101.x, p.p101.y, p.p101.z);
+							p.p110 = tfm(p.p110.x, p.p110.y, p.p110.z);
+							p.p111 = tfm(p.p111.x, p.p111.y, p.p111.z);
+							return p;
+						}();
+
+						const std::vector<FaceBuildDesc> elemDescs = GetBlockFaceBuildDescs(elemPao);
+						for (const FaceBuildDesc& ef : elemDescs)
+						{
+							if (static_cast<int>(ef.face) != faceIdx)
+								continue;
+							const auto overlayAtlas = m_TextureAtlas->GetAtlasEntry(overlayTex.texture);
+							AddUiFace(*uiBlockMesh, ef, overlayTex, overlayAtlas);
+						}
+					}
+				}
+			}
+		}
+
+		uiBlockMesh->SetDirty(false);
+		uiBlockMesh->BuffersUpdated();
+	}
+
 	size_t MeshBuilder::GetMeshBuilderThreadCount() const
 	{
 		return m_ThreadPool.GetPoolsCount();
@@ -570,7 +735,7 @@ namespace onion::voxel
 
 	const std::unordered_set<std::string>& MeshBuilder::GetAllRegisteredTextureNames() const
 	{
-		return m_BlockRegistry.GetAllTextureNames();
+		return m_BlockRenderRegistry.GetAllTextureNames();
 	}
 
 	void MeshBuilder::RecordExecution()
@@ -711,6 +876,212 @@ namespace onion::voxel
 			indices->push_back(startIndex + 1);
 			indices->push_back(startIndex + 0);
 		}
+	}
+
+	void MeshBuilder::AddUiFace(UiBlockMesh& mesh,
+								const FaceBuildDesc& f,
+								const TextureInfo& faceTexture,
+								const TextureAtlas::AtlasEntry& uv)
+	{
+		std::vector<UiBlockMesh::Vertex>* vertices = nullptr;
+		std::vector<uint32_t>* indices = nullptr;
+
+		switch (faceTexture.textureType)
+		{
+			case Transparency::Opaque:
+				vertices = &mesh.m_VerticesOpaque;
+				indices = &mesh.m_IndicesOpaque;
+				break;
+
+			case Transparency::Cutout:
+				vertices = &mesh.m_VerticesCutout;
+				indices = &mesh.m_IndicesCutout;
+				break;
+
+			case Transparency::Transparent:
+				vertices = &mesh.m_VerticesTransparent;
+				indices = &mesh.m_IndicesTransparent;
+				break;
+		}
+
+		// ------ COMPUTE UV SUB-REGION ------
+		float s0 = faceTexture.uv[0] / 16.0f;
+		float s1 = faceTexture.uv[2] / 16.0f;
+		float t0 = 1.0f - faceTexture.uv[3] / 16.0f; // MC v2, flipped to OpenGL
+		float t1 = 1.0f - faceTexture.uv[1] / 16.0f; // MC v1, flipped to OpenGL
+
+		glm::vec2 tileSize = uv.uvMax - uv.uvMin;
+		glm::vec2 uv0 = uv.uvMin + tileSize * glm::vec2(s0, t0);
+		glm::vec2 uv1 = uv.uvMin + tileSize * glm::vec2(s1, t0);
+		glm::vec2 uv2 = uv.uvMin + tileSize * glm::vec2(s1, t1);
+		glm::vec2 uv3 = uv.uvMin + tileSize * glm::vec2(s0, t1);
+
+		// Apply per-face UV rotation (0, 90, 180, 270 degrees CW)
+		const int uvSteps = ((faceTexture.uvRotation / 90) % 4 + 4) % 4;
+		if (uvSteps != 0)
+		{
+			std::array<glm::vec2, 4> corners{uv0, uv1, uv2, uv3};
+			uv0 = corners[(0 + uvSteps) % 4];
+			uv1 = corners[(1 + uvSteps) % 4];
+			uv2 = corners[(2 + uvSteps) % 4];
+			uv3 = corners[(3 + uvSteps) % 4];
+		}
+
+		// ------ TINT HANDLING ------
+		glm::ivec3 tint(255);
+
+		switch (faceTexture.tintType)
+		{
+			case Tint::Grass:
+				tint = glm::ivec3(95, 190, 60);
+				break;
+
+			case Tint::Water:
+				tint = glm::ivec3(77, 128, 255);
+				break;
+
+			default:
+				break;
+		}
+
+		// ------ VERTEX CREATION ------
+		uint32_t startIndex = static_cast<uint32_t>(vertices->size());
+
+		auto makeVertex = [&](const glm::vec3& p, const glm::vec2& texUv)
+		{
+			UiBlockMesh::Vertex vert;
+
+			vert.x = p.x;
+			vert.y = p.y;
+			vert.z = p.z;
+
+			vert.texX = texUv.x;
+			vert.texY = texUv.y;
+
+			vert.facing = static_cast<uint8_t>(faceTexture.shade ? f.face : Face::Top);
+
+			vert.tintR = static_cast<uint8_t>(tint.r);
+			vert.tintG = static_cast<uint8_t>(tint.g);
+			vert.tintB = static_cast<uint8_t>(tint.b);
+
+			return vert;
+		};
+
+		// ------ Add vertices -----
+		vertices->push_back(makeVertex(*f.v[0], uv0));
+		vertices->push_back(makeVertex(*f.v[1], uv1));
+		vertices->push_back(makeVertex(*f.v[2], uv2));
+		vertices->push_back(makeVertex(*f.v[3], uv3));
+
+		// ------ Add indices -----
+		if (!f.reverseWinding)
+		{
+			indices->push_back(startIndex + 0);
+			indices->push_back(startIndex + 1);
+			indices->push_back(startIndex + 2);
+
+			indices->push_back(startIndex + 2);
+			indices->push_back(startIndex + 3);
+			indices->push_back(startIndex + 0);
+		}
+		else
+		{
+			indices->push_back(startIndex + 0);
+			indices->push_back(startIndex + 3);
+			indices->push_back(startIndex + 2);
+
+			indices->push_back(startIndex + 2);
+			indices->push_back(startIndex + 1);
+			indices->push_back(startIndex + 0);
+		}
+	}
+
+	MeshBuilder::PointsAndOcclusion MeshBuilder::GetElementLocalPao(const TextureInfo& textureInfo)
+	{
+		// Map MC units (0-16) to local block space (-0.5 .. +0.5)
+		float nx = textureInfo.from.x / 16.0f - 0.5f;
+		float px = textureInfo.to.x / 16.0f - 0.5f;
+		float ny = textureInfo.from.y / 16.0f - 0.5f;
+		float py = textureInfo.to.y / 16.0f - 0.5f;
+		float nz = textureInfo.from.z / 16.0f - 0.5f;
+		float pz = textureInfo.to.z / 16.0f - 0.5f;
+
+		PointsAndOcclusion result;
+		result.p000 = glm::vec3(nx, ny, nz);
+		result.p001 = glm::vec3(nx, ny, pz);
+		result.p010 = glm::vec3(nx, py, nz);
+		result.p011 = glm::vec3(nx, py, pz);
+		result.p100 = glm::vec3(px, ny, nz);
+		result.p101 = glm::vec3(px, ny, pz);
+		result.p110 = glm::vec3(px, py, nz);
+		result.p111 = glm::vec3(px, py, pz);
+
+		// Apply element rotation if present
+		const auto& rotation = textureInfo.elemRotation;
+		if (rotation.Angle != 0.0f && !rotation.Axis.empty())
+		{
+			// Convert origin from MC units (0-16) to local [-0.5 .. +0.5] space
+			glm::vec3 origin(
+				rotation.Origin.x / 16.0f - 0.5f, rotation.Origin.y / 16.0f - 0.5f, rotation.Origin.z / 16.0f - 0.5f);
+
+			glm::vec3 axis(0.0f);
+			if (rotation.Axis == "x")
+				axis = {1, 0, 0};
+			else if (rotation.Axis == "y")
+				axis = {0, 1, 0};
+			else if (rotation.Axis == "z")
+				axis = {0, 0, 1};
+
+			float radians = glm::radians(rotation.Angle);
+			glm::mat4 rot = glm::rotate(glm::mat4(1.0f), radians, axis);
+
+			auto rotatePoint = [&](glm::vec3& p)
+			{
+				glm::vec3 local = p - origin;
+				local = glm::vec3(rot * glm::vec4(local, 0.0f));
+				p = local + origin;
+			};
+
+			rotatePoint(result.p000);
+			rotatePoint(result.p001);
+			rotatePoint(result.p010);
+			rotatePoint(result.p011);
+			rotatePoint(result.p100);
+			rotatePoint(result.p101);
+			rotatePoint(result.p110);
+			rotatePoint(result.p111);
+
+			if (rotation.Rescale)
+			{
+				float scale = 1.0f / std::cos(radians);
+
+				glm::vec3 scaleAxes(1.0f);
+				if (rotation.Axis == "x")
+					scaleAxes = {1.0f, scale, scale};
+				else if (rotation.Axis == "y")
+					scaleAxes = {scale, 1.0f, scale};
+				else if (rotation.Axis == "z")
+					scaleAxes = {scale, scale, 1.0f};
+
+				auto scalePoint = [&](glm::vec3& p)
+				{
+					glm::vec3 local = p - origin;
+					local *= scaleAxes;
+					p = local + origin;
+				};
+
+				scalePoint(result.p000);
+				scalePoint(result.p001);
+				scalePoint(result.p010);
+				scalePoint(result.p011);
+				scalePoint(result.p100);
+				scalePoint(result.p101);
+				scalePoint(result.p110);
+				scalePoint(result.p111);
+			}
+		}
+
+		return result;
 	}
 
 	MeshBuilder::PointsAndOcclusion MeshBuilder::GetPointsAndOcclusion(

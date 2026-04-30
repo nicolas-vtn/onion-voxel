@@ -127,4 +127,27 @@ namespace onion::voxel
 		(*m_BlockIndexInPalette)[index] = blockIndex;
 	}
 
+	void SubChunk::FillColumnRange_Unsafe(uint8_t x, uint8_t yMin, uint8_t yMax, uint8_t z, uint16_t blockIndex)
+	{
+		if (m_IsMonoBlock)
+		{
+			if (blockIndex == m_MonoBlockIndexInPalette)
+				return; // No change needed
+
+			m_BlockIndexInPalette = std::make_shared<
+				std::array<uint16_t,
+						   WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE>>();
+
+			m_BlockIndexInPalette->fill(m_MonoBlockIndexInPalette);
+			m_IsMonoBlock = false;
+		}
+
+		const size_t stride = WorldConstants::CHUNK_SIZE; // y-stride in the flat array
+		const size_t base = x + z * WorldConstants::CHUNK_SIZE * WorldConstants::CHUNK_SIZE;
+
+		uint16_t* data = m_BlockIndexInPalette->data();
+		for (uint8_t y = yMin; y <= yMax; ++y)
+			data[base + y * stride] = blockIndex;
+	}
+
 } // namespace onion::voxel

@@ -212,6 +212,7 @@ namespace onion::voxel
 
 		// Update player
 		std::shared_ptr<Player> deserializedPlayer = SerializerDTO::DeserializePlayer(msg.player);
+
 		m_WorldManager->UpdatePlayer(deserializedPlayer);
 	}
 
@@ -394,7 +395,9 @@ namespace onion::voxel
 		{
 			std::shared_ptr<Player> player = std::make_shared<Player>(playerInfo.UUID);
 			player->SetName(playerInfo.PlayerName);
-			player->SetPosition(glm::vec3(8.f, 20.f, 8.f)); // Spawn player at a default position
+			glm::vec3 spawnPosition = m_WorldManager->GetSpawnPosition();
+			player->SetPosition(spawnPosition);
+
 			m_WorldManager->AddPlayer(player);
 		}
 

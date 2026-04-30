@@ -1,0 +1,6 @@
+#include "version.hpp"
+
+const char* GetProjectVersion()
+{
+    return "@GIT_VERSION@";
+}

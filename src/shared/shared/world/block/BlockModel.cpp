@@ -116,6 +116,23 @@ namespace onion::voxel
 				elements.push_back(std::move(elem));
 			}
 		}
+
+		void ParseDisplayInfo(const nlohmann::json& displayJson, BlockModel::DisplayInfo& displayInfo)
+		{
+			if (displayJson.contains("rotation"))
+				ParseVec3(displayJson.at("rotation"), displayInfo.Rotation);
+			if (displayJson.contains("translation"))
+				ParseVec3(displayJson.at("translation"), displayInfo.Translation);
+			if (displayJson.contains("scale"))
+				ParseVec3(displayJson.at("scale"), displayInfo.Scale);
+		}
+
+		void ParseDisplay(const nlohmann::json& displayJson, BlockModel::Display& display)
+		{
+			if (displayJson.contains("gui"))
+				ParseDisplayInfo(displayJson.at("gui"), display.Gui);
+		}
+
 	} // namespace
 
 	void BlockModel::SetModelArchive(const std::filesystem::path& archiveFilePath)
@@ -125,7 +142,11 @@ namespace onion::voxel
 
 	BlockModel BlockModel::FromFile(const std::string& filename)
 	{
-		const std::filesystem::path pathInsideArchive = std::filesystem::path("block") / filename;
+		std::filesystem::path pathInsideArchive;
+		if (filename.rfind("block/", 0) == 0 || filename.rfind("item/", 0) == 0)
+			pathInsideArchive = std::filesystem::path(filename);
+		else
+			pathInsideArchive = std::filesystem::path("block") / filename;
 		return GetModel(pathInsideArchive);
 	}
 
@@ -153,6 +174,33 @@ namespace onion::voxel
 
 	BlockModel BlockModel::LoadRawModel(const std::filesystem::path& modelPath)
 	{
+		if (modelPath.string().find("builtin/") == 0)
+		{
+			BlockModel model;
+			model.AmbientOcclusion = false;
+
+			BlockModel::Element elem;
+			elem.From = {0.0f, 0.0f, 8.0f};
+			elem.To = {16.0f, 16.0f, 8.0f}; // zero-thickness plane
+
+			BlockModel::Face face;
+			face.Texture = "#layer0";
+			face.UV = {0, 0, 16, 16};
+
+			// Front/back only to keep it flat
+			elem.Faces["north"] = face;
+			elem.Faces["south"] = face;
+
+			model.Elements.push_back(std::move(elem));
+
+			// Keep GUI transform neutral (no forced rotation/scale)
+			model.ModelDisplay.Gui.Rotation = {0.0f, 0.0f, 0.0f};
+			model.ModelDisplay.Gui.Translation = {0.0f, 0.0f, 0.0f};
+			model.ModelDisplay.Gui.Scale = {1.0f, 1.0f, 1.0f};
+
+			return model;
+		}
+
 		// ---- Read file from Archive ----
 		std::filesystem::path path = modelPath;
 		path.replace_extension(".json");
@@ -185,6 +233,12 @@ namespace onion::voxel
 		if (json.contains("elements") && json["elements"].is_array())
 		{
 			ParseElements(json["elements"], model.Elements);
+		}
+
+		// ---- Display ----
+		if (json.contains("display") && json["display"].is_object())
+		{
+			ParseDisplay(json["display"], model.ModelDisplay);
 		}
 
 		return model;

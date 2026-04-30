@@ -23,7 +23,20 @@ namespace onion::voxel
 														{eAction::ToggleDebugMenus, Key::F3},
 
 														{eAction::Attack, Key::MouseButtonLeft},
+														{eAction::PickBlock, Key::MouseButtonMiddle},
 														{eAction::Interact, Key::MouseButtonRight},
+
+														{eAction::DropItem, Key::Q},
+														{eAction::OpenInventory, Key::E},
+														{eAction::HotbarSlot1, Key::Num1},
+														{eAction::HotbarSlot2, Key::Num2},
+														{eAction::HotbarSlot3, Key::Num3},
+														{eAction::HotbarSlot4, Key::Num4},
+														{eAction::HotbarSlot5, Key::Num5},
+														{eAction::HotbarSlot6, Key::Num6},
+														{eAction::HotbarSlot7, Key::Num7},
+														{eAction::HotbarSlot8, Key::Num8},
+														{eAction::HotbarSlot9, Key::Num9},
 
 														{eAction::ToggleFlyMode, Key::Space}};
 	};

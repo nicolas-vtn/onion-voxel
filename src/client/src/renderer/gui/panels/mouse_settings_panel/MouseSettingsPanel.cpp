@@ -52,7 +52,7 @@ namespace onion::voxel
 
 	void MouseSettingsPanel::Render()
 	{
-		if (s_IsBackPressed)
+		if (IsBackPressed())
 		{
 			Handle_Done_Click(m_Done_Button);
 			return;

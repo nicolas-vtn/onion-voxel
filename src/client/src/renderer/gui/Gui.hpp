@@ -13,6 +13,8 @@
 #include "panels/demo_panel/DemoPanel.hpp"
 #include "panels/demo_scrolling_panel/DemoScrollingPanel.hpp"
 #include "panels/demo_texts_panel/DemoTextsPanel.hpp"
+#include "panels/hud_panel/HudPanel.hpp"
+#include "panels/inventory_panel/InventoryPanel.hpp"
 #include "panels/key_binds_panel/KeyBindsPanel.hpp"
 #include "panels/main_menu_panel/MainMenuPanel.hpp"
 #include "panels/mouse_settings_panel/MouseSettingsPanel.hpp"
@@ -42,6 +44,7 @@ namespace onion::voxel
 	  public:
 		void Initialize();
 		void Render();
+		void RenderGameHUD();
 		void RenderBackground();
 		void Shutdown();
 		void ReloadTextures();
@@ -80,6 +83,8 @@ namespace onion::voxel
 		ControlsPanel m_ControlsPanel;
 		MouseSettingsPanel m_MouseSettingsPanel;
 		KeyBindsPanel m_KeyBindsPanel;
+		InventoryPanel m_InventoryPanel;
+		HudPanel m_HudPanel;
 
 		// ---- Private Members -----
 	  private:

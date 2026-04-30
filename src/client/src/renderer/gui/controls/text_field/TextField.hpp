@@ -53,6 +53,8 @@ namespace onion::voxel
 		bool IsReadOnly() const;
 		void SetReadOnly(bool readOnly);
 
+		bool IsActive() const { return m_IsActive; }
+
 		// ----- Events -----
 	  public:
 		Event<const TextField&> EvtTextChanged;

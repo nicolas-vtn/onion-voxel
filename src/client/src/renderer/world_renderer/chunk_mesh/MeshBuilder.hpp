@@ -11,7 +11,8 @@
 #include <shared/world/chunk/Chunk.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
-#include <renderer/world_renderer/block_registry/BlockRegistry.hpp>
+#include <renderer/gui/ui_block_mesh/UiBlockMesh.hpp>
+#include <renderer/world_renderer/block_render_registry/BlockRenderRegistry.hpp>
 
 #include "ChunkMesh.hpp"
 
@@ -34,6 +35,8 @@ namespace onion::voxel
 		size_t GetChunkMeshUpdatesLastSeconds() const;
 		double GetChunkMeshUpdatesPerSecond() const;
 
+		void UpdateUiBlockMesh(const std::shared_ptr<UiBlockMesh> uiBlockMesh) const;
+
 		size_t GetMeshBuilderThreadCount() const;
 		void SetMeshBuilderThreadCount(size_t count);
 
@@ -42,7 +45,7 @@ namespace onion::voxel
 		// ----- Private Members -----
 	  private:
 		std::shared_ptr<WorldManager> m_WorldManager;
-		BlockRegistry m_BlockRegistry;
+		BlockRenderRegistry m_BlockRenderRegistry;
 		std::shared_ptr<TextureAtlas> m_TextureAtlas;
 
 		ThreadPool m_ThreadPool{4};
@@ -103,9 +106,18 @@ namespace onion::voxel
 							const TextureInfo& faceTexture,
 							const TextureAtlas::AtlasEntry& uv);
 
+		static void AddUiFace(UiBlockMesh& mesh,
+							  const FaceBuildDesc& f,
+							  const TextureInfo& faceTexture,
+							  const TextureAtlas::AtlasEntry& uv);
+
 		PointsAndOcclusion GetPointsAndOcclusion(
 			SubChunkMesh* mesh, const int lx, const int wy, const int lz, const TextureInfo& textureInfo);
 
-		std::vector<FaceBuildDesc> GetBlockFaceBuildDescs(const PointsAndOcclusion& pao);
+		// Compute the 8 corners of a model element in local [-0.5 .. +0.5] space,
+		// including element rotation, for use in inventory (UI) rendering.
+		static PointsAndOcclusion GetElementLocalPao(const TextureInfo& textureInfo);
+
+		static std::vector<FaceBuildDesc> GetBlockFaceBuildDescs(const PointsAndOcclusion& pao);
 	};
 } // namespace onion::voxel

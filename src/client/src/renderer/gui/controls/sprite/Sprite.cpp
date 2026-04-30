@@ -25,6 +25,13 @@ void Sprite::Render()
 {
 	glm::vec2 topLeft = m_Position - m_Size * 0.5f;
 
+	bool hasCissors = !(m_CissorsTopLeft == glm::ivec2(0, 0) && m_CissorsBottomRight == glm::ivec2(0, 0));
+
+	if (hasCissors)
+	{
+		StartCissors();
+	}
+
 	// ----- Setup state for sprites -----
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
@@ -47,6 +54,11 @@ void Sprite::Render()
 
 	// ----- Reset state -----
 	glDepthMask(GL_TRUE);
+
+	if (hasCissors)
+	{
+		EndCissors();
+	}
 }
 
 void Sprite::Initialize()
@@ -195,10 +207,34 @@ onion::voxel::Sprite::eOrigin onion::voxel::Sprite::GetOrigin() const
 	return m_Origin;
 }
 
+void onion::voxel::Sprite::SetCissors(const glm::ivec2& topLeft, const glm::ivec2& bottomRight)
+{
+	m_CissorsTopLeft = topLeft;
+	m_CissorsBottomRight = bottomRight;
+}
+
 void onion::voxel::Sprite::SwapTexture(Texture newTexture)
 {
 	m_Texture.Delete();
 	m_Texture = std::move(newTexture);
+}
+
+void onion::voxel::Sprite::StartCissors() const
+{
+	glEnable(GL_SCISSOR_TEST);
+
+	// Convert from top-left origin to bottom-left origin and flip Y axis
+	int scissorX = m_CissorsTopLeft.x;
+	int scissorY = s_ScreenHeight - m_CissorsBottomRight.y;
+	int scissorWidth = m_CissorsBottomRight.x - m_CissorsTopLeft.x;
+	int scissorHeight = m_CissorsBottomRight.y - m_CissorsTopLeft.y;
+
+	glScissor(scissorX, scissorY, scissorWidth, scissorHeight);
+}
+
+void onion::voxel::Sprite::EndCissors() const
+{
+	glDisable(GL_SCISSOR_TEST);
 }
 
 void Sprite::GenerateBuffers()

@@ -1,2 +1,3 @@
 #pragma once
-#define PROJECT_VERSION "@GIT_VERSION@"
+
+const char* GetProjectVersion();

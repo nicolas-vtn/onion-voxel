@@ -118,8 +118,12 @@ namespace onion::voxel
 		m_ThreadPool.Dispatch(
 			[this, chunkPosition]()
 			{
-				GenChunk genChunk = GenerateChunk(chunkPosition);
-				EvtChunkGenerated.Trigger(genChunk);
+				if (TryStartGeneratingChunk(chunkPosition))
+				{
+					GenChunk genChunk = GenerateChunk(chunkPosition);
+					EvtChunkGenerated.Trigger(genChunk);
+					FinishGeneratingChunk(chunkPosition);
+				}
 			});
 	}
 
@@ -244,9 +248,27 @@ namespace onion::voxel
 			}
 
 			const auto& variants = blockstates.at(id);
-			uint8_t variantCount = static_cast<uint8_t>(variants.size());
 
-			for (uint8_t variantIndex = 0; variantIndex < variantCount; variantIndex++)
+			auto isDemoEligibleVariant = [](const VariantModel& variant) -> bool
+			{
+				auto guiIt = variant.Properties.find("gui");
+				if (guiIt != variant.Properties.end() && guiIt->second == "true")
+					return false;
+				return true;
+			};
+
+			std::vector<uint8_t> demoVariantIndices;
+			demoVariantIndices.reserve(variants.size());
+			for (size_t i = 0; i < variants.size(); i++)
+			{
+				if (isDemoEligibleVariant(variants[i]))
+					demoVariantIndices.push_back(static_cast<uint8_t>(i));
+			}
+
+			if (demoVariantIndices.empty() && !variants.empty())
+				demoVariantIndices.push_back(0);
+
+			for (uint8_t variantIndex : demoVariantIndices)
 			{
 				if (x >= max)
 				{
@@ -278,52 +300,26 @@ namespace onion::voxel
 	WorldGenerator::GenChunk WorldGenerator::GenerateChunk_Superflat(const glm::ivec2& chunkPosition)
 	{
 		GenChunk genChunk;
-		genChunk.chunk = std::make_shared<Chunk>(chunkPosition);
+		genChunk.chunk = std::make_shared<Chunk>(chunkPosition, 1);
 		auto& chunk = genChunk.chunk;
 
 		constexpr bool GENERATE_GRASS = true;
 		constexpr bool GENERATE_FLOWERS = true;
 		constexpr bool GENERATE_TREES = true;
 
-		int y = 0;
+		// Pre-resolve palette indices
+		const uint16_t idxBedrock = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Bedrock));
+		const uint16_t idxDirt = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Dirt));
+		const uint16_t idxGrass = chunk->GetOrAddPaletteIndex(BlockState(BlockId::GrassBlock));
 
-		// Bedrock layer
-		BlockState bedrock(BlockId::Bedrock);
-		for (y = 0; y <= 0; y++)
-		{
-
-			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
-			{
-				for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
-				{
-					chunk->SetBlock(glm::ivec3(x, y, z), bedrock);
-				}
-			}
-		}
-
-		// 3 Dirt layers
-		BlockState dirt(BlockId::Dirt);
-		for (y = 1; y <= 3; y++)
+		// Fill all columns: bedrock(0), dirt(1-3), grass(4)
+		for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
 		{
 			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
 			{
-				for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
-				{
-					chunk->SetBlock(glm::ivec3(x, y, z), dirt);
-				}
-			}
-		}
-
-		// Grass layer
-		BlockState grass(BlockId::GrassBlock);
-		for (y = 4; y <= 4; y++)
-		{
-			for (int x = 0; x < WorldConstants::CHUNK_SIZE; x++)
-			{
-				for (int z = 0; z < WorldConstants::CHUNK_SIZE; z++)
-				{
-					chunk->SetBlock(glm::ivec3(x, y, z), grass);
-				}
+				chunk->FillColumn_Unsafe((uint8_t) x, 0, 0, (uint8_t) z, idxBedrock);
+				chunk->FillColumn_Unsafe((uint8_t) x, 1, 3, (uint8_t) z, idxDirt);
+				chunk->FillColumn_Unsafe((uint8_t) x, 4, 4, (uint8_t) z, idxGrass);
 			}
 		}
 
@@ -385,18 +381,23 @@ namespace onion::voxel
 					Schematic tree = GenerateTree(
 						treeBlock, treeHeight, logId, leavesId); // Generate a tree at the top block position
 
-					std::unordered_set<BlockId> overwritables;
-					overwritables.insert(BlockId::Air);
-					overwritables.insert(BlockId::OakLeaves);
-					overwritables.insert(BlockId::SpruceLeaves);
-					overwritables.insert(BlockId::BirchLeaves);
-					overwritables.insert(BlockId::Bush);
-					overwritables.insert(BlockId::ShortGrass);
-					overwritables.insert(BlockId::TallGrass);
-					for (auto& blockId : BlockState::Flowers)
+					static const std::unordered_set<BlockId> overwritables = []
 					{
-						overwritables.insert(blockId);
-					}
+						std::unordered_set<BlockId> s;
+
+						s.insert(BlockId::Air);
+						s.insert(BlockId::OakLeaves);
+						s.insert(BlockId::SpruceLeaves);
+						s.insert(BlockId::BirchLeaves);
+						s.insert(BlockId::Bush);
+						s.insert(BlockId::ShortGrass);
+						s.insert(BlockId::TallGrass);
+
+						for (auto& blockId : BlockState::Flowers)
+							s.insert(blockId);
+
+						return s;
+					}();
 
 					MergeSchematicInChunk(tree, genChunk, overwritables);
 				}
@@ -457,6 +458,11 @@ namespace onion::voxel
 		}
 
 		// Fills the chunks with blocks based on the height map
+		const uint16_t idxGravel = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Gravel));
+		const uint16_t idxWater = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Water));
+		const uint16_t idxDirt = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Dirt));
+		const uint16_t idxIce = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Ice));
+
 		for (uint8_t z = 0; z < CHUNK_SIZE; z++)
 		{
 			for (uint8_t x = 0; x < CHUNK_SIZE; x++)
@@ -483,46 +489,29 @@ namespace onion::voxel
 
 					// Fills from the height to sea level with gravel
 					if (height > m_SeaLevel)
-					{
-						for (int y = m_SeaLevel; y <= height; y++)
-						{
-							chunk->SetBlock(glm::ivec3(x, y, z), BlockState(BlockId::Gravel));
-						}
-					}
+						chunk->FillColumn_Unsafe(x, (uint16_t) m_SeaLevel, height, z, idxGravel);
 
 					continue;
 				}
 
 				SetBlocksColumn(genChunk, glm::ivec2(x, z), height, columnBlocks);
 
-				// Replace air blocks below sea level with water, and replace grass with dirt if underwater
+				// Replace air blocks above terrain up to sea level with water
 				if (height <= m_SeaLevel)
 				{
-					for (uint16_t y = 0; y <= m_SeaLevel; y++)
-					{
-						BlockState block = chunk->GetBlock(glm::ivec3(x, y, z));
-						if (block.ID == BlockId::Air)
-						{
-							chunk->SetBlock(glm::ivec3(x, y, z), BlockState(BlockId::Water));
-							block.ID = BlockId::Water; // Update block variable for the next condition
-						}
-						else if ((block.ID == BlockId::GrassBlock || block.ID == BlockId::SnowBlock) && y < m_SeaLevel)
-						{
-							chunk->SetBlock(glm::ivec3(x, y, z), BlockState(BlockId::Dirt));
-							block.ID = BlockId::Dirt; // Update block variable for the next condition
-						}
+					// Replace top solid block (grass/snow) with dirt if it's submerged
+					BlockState topBlock = chunk->GetBlock(glm::ivec3(x, height, z));
+					if ((topBlock.ID == BlockId::GrassBlock || topBlock.ID == BlockId::SnowBlock) &&
+						height < m_SeaLevel)
+						chunk->FillColumn_Unsafe(x, height, height, z, idxDirt);
 
-						// Top Layer Replacement
-						if (y == m_SeaLevel)
-						{
-							// Replace top water by ice in snowy biomes
-							if (biome == Biome::Snow && block.ID == BlockId::Water)
-							{
-								chunk->SetBlock(glm::ivec3(x, y, z), BlockState(BlockId::Ice));
-								block.ID = BlockId::Ice; // Update block variable for the next condition
-							}
-						}
-					}
+					// Flood-fill air column above terrain with water
+					if ((int) height + 1 <= m_SeaLevel - 1)
+						chunk->FillColumn_Unsafe(x, (uint16_t) (height + 1), (uint16_t) (m_SeaLevel - 1), z, idxWater);
+
+					// Cap at sea level: water or ice (snow biome)
+					const uint16_t idxTop = (biome == Biome::Snow) ? idxIce : idxWater;
+					chunk->FillColumn_Unsafe(x, (uint16_t) m_SeaLevel, (uint16_t) m_SeaLevel, z, idxTop);
 				}
 
 				// If top block is not transparent, try to generate foliage on top of it
@@ -552,7 +541,12 @@ namespace onion::voxel
 
 		constexpr int CHUNK_SIZE = WorldConstants::CHUNK_SIZE;
 
+		//Stopwatch swTotal;
+		//swTotal.Start();
+
 		// Gets the height map
+		//Stopwatch swHeightMap;
+		//swHeightMap.Start();
 		uint16_t heightMap[CHUNK_SIZE][CHUNK_SIZE] = {0};
 		for (uint8_t z = 0; z < CHUNK_SIZE; z++)
 		{
@@ -598,8 +592,23 @@ namespace onion::voxel
 					static_cast<uint16_t>(std::clamp(height, 1.0f, static_cast<float>(m_WorldHeight - 1)));
 			}
 		}
+		//double heightMapMs = swHeightMap.ElapsedMs();
 
 		// Fills the chunks with blocks based on the height map
+		//double foliageAccumMs = 0.0;
+		//Stopwatch swBlockFill;
+		//swBlockFill.Start();
+
+		// Pre-resolve palette indices once to avoid repeated linear scans inside the fill loops
+		const uint16_t idxBedrock = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Bedrock));
+		const uint16_t idxStone = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Stone));
+		const uint16_t idxDirt = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Dirt));
+		const uint16_t idxGrass = chunk->GetOrAddPaletteIndex(BlockState(BlockId::GrassBlock));
+		const uint16_t idxSnow = chunk->GetOrAddPaletteIndex(BlockState(BlockId::SnowBlock));
+		const uint16_t idxWater = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Water));
+		const uint16_t idxSand = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Sand));
+		const uint16_t idxGravel = chunk->GetOrAddPaletteIndex(BlockState(BlockId::Gravel));
+
 		for (uint8_t z = 0; z < CHUNK_SIZE; z++)
 		{
 			for (uint8_t x = 0; x < CHUNK_SIZE; x++)
@@ -620,76 +629,39 @@ namespace onion::voxel
 				// Higher than sea level
 				if (height >= m_SeaLevel)
 				{
-					BlockId topBlockId = (height >= adjustedSnowLevel) ? BlockId::SnowBlock : BlockId::GrassBlock;
-					for (uint16_t y = 0; y <= height + 1; y++)
-					{
-						// Bedrock
-						if (y == 0)
-						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockState(BlockId::Bedrock)); // Set bedrock at the bottom
-							continue;
-						}
+					const uint16_t idxTop = (height >= adjustedSnowLevel) ? idxSnow : idxGrass;
 
-						float altitudeFactor = std::clamp(
-							(float) (height - m_SeaLevel) / (float) (adjustedSnowLevel - m_SeaLevel), 0.0f, 1.0f);
-						int numDirtLayers = (int) std::round((1.0f - altitudeFactor) * 3.0f);
+					float altitudeFactor = std::clamp(
+						(float) (height - m_SeaLevel) / (float) (adjustedSnowLevel - m_SeaLevel), 0.0f, 1.0f);
+					int numDirtLayers = (int) std::round((1.0f - altitudeFactor) * 3.0f);
 
-						// Stone layers
-						if (y < height - numDirtLayers)
-						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockState(BlockId::Stone)); // Set stone below the dirt
-							continue;
-						}
-
-						// Dirt layers
-						if (y < height)
-						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockState(BlockId::Dirt)); // Set dirt below the top block
-							continue;
-						}
-
-						if (y == height)
-						{
-							chunk->SetBlock_Unsafe((uint8_t) x,
-												   y,
-												   (uint8_t) z,
-												   BlockState(topBlockId)); // Set the Top block (grass or snow grass)
-							continue;
-						}
-					}
+					// Bedrock
+					chunk->FillColumn_Unsafe(x, 0, 0, z, idxBedrock);
+					// Stone
+					if (height - numDirtLayers > 1)
+						chunk->FillColumn_Unsafe(x, 1, (uint16_t) (height - numDirtLayers - 1), z, idxStone);
+					// Dirt
+					if (numDirtLayers > 0)
+						chunk->FillColumn_Unsafe(
+							x, (uint16_t) (height - numDirtLayers), (uint16_t) (height - 1), z, idxDirt);
+					// Top block
+					chunk->FillColumn_Unsafe(x, height, height, z, idxTop);
 				}
 				else
 				{
-					for (uint16_t y = 0; y < m_WorldHeight; y++)
-					{
-						// Bedrock
-						if (y == 0)
-						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockState(BlockId::Bedrock)); // Set bedrock at the bottom
-						}
-						// Stone
-						else if (y < height - 3)
-						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockState(BlockId::Stone)); // Set stone at the bottom
-						}
-						// Gravel Or Sand
-						else if (y <= height)
-						{
-							// Deeper sea has gravel, shallower sea has sand
-							BlockId seaFloor = (height < m_SeaLevel - 8) ? BlockId::Gravel : BlockId::Sand;
-							chunk->SetBlock_Unsafe((uint8_t) x, y, (uint8_t) z, BlockState(seaFloor));
-						}
-						else if (y > height && y < m_SeaLevel)
-						{
-							chunk->SetBlock_Unsafe(
-								(uint8_t) x, y, (uint8_t) z, BlockState(BlockId::Water)); // Set water above the gravel
-						}
-					}
+					const uint16_t idxSeaFloor = (height < m_SeaLevel - 8) ? idxGravel : idxSand;
+
+					// Bedrock
+					chunk->FillColumn_Unsafe(x, 0, 0, z, idxBedrock);
+					// Stone
+					if (height > 4)
+						chunk->FillColumn_Unsafe(x, 1, (uint16_t) (height - 4), z, idxStone);
+					// Sand / Gravel
+					if (height >= 1)
+						chunk->FillColumn_Unsafe(x, (uint16_t) std::max(1, height - 3), height, z, idxSeaFloor);
+					// Water
+					if (height + 1 < m_SeaLevel)
+						chunk->FillColumn_Unsafe(x, (uint16_t) (height + 1), (uint16_t) (m_SeaLevel - 1), z, idxWater);
 				}
 
 				// If top block is not transparent, try to generate foliage on top of it
@@ -698,13 +670,29 @@ namespace onion::voxel
 				if (isAboveSeaLevel && !isBlockTransparent)
 				{
 					glm::ivec3 localPosAbove = {x, height + 1, z};
+					//Stopwatch swFoliage;
+					//swFoliage.Start();
 					AddFoliage(genChunk, worldPos + glm::ivec3(0, 1, 0), localPosAbove, Biome::Forest);
+					//foliageAccumMs += swFoliage.ElapsedMs();
 				}
 			}
 		}
+		//double blockFillMs = swBlockFill.ElapsedMs();
 
 		// Optimize the chunk (less memory, faster to send to clients)
+		//Stopwatch swOptimize;
+		//swOptimize.Start();
 		chunk->Optimize();
+		//double optimizeMs = swOptimize.ElapsedMs();
+
+		//double totalMs = swTotal.ElapsedMs();
+		//std::cout << "[ClassicNoBiomes] Chunk (" << chunkPosition.x << ", " << chunkPosition.y << ")\n"
+		//		  << "  HeightMap:  " << heightMapMs << " ms\n"
+		//		  << "  BlockFill:  " << blockFillMs << " ms"
+		//		  << "  (Foliage: " << foliageAccumMs << " ms,"
+		//		  << " Net: " << (blockFillMs - foliageAccumMs) << " ms)\n"
+		//		  << "  Optimize:   " << optimizeMs << " ms\n"
+		//		  << "  Total:      " << totalMs << " ms\n";
 
 		return genChunk;
 	}
@@ -767,6 +755,25 @@ namespace onion::voxel
 		}
 
 		return genChunk;
+	}
+
+	bool WorldGenerator::IsChunkBeingGenerated(const glm::ivec2& chunkPosition) const
+	{
+		std::shared_lock lock(m_MutexChunksBeingGenerated);
+		return m_ChunksBeingGenerated.contains(chunkPosition);
+	}
+
+	bool WorldGenerator::TryStartGeneratingChunk(const glm::ivec2& chunkPosition)
+	{
+		std::unique_lock lock(m_MutexChunksBeingGenerated);
+		auto [it, inserted] = m_ChunksBeingGenerated.insert(chunkPosition);
+		return inserted; // true = we acquired generation responsibility
+	}
+
+	void WorldGenerator::FinishGeneratingChunk(const glm::ivec2& chunkPosition)
+	{
+		std::unique_lock lock(m_MutexChunksBeingGenerated);
+		m_ChunksBeingGenerated.erase(chunkPosition);
 	}
 
 	bool WorldGenerator::ShouldGenerateTree(const glm::ivec3& position, Biome biome) const
@@ -902,28 +909,33 @@ namespace onion::voxel
 										 const ColumnBlocks& columnBlocks)
 	{
 		const auto& chunk = genChunk.chunk;
-		const auto& layers = columnBlocks.layers;
+		const uint8_t x = static_cast<uint8_t>(localPos.x);
+		const uint8_t z = static_cast<uint8_t>(localPos.y);
 
+		// Walk down from height, filling each layer as a range
 		int y = height;
-
-		for (auto& [layerHeight, blockId] : layers)
+		for (auto& [layerHeight, blockId] : columnBlocks.layers)
 		{
-			for (int i = 0; i < layerHeight && y > 0; i++)
-			{
-				chunk->SetBlock(glm::ivec3(localPos.x, y, localPos.y), BlockState(blockId));
-				y--;
-			}
+			int yTop = y;
+			int yBot = std::max(1, y - layerHeight + 1);
+			if (yTop >= yBot)
+				chunk->FillColumn_Unsafe(x,
+										 static_cast<uint16_t>(yBot),
+										 static_cast<uint16_t>(yTop),
+										 z,
+										 chunk->GetOrAddPaletteIndex(BlockState(blockId)));
+			y -= layerHeight;
+			if (y <= 0)
+				break;
 		}
 
-		// Fill remaining height with the last block type
-		while (y > 0)
-		{
-			chunk->SetBlock(glm::ivec3(localPos.x, y, localPos.y), BlockState(columnBlocks.fillBlock));
-			y--;
-		}
+		// Fill remaining height with the fill block
+		if (y > 1)
+			chunk->FillColumn_Unsafe(
+				x, 1, static_cast<uint16_t>(y), z, chunk->GetOrAddPaletteIndex(BlockState(columnBlocks.fillBlock)));
 
 		// Ensure bedrock at the bottom
-		chunk->SetBlock(glm::ivec3(localPos.x, 0, localPos.y), BlockState(BlockId::Bedrock));
+		chunk->FillColumn_Unsafe(x, 0, 0, z, chunk->GetOrAddPaletteIndex(BlockState(BlockId::Bedrock)));
 	}
 
 	const WorldGenerator::ColumnBlocks& WorldGenerator::GetColumnBlocksForBiome(Biome biome) const
@@ -1219,18 +1231,24 @@ namespace onion::voxel
 				tree = GenerateTree(worldPos, treeHeight, logId, leavesId);
 			}
 
-			std::unordered_set<BlockId> overwritables;
-			overwritables.insert(BlockId::Air);
-			overwritables.insert(BlockId::OakLeaves);
-			overwritables.insert(BlockId::SpruceLeaves);
-			overwritables.insert(BlockId::BirchLeaves);
-			overwritables.insert(BlockId::Bush);
-			overwritables.insert(BlockId::ShortGrass);
-			overwritables.insert(BlockId::TallGrass);
-			for (auto& blockId : BlockState::Flowers)
+			static const std::unordered_set<BlockId> overwritables = []
 			{
-				overwritables.insert(blockId);
-			}
+				std::unordered_set<BlockId> s;
+
+				s.insert(BlockId::Air);
+				s.insert(BlockId::OakLeaves);
+				s.insert(BlockId::SpruceLeaves);
+				s.insert(BlockId::BirchLeaves);
+				s.insert(BlockId::Bush);
+				s.insert(BlockId::ShortGrass);
+				s.insert(BlockId::TallGrass);
+
+				for (auto& blockId : BlockState::Flowers)
+					s.insert(blockId);
+
+				return s;
+			}();
+
 			MergeSchematicInChunk(tree, genChunk, overwritables);
 
 			// Set dirt block under the tree

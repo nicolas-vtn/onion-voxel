@@ -8,6 +8,10 @@
 
 #include <shared/data_transfer_objects/serializer/GlmSerialization.hpp>
 
+#include "ExperienceDTO.hpp"
+#include "HealthDTO.hpp"
+#include "HungerDTO.hpp"
+#include "InventoryDTO.hpp"
 #include "PhysicsBodyDTO.hpp"
 #include "TransformDTO.hpp"
 
@@ -21,7 +25,15 @@ namespace onion::voxel
 
 		std::optional<TransformDTO> Transform;
 		std::optional<PhysicsBodyDTO> PhysicsBody;
+		std::optional<HealthDTO> Health;
+		std::optional<HungerDTO> Hunger;
+		std::optional<ExperienceDTO> Experience;
+		std::optional<InventoryDTO> Hotbar;
+		std::optional<InventoryDTO> Inventory;
 
-		template <class Archive> void serialize(Archive& ar) { ar(Type, UUID, State, Transform, PhysicsBody); }
+		template <class Archive> void serialize(Archive& ar)
+		{
+			ar(Type, UUID, State, Transform, PhysicsBody, Health, Hunger, Experience, Hotbar, Inventory);
+		}
 	};
 } // namespace onion::voxel
