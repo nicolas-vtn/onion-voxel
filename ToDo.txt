@@ -6,16 +6,18 @@
 - Animated textures (water, lava, ...) and lower texture
 - Add Player position interpolation in multiplayer
 - Add a Chat system
+- FPS display in hud
+- WAILA (What Am I Looking At) : Display block name and info on looking at it
 - Add Player Names display on top of head in Multiplayer
 - Add Player list display (tab)
 - Add UI Tooltip on hovering options
 - Particules (breaking blocks, footsteps, ...)
+- Add Block Stacking (stack blocks in inventory and hotbar)
+- Add Dropped items (and pickup)
 - First person view : Arm and selected block. (+ Movement on walking, placing and breaking)
 - Support model face culling ( Can optimize face cutout culling issue (double cutout render pass))
-- Rotated Oak Logs (Barks in correct direction)
 
 		----- KNOWN ISSUES -----
 - Z-Ordering issue in GUI (Fix TextField Background drawn in wrong order to bypass this issue )
 - On server close, client does not go back to main menu.
 - Random crashes when loading worlds (probably due to server port)
-- BlockStateJson fallback on default resourcepack if invalid BlockStateJson read from current resourcepack

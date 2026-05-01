@@ -68,6 +68,7 @@ namespace onion::voxel
 		if (m_ClearOnRightClick && isHovered && isRightClickPressed)
 		{
 			SetText("");
+			m_IsActive = true;
 		}
 
 		// Add trailing '_' or Render Cursor

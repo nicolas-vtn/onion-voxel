@@ -89,8 +89,10 @@ namespace onion::voxel
 
 		// Pool Inputs
 		const glm::vec2 cursorPosition{s_InputsSnapshot->Mouse.Xpos, s_InputsSnapshot->Mouse.Ypos};
-		bool mouseDown = s_InputsSnapshot->Mouse.LeftButtonPressed;
-		bool mouseClicked = (mouseDown && !m_WasMouseDown);
+		const bool mouseDown = s_InputsSnapshot->Mouse.LeftButtonPressed;
+		const bool mouseClicked = (mouseDown && !m_WasMouseDown);
+		const bool shiftDown = EngineContext::Get().Keys->GetKeyState(eAction::Sneak).IsPressed;
+		const bool shiftClicking = (shiftDown && mouseDown);
 
 		// Retreve Player State
 		std::shared_ptr<Player> player = EngineContext::Get().GetLocalPlayer();
@@ -149,13 +151,58 @@ namespace onion::voxel
 		const int hoveredHotbarSlotIndex =
 			m_HotbarBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstHotbarSlotTopLeft);
 		Inventory hotbar = player->GetHotbar();
-		if (hoveredHotbarSlotIndex >= 0 && mouseClicked)
+		if (hoveredHotbarSlotIndex >= 0)
 		{
-			// Swap the hovered hotbar slot with the moved item slot
-			BlockId hotbarItem = hotbar.At(hoveredHotbarSlotIndex);
-			hotbar.At(hoveredHotbarSlotIndex) = m_InventoryMovedItem.At(0);
-			m_InventoryMovedItem.At(0) = hotbarItem;
-			player->SetHotbar(hotbar);
+			if (mouseClicked && !shiftClicking)
+			{
+				// Swap the hovered hotbar slot with the moved item slot
+				BlockId hotbarItem = hotbar.At(hoveredHotbarSlotIndex);
+				hotbar.At(hoveredHotbarSlotIndex) = m_InventoryMovedItem.At(0);
+				m_InventoryMovedItem.At(0) = hotbarItem;
+				player->SetHotbar(hotbar);
+			}
+			else if (shiftClicking)
+			{
+				// If shift-clicking, move the hovered hotbar slot item to the inventory (first empty slot or same item stack)
+				BlockId hotbarItem = hotbar.At(hoveredHotbarSlotIndex);
+				if (hotbarItem != BlockId::Air)
+				{
+					Inventory inventory = player->GetPlayerInventory();
+					bool movedToInventory = false;
+
+					// First try to move to an existing stack of the same item
+					for (int i = 0; i < inventory.Rows() * inventory.Columns(); ++i)
+					{
+						if (inventory.At(i) == hotbarItem)
+						{
+							inventory.At(i) = hotbarItem; // To be replaced by stacking later
+							movedToInventory = true;
+							break;
+						}
+					}
+
+					// If no existing stack, move to the first empty slot
+					if (!movedToInventory)
+					{
+						for (int i = 0; i < inventory.Rows() * inventory.Columns(); ++i)
+						{
+							if (inventory.At(i) == BlockId::Air)
+							{
+								inventory.At(i) = hotbarItem;
+								movedToInventory = true;
+								break;
+							}
+						}
+					}
+
+					if (movedToInventory)
+					{
+						hotbar.At(hoveredHotbarSlotIndex) = BlockId::Air;
+						player->SetHotbar(hotbar);
+						player->SetPlayerInventory(inventory);
+					}
+				}
+			}
 		}
 		hotbar.SelectedIndex() = hoveredHotbarSlotIndex;
 		m_HotbarBlockMesh->SetSlotBorder(slotBorder);
@@ -176,13 +223,55 @@ namespace onion::voxel
 		const int hoveredInventorySlotIndex =
 			m_InventoryBlockMesh->GetSelectedIndexFromCursorPosition(cursorPosition, firstInventorySlotTopLeft);
 		Inventory inventory = player->GetPlayerInventory();
-		if (hoveredInventorySlotIndex >= 0 && mouseClicked)
+		if (hoveredInventorySlotIndex >= 0)
 		{
-			// Swap the hovered inventory slot with the moved item slot
-			BlockId inventoryItem = inventory.At(hoveredInventorySlotIndex);
-			inventory.At(hoveredInventorySlotIndex) = m_InventoryMovedItem.At(0);
-			m_InventoryMovedItem.At(0) = inventoryItem;
-			player->SetPlayerInventory(inventory);
+			if (mouseClicked && !shiftClicking)
+			{
+				// Swap the hovered inventory slot with the moved item slot
+				BlockId inventoryItem = inventory.At(hoveredInventorySlotIndex);
+				inventory.At(hoveredInventorySlotIndex) = m_InventoryMovedItem.At(0);
+				m_InventoryMovedItem.At(0) = inventoryItem;
+				player->SetPlayerInventory(inventory);
+			}
+			else if (shiftClicking)
+			{
+				// If shift-clicking, move the hovered inventory slot item to the hotbar (first empty slot or same item stack)
+				BlockId inventoryItem = inventory.At(hoveredInventorySlotIndex);
+				if (inventoryItem != BlockId::Air)
+				{
+					Inventory tmpHotbar = player->GetHotbar();
+					bool movedToHotbar = false;
+					// First try to move to an existing stack of the same item
+					for (int i = 0; i < tmpHotbar.Rows() * tmpHotbar.Columns(); ++i)
+					{
+						if (tmpHotbar.At(i) == inventoryItem)
+						{
+							tmpHotbar.At(i) = inventoryItem; // To be replaced by stacking later
+							movedToHotbar = true;
+							break;
+						}
+					}
+					// If no existing stack, move to the first empty slot
+					if (!movedToHotbar)
+					{
+						for (int i = 0; i < tmpHotbar.Rows() * tmpHotbar.Columns(); ++i)
+						{
+							if (tmpHotbar.At(i) == BlockId::Air)
+							{
+								tmpHotbar.At(i) = inventoryItem;
+								movedToHotbar = true;
+								break;
+							}
+						}
+					}
+					if (movedToHotbar)
+					{
+						inventory.At(hoveredInventorySlotIndex) = BlockId::Air;
+						player->SetPlayerInventory(inventory);
+						player->SetHotbar(tmpHotbar);
+					}
+				}
+			}
 		}
 		inventory.SelectedIndex() = hoveredInventorySlotIndex;
 		m_InventoryBlockMesh->SetSlotBorder(slotBorder);
