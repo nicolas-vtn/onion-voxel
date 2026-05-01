@@ -80,6 +80,8 @@ namespace onion::voxel
 
 		void RequestAllMissingChunks();
 
+		void UpdateBlock(const glm::ivec3& worldPosition, bool propagateToNeighbors);
+
 		// ----- Getters / Setters -----
 	  public:
 		uint32_t GetSeed() const;

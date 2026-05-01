@@ -12,6 +12,7 @@ add_library(onion_voxel_shared
  "shared/world/block/BlockModel.cpp"
  "shared/world/block/BlockstateRegistry.cpp"
  "shared/world/block/BlockPlacementResolver.cpp"
+ "shared/world/block/BlockUpdater.cpp"
 
  "shared/world/world_manager/WorldManager.cpp"
  "shared/world/world_generator/WorldGenerator.cpp"

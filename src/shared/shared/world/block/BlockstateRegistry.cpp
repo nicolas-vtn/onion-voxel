@@ -199,13 +199,37 @@ namespace
 		return true;
 	}
 
+	// When a multipart `when` clause only lists a subset of a property's possible
+	// values (e.g. fences only ever mention "true", walls only mention "low"/"tall"),
+	// the Cartesian enumeration would miss the complementary values and produce no
+	// variant for the "not connected" state.  This table expands any seen value to
+	// the full set of values that property type can take.
+	static const std::unordered_map<std::string, std::vector<std::string>> kPropertyValueComplements = {
+		{"true", {"true", "false"}},
+		{"false", {"true", "false"}},
+		{"low", {"none", "low", "tall"}},
+		{"tall", {"none", "low", "tall"}},
+		{"none", {"none", "low", "tall"}},
+	};
+
 	static void CollectPropertyDomainFromPredicate(const WhenPredicate& predicate,
 												   std::map<std::string, std::set<std::string>>& propertyDomain)
 	{
 		if (predicate.PredicateType == WhenPredicate::Type::PropertyEqualsAny)
 		{
 			auto& values = propertyDomain[predicate.PropertyKey];
-			values.insert(predicate.PropertyValues.begin(), predicate.PropertyValues.end());
+			for (const auto& v : predicate.PropertyValues)
+			{
+				// Always add the literal value seen in the when-clause.
+				values.insert(v);
+
+				// Also add all complementary values so that the Cartesian
+				// enumeration covers states where this property is NOT matched
+				// (e.g. fence north="false", wall north="none").
+				auto it = kPropertyValueComplements.find(v);
+				if (it != kPropertyValueComplements.end())
+					values.insert(it->second.begin(), it->second.end());
+			}
 			return;
 		}
 
