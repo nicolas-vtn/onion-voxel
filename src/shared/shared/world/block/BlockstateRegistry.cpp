@@ -321,28 +321,7 @@ namespace
 		return cycle[((idx + steps) % 4 + 4) % 4];
 	}
 
-	// Rotate a UV rect [u1,v1,u2,v2] by `steps` × 90° CW around center (8,8).
-	// Used for top/bottom faces under Y rotation, and east/west faces under X rotation.
-	static std::array<float, 4> RotateUV90CW(const std::array<float, 4>& uv)
-	{
-		// Corners: TL=(u1,v1), TR=(u2,v1), BR=(u2,v2), BL=(u1,v2)
-		// 90° CW around (8,8): (u,v) → (16-v, u)  [in MC UV space]
-		// New rect from rotated corners:
-		float u1 = uv[0], v1 = uv[1], u2 = uv[2], v2 = uv[3];
-		// After 90° CW: new u-range = [16-v2, 16-v1], new v-range = [u1, u2]
-		return {16.f - v2, u1, 16.f - v1, u2};
-	}
-
-	static std::array<float, 4> RotateUVSteps(const std::array<float, 4>& uv, int steps)
-	{
-		steps = ((steps % 4) + 4) % 4;
-		std::array<float, 4> result = uv;
-		for (int i = 0; i < steps; i++)
-			result = RotateUV90CW(result);
-		return result;
-	}
-
-	static void RotateModel(onion::voxel::BlockModel& model, int stepsX, int stepsY)
+	static void RotateModel(onion::voxel::BlockModel& model, int stepsX, int stepsY, bool uvlock = false)
 	{
 		if (stepsX == 0 && stepsY == 0)
 			return;
@@ -389,9 +368,11 @@ namespace
 					newName = RotateFaceY(nameAfterX, stepsY);
 
 				// If the face was NOT remapped by X rotation (east/west), rotate its UV.
+				// face.Rotation (corner permutation in AddFace) is the sole mechanism used —
+				// modifying face.UV via RotateUVSteps on top of face.Rotation would double-rotate:
+				// correct for full-tile UVs (a no-op there) but wrong for non-square sub-tile UVs.
 				if (stepsX != 0 && nameAfterX == faceName && (faceName == "east" || faceName == "west"))
 				{
-					face.UV = RotateUVSteps(face.UV, stepsX);
 					face.Rotation = std::fmod(face.Rotation.value_or(0.f) + 90.f * stepsX, 360.f);
 				}
 
@@ -400,9 +381,22 @@ namespace
 				// by the X rotation are correctly identified as up/down for the Y check.
 				if (stepsY != 0 && newName == nameAfterX && (nameAfterX == "up" || nameAfterX == "down"))
 				{
-					face.UV = RotateUVSteps(face.UV, stepsY);
 					face.Rotation = std::fmod(face.Rotation.value_or(0.f) + 90.f * stepsY, 360.f);
 				}
+
+				// UVLock: counter-rotate faces that WERE moved by the X rotation so their
+				// texture stays world-aligned (not spinning with the rotated geometry).
+				if (uvlock && stepsX != 0 && nameAfterX != faceName)
+				{
+					const float counterX = std::fmod(360.f - 90.f * stepsX, 360.f);
+					face.Rotation = std::fmod(face.Rotation.value_or(0.f) + counterX, 360.f);
+				}
+
+				// Note: no counter-rotation is needed for faces MOVED by Y rotation.
+				// All four cardinal face windings (N/E/S/W) share the same V direction (+Y),
+				// so moving a face from one cardinal direction to another under Y rotation
+				// does not change how the UV rect maps to the surface — the face winding
+				// convention already keeps the texture world-aligned without any correction.
 
 				rotatedFaces[newName] = std::move(face);
 			}
@@ -430,7 +424,7 @@ namespace
 			const int stepsX = ((apply.RotationX / 90) % 4 + 4) % 4;
 			const int stepsY = ((apply.RotationY / 90) % 4 + 4) % 4;
 			if (stepsX != 0 || stepsY != 0)
-				RotateModel(model, stepsX, stepsY);
+				RotateModel(model, stepsX, stepsY, apply.UVLock);
 
 			variant.Model.AmbientOcclusion = variant.Model.AmbientOcclusion && model.AmbientOcclusion;
 
@@ -827,7 +821,7 @@ namespace onion::voxel
 						const int stepsX = ((variantModel.RotationX / 90) % 4 + 4) % 4;
 						const int stepsY = ((variantModel.RotationY / 90) % 4 + 4) % 4;
 						if (stepsX != 0 || stepsY != 0)
-							RotateModel(variantModel.Model, stepsX, stepsY);
+							RotateModel(variantModel.Model, stepsX, stepsY, variantModel.UVLock);
 
 						// Resets rotation because it's already baked into the model geometry.
 						variantModel.RotationX = 0;
@@ -846,7 +840,7 @@ namespace onion::voxel
 							const int stepsX = ((variantModel.RotationX / 90) % 4 + 4) % 4;
 							const int stepsY = ((variantModel.RotationY / 90) % 4 + 4) % 4;
 							if (stepsX != 0 || stepsY != 0)
-								RotateModel(variantModel.Model, stepsX, stepsY);
+								RotateModel(variantModel.Model, stepsX, stepsY, variantModel.UVLock);
 
 							// Resets rotation because it's already baked into the model geometry.
 							variantModel.RotationX = 0;
