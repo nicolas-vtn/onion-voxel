@@ -6,6 +6,8 @@
 
 #include <shared/zip_archive/ZipArchive.hpp>
 
+#include <shared/world/block/BlockState.hpp>
+
 namespace
 {
 	struct ApplySpec
@@ -363,29 +365,43 @@ namespace
 			// Remap face direction keys and rotate UVs for faces whose plane is
 			// parallel to the rotation axis (i.e. faces that stay on the same side).
 			//
-			// - Y rotation: up/down faces stay in place → their UV rotates by stepsY CW.
 			// - X rotation: east/west faces stay in place → their UV rotates by stepsX CW.
-			// Side faces that get remapped to a new direction keep their UV content
-			// unchanged (the texture moves with the geometry).
+			// - Y rotation: up/down faces stay in place → their UV rotates by stepsY CW.
+			//
+			// UV rotation checks must use an intermediate name (nameAfterX) to correctly
+			// handle combined X+Y rotations (e.g. axis=x log: x:90, y:90).
+			// The X check asks "was this face unchanged by X?" using nameAfterX vs faceName.
+			// The Y check asks "was this face unchanged by Y?" using newName vs nameAfterX.
+			// Using the final newName for both checks is wrong: a face like "north" that
+			// lands on "up" after X rotation and stays on "up" after Y rotation would fail
+			// the Y check if compared against the original faceName "north".
 			std::unordered_map<std::string, onion::voxel::BlockModel::Face> rotatedFaces;
 			for (auto& [faceName, face] : elem.Faces)
 			{
-				std::string newName = faceName;
+				// Compute intermediate name after X rotation only.
+				std::string nameAfterX = faceName;
 				if (stepsX != 0)
-					newName = RotateFaceX(newName, stepsX);
-				if (stepsY != 0)
-					newName = RotateFaceY(newName, stepsY);
+					nameAfterX = RotateFaceX(faceName, stepsX);
 
-				// If the face was NOT remapped by Y rotation (up/down), rotate its UV.
-				if (stepsY != 0 && newName == faceName && (faceName == "up" || faceName == "down"))
-				{
-					face.UV = RotateUVSteps(face.UV, stepsY);
-				}
+				// Compute final name after Y rotation.
+				std::string newName = nameAfterX;
+				if (stepsY != 0)
+					newName = RotateFaceY(nameAfterX, stepsY);
 
 				// If the face was NOT remapped by X rotation (east/west), rotate its UV.
-				if (stepsX != 0 && newName == faceName && (faceName == "east" || faceName == "west"))
+				if (stepsX != 0 && nameAfterX == faceName && (faceName == "east" || faceName == "west"))
 				{
 					face.UV = RotateUVSteps(face.UV, stepsX);
+					face.Rotation = std::fmod(face.Rotation.value_or(0.f) + 90.f * stepsX, 360.f);
+				}
+
+				// If the face was NOT remapped by Y rotation (up/down), rotate its UV.
+				// Check nameAfterX (not original faceName) so that faces moved to up/down
+				// by the X rotation are correctly identified as up/down for the Y check.
+				if (stepsY != 0 && newName == nameAfterX && (nameAfterX == "up" || nameAfterX == "down"))
+				{
+					face.UV = RotateUVSteps(face.UV, stepsY);
+					face.Rotation = std::fmod(face.Rotation.value_or(0.f) + 90.f * stepsY, 360.f);
 				}
 
 				rotatedFaces[newName] = std::move(face);
@@ -756,6 +772,9 @@ namespace onion::voxel
 		auto& blockstateMap = Get();
 
 		if (id == BlockId::Air)
+			return false;
+
+		if (!BlockState::IsFullBlock(id, variantIndex))
 			return false;
 
 		auto it = blockstateMap.find(id);
