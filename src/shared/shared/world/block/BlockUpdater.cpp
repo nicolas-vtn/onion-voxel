@@ -6,6 +6,32 @@
 #include <shared/world/block/BlockstateRegistry.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
+namespace
+{
+	using namespace onion::voxel;
+
+	// Returns true if the fence gate at neighborState is oriented so that its
+	// open mouth faces dirKey (the direction from the connecting block to the gate).
+	//   facing=north/south → gate runs along Z → open mouths face north/south
+	//   facing=east/west   → gate runs along X → open mouths face east/west
+	static bool FenceGateConnectsFrom(const BlockState& neighborState, const std::string& dirKey)
+	{
+		const auto& registry = BlockstateRegistry::Get();
+		auto it = registry.find(neighborState.ID);
+		if (it == registry.end())
+			return false;
+		const auto& props = it->second[neighborState.VariantIndex].Properties;
+		auto facingIt = props.find("facing");
+		if (facingIt == props.end())
+			return false;
+		const std::string& facing = facingIt->second;
+
+		if (facing == "north" || facing == "south")
+			return dirKey == "east" || dirKey == "west";
+		return dirKey == "north" || dirKey == "south";
+	}
+} // namespace
+
 namespace onion::voxel
 {
 	// Neighbor index constants — matches the array contract in the header.
@@ -172,7 +198,8 @@ namespace onion::voxel
 			for (int i = 0; i < 4; ++i)
 			{
 				const BlockId nid = cardinals[i]->ID;
-				connected[i] = IsConnectableBlock(nid) || IsFenceGate(nid);
+				connected[i] = IsWall(nid) || IsPane(nid) ||
+					(IsFenceGate(nid) && FenceGateConnectsFrom(*cardinals[i], kCardinalKeys[i]));
 				if (connected[i])
 					++connectionCount;
 			}
@@ -200,13 +227,16 @@ namespace onion::voxel
 
 		// -----------------------------------------------------------------
 		// Panes — north/south/east/west = true/false
-		// Connect only to other panes (any type — name contains "pane").
+		// Connect to other panes and walls.
 		// -----------------------------------------------------------------
 		if (IsPane(target.ID))
 		{
 			std::map<std::string, std::string> newProps;
 			for (int i = 0; i < 4; ++i)
-				newProps[kCardinalKeys[i]] = IsPane(cardinals[i]->ID) ? "true" : "false";
+			{
+				const BlockId nid = cardinals[i]->ID;
+				newProps[kCardinalKeys[i]] = (IsPane(nid) || IsWall(nid)) ? "true" : "false";
+			}
 
 			const uint8_t newVariant = BlockstateRegistry::GetVariantIndex(target.ID, newProps);
 			if (newVariant != target.VariantIndex)
@@ -220,7 +250,7 @@ namespace onion::voxel
 
 		// -----------------------------------------------------------------
 		// Fences — north/south/east/west = true/false
-		// Connect to any connectable block or fence gate.
+		// Connect to other fences and fence gates.
 		// -----------------------------------------------------------------
 		if (IsConnectableBlock(target.ID))
 		{
@@ -228,7 +258,11 @@ namespace onion::voxel
 			for (int i = 0; i < 4; ++i)
 			{
 				const BlockId nid = cardinals[i]->ID;
-				newProps[kCardinalKeys[i]] = (IsConnectableBlock(nid) || IsFenceGate(nid)) ? "true" : "false";
+				newProps[kCardinalKeys[i]] =
+					(IsConnectableBlock(nid) && !IsWall(nid) && !IsPane(nid) ||
+					 (IsFenceGate(nid) && FenceGateConnectsFrom(*cardinals[i], kCardinalKeys[i])))
+					? "true"
+					: "false";
 			}
 
 			const uint8_t newVariant = BlockstateRegistry::GetVariantIndex(target.ID, newProps);
