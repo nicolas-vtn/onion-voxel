@@ -87,16 +87,18 @@ namespace onion::voxel
 		}
 
 		// --- Horizontal facing from player yaw ---
-		// The block faces the player (opposite of look dir), matching Minecraft
-		// convention for furnaces, pistons, etc.
-		// We use the look direction's XZ components to determine the dominant axis.
+		// Most blocks face the player (opposite of look dir) — furnaces, pistons, etc.
+		// Stairs and other shape= blocks face the same direction as the player looks.
 		float x = ctx.PlayerLookDir.x;
 		float z = ctx.PlayerLookDir.z;
 
+		bool facesPlayer = !BlockHasProperty(ctx.Id, "shape");
+
 		if (std::abs(x) >= std::abs(z))
-			result.Properties["facing"] = (x > 0.f) ? "west" : "east";
+			result.Properties["facing"] = (x > 0.f) ? (facesPlayer ? "west" : "east") : (facesPlayer ? "east" : "west");
 		else
-			result.Properties["facing"] = (z > 0.f) ? "north" : "south";
+			result.Properties["facing"] =
+				(z > 0.f) ? (facesPlayer ? "north" : "south") : (facesPlayer ? "south" : "north");
 	}
 
 	void BlockPlacementResolver::ResolveAxis(const PlacementContext& ctx, PlacementResult& result)

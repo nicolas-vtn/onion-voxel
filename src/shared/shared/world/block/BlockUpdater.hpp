@@ -68,5 +68,12 @@ namespace onion::voxel
 
 		/// True if the block has an "in_wall" property (fence gates).
 		static bool IsFenceGate(BlockId id);
+
+		/// True if the block has a "shape" property with stair values (stairs).
+		static bool IsStair(BlockId id);
+
+		/// Returns the facing of a stair neighbor if it is a stair with the same half,
+		/// or an empty string if the neighbor is not a qualifying stair.
+		static std::string GetStairFacing(const BlockState& neighbor, const std::string& requiredHalf);
 	};
 } // namespace onion::voxel

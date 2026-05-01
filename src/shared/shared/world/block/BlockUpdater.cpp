@@ -273,6 +273,103 @@ namespace onion::voxel
 							   /*notify=*/false);
 			}
 		}
+
+		// -----------------------------------------------------------------
+		// Stairs — recompute shape= based on neighboring stairs.
+		// -----------------------------------------------------------------
+		if (IsStair(target.ID))
+		{
+			const auto& registry = BlockstateRegistry::Get();
+			auto it = registry.find(target.ID);
+			if (it == registry.end())
+				return;
+
+			const auto& currentProps = it->second[target.VariantIndex].Properties;
+			auto facingIt = currentProps.find("facing");
+			auto halfIt = currentProps.find("half");
+			if (facingIt == currentProps.end() || halfIt == currentProps.end())
+				return;
+
+			const std::string& facing = facingIt->second;
+			const std::string& half = halfIt->second;
+
+			// Front = neighbor in the direction the stair faces.
+			// Back  = neighbor behind (opposite of facing).
+			const BlockState* front = nullptr;
+			const BlockState* back = nullptr;
+
+			if (facing == "north")
+			{
+				front = &neighbors[kNorth];
+				back = &neighbors[kSouth];
+			}
+			else if (facing == "south")
+			{
+				front = &neighbors[kSouth];
+				back = &neighbors[kNorth];
+			}
+			else if (facing == "east")
+			{
+				front = &neighbors[kEast];
+				back = &neighbors[kWest];
+			}
+			else
+			{
+				front = &neighbors[kWest];
+				back = &neighbors[kEast];
+			}
+
+			// 90° clockwise rotation: north→east→south→west→north
+			auto rotateCW = [](const std::string& f) -> std::string
+			{
+				if (f == "north")
+					return "east";
+				if (f == "east")
+					return "south";
+				if (f == "south")
+					return "west";
+				return "north"; // west
+			};
+			auto rotateCCW = [](const std::string& f) -> std::string
+			{
+				if (f == "north")
+					return "west";
+				if (f == "west")
+					return "south";
+				if (f == "south")
+					return "east";
+				return "north"; // east
+			};
+
+			// Back neighbor determines inner corners; front determines outer corners.
+			// CW turn relative to us → right side; CCW turn → left side.
+			const std::string frontFacing = GetStairFacing(*front, half);
+			const std::string backFacing = GetStairFacing(*back, half);
+
+			std::string shape = "straight";
+			if (backFacing == rotateCW(facing))
+				shape = "inner_right";
+			else if (backFacing == rotateCCW(facing))
+				shape = "inner_left";
+			else if (frontFacing == rotateCW(facing))
+				shape = "outer_right";
+			else if (frontFacing == rotateCCW(facing))
+				shape = "outer_left";
+
+			std::map<std::string, std::string> newProps = {
+				{"facing", facing},
+				{"half", half},
+				{"shape", shape},
+			};
+
+			const uint8_t newVariant = BlockstateRegistry::GetVariantIndex(target.ID, newProps);
+			if (newVariant != target.VariantIndex)
+			{
+				world.SetBlock(Block(worldPos, BlockState(target.ID, newVariant)),
+							   WorldManager::BlocksChangedEventArgs::eOrigin::ServerRequest,
+							   /*notify=*/false);
+			}
+		}
 	}
 
 	// -------------------------------------------------------------------------
@@ -318,6 +415,32 @@ namespace onion::voxel
 	bool BlockUpdater::IsFenceGate(BlockId id)
 	{
 		return BlockHasProperty(id, "in_wall");
+	}
+
+	bool BlockUpdater::IsStair(BlockId id)
+	{
+		return BlockHasProperty(id, "shape");
+	}
+
+	std::string BlockUpdater::GetStairFacing(const BlockState& neighbor, const std::string& requiredHalf)
+	{
+		if (!IsStair(neighbor.ID))
+			return "";
+
+		const auto& registry = BlockstateRegistry::Get();
+		auto it = registry.find(neighbor.ID);
+		if (it == registry.end())
+			return "";
+
+		const auto& props = it->second[neighbor.VariantIndex].Properties;
+		auto halfIt = props.find("half");
+		auto facingIt = props.find("facing");
+		if (halfIt == props.end() || facingIt == props.end())
+			return "";
+		if (halfIt->second != requiredHalf)
+			return ""; // different half — no shape influence
+
+		return facingIt->second;
 	}
 
 } // namespace onion::voxel
