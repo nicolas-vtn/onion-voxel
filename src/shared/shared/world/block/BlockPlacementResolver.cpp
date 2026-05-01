@@ -19,6 +19,7 @@ namespace onion::voxel
 		ResolveHalf(ctx, result);
 		ResolveType(ctx, result); // last — may redirect Position and Id
 		ResolveOrientation(ctx, result);
+		ResolveFace(ctx, result);
 
 		return result;
 	}
@@ -295,6 +296,41 @@ namespace onion::voxel
 		}
 
 		result.Properties["orientation"] = pointing + "_" + top;
+	}
+
+	void BlockPlacementResolver::ResolveFace(const PlacementContext& ctx, PlacementResult& result)
+	{
+		if (!BlockHasProperty(ctx.Id, "face"))
+			return;
+
+		const float x = ctx.PlayerLookDir.x;
+		const float z = ctx.PlayerLookDir.z;
+
+		if (ctx.HitFaceNormal.y == 1)
+		{
+			// Hit the top face of a block → button sits on the floor, facing player look direction.
+			result.Properties["face"] = "floor";
+			result.Properties["facing"] = DominantHorizontal(x, z);
+		}
+		else if (ctx.HitFaceNormal.y == -1)
+		{
+			// Hit the bottom face of a block → button hangs from ceiling, facing player look direction.
+			result.Properties["face"] = "ceiling";
+			result.Properties["facing"] = DominantHorizontal(x, z);
+		}
+		else
+		{
+			// Hit a side face → button mounts on wall, facing outward (away from the wall surface).
+			result.Properties["face"] = "wall";
+			if (ctx.HitFaceNormal.z == 1)
+				result.Properties["facing"] = "south";
+			else if (ctx.HitFaceNormal.z == -1)
+				result.Properties["facing"] = "north";
+			else if (ctx.HitFaceNormal.x == 1)
+				result.Properties["facing"] = "east";
+			else
+				result.Properties["facing"] = "west";
+		}
 	}
 
 	bool BlockPlacementResolver::BlockHasProperty(BlockId id, const std::string& propertyKey)
