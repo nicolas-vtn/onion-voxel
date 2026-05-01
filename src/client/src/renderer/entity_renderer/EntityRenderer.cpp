@@ -633,7 +633,7 @@ namespace onion::voxel
 
 		AddCuboidFace(cuboid.GetFrontFacePositions(), front);	// Front face
 		AddCuboidFace(cuboid.GetBackFacePositions(), back);		// Back face
-		AddCuboidFace(cuboid.GetTopFacePositions(), top);		// Top face
+		AddCuboidFace(cuboid.GetTopFacePositions(), top);		// Up face
 		AddCuboidFace(cuboid.GetBottomFacePositions(), bottom); // Bottom face
 		AddCuboidFace(cuboid.GetLeftFacePositions(), left);		// Left face
 		AddCuboidFace(cuboid.GetRightFacePositions(), right);	// Right face
@@ -1041,7 +1041,7 @@ namespace onion::voxel
 			skeleton.Head,
 			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_FRONT)),  // Front
 			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_BACK)),   // Back
-			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_TOP)),	   // Top
+			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_TOP)),	   // Up
 			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_BOTTOM)), // Bottom
 			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_LEFT)),   // Left
 			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_RIGHT))   // Right
@@ -1051,7 +1051,7 @@ namespace onion::voxel
 			skeleton.Body,
 			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_FRONT)),  // Front
 			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_BACK)),   // Back
-			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_TOP)),	   // Top
+			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_TOP)),	   // Up
 			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_BOTTOM)), // Bottom
 			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_LEFT)),   // Left
 			m_PlayerTextureTileMapper_Legacy.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_RIGHT))   // Right
@@ -1100,7 +1100,7 @@ namespace onion::voxel
 			skeleton.Head,
 			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_FRONT)),  // Front
 			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_BACK)),   // Back
-			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_TOP)),	   // Top
+			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_TOP)),	   // Up
 			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_BOTTOM)), // Bottom
 			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_LEFT)),   // Left
 			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::HEAD_RIGHT))   // Right
@@ -1110,7 +1110,7 @@ namespace onion::voxel
 			skeleton.Body,
 			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_FRONT)),  // Front
 			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_BACK)),   // Back
-			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_TOP)),	   // Top
+			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_TOP)),	   // Up
 			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_BOTTOM)), // Bottom
 			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_LEFT)),   // Left
 			m_PlayerTextureTileMapper_Modern.GetTextureTile(static_cast<int>(PlayerTexturePart::BODY_RIGHT))   // Right

@@ -187,7 +187,7 @@ namespace onion::voxel
 			face.Texture = "#layer0";
 			face.UV = {0, 0, 16, 16};
 
-			// Front/back only to keep it flat
+			// South/back only to keep it flat
 			elem.Faces["north"] = face;
 			elem.Faces["south"] = face;
 

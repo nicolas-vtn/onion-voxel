@@ -681,6 +681,28 @@ namespace onion::voxel
 		return false;
 	}
 
+	bool PhysicsEngine::IsPlayerCollidingWithBlock(const std::shared_ptr<Entity>& player,
+												   const BlockState& state,
+												   const glm::ivec3& blockPos)
+	{
+		if (!player->HasTransform() || !player->HasPhysicsBody())
+			return false;
+
+		if (!BlockState::IsSolid(state.ID))
+			return false;
+
+		const AABBWorld playerBox = ComputeAABB(player->GetTransform(), player->GetPhysicsBody());
+
+		for (const AABBWorld& elemBox : GetBlockElementAABBs(state, blockPos))
+		{
+			if (playerBox.Max.x > elemBox.Min.x && playerBox.Min.x < elemBox.Max.x && playerBox.Max.y > elemBox.Min.y &&
+				playerBox.Min.y < elemBox.Max.y && playerBox.Max.z > elemBox.Min.z && playerBox.Min.z < elemBox.Max.z)
+				return true;
+		}
+
+		return false;
+	}
+
 	// -------------------------------------------------------------------------
 	// HasGroundSupport
 	//

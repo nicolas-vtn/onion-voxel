@@ -37,7 +37,7 @@ namespace onion::voxel
 
 			//if (block.ID == BlockId::OakLeaves && neighbors[i].ID == BlockId::OakLeaves)
 			//{
-			//	if (i == (int) Face::Top || i == (int) Face::Left || i == (int) Face::Back)
+			//	if (i == (int) Face::Up || i == (int) Face::West || i == (int) Face::North)
 			//	{
 			//		visibility[i] = true;
 			//		continue;
@@ -46,8 +46,14 @@ namespace onion::voxel
 			//	continue;
 			//}
 
-			// A face is visible if the neighboring block in that direction is transparent
-			visibility[i] = BlockState::IsTransparent(block.ID) || BlockState::IsTransparent(neighbors[i].ID);
+			// A face is visible if the neighbor does not fully occlude it.
+			// Transparency alone is insufficient — a non-full block (slab, stair, fence, etc.)
+			// is opaque but does not fill its cell, so adjacent faces must remain visible.
+			bool currentIsFullBlock = BlockState::IsFullBlock(block.ID, block.VariantIndex);
+			bool neighborOccludesFace = currentIsFullBlock && !BlockState::IsTransparent(neighbors[i].ID) &&
+				BlockState::IsFullBlock(neighbors[i].ID, neighbors[i].VariantIndex);
+
+			visibility[i] = !neighborOccludesFace;
 		}
 
 		return visibility;
@@ -143,54 +149,54 @@ namespace onion::voxel
 						// ------ Get Neighboring Blocks ------
 						std::array<BlockState, 6> neighbors;
 
-						// Top (+y)
+						// Up (+y)
 						if (localPos.y + 1 < subChunkCount * SIZE)
-							neighbors[(int) Face::Top] = chunk->GetBlock(glm::ivec3(x, localPos.y + 1, z));
+							neighbors[(int) Face::Up] = chunk->GetBlock(glm::ivec3(x, localPos.y + 1, z));
 						else
-							neighbors[(int) Face::Top] = BlockState(BlockId::Air); // Air block if above the world
+							neighbors[(int) Face::Up] = BlockState(BlockId::Air); // Air block if above the world
 
-						// Bottom (-y)
+						// Down (-y)
 						if (localPos.y - 1 >= 0)
-							neighbors[(int) Face::Bottom] = chunk->GetBlock(glm::ivec3(x, localPos.y - 1, z));
+							neighbors[(int) Face::Down] = chunk->GetBlock(glm::ivec3(x, localPos.y - 1, z));
 						else
-							neighbors[(int) Face::Bottom] = BlockState(BlockId::Air); // Air block if below the world
+							neighbors[(int) Face::Down] = BlockState(BlockId::Air); // Air block if below the world
 
-						// Front (+z)
+						// South (+z)
 						if (z + 1 < SIZE)
-							neighbors[(int) Face::Front] = chunk->GetBlock(glm::ivec3(x, localPos.y, z + 1));
+							neighbors[(int) Face::South] = chunk->GetBlock(glm::ivec3(x, localPos.y, z + 1));
 						else
 						{
-							neighbors[(int) Face::Front] = adjacentPosZ
+							neighbors[(int) Face::South] = adjacentPosZ
 								? adjacentPosZ->GetBlock(glm::ivec3(x, localPos.y, 0))
 								: BlockState(BlockId::Stone);
 						}
 
-						// Back (-z)
+						// North (-z)
 						if (z - 1 >= 0)
-							neighbors[(int) Face::Back] = chunk->GetBlock(glm::ivec3(x, localPos.y, z - 1));
+							neighbors[(int) Face::North] = chunk->GetBlock(glm::ivec3(x, localPos.y, z - 1));
 						else
 						{
-							neighbors[(int) Face::Back] = adjacentNegZ
+							neighbors[(int) Face::North] = adjacentNegZ
 								? adjacentNegZ->GetBlock(glm::ivec3(x, localPos.y, SIZE - 1))
 								: BlockState(BlockId::Stone);
 						}
 
-						// Right (+x)
+						// East (+x)
 						if (x + 1 < SIZE)
-							neighbors[(int) Face::Right] = chunk->GetBlock(glm::ivec3(x + 1, localPos.y, z));
+							neighbors[(int) Face::East] = chunk->GetBlock(glm::ivec3(x + 1, localPos.y, z));
 						else
 						{
-							neighbors[(int) Face::Right] = adjacentPosX
+							neighbors[(int) Face::East] = adjacentPosX
 								? adjacentPosX->GetBlock(glm::ivec3(0, localPos.y, z))
 								: BlockState(BlockId::Stone);
 						}
 
-						// Left (-x)
+						// West (-x)
 						if (x - 1 >= 0)
-							neighbors[(int) Face::Left] = chunk->GetBlock(glm::ivec3(x - 1, localPos.y, z));
+							neighbors[(int) Face::West] = chunk->GetBlock(glm::ivec3(x - 1, localPos.y, z));
 						else
 						{
-							neighbors[(int) Face::Left] = adjacentNegX
+							neighbors[(int) Face::West] = adjacentNegX
 								? adjacentNegX->GetBlock(glm::ivec3(SIZE - 1, localPos.y, z))
 								: BlockState(BlockId::Stone);
 						}
@@ -620,7 +626,7 @@ namespace onion::voxel
 				transform = glm::translate(transform, gui.Translation / 16.0f * blockScreenSize);
 				transform = glm::rotate(transform, glm::radians(gui.Rotation.z), glm::vec3(0, 0, 1));
 				transform = glm::rotate(transform, glm::radians(-gui.Rotation.x), glm::vec3(1, 0, 0));
-				transform = glm::rotate(transform, glm::radians(gui.Rotation.y), glm::vec3(0, 1, 0));
+				transform = glm::rotate(transform, glm::radians(-gui.Rotation.y), glm::vec3(0, 1, 0));
 				transform = glm::scale(transform, gui.Scale * (-blockScreenSize));
 
 				// Compute the 8 corners of the unit cube through the transform.
@@ -839,7 +845,7 @@ namespace onion::voxel
 			vert.texX = uv.x;
 			vert.texY = uv.y;
 
-			vert.facing = vert.facing = static_cast<uint8_t>(faceTexture.shade ? f.face : Face::Top);
+			vert.facing = vert.facing = static_cast<uint8_t>(faceTexture.shade ? f.face : Face::Up);
 			vert.occlusion = occlusion;
 
 			vert.tintR = static_cast<uint8_t>(tint.r);
@@ -958,7 +964,7 @@ namespace onion::voxel
 			vert.texX = texUv.x;
 			vert.texY = texUv.y;
 
-			vert.facing = static_cast<uint8_t>(faceTexture.shade ? f.face : Face::Top);
+			vert.facing = static_cast<uint8_t>(faceTexture.shade ? f.face : Face::Up);
 
 			vert.tintR = static_cast<uint8_t>(tint.r);
 			vert.tintG = static_cast<uint8_t>(tint.g);
@@ -1211,12 +1217,12 @@ namespace onion::voxel
 	std::vector<MeshBuilder::FaceBuildDesc> MeshBuilder::GetBlockFaceBuildDescs(const PointsAndOcclusion& pao)
 	{
 		return {
-			{Face::Top, {&pao.p011, &pao.p111, &pao.p110, &pao.p010}, {&pao.o011, &pao.o111, &pao.o110, &pao.o010}},
-			{Face::Bottom, {&pao.p000, &pao.p100, &pao.p101, &pao.p001}, {&pao.o000, &pao.o100, &pao.o101, &pao.o001}},
-			{Face::Front, {&pao.p001, &pao.p101, &pao.p111, &pao.p011}, {&pao.o001, &pao.o101, &pao.o111, &pao.o011}},
-			{Face::Back, {&pao.p100, &pao.p000, &pao.p010, &pao.p110}, {&pao.o100, &pao.o000, &pao.o010, &pao.o110}},
-			{Face::Right, {&pao.p101, &pao.p100, &pao.p110, &pao.p111}, {&pao.o101, &pao.o100, &pao.o110, &pao.o111}},
-			{Face::Left, {&pao.p000, &pao.p001, &pao.p011, &pao.p010}, {&pao.o000, &pao.o001, &pao.o011, &pao.o010}},
+			{Face::Up, {&pao.p011, &pao.p111, &pao.p110, &pao.p010}, {&pao.o011, &pao.o111, &pao.o110, &pao.o010}},
+			{Face::Down, {&pao.p000, &pao.p100, &pao.p101, &pao.p001}, {&pao.o000, &pao.o100, &pao.o101, &pao.o001}},
+			{Face::South, {&pao.p001, &pao.p101, &pao.p111, &pao.p011}, {&pao.o001, &pao.o101, &pao.o111, &pao.o011}},
+			{Face::North, {&pao.p100, &pao.p000, &pao.p010, &pao.p110}, {&pao.o100, &pao.o000, &pao.o010, &pao.o110}},
+			{Face::East, {&pao.p101, &pao.p100, &pao.p110, &pao.p111}, {&pao.o101, &pao.o100, &pao.o110, &pao.o111}},
+			{Face::West, {&pao.p000, &pao.p001, &pao.p011, &pao.p010}, {&pao.o000, &pao.o001, &pao.o011, &pao.o010}},
 		};
 	}
 

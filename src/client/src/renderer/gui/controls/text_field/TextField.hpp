@@ -53,6 +53,11 @@ namespace onion::voxel
 		bool IsReadOnly() const;
 		void SetReadOnly(bool readOnly);
 
+		bool IsHovered() const;
+
+		bool DoesClearOnRightClick() const;
+		void SetClearOnRightClick(bool clearOnRightClick);
+
 		bool IsActive() const { return m_IsActive; }
 
 		// ----- Events -----
@@ -116,6 +121,7 @@ namespace onion::voxel
 		glm::ivec2 m_Position{0, 0};
 		glm::ivec2 m_Size{1, 1};
 		bool m_IsPressed = false;
+		bool m_ClearOnRightClick = false;
 
 		float m_TextScaleFactor = 0.4f;
 		float m_TextStartXratio = 2.078f;

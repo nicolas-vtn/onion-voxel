@@ -42,25 +42,25 @@ namespace onion::voxel
 	{
 		std::array<WorldRenderer::FrustumPlane, 6> planes;
 
-		// Left
+		// West
 		planes[0].normal.x = vp[0][3] + vp[0][0];
 		planes[0].normal.y = vp[1][3] + vp[1][0];
 		planes[0].normal.z = vp[2][3] + vp[2][0];
 		planes[0].distance = vp[3][3] + vp[3][0];
 
-		// Right
+		// East
 		planes[1].normal.x = vp[0][3] - vp[0][0];
 		planes[1].normal.y = vp[1][3] - vp[1][0];
 		planes[1].normal.z = vp[2][3] - vp[2][0];
 		planes[1].distance = vp[3][3] - vp[3][0];
 
-		// Bottom
+		// Down
 		planes[2].normal.x = vp[0][3] + vp[0][1];
 		planes[2].normal.y = vp[1][3] + vp[1][1];
 		planes[2].normal.z = vp[2][3] + vp[2][1];
 		planes[2].distance = vp[3][3] + vp[3][1];
 
-		// Top
+		// Up
 		planes[3].normal.x = vp[0][3] - vp[0][1];
 		planes[3].normal.y = vp[1][3] - vp[1][1];
 		planes[3].normal.z = vp[2][3] - vp[2][1];

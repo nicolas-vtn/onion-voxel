@@ -18,7 +18,7 @@ namespace onion::voxel
 			  "ExperienceBarProgress_Sprite", s_PathExperienceBarProgress, Sprite::eOrigin::ResourcePack),
 		  m_HeartContainer_Sprite("HeartContainer_Sprite", s_PathHeartContainer, Sprite::eOrigin::ResourcePack),
 		  m_HungerEmpty_Sprite("HungerEmpty_Sprite", s_PathHungerEmpty, Sprite::eOrigin::ResourcePack),
-		  m_ExperienceLevel_Label("ExperienceLevel_Label")
+		  m_ExperienceLevel_Label("ExperienceLevel_Label"), m_SelectedBlockName_Label("SelectedBlockName_Label")
 	{
 		m_ExperienceBarBackground_Sprite.SetZOffset(0.4f);
 		m_ExperienceBarProgress_Sprite.SetZOffset(0.45f);
@@ -26,6 +26,9 @@ namespace onion::voxel
 		m_ExperienceLevel_Label.SetZOffset(0.5f);
 		m_ExperienceLevel_Label.SetTextColor(Font::eColor::Green);
 		m_ExperienceLevel_Label.SetTextAlignment(Font::eTextAlignment::Center);
+
+		m_SelectedBlockName_Label.SetZOffset(0.5f);
+		m_SelectedBlockName_Label.SetTextAlignment(Font::eTextAlignment::Center);
 
 		m_UiBlockMesh->SetRenderSelectedHighlight(false);
 		m_UiBlockMesh->SetSlotBorder(0.f);
@@ -41,6 +44,8 @@ namespace onion::voxel
 			// Create an empty player as placeholder
 			player = std::make_shared<Player>("HudPlaceholderPlayer");
 		}
+
+		Inventory playerHotbar = player->GetHotbar();
 
 		// ---- Handle Hotbar Scrolling Input ----
 		double rawScroll = s_InputsSnapshot->Mouse.ScrollYoffset;
@@ -60,7 +65,6 @@ namespace onion::voxel
 
 		if (scroll != 0 && !bypassScroll)
 		{
-			auto playerHotbar = player->GetHotbar();
 			const int maxSlots = playerHotbar.Rows() * playerHotbar.Columns();
 
 			int current = static_cast<int>(playerHotbar.SelectedIndex());
@@ -72,6 +76,13 @@ namespace onion::voxel
 
 			playerHotbar.SelectedIndex() = static_cast<uint8_t>(newSlot);
 			player->SetHotbar(playerHotbar);
+		}
+
+		// Detect hotbar selection change to reset the selected block name timer
+		bool selectionChanged = (playerHotbar.SelectedIndex() != m_PreviousSelectedHotbarIndex);
+		if (selectionChanged)
+		{
+			m_SelectedBlockTime = glfwGetTime(); // Reset timer
 		}
 
 		// ---- Constants ----
@@ -96,7 +107,7 @@ namespace onion::voxel
 		float hotbarBorderRatio = 4.f / 1920.f;
 		float spacingRatio = (hotbarWidthRatio - (2 * hotbarBorderRatio)) / 9.f;
 		float leftHotbarEdgeRatio = 0.5f - (hotbarWidthRatio - hotbarBorderRatio) * 0.5f;
-		int selectedSlotIndex = player->GetHotbar().SelectedIndex();
+		int selectedSlotIndex = playerHotbar.SelectedIndex();
 		float selectionXratio = leftHotbarEdgeRatio + (spacingRatio / 2.f) + (spacingRatio * selectedSlotIndex);
 		glm::vec2 hotbarSelectionPos = {s_ScreenWidth * selectionXratio, screenBottom - hotbarHeight / 2};
 		m_HotbarSelection_Sprite.SetPosition(hotbarSelectionPos);
@@ -113,7 +124,7 @@ namespace onion::voxel
 		float firstSlotTopYborderRatio = (956.f - 23.f) / 1009.f;
 		glm::vec2 firstSlotTopLeft = {s_ScreenWidth * firstSlotLeftXborderRatio,
 									  s_ScreenHeight * firstSlotTopYborderRatio};
-		m_UiBlockMesh->SetInventory(player->GetHotbar(), slotSize, slotPadding);
+		m_UiBlockMesh->SetInventory(playerHotbar, slotSize, slotPadding);
 		if (m_UiBlockMesh->IsDirty())
 		{
 			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
@@ -230,7 +241,6 @@ namespace onion::voxel
 		float levelLabelCenterRatioX = 958.f / 1920.f;
 		float levelLabelCenterRatioY = (909 - 23) / 1009.f;
 		glm::vec2 levelLabelPos = {s_ScreenWidth * levelLabelCenterRatioX, s_ScreenHeight * levelLabelCenterRatioY};
-		glm::vec3 labelColor = {1.f, 1.f, 1.f};
 
 		m_ExperienceBarBackground_Sprite.SetPosition(xpBarPos);
 		m_ExperienceBarBackground_Sprite.SetSize(xpBarSize);
@@ -247,6 +257,25 @@ namespace onion::voxel
 			m_ExperienceLevel_Label.SetText(std::to_string(levelInfo.Level));
 			m_ExperienceLevel_Label.SetTextHeight(s_TextHeight);
 			m_ExperienceLevel_Label.Render();
+		}
+
+		// ---- Selected Block Name (top-center) ----
+		float textFadeStrength = GetSelectedBlockNameFadeInFactor();
+		if (textFadeStrength > 0.f)
+		{
+			BlockId selectedBlockId = playerHotbar.At(playerHotbar.SelectedIndex());
+			if (selectedBlockId != BlockId::Air)
+			{
+				std::string blockName = BlockIds::GetName(playerHotbar.At(playerHotbar.SelectedIndex()));
+				const float labelYposRatio = (812.f - 23.f) / 1009.f;
+				const float labelPosY = std::round(s_ScreenHeight * labelYposRatio);
+				m_SelectedBlockName_Label.SetText(blockName);
+				m_SelectedBlockName_Label.SetPosition({screenCenterX, labelPosY});
+				m_SelectedBlockName_Label.SetTextHeight(s_TextHeight);
+				glm::vec4 textColor = glm::vec4(1.f, 1.f, 1.f, textFadeStrength);
+				m_SelectedBlockName_Label.SetCustomTextColor(textColor);
+				m_SelectedBlockName_Label.Render();
+			}
 		}
 
 		// ---- Crosshair ----
@@ -266,6 +295,9 @@ namespace onion::voxel
 		int crosshairLineWidth = static_cast<int>(s_ScreenWidth * (4.f / 1920.f));
 		DebugDraws::DrawScreenLine_Pixels(crosshairTop, crosshairBottom, crosshairColor, crosshairLineWidth);
 		DebugDraws::DrawScreenLine_Pixels(crosshairLeft, crosshairRight, crosshairColor, crosshairLineWidth);
+
+		// Update States
+		m_PreviousSelectedHotbarIndex = playerHotbar.SelectedIndex();
 	}
 
 	void HudPanel::Initialize()
@@ -316,6 +348,20 @@ namespace onion::voxel
 		m_ExperienceBarBackground_Sprite.ReloadTextures();
 		m_ExperienceBarProgress_Sprite.ReloadTextures();
 		m_ExperienceLevel_Label.ReloadTextures();
+	}
+
+	float HudPanel::GetSelectedBlockNameFadeInFactor() const
+	{
+		double t = glfwGetTime() - m_SelectedBlockTime;
+
+		if (t <= 2.0)
+			return 1.0f;
+
+		if (t >= 3.0)
+			return 0.0f;
+
+		// Linear fade from 1 to 0 over [2, 3]
+		return static_cast<float>(1.0 - (t - 2.0));
 	}
 
 } // namespace onion::voxel

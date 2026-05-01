@@ -8,6 +8,8 @@
 #include "version.hpp"
 
 #include <shared/utils/Utils.hpp>
+#include <shared/world/block/BlockPlacementResolver.hpp>
+#include <shared/world/block/BlockstateRegistry.hpp>
 
 #include "debug_draws/DebugDraws.hpp"
 
@@ -664,7 +666,7 @@ namespace onion::voxel
 		glm::vec3 rayOrigin = m_Camera->GetPosition();
 		glm::vec3 rayDirection = m_Camera->GetFront();
 
-		m_CurrentRaycastHit = Raycaster::Raycast(*m_WorldManager, rayOrigin, rayDirection, 10.0f, 300);
+		m_CurrentRaycastHit = Raycaster::Raycast(*m_WorldManager, rayOrigin, rayDirection, 10.0f, 500);
 
 		// ----- DROP ITEM -----
 		KeyState dropItemKeyState = m_KeyBinds.GetKeyState(eAction::DropItem);
@@ -694,14 +696,44 @@ namespace onion::voxel
 		if (interactKeyState.IsPressed && m_CurrentRaycastHit.has_value())
 		{
 			const Block& adjacentBlock = m_CurrentRaycastHit->AdjacentBlock;
+			BlockId placedId = hotbar.Content()[selectedSlot];
 
-			Block blockToPlace = Block(adjacentBlock.Position, BlockState(hotbar.Content()[selectedSlot]));
+			// Resolve the correct variant based on player orientation and hit face.
+			PlacementContext ctx;
+			ctx.Id = placedId;
+			ctx.PlayerLookDir = m_Camera->GetFront();
+			ctx.HitFaceNormal = m_CurrentRaycastHit->HitFaceNormal;
+			ctx.HitPosition = m_CurrentRaycastHit->HitPosition;
+			ctx.HitBlock = m_CurrentRaycastHit->HitBlock;
+			ctx.PlacePosition = adjacentBlock.Position;
+			ctx.World = m_WorldManager.get();
 
-			bool success = m_WorldManager->SetBlock(
-				blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
+			PlacementResult placement = BlockPlacementResolver::Resolve(ctx);
+			uint8_t variantIndex = BlockstateRegistry::GetVariantIndex(placement.Id, placement.Properties);
 
-			std::cout << "Attempting to place block at " << blockToPlace.Position.x << ", " << blockToPlace.Position.y
-					  << ", " << blockToPlace.Position.z << " - Success: " << (success ? "Yes" : "No") << std::endl;
+			Block blockToPlace = Block(placement.Position, BlockState(placement.Id, variantIndex));
+
+			bool isAir = m_WorldManager->GetBlock(placement.Position).ID == BlockId::Air;
+			bool collidesWithAnyPlayer = false;
+			for (const auto& [uuid, aPlayer] : m_WorldManager->GetAllPlayers())
+			{
+				if (m_PhysicsEngine.IsPlayerCollidingWithBlock(aPlayer, blockToPlace.State, blockToPlace.Position))
+				{
+					collidesWithAnyPlayer = true;
+					break;
+				}
+			}
+			bool canPlace = (placement.IsPromotion || isAir) && !collidesWithAnyPlayer;
+
+			if (canPlace)
+			{
+				bool success = m_WorldManager->SetBlock(
+					blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
+
+				std::cout << "Attempting to place block at " << blockToPlace.Position.x << ", "
+						  << blockToPlace.Position.y << ", " << blockToPlace.Position.z
+						  << " - Success: " << (success ? "Yes" : "No") << std::endl;
+			}
 		}
 
 		// ----- PROCESS BLOCK PICK -----
@@ -1386,6 +1418,38 @@ namespace onion::voxel
 			if (ImGui::DragFloat3("Front", &front.x, 0.01f))
 				m_Camera->SetFront(front);
 
+			{
+				const char* facingName;
+				const char* facingAxis;
+				if (std::abs(front.x) >= std::abs(front.z))
+				{
+					if (front.x > 0.f)
+					{
+						facingName = "East";
+						facingAxis = "(+X)";
+					}
+					else
+					{
+						facingName = "West";
+						facingAxis = "(-X)";
+					}
+				}
+				else
+				{
+					if (front.z > 0.f)
+					{
+						facingName = "South";
+						facingAxis = "(+Z)";
+					}
+					else
+					{
+						facingName = "North";
+						facingAxis = "(-Z)";
+					}
+				}
+				ImGui::Text("Facing : %s %s", facingName, facingAxis);
+			}
+
 			if (ImGui::DragFloat("Yaw", &yaw, 0.5f))
 				m_Camera->SetYaw(yaw);
 
@@ -1413,6 +1477,50 @@ namespace onion::voxel
 				ImGui::Text("Name: %s", BlockIds::GetName(hitBlock.ID()).c_str());
 				int variantIndex = hitBlock.State.VariantIndex;
 				ImGui::Text("Variant Index: %d", variantIndex);
+
+				const auto& registry = BlockstateRegistry::Get();
+				auto it = registry.find(hitBlock.ID());
+				if (it != registry.end() && !it->second.empty())
+				{
+					// Active variant inline
+					const auto& activeVariant = it->second[variantIndex];
+					std::string activeProps;
+					for (const auto& [key, val] : activeVariant.Properties)
+					{
+						if (!activeProps.empty())
+							activeProps += ", ";
+						activeProps += key + "=" + val;
+					}
+					if (activeProps.empty())
+						activeProps = "(default)";
+					ImGui::Text("Variant : %s", activeProps.c_str());
+
+					// All variants in a collapsible
+					if (ImGui::CollapsingHeader("All Variants"))
+					{
+						ImGui::BeginChild("##variants", ImVec2(0, 120), true);
+						for (size_t i = 0; i < it->second.size(); i++)
+						{
+							const auto& variant = it->second[i];
+							std::string line;
+							for (const auto& [key, val] : variant.Properties)
+							{
+								if (!line.empty())
+									line += ", ";
+								line += key + "=" + val;
+							}
+							if (line.empty())
+								line = "(default)";
+							bool active = (static_cast<int>(i) == variantIndex);
+							if (active)
+								ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.85f, 0.f, 1.f));
+							ImGui::Text("%s[%zu] %s", active ? ">>> " : "    ", i, line.c_str());
+							if (active)
+								ImGui::PopStyleColor();
+						}
+						ImGui::EndChild();
+					}
+				}
 			}
 		}
 

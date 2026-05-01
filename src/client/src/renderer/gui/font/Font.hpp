@@ -135,8 +135,8 @@ namespace onion::voxel
 		void RenderText(const std::string& text,
 						eTextAlignment alignment,
 						const glm::vec2& position,
-						const glm::vec3& textColor,
-						const glm::vec3& shadowColor,
+						const glm::vec4& textColor,
+						const glm::vec4& shadowColor,
 						float textHeightPx,
 						const Font::TextFormat& format,
 						float zOffset = 0.0f,
@@ -172,8 +172,8 @@ namespace onion::voxel
 		void RenderText(const std::u32string& text,
 						eTextAlignment alignment,
 						const glm::vec2& position,
-						const glm::vec3& textColor,
-						const glm::vec3& shadowColor,
+						const glm::vec4& textColor,
+						const glm::vec4& shadowColor,
 						float textHeightPx,
 						const Font::TextFormat& format,
 						float zOffset = 0.0f,
@@ -224,7 +224,7 @@ namespace onion::voxel
 		// ----- Partial Rendering -----
 	  private:
 		glm::ivec2 RenderPartialText(const std::u32string& text,
-									 const glm::vec3& color,
+									 const glm::vec4& color,
 									 const glm::vec2& position,
 									 const Font::TextFormat& textFormat,
 									 float textHeightPx,
@@ -245,7 +245,7 @@ namespace onion::voxel
 
 		// ----- Static Private Members -----
 	  private:
-		static const std::unordered_map<eColor, glm::vec3> s_TextColorMap;
-		static const std::unordered_map<eColor, glm::vec3> s_ShadowColorMap;
+		static const std::unordered_map<eColor, glm::vec4> s_TextColorMap;
+		static const std::unordered_map<eColor, glm::vec4> s_ShadowColorMap;
 	};
 } // namespace onion::voxel

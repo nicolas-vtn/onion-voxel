@@ -19,12 +19,12 @@ namespace onion::voxel
 {
 	enum class Face : uint8_t
 	{
-		Top,
-		Bottom,
-		Front,
-		Back,
-		Left,
-		Right,
+		Up,
+		Down,
+		South,
+		North,
+		West,
+		East,
 		Count
 	};
 

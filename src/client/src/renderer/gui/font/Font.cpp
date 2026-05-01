@@ -21,41 +21,41 @@ namespace onion::voxel
 		return v / 255.f;
 	}
 
-	const std::unordered_map<Font::eColor, glm::vec3> Font::s_TextColorMap = {
-		{eColor::Black, {c(0.f), c(0.f), c(0.f)}},
-		{eColor::DarkBlue, {c(0.f), c(0.f), c(170.f)}},
-		{eColor::DarkGreen, {c(0.f), c(170.f), c(0.f)}},
-		{eColor::DarkAqua, {c(0.f), c(170.f), c(170.f)}},
-		{eColor::DarkRed, {c(170.f), c(0.f), c(0.f)}},
-		{eColor::DarkPurple, {c(170.f), c(0.f), c(170.f)}},
-		{eColor::Gold, {c(255.f), c(170.f), c(0.f)}},
-		{eColor::Gray, {c(170.f), c(170.f), c(170.f)}},
-		{eColor::DarkGray, {c(85.f), c(85.f), c(85.f)}},
-		{eColor::Blue, {c(85.f), c(85.f), c(255.f)}},
-		{eColor::Green, {c(85.f), c(255.f), c(85.f)}},
-		{eColor::Aqua, {c(85.f), c(255.f), c(255.f)}},
-		{eColor::Red, {c(255.f), c(85.f), c(85.f)}},
-		{eColor::LightPurple, {c(255.f), c(85.f), c(255.f)}},
-		{eColor::Yellow, {c(255.f), c(255.f), c(85.f)}},
-		{eColor::White, {c(255.f), c(255.f), c(255.f)}}};
+	const std::unordered_map<Font::eColor, glm::vec4> Font::s_TextColorMap = {
+		{eColor::Black, {c(0.f), c(0.f), c(0.f), 1.f}},
+		{eColor::DarkBlue, {c(0.f), c(0.f), c(170.f), 1.f}},
+		{eColor::DarkGreen, {c(0.f), c(170.f), c(0.f), 1.f}},
+		{eColor::DarkAqua, {c(0.f), c(170.f), c(170.f), 1.f}},
+		{eColor::DarkRed, {c(170.f), c(0.f), c(0.f), 1.f}},
+		{eColor::DarkPurple, {c(170.f), c(0.f), c(170.f), 1.f}},
+		{eColor::Gold, {c(255.f), c(170.f), c(0.f), 1.f}},
+		{eColor::Gray, {c(170.f), c(170.f), c(170.f), 1.f}},
+		{eColor::DarkGray, {c(85.f), c(85.f), c(85.f), 1.f}},
+		{eColor::Blue, {c(85.f), c(85.f), c(255.f), 1.f}},
+		{eColor::Green, {c(85.f), c(255.f), c(85.f), 1.f}},
+		{eColor::Aqua, {c(85.f), c(255.f), c(255.f), 1.f}},
+		{eColor::Red, {c(255.f), c(85.f), c(85.f), 1.f}},
+		{eColor::LightPurple, {c(255.f), c(85.f), c(255.f), 1.f}},
+		{eColor::Yellow, {c(255.f), c(255.f), c(85.f), 1.f}},
+		{eColor::White, {c(255.f), c(255.f), c(255.f), 1.f}}};
 
-	const std::unordered_map<Font::eColor, glm::vec3> Font::s_ShadowColorMap = {
-		{eColor::Black, {c(0.f), c(0.f), c(0.f)}},
-		{eColor::DarkBlue, {c(0.f), c(0.f), c(42.f)}},
-		{eColor::DarkGreen, {c(0.f), c(42.f), c(0.f)}},
-		{eColor::DarkAqua, {c(0.f), c(42.f), c(42.f)}},
-		{eColor::DarkRed, {c(42.f), c(0.f), c(0.f)}},
-		{eColor::DarkPurple, {c(42.f), c(0.f), c(42.f)}},
-		{eColor::Gold, {c(42.f), c(42.f), c(0.f)}},
-		{eColor::Gray, {c(42.f), c(42.f), c(42.f)}},
-		{eColor::DarkGray, {c(21.f), c(21.f), c(21.f)}},
-		{eColor::Blue, {c(21.f), c(21.f), c(63.f)}},
-		{eColor::Green, {c(21.f), c(63.f), c(21.f)}},
-		{eColor::Aqua, {c(21.f), c(63.f), c(63.f)}},
-		{eColor::Red, {c(63.f), c(21.f), c(21.f)}},
-		{eColor::LightPurple, {c(63.f), c(21.f), c(63.f)}},
-		{eColor::Yellow, {c(63.f), c(63.f), c(21.f)}},
-		{eColor::White, {c(63.f), c(63.f), c(63.f)}}};
+	const std::unordered_map<Font::eColor, glm::vec4> Font::s_ShadowColorMap = {
+		{eColor::Black, {c(0.f), c(0.f), c(0.f), 1.f}},
+		{eColor::DarkBlue, {c(0.f), c(0.f), c(42.f), 1.f}},
+		{eColor::DarkGreen, {c(0.f), c(42.f), c(0.f), 1.f}},
+		{eColor::DarkAqua, {c(0.f), c(42.f), c(42.f), 1.f}},
+		{eColor::DarkRed, {c(42.f), c(0.f), c(0.f), 1.f}},
+		{eColor::DarkPurple, {c(42.f), c(0.f), c(42.f), 1.f}},
+		{eColor::Gold, {c(42.f), c(42.f), c(0.f), 1.f}},
+		{eColor::Gray, {c(42.f), c(42.f), c(42.f), 1.f}},
+		{eColor::DarkGray, {c(21.f), c(21.f), c(21.f), 1.f}},
+		{eColor::Blue, {c(21.f), c(21.f), c(63.f), 1.f}},
+		{eColor::Green, {c(21.f), c(63.f), c(21.f), 1.f}},
+		{eColor::Aqua, {c(21.f), c(63.f), c(63.f), 1.f}},
+		{eColor::Red, {c(63.f), c(21.f), c(21.f), 1.f}},
+		{eColor::LightPurple, {c(63.f), c(21.f), c(63.f), 1.f}},
+		{eColor::Yellow, {c(63.f), c(63.f), c(21.f), 1.f}},
+		{eColor::White, {c(63.f), c(63.f), c(63.f), 1.f}}};
 
 	// -------- Constructor / Destructor --------
 
@@ -213,8 +213,8 @@ namespace onion::voxel
 	void Font::RenderText(const std::string& text,
 						  eTextAlignment alignment,
 						  const glm::vec2& position,
-						  const glm::vec3& textColor,
-						  const glm::vec3& shadowColor,
+						  const glm::vec4& textColor,
+						  const glm::vec4& shadowColor,
 						  float textHeightPx,
 						  const Font::TextFormat& format,
 						  float zOffset,
@@ -289,7 +289,7 @@ namespace onion::voxel
 			currentPos += shadowOffset;
 			for (const TextSegment& segment : segments)
 			{
-				const glm::vec3& shadowColor = s_ShadowColorMap.at(segment.color);
+				const glm::vec4& shadowColor = s_ShadowColorMap.at(segment.color);
 				glm::ivec2 result = RenderPartialText(segment.text,
 													  shadowColor,
 													  currentPos,
@@ -312,7 +312,7 @@ namespace onion::voxel
 		currentPos = {startX, startY};
 		for (const TextSegment& segment : segments)
 		{
-			const glm::vec3& foregroundColor = s_TextColorMap.at(segment.color);
+			const glm::vec4& foregroundColor = s_TextColorMap.at(segment.color);
 			glm::ivec2 result = RenderPartialText(segment.text,
 												  foregroundColor,
 												  currentPos,
@@ -334,8 +334,8 @@ namespace onion::voxel
 	void Font::RenderText(const std::u32string& text,
 						  eTextAlignment alignment,
 						  const glm::vec2& position,
-						  const glm::vec3& textColor,
-						  const glm::vec3& shadowColor,
+						  const glm::vec4& textColor,
+						  const glm::vec4& shadowColor,
 						  float textHeightPx,
 						  const Font::TextFormat& format,
 						  float zOffset,
@@ -702,7 +702,7 @@ namespace onion::voxel
 	}
 
 	glm::ivec2 Font::RenderPartialText(const std::u32string& text,
-									   const glm::vec3& color,
+									   const glm::vec4& color,
 									   const glm::vec2& position,
 									   const Font::TextFormat& textFormat,
 									   float textHeightPx,
@@ -867,7 +867,7 @@ namespace onion::voxel
 			glyphProvider.TextureGlyph.Bind();
 
 			s_ShaderFont.Use();
-			s_ShaderFont.setVec3("uTextColor", color);
+			s_ShaderFont.setVec4("uTextColor", color);
 			s_ShaderFont.setInt("uTexture", 0);
 			s_ShaderFont.setMat4("uModel", model);
 
@@ -891,7 +891,7 @@ namespace onion::voxel
 			ColoredBackground::CornerOptions underlineOptions;
 			underlineOptions.TopLeftCorner = {leftX, topY};
 			underlineOptions.BottomRightCorner = {rightX, bottomY};
-			underlineOptions.Color = glm::vec4(color, 1.0f);
+			underlineOptions.Color = color;
 			underlineOptions.ZOffset = zOffset;
 			underlineOptions.RotationDegrees = rotationDegrees;
 
@@ -911,7 +911,7 @@ namespace onion::voxel
 			ColoredBackground::CornerOptions strikethroughOptions;
 			strikethroughOptions.TopLeftCorner = {leftX, topY};
 			strikethroughOptions.BottomRightCorner = {rightX, bottomY};
-			strikethroughOptions.Color = glm::vec4(color, 1.0f);
+			strikethroughOptions.Color = color;
 			strikethroughOptions.ZOffset = zOffset;
 			strikethroughOptions.RotationDegrees = rotationDegrees;
 

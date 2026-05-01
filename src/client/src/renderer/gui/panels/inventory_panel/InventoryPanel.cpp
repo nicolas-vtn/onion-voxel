@@ -62,6 +62,7 @@ namespace onion::voxel
 		m_PageIndicator_Label.SetZOffset(0.6f); // Ensure it's in front of the inventory background
 
 		m_Search_TextField.SetPlaceholderText("Search...");
+		m_Search_TextField.SetClearOnRightClick(true);
 	}
 
 	InventoryPanel::~InventoryPanel()

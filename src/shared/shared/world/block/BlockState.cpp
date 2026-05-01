@@ -1,7 +1,12 @@
 #include "BlockState.hpp"
 
+#include <shared/world/block/BlockstateRegistry.hpp>
+
 namespace onion::voxel
 {
+	// Per-variant full-block lookup table — write-once at load time
+	std::unordered_map<BlockId, std::vector<bool>> BlockState::s_FullBlockLookupTable;
+
 	// ----- Static Initialization -----
 	std::vector<bool> BlockState::s_TransparencyLookupTable = []()
 	{
@@ -511,5 +516,48 @@ namespace onion::voxel
 	{
 		std::lock_guard lock(s_TransparencyLookupTableMutex);
 		s_TransparencyLookupTable[static_cast<size_t>(blockID)] = transparent;
+	}
+
+	void BlockState::BuildFullBlockLookup()
+	{
+		s_FullBlockLookupTable.clear();
+
+		const auto& registry = BlockstateRegistry::Get();
+		for (const auto& [blockId, variants] : registry)
+		{
+			auto& vec = s_FullBlockLookupTable[blockId];
+			vec.resize(variants.size(), false);
+
+			for (size_t i = 0; i < variants.size(); ++i)
+			{
+				// Skip the injected GUI variant — it's not a world block
+				const auto& props = variants[i].Properties;
+				auto guiIt = props.find("gui");
+				if (guiIt != props.end() && guiIt->second == "true")
+					continue;
+
+				const auto& elements = variants[i].Model.Elements;
+				bool full = !elements.empty();
+				for (const auto& e : elements)
+				{
+					if (e.From != glm::vec3(0, 0, 0) || e.To != glm::vec3(16, 16, 16))
+					{
+						full = false;
+						break;
+					}
+				}
+				vec[i] = full;
+			}
+		}
+	}
+
+	bool BlockState::IsFullBlock(BlockId blockID, uint8_t variantIndex)
+	{
+		auto it = s_FullBlockLookupTable.find(blockID);
+		if (it == s_FullBlockLookupTable.end())
+			return false;
+		if (variantIndex >= it->second.size())
+			return false;
+		return it->second[variantIndex];
 	}
 } // namespace onion::voxel

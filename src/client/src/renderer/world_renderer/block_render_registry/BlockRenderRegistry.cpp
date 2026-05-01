@@ -34,17 +34,17 @@ namespace
 	{
 		using namespace onion::voxel;
 		if (name == "up")
-			return Face::Top;
+			return Face::Up;
 		if (name == "down")
-			return Face::Bottom;
+			return Face::Down;
 		if (name == "north")
-			return Face::Front;
+			return Face::North;
 		if (name == "south")
-			return Face::Back;
+			return Face::South;
 		if (name == "west")
-			return Face::Left;
+			return Face::West;
 		if (name == "east")
-			return Face::Right;
+			return Face::East;
 		throw std::runtime_error("Unknown face: " + name);
 	}
 
@@ -290,6 +290,10 @@ namespace onion::voxel
 
 		for (const auto& staged : m_StagedOverlayTextures)
 			CommitOverlayTextures(staged.id, staged.variantIndex, staged.textures);
+
+		// Build the per-variant full-block lookup now that all variants are committed
+		// and the registry is fully populated.
+		BlockState::BuildFullBlockLookup();
 	}
 
 	const std::unordered_set<std::string>& BlockRenderRegistry::GetAllTextureNames() const

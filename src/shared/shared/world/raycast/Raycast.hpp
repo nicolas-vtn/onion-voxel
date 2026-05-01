@@ -13,6 +13,7 @@ namespace onion::voxel
 		glm::vec3 HitPosition{0.f};
 		Block HitBlock;
 		Block AdjacentBlock;
+		glm::ivec3 HitFaceNormal{0}; // Direction from hit block toward adjacent block (e.g. (0,1,0) = top face)
 	};
 
 	class Raycaster

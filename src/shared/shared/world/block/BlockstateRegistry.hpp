@@ -31,6 +31,10 @@ namespace onion::voxel
 		static const std::unordered_map<BlockId, std::vector<VariantModel>>& Get();
 
 		static bool IsTallPlant(BlockId flowerId);
+		/// Returns the variant index for the given block that best matches the provided property map.
+		/// Exact match wins first. Otherwise, every key in the input must be present and equal in the
+		/// variant (unspecified keys are ignored). Among partial matches, the most specific variant
+		/// (most properties) wins. Returns 0 if no match is found.
 		static uint8_t GetVariantIndex(BlockId id, const std::map<std::string, std::string>& properties);
 
 		static bool CountsInAO(BlockId id, uint8_t variantIndex);
