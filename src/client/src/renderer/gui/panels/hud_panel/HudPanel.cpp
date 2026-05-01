@@ -263,15 +263,19 @@ namespace onion::voxel
 		float textFadeStrength = GetSelectedBlockNameFadeInFactor();
 		if (textFadeStrength > 0.f)
 		{
-			std::string blockName = BlockIds::GetName(playerHotbar.At(playerHotbar.SelectedIndex()));
-			const float labelYposRatio = (812.f - 23.f) / 1009.f;
-			const float labelPosY = std::round(s_ScreenHeight * labelYposRatio);
-			m_SelectedBlockName_Label.SetText(blockName);
-			m_SelectedBlockName_Label.SetPosition({screenCenterX, labelPosY});
-			m_SelectedBlockName_Label.SetTextHeight(s_TextHeight);
-			glm::vec4 textColor = glm::vec4(1.f, 1.f, 1.f, textFadeStrength);
-			m_SelectedBlockName_Label.SetCustomTextColor(textColor);
-			m_SelectedBlockName_Label.Render();
+			BlockId selectedBlockId = playerHotbar.At(playerHotbar.SelectedIndex());
+			if (selectedBlockId != BlockId::Air)
+			{
+				std::string blockName = BlockIds::GetName(playerHotbar.At(playerHotbar.SelectedIndex()));
+				const float labelYposRatio = (812.f - 23.f) / 1009.f;
+				const float labelPosY = std::round(s_ScreenHeight * labelYposRatio);
+				m_SelectedBlockName_Label.SetText(blockName);
+				m_SelectedBlockName_Label.SetPosition({screenCenterX, labelPosY});
+				m_SelectedBlockName_Label.SetTextHeight(s_TextHeight);
+				glm::vec4 textColor = glm::vec4(1.f, 1.f, 1.f, textFadeStrength);
+				m_SelectedBlockName_Label.SetCustomTextColor(textColor);
+				m_SelectedBlockName_Label.Render();
+			}
 		}
 
 		// ---- Crosshair ----
