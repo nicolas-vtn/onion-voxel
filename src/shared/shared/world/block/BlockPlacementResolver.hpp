@@ -99,6 +99,11 @@ namespace onion::voxel
 		/// Used by jigsaw blocks and similar two-axis-directional blocks.
 		static void ResolveOrientation(const PlacementContext& ctx, PlacementResult& result);
 
+		/// Populate face= (floor/wall/ceiling) and facing= for wall-attachable blocks
+		/// (buttons, levers, torches). face= is derived from the hit face normal;
+		/// facing= from the player look direction (floor/ceiling) or hit normal (wall).
+		static void ResolveFace(const PlacementContext& ctx, PlacementResult& result);
+
 		/// Returns true if any variant of the given block has the specified property key.
 		static bool BlockHasProperty(BlockId id, const std::string& propertyKey);
 	};

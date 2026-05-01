@@ -1,6 +1,7 @@
 #include "WorldManager.hpp"
 
 #include <shared/utils/Utils.hpp>
+#include <shared/world/block/BlockUpdater.hpp>
 
 #include <iostream>
 
@@ -543,6 +544,8 @@ namespace onion::voxel
 						chunk->SetBlock(localPos, block.State);
 
 						const glm::ivec3 worldPos = Utils::LocalToWorldPosition(localPos, chunkPos);
+						UpdateBlock(worldPos, true);
+
 						blocksToNotify.push_back(block);
 					}
 				}
@@ -830,6 +833,37 @@ namespace onion::voxel
 		if (!missingChunks.empty())
 		{
 			RequestMissingChunksAsync(missingChunks);
+		}
+	}
+
+	void WorldManager::UpdateBlock(const glm::ivec3& worldPosition, bool propagateToNeighbors)
+	{
+		const BlockState target = GetBlock(worldPosition);
+
+		const std::array<BlockState, 6> neighbors = {
+			GetBlock(worldPosition + glm::ivec3{0, -1, 0}), // Down
+			GetBlock(worldPosition + glm::ivec3{0, 1, 0}),	// Up
+			GetBlock(worldPosition + glm::ivec3{0, 0, -1}), // North
+			GetBlock(worldPosition + glm::ivec3{0, 0, 1}),	// South
+			GetBlock(worldPosition + glm::ivec3{-1, 0, 0}), // West
+			GetBlock(worldPosition + glm::ivec3{1, 0, 0}),	// East
+		};
+
+		BlockUpdater::Update(target, neighbors, worldPosition, *this);
+
+		if (propagateToNeighbors)
+		{
+			static const std::array<glm::ivec3, 6> kOffsets = {
+				glm::ivec3{0, -1, 0},
+				glm::ivec3{0, 1, 0},
+				glm::ivec3{0, 0, -1},
+				glm::ivec3{0, 0, 1},
+				glm::ivec3{-1, 0, 0},
+				glm::ivec3{1, 0, 0},
+			};
+
+			for (const auto& offset : kOffsets)
+				UpdateBlock(worldPosition + offset, false);
 		}
 	}
 
