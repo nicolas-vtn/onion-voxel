@@ -19,7 +19,7 @@ namespace onion::voxel
 		  m_HeartContainer_Sprite("HeartContainer_Sprite", s_PathHeartContainer, Sprite::eOrigin::ResourcePack),
 		  m_HungerEmpty_Sprite("HungerEmpty_Sprite", s_PathHungerEmpty, Sprite::eOrigin::ResourcePack),
 		  m_ExperienceLevel_Label("ExperienceLevel_Label"), m_SelectedBlockName_Label("SelectedBlockName_Label"),
-		  m_WailaTooltip("WailaTooltip")
+		  m_Fps_Label("Fps_Label"), m_WailaTooltip("WailaTooltip")
 	{
 		m_ExperienceBarBackground_Sprite.SetZOffset(0.4f);
 		m_ExperienceBarProgress_Sprite.SetZOffset(0.45f);
@@ -30,6 +30,9 @@ namespace onion::voxel
 
 		m_SelectedBlockName_Label.SetZOffset(0.5f);
 		m_SelectedBlockName_Label.SetTextAlignment(Font::eTextAlignment::Center);
+
+		m_Fps_Label.SetZOffset(0.5f);
+		m_Fps_Label.SetTextAlignment(Font::eTextAlignment::Left);
 
 		m_UiBlockMesh->SetRenderSelectedHighlight(false);
 		m_UiBlockMesh->SetSlotBorder(0.f);
@@ -93,6 +96,23 @@ namespace onion::voxel
 		// ---- Constants ----
 		int screenCenterX = static_cast<int>(std::round(s_ScreenWidth * 0.5f));
 		int screenBottom = static_cast<int>(s_ScreenHeight);
+
+		// ---- FPS (top-left) ----
+		{
+			double now = glfwGetTime();
+			double delta = now - m_LastFrameTime;
+			m_LastFrameTime = now;
+			if (delta > 0.0)
+			{
+				float instant = static_cast<float>(1.0 / delta);
+				m_SmoothedFps += (instant - m_SmoothedFps) * 0.1f;
+			}
+			int fps = static_cast<int>(std::round(m_SmoothedFps));
+			m_Fps_Label.SetText("Fps: " + std::to_string(fps));
+			m_Fps_Label.SetTextHeight(s_TextHeight);
+			m_Fps_Label.SetPosition({s_ScreenWidth * (10.f / 1920.f), s_ScreenHeight * (20.f / 1009.f)});
+			m_Fps_Label.Render();
+		}
 
 		// ---- Hotbar (bottom-center) ----
 		float hotbarHeightRatio = 86.f / 1009.f;
@@ -369,6 +389,7 @@ namespace onion::voxel
 		m_ExperienceBarBackground_Sprite.Initialize();
 		m_ExperienceBarProgress_Sprite.Initialize();
 		m_ExperienceLevel_Label.Initialize();
+		m_Fps_Label.Initialize();
 		m_WailaTooltip.Initialize();
 
 		SetInitState(true);
@@ -387,6 +408,7 @@ namespace onion::voxel
 		m_ExperienceBarBackground_Sprite.Delete();
 		m_ExperienceBarProgress_Sprite.Delete();
 		m_ExperienceLevel_Label.Delete();
+		m_Fps_Label.Delete();
 		m_UiBlockMesh->Delete();
 		m_WailaTooltip.Delete();
 		m_WailaBlockMesh->Delete();
@@ -407,6 +429,7 @@ namespace onion::voxel
 		m_ExperienceBarBackground_Sprite.ReloadTextures();
 		m_ExperienceBarProgress_Sprite.ReloadTextures();
 		m_ExperienceLevel_Label.ReloadTextures();
+		m_Fps_Label.ReloadTextures();
 		m_WailaTooltip.ReloadTextures();
 		m_WailaBlockMesh->SetDirty(true);
 	}
