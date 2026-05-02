@@ -304,8 +304,7 @@ namespace onion::voxel
 		}
 
 		// ---- WAILA (What Am I Looking At) ----
-		// Prepare for future settings option: replace `true` with `settings.ShowWaila` when available.
-		if (/* showWaila */ true)
+		if (EngineContext::Get().Settings().Video.WailaEnabled)
 		{
 			const auto& lookedAt = EngineContext::Get().LookedAtBlock;
 			if (lookedAt.has_value() && lookedAt->HitBlock.State.ID != BlockId::Air)

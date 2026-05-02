@@ -11,6 +11,8 @@ namespace onion::voxel
 
 		uint8_t RenderDistance = 4;
 		uint8_t SimulationDistance = 4;
+
+		bool WailaEnabled = true;
 	};
 
 	template <typename BasicJsonType> inline void to_json(BasicJsonType& j, const VideoSettings& s)
@@ -18,7 +20,8 @@ namespace onion::voxel
 		j = BasicJsonType{{"MaxFPS", s.MaxFPS},
 						  {"VSyncEnabled", s.VSyncEnabled},
 						  {"RenderDistance", s.RenderDistance},
-						  {"SimulationDistance", s.SimulationDistance}};
+						  {"SimulationDistance", s.SimulationDistance},
+						  {"WailaEnabled", s.WailaEnabled}};
 	}
 
 	template <typename BasicJsonType> inline void from_json(const BasicJsonType& j, VideoSettings& s)
@@ -34,6 +37,9 @@ namespace onion::voxel
 
 		if (j.contains("SimulationDistance"))
 			j.at("SimulationDistance").get_to(s.SimulationDistance);
+
+		if (j.contains("WailaEnabled"))
+			j.at("WailaEnabled").get_to(s.WailaEnabled);
 	}
 
 } // namespace onion::voxel
