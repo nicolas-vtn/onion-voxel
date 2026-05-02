@@ -95,6 +95,24 @@ clang-format -i src/path/to/file.cpp
 
 ---
 
+## Adding a UserSetting
+
+Two categories — determine which applies before writing any code:
+
+- **Live-read** — the consumer calls `EngineContext::Get().Settings()` inline each frame. No side-effect beyond storing the value. No `ApplyUserSettings` branch needed. Example: `WailaEnabled`.
+- **Apply-once** — drives an imperative side-effect (OpenGL/GLFW call, subsystem method, event). Requires an `if (args.SettingName_Changed)` branch in `Renderer::ApplyUserSettings`, and optionally a local mirror member in `Renderer` if the render-loop hot path reads it every frame. Example: `VSyncEnabled` → `glfwSwapInterval(...)`.
+
+See [`docs/adding_user_settings.md`](docs/adding_user_settings.md) for the full step-by-step walkthrough.
+
+### What not to forget
+
+- `from_json` must use a `contains()` guard — without it, an old config file missing the key throws a JSON exception and silently resets all settings to defaults.
+- The `allChanged` branch in `UserSettingsChangedEventArgs` — if the flag is absent there, apply-once settings are not applied at startup (cold boot calls `ApplyUserSettings` with `allChanged = true`).
+- All four lifecycle methods on every new control: **`Initialize`, `Delete`, `ReloadTextures`, `Render`**. Missing `Delete` leaks GPU resources; missing `ReloadTextures` breaks resource-pack switching.
+- `EventHandle` must be stored in `m_EventHandles` — a discarded handle destroys the subscription immediately, causing a dangling-reference crash on the next event fire.
+
+---
+
 ## Codegen — version injection
 
 `cmake/GetGitVersion.cmake` runs `git describe --tags --always --dirty` at **configure time** and generates `version.hpp`/`version.cpp` into `${CMAKE_BINARY_DIR}/generated/`. If you add a tag, reconfigure to pick it up.
