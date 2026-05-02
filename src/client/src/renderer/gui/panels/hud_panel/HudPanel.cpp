@@ -18,7 +18,8 @@ namespace onion::voxel
 			  "ExperienceBarProgress_Sprite", s_PathExperienceBarProgress, Sprite::eOrigin::ResourcePack),
 		  m_HeartContainer_Sprite("HeartContainer_Sprite", s_PathHeartContainer, Sprite::eOrigin::ResourcePack),
 		  m_HungerEmpty_Sprite("HungerEmpty_Sprite", s_PathHungerEmpty, Sprite::eOrigin::ResourcePack),
-		  m_ExperienceLevel_Label("ExperienceLevel_Label"), m_SelectedBlockName_Label("SelectedBlockName_Label")
+		  m_ExperienceLevel_Label("ExperienceLevel_Label"), m_SelectedBlockName_Label("SelectedBlockName_Label"),
+		  m_WailaTooltip("WailaTooltip")
 	{
 		m_ExperienceBarBackground_Sprite.SetZOffset(0.4f);
 		m_ExperienceBarProgress_Sprite.SetZOffset(0.45f);
@@ -32,6 +33,10 @@ namespace onion::voxel
 
 		m_UiBlockMesh->SetRenderSelectedHighlight(false);
 		m_UiBlockMesh->SetSlotBorder(0.f);
+
+		m_WailaTooltip.SetZOffset(0.85f);
+		m_WailaBlockMesh->SetRenderSelectedHighlight(false);
+		m_WailaBlockMesh->SetSlotBorder(0.f);
 	}
 
 	void HudPanel::Render()
@@ -278,6 +283,57 @@ namespace onion::voxel
 			}
 		}
 
+		// ---- WAILA (What Am I Looking At) ----
+		// Prepare for future settings option: replace `true` with `settings.ShowWaila` when available.
+		if (/* showWaila */ true)
+		{
+			const auto& lookedAt = EngineContext::Get().LookedAtBlock;
+			if (lookedAt.has_value() && lookedAt->HitBlock.State.ID != BlockId::Air)
+			{
+				const BlockId wailaBlockId = lookedAt->HitBlock.State.ID;
+
+				// Build tooltip text — leading spaces reserve room for the block miniature on the left.
+				// NOTE: spaces on line 2 must come AFTER the format codes (§9§o), not before them.
+				// SegmentText splits on § boundaries, so any text before a § is flushed into the previous
+				// segment. Spaces placed before §9§o would end up in segment 1 and their cursor advance
+				// would be discarded when RenderText resets X to startX after the newline.
+				static constexpr std::string_view k_WailaSpaces = "      "; // 6 spaces
+				const std::string wailaLine1 = std::string(k_WailaSpaces) + BlockIds::GetName(wailaBlockId);
+				const std::string wailaLine2 = "§9§o" + std::string(k_WailaSpaces) + "Onion::Voxel§r§r";
+
+				m_WailaTooltip.SetText(wailaLine1 + "\n" + wailaLine2);
+				m_WailaTooltip.SetTextHeight(s_TextHeight);
+
+				// Position: top-center — m_Position.y is the vertical center of the tooltip box.
+				const float wailaTooltipY = s_ScreenHeight * (60.f / 1009.f);
+				m_WailaTooltip.SetPositionCentered({0.f, wailaTooltipY});
+
+				// Compute where the block mesh should go (inner top-left of the tooltip content area).
+				const glm::ivec2 innerTopLeft = m_WailaTooltip.GetInnerTopLeft();
+
+				// Block mesh: square slot sized to span the full inner content height (two text lines + gap).
+				const float blockSize = s_TextHeight * 2.6f;
+				const glm::vec2 wailaSlotSize = {blockSize, blockSize};
+
+				// Center the block mesh vertically within the content area.
+				const float blockTopY = innerTopLeft.y + (s_TextHeight * 2.2f) / 2.f - blockSize / 2.f;
+				const glm::vec2 blockTopLeft = {(float) innerTopLeft.x, blockTopY};
+
+				// Update block mesh inventory.
+				Inventory wailaInv{1, 1};
+				wailaInv.Content()[0] = wailaBlockId;
+				m_WailaBlockMesh->SetInventory(wailaInv, wailaSlotSize, {0.f, 0.f});
+				if (m_WailaBlockMesh->IsDirty())
+				{
+					auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
+					meshBuilder.UpdateUiBlockMesh(m_WailaBlockMesh);
+				}
+
+				m_WailaTooltip.Render();
+				m_WailaBlockMesh->Render(blockTopLeft, s_ScreenWidth, s_ScreenHeight);
+			}
+		}
+
 		// ---- Crosshair ----
 		float crossHairHeightRatio = 35.f / 1009.f;
 		float crossHairHeight = s_ScreenHeight * crossHairHeightRatio;
@@ -313,6 +369,7 @@ namespace onion::voxel
 		m_ExperienceBarBackground_Sprite.Initialize();
 		m_ExperienceBarProgress_Sprite.Initialize();
 		m_ExperienceLevel_Label.Initialize();
+		m_WailaTooltip.Initialize();
 
 		SetInitState(true);
 	}
@@ -331,6 +388,8 @@ namespace onion::voxel
 		m_ExperienceBarProgress_Sprite.Delete();
 		m_ExperienceLevel_Label.Delete();
 		m_UiBlockMesh->Delete();
+		m_WailaTooltip.Delete();
+		m_WailaBlockMesh->Delete();
 
 		SetDeletedState(true);
 	}
@@ -348,6 +407,8 @@ namespace onion::voxel
 		m_ExperienceBarBackground_Sprite.ReloadTextures();
 		m_ExperienceBarProgress_Sprite.ReloadTextures();
 		m_ExperienceLevel_Label.ReloadTextures();
+		m_WailaTooltip.ReloadTextures();
+		m_WailaBlockMesh->SetDirty(true);
 	}
 
 	float HudPanel::GetSelectedBlockNameFadeInFactor() const

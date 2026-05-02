@@ -667,6 +667,7 @@ namespace onion::voxel
 		glm::vec3 rayDirection = m_Camera->GetFront();
 
 		m_CurrentRaycastHit = Raycaster::Raycast(*m_WorldManager, rayOrigin, rayDirection, 10.0f, 500);
+		EngineContext::Get().LookedAtBlock = m_CurrentRaycastHit;
 
 		// ----- DROP ITEM -----
 		KeyState dropItemKeyState = m_KeyBinds.GetKeyState(eAction::DropItem);
@@ -1327,6 +1328,7 @@ namespace onion::voxel
 			m_WorldRenderer.DeleteChunkMeshes();
 
 			m_CurrentRaycastHit = std::nullopt; // Reset HitBlock
+			EngineContext::Get().LookedAtBlock = std::nullopt;
 
 			m_Gui.SetIsInGame(false);
 

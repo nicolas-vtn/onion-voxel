@@ -32,25 +32,34 @@ namespace onion::voxel
 		const glm::ivec2 textSize = m_Label.GetTextSize();
 		const glm::ivec2 size = {textSize.x + 2 * padding, textSize.y + 2 * padding};
 
-		// Flip to right-aligned when the tooltip would overflow the right edge of the screen.
-		// m_Position is always the anchor point (e.g. cursor tip) — the tooltip grows left when flipped.
-		const bool flipped = ((int) m_Position.x + size.x) > s_ScreenWidth;
-
 		glm::ivec2 center;
 		glm::vec2 labelPos;
 
-		if (!flipped)
+		if (m_Centered)
 		{
-			// Default: m_Position is left-center anchor
-			center = {(int) m_Position.x + size.x / 2, (int) m_Position.y};
-			labelPos = {m_Position.x + padding, m_Position.y};
+			// Centered mode: always horizontally centered on screen, m_Position.y is the vertical center.
+			center = {s_ScreenWidth / 2, (int) m_Position.y};
+			labelPos = {(float) (center.x - size.x / 2 + padding), m_Position.y};
 		}
 		else
 		{
-			// Flipped: m_Position is right-center anchor, tooltip grows leftward.
-			// Label is left-aligned from the left inner edge of the box.
-			center = {(int) m_Position.x - size.x / 2, (int) m_Position.y};
-			labelPos = {(float) (center.x - size.x / 2 + padding), m_Position.y};
+			// Flip to right-aligned when the tooltip would overflow the right edge of the screen.
+			// m_Position is always the anchor point (e.g. cursor tip) — the tooltip grows left when flipped.
+			const bool flipped = ((int) m_Position.x + size.x) > s_ScreenWidth;
+
+			if (!flipped)
+			{
+				// Default: m_Position is left-center anchor
+				center = {(int) m_Position.x + size.x / 2, (int) m_Position.y};
+				labelPos = {m_Position.x + padding, m_Position.y};
+			}
+			else
+			{
+				// Flipped: m_Position is right-center anchor, tooltip grows leftward.
+				// Label is left-aligned from the left inner edge of the box.
+				center = {(int) m_Position.x - size.x / 2, (int) m_Position.y};
+				labelPos = {(float) (center.x - size.x / 2 + padding), m_Position.y};
+			}
 		}
 
 		m_Background.SetPosition(center);
@@ -100,11 +109,43 @@ namespace onion::voxel
 	void Tooltip::SetPosition(const glm::vec2& position)
 	{
 		m_Position = position;
+		m_Centered = false;
 	}
 
 	glm::vec2 Tooltip::GetPosition() const
 	{
 		return m_Position;
+	}
+
+	void Tooltip::SetPositionCentered(const glm::vec2& position)
+	{
+		m_Position = position;
+		m_Centered = true;
+	}
+
+	glm::ivec2 Tooltip::GetInnerTopLeft()
+	{
+		const int padding = 12 * s_GuiScale;
+		m_Label.SetTextHeight(m_TextHeight);
+		const glm::ivec2 textSize = m_Label.GetTextSize();
+		const glm::ivec2 size = {textSize.x + 2 * padding, textSize.y + 2 * padding};
+
+		int left;
+		if (m_Centered)
+		{
+			left = s_ScreenWidth / 2 - size.x / 2;
+		}
+		else
+		{
+			const bool flipped = ((int) m_Position.x + size.x) > s_ScreenWidth;
+			if (!flipped)
+				left = (int) m_Position.x;
+			else
+				left = (int) m_Position.x - size.x;
+		}
+
+		const int top = (int) m_Position.y - size.y / 2;
+		return {left + padding, top + padding};
 	}
 
 	void Tooltip::SetTextHeight(float textHeight)
