@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <utility>
 #include <vector>
 
@@ -7,23 +8,35 @@
 
 namespace onion::voxel
 {
+	struct Slot
+	{
+		BlockId Id = BlockId::Air;
+		uint8_t Count = 0;
+
+		bool IsEmpty() const { return Id == BlockId::Air || Count == 0; }
+
+		friend bool operator==(const Slot&, const Slot&) = default;
+	};
+
+	static constexpr uint8_t k_MaxStackSize = 64;
+
 	class Inventory
 	{
 		// ----- Constructor / Destructor -----
 	  public:
 		Inventory(int rowsCount, int columnsCount) : m_Rows(rowsCount), m_Columns(columnsCount)
 		{
-			m_Data.resize(rowsCount * columnsCount, BlockId::Air);
+			m_Data.resize(rowsCount * columnsCount);
 		}
 
 		~Inventory() = default;
 
 		// ----- Public API -----
 	  public:
-		BlockId& At(int row, int column) { return m_Data[row * m_Columns + column]; }
-		const BlockId At(int row, int column) const { return m_Data[row * m_Columns + column]; }
-		BlockId& At(int index) { return m_Data[index]; }
-		const BlockId At(int index) const { return m_Data[index]; }
+		Slot& At(int row, int column) { return m_Data[row * m_Columns + column]; }
+		const Slot At(int row, int column) const { return m_Data[row * m_Columns + column]; }
+		Slot& At(int index) { return m_Data[index]; }
+		const Slot At(int index) const { return m_Data[index]; }
 
 		int& SelectedIndex() { return m_SelectedIndex; }
 		const int& SelectedIndex() const { return m_SelectedIndex; }
@@ -35,8 +48,8 @@ namespace onion::voxel
 			return {row, column};
 		}
 
-		std::vector<BlockId>& Content() { return m_Data; }
-		const std::vector<BlockId>& Content() const { return m_Data; }
+		std::vector<Slot>& Content() { return m_Data; }
+		const std::vector<Slot>& Content() const { return m_Data; }
 
 		int Rows() const { return m_Rows; }
 		int Columns() const { return m_Columns; }
@@ -46,7 +59,7 @@ namespace onion::voxel
 		int m_Rows;
 		int m_Columns;
 		int m_SelectedIndex = -1;
-		std::vector<BlockId> m_Data;
+		std::vector<Slot> m_Data;
 
 		// ----- Operators -----
 	  public:

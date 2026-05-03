@@ -7,6 +7,7 @@
 
 #include <renderer/OpenGL.hpp>
 
+#include <renderer/gui/controls/label/Label.hpp>
 #include <renderer/shader/shader.hpp>
 #include <renderer/texture/texture.hpp>
 #include <renderer/texture_atlas/TextureAtlas.hpp>
@@ -40,6 +41,9 @@ namespace onion::voxel
 		void SetSlotBorder(float border);
 		float GetSlotBorder() const;
 
+		/// @brief Sets the text height for the per-slot stack count label. Pass GuiElement::s_TextHeight.
+		void SetCountLabelTextHeight(float height);
+
 		void Delete();
 
 		uint32_t GetVertexCount() const;
@@ -69,6 +73,9 @@ namespace onion::voxel
 		glm::vec2 m_SlotSize{50.f, 50.f};	 // In pixels
 		glm::vec2 m_SlotPadding{10.f, 10.f}; // In pixels
 		float m_SlotBorder{4.f};			 // Inner border in pixels — block renders at slotSize - 2*border
+
+		Label m_CountLabel{"UiBlockMesh_CountLabel"};
+		float m_CountLabelTextHeight{16.f}; // Updated via SetCountLabelTextHeight
 
 		std::shared_ptr<TextureAtlas> m_TextureAtlas;
 

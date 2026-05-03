@@ -673,9 +673,15 @@ namespace onion::voxel
 		KeyState dropItemKeyState = m_KeyBinds.GetKeyState(eAction::DropItem);
 		if (dropItemKeyState.IsPressed)
 		{
-			// Set air as the selected Hotbar slot
-			hotbar.Content()[selectedSlot] = BlockId::Air;
-			player->SetHotbar(hotbar);
+			// Decrement count by 1; clear to Air if it reaches 0
+			Slot& selectedSlotRef = hotbar.At(selectedSlot);
+			if (!selectedSlotRef.IsEmpty())
+			{
+				selectedSlotRef.Count--;
+				if (selectedSlotRef.Count == 0)
+					selectedSlotRef = Slot{};
+				player->SetHotbar(hotbar);
+			}
 		}
 
 		// ----- PROCESS BLOCK DESTROY -----
@@ -697,43 +703,56 @@ namespace onion::voxel
 		if (interactKeyState.IsPressed && m_CurrentRaycastHit.has_value())
 		{
 			const Block& adjacentBlock = m_CurrentRaycastHit->AdjacentBlock;
-			BlockId placedId = hotbar.Content()[selectedSlot];
+			Slot& selectedSlotRef = hotbar.At(selectedSlot);
+			BlockId placedId = selectedSlotRef.Id;
 
-			// Resolve the correct variant based on player orientation and hit face.
-			PlacementContext ctx;
-			ctx.Id = placedId;
-			ctx.PlayerLookDir = m_Camera->GetFront();
-			ctx.HitFaceNormal = m_CurrentRaycastHit->HitFaceNormal;
-			ctx.HitPosition = m_CurrentRaycastHit->HitPosition;
-			ctx.HitBlock = m_CurrentRaycastHit->HitBlock;
-			ctx.PlacePosition = adjacentBlock.Position;
-			ctx.World = m_WorldManager.get();
-
-			PlacementResult placement = BlockPlacementResolver::Resolve(ctx);
-			uint8_t variantIndex = BlockstateRegistry::GetVariantIndex(placement.Id, placement.Properties);
-
-			Block blockToPlace = Block(placement.Position, BlockState(placement.Id, variantIndex));
-
-			bool isAir = m_WorldManager->GetBlock(placement.Position).ID == BlockId::Air;
-			bool collidesWithAnyPlayer = false;
-			for (const auto& [uuid, aPlayer] : m_WorldManager->GetAllPlayers())
+			if (placedId != BlockId::Air)
 			{
-				if (m_PhysicsEngine.IsPlayerCollidingWithBlock(aPlayer, blockToPlace.State, blockToPlace.Position))
+				// Resolve the correct variant based on player orientation and hit face.
+				PlacementContext ctx;
+				ctx.Id = placedId;
+				ctx.PlayerLookDir = m_Camera->GetFront();
+				ctx.HitFaceNormal = m_CurrentRaycastHit->HitFaceNormal;
+				ctx.HitPosition = m_CurrentRaycastHit->HitPosition;
+				ctx.HitBlock = m_CurrentRaycastHit->HitBlock;
+				ctx.PlacePosition = adjacentBlock.Position;
+				ctx.World = m_WorldManager.get();
+
+				PlacementResult placement = BlockPlacementResolver::Resolve(ctx);
+				uint8_t variantIndex = BlockstateRegistry::GetVariantIndex(placement.Id, placement.Properties);
+
+				Block blockToPlace = Block(placement.Position, BlockState(placement.Id, variantIndex));
+
+				bool isAir = m_WorldManager->GetBlock(placement.Position).ID == BlockId::Air;
+				bool collidesWithAnyPlayer = false;
+				for (const auto& [uuid, aPlayer] : m_WorldManager->GetAllPlayers())
 				{
-					collidesWithAnyPlayer = true;
-					break;
+					if (m_PhysicsEngine.IsPlayerCollidingWithBlock(aPlayer, blockToPlace.State, blockToPlace.Position))
+					{
+						collidesWithAnyPlayer = true;
+						break;
+					}
 				}
-			}
-			bool canPlace = (placement.IsPromotion || isAir) && !collidesWithAnyPlayer;
+				bool canPlace = (placement.IsPromotion || isAir) && !collidesWithAnyPlayer;
 
-			if (canPlace)
-			{
-				bool success = m_WorldManager->SetBlock(
-					blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
+				if (canPlace)
+				{
+					bool success = m_WorldManager->SetBlock(
+						blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
 
-				std::cout << "Attempting to place block at " << blockToPlace.Position.x << ", "
-						  << blockToPlace.Position.y << ", " << blockToPlace.Position.z
-						  << " - Success: " << (success ? "Yes" : "No") << std::endl;
+					std::cout << "Attempting to place block at " << blockToPlace.Position.x << ", "
+							  << blockToPlace.Position.y << ", " << blockToPlace.Position.z
+							  << " - Success: " << (success ? "Yes" : "No") << std::endl;
+
+					if (success)
+					{
+						// Decrement slot count; clear if reaches 0
+						selectedSlotRef.Count--;
+						if (selectedSlotRef.Count == 0)
+							selectedSlotRef = Slot{};
+						player->SetHotbar(hotbar);
+					}
+				}
 			}
 		}
 
@@ -745,7 +764,32 @@ namespace onion::voxel
 			std::cout << "Picking block at " << hitBlock.Position.x << ", " << hitBlock.Position.y << ", "
 					  << hitBlock.Position.z << " - Block : " << BlockIds::GetName(hitBlock.ID()) << std::endl;
 
-			hotbar.Content()[selectedSlot] = hitBlock.ID();
+			const BlockId pickedId = hitBlock.ID();
+
+			// Search for an existing slot with the same Id in the hotbar
+			int existingSlotIdx = -1;
+			for (int i = 0; i < hotbar.Rows() * hotbar.Columns(); ++i)
+			{
+				if (hotbar.At(i).Id == pickedId && !hotbar.At(i).IsEmpty())
+				{
+					existingSlotIdx = i;
+					break;
+				}
+			}
+
+			if (existingSlotIdx >= 0)
+			{
+				// Move selected index to that slot and increment count (up to max)
+				hotbar.SelectedIndex() = existingSlotIdx;
+				Slot& existSlot = hotbar.At(existingSlotIdx);
+				if (existSlot.Count < k_MaxStackSize)
+					existSlot.Count++;
+			}
+			else
+			{
+				// Replace current selected slot
+				hotbar.At(selectedSlot) = Slot{pickedId, 1};
+			}
 
 			player->SetHotbar(hotbar);
 		}

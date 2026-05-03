@@ -150,6 +150,7 @@ namespace onion::voxel
 		glm::vec2 firstSlotTopLeft = {s_ScreenWidth * firstSlotLeftXborderRatio,
 									  s_ScreenHeight * firstSlotTopYborderRatio};
 		m_UiBlockMesh->SetInventory(playerHotbar, slotSize, slotPadding);
+		m_UiBlockMesh->SetCountLabelTextHeight(s_TextHeight);
 		if (m_UiBlockMesh->IsDirty())
 		{
 			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
@@ -288,10 +289,10 @@ namespace onion::voxel
 		float textFadeStrength = GetSelectedBlockNameFadeInFactor();
 		if (textFadeStrength > 0.f)
 		{
-			BlockId selectedBlockId = playerHotbar.At(playerHotbar.SelectedIndex());
-			if (selectedBlockId != BlockId::Air)
-			{
-				std::string blockName = BlockIds::GetName(playerHotbar.At(playerHotbar.SelectedIndex()));
+		BlockId selectedBlockId = playerHotbar.At(playerHotbar.SelectedIndex()).Id;
+		if (selectedBlockId != BlockId::Air)
+		{
+			std::string blockName = BlockIds::GetName(playerHotbar.At(playerHotbar.SelectedIndex()).Id);
 				const float labelYposRatio = (812.f - 23.f) / 1009.f;
 				const float labelPosY = std::round(s_ScreenHeight * labelYposRatio);
 				m_SelectedBlockName_Label.SetText(blockName);
@@ -339,8 +340,8 @@ namespace onion::voxel
 				const glm::vec2 blockTopLeft = {(float) innerTopLeft.x, blockTopY};
 
 				// Update block mesh inventory.
-				Inventory wailaInv{1, 1};
-				wailaInv.Content()[0] = wailaBlockId;
+			Inventory wailaInv{1, 1};
+			wailaInv.Content()[0] = Slot{wailaBlockId, 1};
 				m_WailaBlockMesh->SetInventory(wailaInv, wailaSlotSize, {0.f, 0.f});
 				if (m_WailaBlockMesh->IsDirty())
 				{

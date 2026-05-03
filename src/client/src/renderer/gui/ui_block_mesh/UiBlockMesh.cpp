@@ -195,6 +195,35 @@ namespace onion::voxel
 			highlightOptions.ZOffset = 0.7f;
 			ColoredBackground::Render(highlightOptions);
 		}
+
+		// Render stack count labels (Count > 1 only)
+		const int rows = m_Inventory.Rows();
+		const int cols = m_Inventory.Columns();
+		const float textHeight = m_CountLabelTextHeight;
+		m_CountLabel.SetTextAlignment(Font::eTextAlignment::Right);
+		m_CountLabel.SetTextHeight(textHeight);
+		m_CountLabel.SetZOffset(0.75f);
+
+		for (int row = 0; row < rows; ++row)
+		{
+			for (int col = 0; col < cols; ++col)
+			{
+				const Slot& slot = m_Inventory.At(row, col);
+				if (slot.IsEmpty() || slot.Count <= 1)
+					continue;
+
+				// Bottom-right of slot, inset by a small margin
+				const float slotLeft = roundedPosition.x + col * (m_SlotSize.x + m_SlotPadding.x);
+				const float slotTop = roundedPosition.y + row * (m_SlotSize.y + m_SlotPadding.y);
+				// Right-align: position at the right edge of the slot with a small margin
+				const glm::vec2 labelPos = {slotLeft + m_SlotSize.x - m_SlotBorder,
+											slotTop + m_SlotSize.y - textHeight * 0.5f};
+
+				m_CountLabel.SetPosition(labelPos);
+				m_CountLabel.SetText(std::to_string(slot.Count));
+			m_CountLabel.Render();
+			}
+		}
 	}
 
 	void UiBlockMesh::SetInventory(const Inventory& inventory, const glm::vec2& slotSize, const glm::vec2& slotPadding)
@@ -209,6 +238,11 @@ namespace onion::voxel
 
 		// Override inventory selected index anyway
 		m_Inventory.SelectedIndex() = inventory.SelectedIndex();
+	}
+
+	void UiBlockMesh::SetCountLabelTextHeight(float height)
+	{
+		m_CountLabelTextHeight = height;
 	}
 
 	void UiBlockMesh::SetSlotBorder(float border)

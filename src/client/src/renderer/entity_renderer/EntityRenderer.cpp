@@ -793,8 +793,8 @@ namespace onion::voxel
 					Inventory hotbar = player->GetHotbar();
 
 					int nonEmpty = 0;
-					for (const BlockId id : hotbar.Content())
-						if (id != BlockId::Air)
+					for (const Slot& slot : hotbar.Content())
+						if (!slot.IsEmpty())
 							nonEmpty++;
 
 					int selectedSlot = hotbar.SelectedIndex();
@@ -804,13 +804,14 @@ namespace onion::voxel
 						player->SetHotbar(hotbar);
 					}
 
-					ImGui::Text("Selected ID:     %d", (int) hotbar.Content()[hotbar.SelectedIndex()]);
+					const Slot& selSlot = hotbar.Content()[hotbar.SelectedIndex()];
+					ImGui::Text("Selected ID:     %d  x%d", (int) selSlot.Id, (int) selSlot.Count);
 					ImGui::Text("Non-empty slots: %d / 9", nonEmpty);
 
 					if (ImGui::Button("Clear Hotbar"))
 					{
-						for (BlockId& id : hotbar.Content())
-							id = BlockId::Air;
+						for (Slot& slot : hotbar.Content())
+							slot = Slot{};
 						player->SetHotbar(hotbar);
 					}
 				}
@@ -826,16 +827,19 @@ namespace onion::voxel
 				{
 					Inventory inventory = player->GetPlayerInventory();
 					int used = 0;
-					for (const BlockId id : inventory.Content())
-						if (id != BlockId::Air)
+					for (const Slot& slot : inventory.Content())
+						if (!slot.IsEmpty())
 							used++;
 					ImGui::Text("Used slots: %d / 27", used);
 
 					if (ImGui::Button("Fill with Random Items"))
 					{
 						const int blockCount = BlockIds::GetBlockIdCount();
-						for (BlockId& id : inventory.Content())
-							id = static_cast<BlockId>(rand() % blockCount);
+						for (Slot& slot : inventory.Content())
+						{
+							slot.Id = static_cast<BlockId>(rand() % blockCount);
+							slot.Count = 1;
+						}
 						player->SetPlayerInventory(inventory);
 					}
 
@@ -843,8 +847,8 @@ namespace onion::voxel
 
 					if (ImGui::Button("Clear Inventory"))
 					{
-						for (BlockId& id : inventory.Content())
-							id = BlockId::Air;
+						for (Slot& slot : inventory.Content())
+							slot = Slot{};
 						player->SetPlayerInventory(inventory);
 					}
 				}

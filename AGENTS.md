@@ -49,6 +49,8 @@ To build without disturbing the VS cache, activate the MSVC x64 environment firs
 cmd /c "`"C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvarsall.bat`" amd64 && cmake --build out/build/x64-Debug 2>&1"
 ```
 
+> **Agent note:** The Visual Studio installation directory is `18`. The exact path is `C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvarsall.bat`.
+
 - `vcvarsall.bat amd64` matches the `msvc_x64_x64` environment VS uses — without it, the linker resolves x86 CRT/SDK libs and the build fails with hundreds of LNK2019 errors.
 - `cmake --build` drives Ninja against the existing cache; it never modifies `CMakeCache.txt`.
 - `2>&1` merges stderr so warnings and errors appear in one stream.

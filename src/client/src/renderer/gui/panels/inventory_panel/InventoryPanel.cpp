@@ -17,6 +17,20 @@ namespace
 		const std::string tooltipText = blockName + "\n" + line2;
 		return tooltipText;
 	}
+
+	// Merge src into dst (same Id assumed). Returns leftover count that didn't fit.
+	uint8_t MergeSlots(onion::voxel::Slot& dst, const onion::voxel::Slot& src)
+	{
+		using namespace onion::voxel;
+		int total = (int) dst.Count + (int) src.Count;
+		if (total > k_MaxStackSize)
+		{
+			dst.Count = k_MaxStackSize;
+			return static_cast<uint8_t>(total - k_MaxStackSize);
+		}
+		dst.Count = static_cast<uint8_t>(total);
+		return 0;
+	}
 } // namespace
 
 namespace onion::voxel
@@ -89,10 +103,12 @@ namespace onion::voxel
 
 		// Pool Inputs
 		const glm::vec2 cursorPosition{s_InputsSnapshot->Mouse.Xpos, s_InputsSnapshot->Mouse.Ypos};
-		const bool mouseDown = s_InputsSnapshot->Mouse.LeftButtonPressed;
-		const bool mouseClicked = (mouseDown && !m_WasMouseDown);
+		const bool mouseLeftDown = s_InputsSnapshot->Mouse.LeftButtonPressed;
+		const bool mouseRightDown = s_InputsSnapshot->Mouse.RightButtonPressed;
+		const bool mouseLeftClicked = (mouseLeftDown && !m_WasMouseLeftDown);
+		const bool mouseRightClicked = (mouseRightDown && !m_WasMouseRightDown);
 		const bool shiftDown = EngineContext::Get().Keys->GetKeyState(eAction::Sneak).IsPressed;
-		const bool shiftClicking = (shiftDown && mouseDown);
+		const bool shiftClicking = (shiftDown && mouseLeftDown);
 
 		// Retreve Player State
 		std::shared_ptr<Player> player = EngineContext::Get().GetLocalPlayer();
@@ -153,19 +169,75 @@ namespace onion::voxel
 		Inventory hotbar = player->GetHotbar();
 		if (hoveredHotbarSlotIndex >= 0)
 		{
-			if (mouseClicked && !shiftClicking)
+			Slot& hotbarSlot = hotbar.At(hoveredHotbarSlotIndex);
+			Slot& movedSlot = m_InventoryMovedItem.At(0);
+
+			if (mouseLeftClicked && !shiftClicking)
 			{
-				// Swap the hovered hotbar slot with the moved item slot
-				BlockId hotbarItem = hotbar.At(hoveredHotbarSlotIndex);
-				hotbar.At(hoveredHotbarSlotIndex) = m_InventoryMovedItem.At(0);
-				m_InventoryMovedItem.At(0) = hotbarItem;
+				// Left-click: swap, merge, or place
+				if (movedSlot.IsEmpty())
+				{
+					// Pick up the whole stack
+					std::swap(hotbarSlot, movedSlot);
+				}
+				else if (!hotbarSlot.IsEmpty() && hotbarSlot.Id == movedSlot.Id)
+				{
+					// Merge stacks
+					uint8_t leftover = MergeSlots(hotbarSlot, movedSlot);
+					movedSlot = leftover > 0 ? Slot{movedSlot.Id, leftover} : Slot{};
+				}
+				else
+				{
+					// Swap
+					std::swap(hotbarSlot, movedSlot);
+				}
+				player->SetHotbar(hotbar);
+			}
+			else if (mouseRightClicked && !shiftClicking)
+			{
+				// Right-click: place 1 or pick up half
+				if (movedSlot.IsEmpty())
+				{
+					// Pick up half (ceil)
+					if (!hotbarSlot.IsEmpty())
+					{
+						uint8_t half = static_cast<uint8_t>((hotbarSlot.Count + 1) / 2);
+						movedSlot = Slot{hotbarSlot.Id, half};
+						hotbarSlot.Count -= half;
+						if (hotbarSlot.Count == 0)
+							hotbarSlot = Slot{};
+					}
+				}
+				else
+				{
+					if (hotbarSlot.IsEmpty())
+					{
+						// Place 1
+						hotbarSlot = Slot{movedSlot.Id, 1};
+						movedSlot.Count--;
+						if (movedSlot.Count == 0)
+							movedSlot = Slot{};
+					}
+					else if (hotbarSlot.Id == movedSlot.Id && hotbarSlot.Count < k_MaxStackSize)
+					{
+						// Add 1
+						hotbarSlot.Count++;
+						movedSlot.Count--;
+						if (movedSlot.Count == 0)
+							movedSlot = Slot{};
+					}
+					else
+					{
+						// Swap
+						std::swap(hotbarSlot, movedSlot);
+					}
+				}
 				player->SetHotbar(hotbar);
 			}
 			else if (shiftClicking)
 			{
 				// If shift-clicking, move the hovered hotbar slot item to the inventory (first empty slot or same item stack)
-				BlockId hotbarItem = hotbar.At(hoveredHotbarSlotIndex);
-				if (hotbarItem != BlockId::Air)
+				if (!hotbarSlot.IsEmpty())
 				{
 					Inventory inventory = player->GetPlayerInventory();
 					bool movedToInventory = false;
@@ -173,22 +245,26 @@ namespace onion::voxel
 					// First try to move to an existing stack of the same item
 					for (int i = 0; i < inventory.Rows() * inventory.Columns(); ++i)
 					{
-						if (inventory.At(i) == hotbarItem)
+						Slot& invSlot = inventory.At(i);
+						if (invSlot.Id == hotbarSlot.Id && invSlot.Count < k_MaxStackSize)
 						{
-							inventory.At(i) = hotbarItem; // To be replaced by stacking later
+							uint8_t leftover = MergeSlots(invSlot, hotbarSlot);
+							hotbarSlot = leftover > 0 ? Slot{hotbarSlot.Id, leftover} : Slot{};
 							movedToInventory = true;
-							break;
+							if (hotbarSlot.IsEmpty())
+								break;
 						}
 					}
 
-					// If no existing stack, move to the first empty slot
-					if (!movedToInventory)
+					// If no existing stack (or partial), move to the first empty slot
+					if (!hotbarSlot.IsEmpty())
 					{
 						for (int i = 0; i < inventory.Rows() * inventory.Columns(); ++i)
 						{
-							if (inventory.At(i) == BlockId::Air)
+							if (inventory.At(i).IsEmpty())
 							{
-								inventory.At(i) = hotbarItem;
+								inventory.At(i) = hotbarSlot;
+								hotbarSlot = Slot{};
 								movedToInventory = true;
 								break;
 							}
@@ -197,15 +273,17 @@ namespace onion::voxel
 
 					if (movedToInventory)
 					{
-						hotbar.At(hoveredHotbarSlotIndex) = BlockId::Air;
 						player->SetHotbar(hotbar);
 						player->SetPlayerInventory(inventory);
 					}
 				}
 			}
 		}
+		// Preserve the real selected index before overwriting it for highlight rendering
+		const int hotbarRealSelectedIndex = player->GetHotbar().SelectedIndex();
 		hotbar.SelectedIndex() = hoveredHotbarSlotIndex;
 		m_HotbarBlockMesh->SetSlotBorder(slotBorder);
+		m_HotbarBlockMesh->SetCountLabelTextHeight(s_TextHeight);
 		m_HotbarBlockMesh->SetInventory(hotbar, slotSize, slotPadding);
 		if (m_HotbarBlockMesh->IsDirty())
 		{
@@ -225,40 +303,93 @@ namespace onion::voxel
 		Inventory inventory = player->GetPlayerInventory();
 		if (hoveredInventorySlotIndex >= 0)
 		{
-			if (mouseClicked && !shiftClicking)
+			Slot& invSlot = inventory.At(hoveredInventorySlotIndex);
+			Slot& movedSlot = m_InventoryMovedItem.At(0);
+
+			if (mouseLeftClicked && !shiftClicking)
 			{
-				// Swap the hovered inventory slot with the moved item slot
-				BlockId inventoryItem = inventory.At(hoveredInventorySlotIndex);
-				inventory.At(hoveredInventorySlotIndex) = m_InventoryMovedItem.At(0);
-				m_InventoryMovedItem.At(0) = inventoryItem;
+				// Left-click: swap, merge, or place
+				if (movedSlot.IsEmpty())
+				{
+					std::swap(invSlot, movedSlot);
+				}
+				else if (!invSlot.IsEmpty() && invSlot.Id == movedSlot.Id)
+				{
+					uint8_t leftover = MergeSlots(invSlot, movedSlot);
+					movedSlot = leftover > 0 ? Slot{movedSlot.Id, leftover} : Slot{};
+				}
+				else
+				{
+					std::swap(invSlot, movedSlot);
+				}
+				player->SetPlayerInventory(inventory);
+			}
+			else if (mouseRightClicked && !shiftClicking)
+			{
+				// Right-click: place 1 or pick up half
+				if (movedSlot.IsEmpty())
+				{
+					if (!invSlot.IsEmpty())
+					{
+						uint8_t half = static_cast<uint8_t>((invSlot.Count + 1) / 2);
+						movedSlot = Slot{invSlot.Id, half};
+						invSlot.Count -= half;
+						if (invSlot.Count == 0)
+							invSlot = Slot{};
+					}
+				}
+				else
+				{
+					if (invSlot.IsEmpty())
+					{
+						invSlot = Slot{movedSlot.Id, 1};
+						movedSlot.Count--;
+						if (movedSlot.Count == 0)
+							movedSlot = Slot{};
+					}
+					else if (invSlot.Id == movedSlot.Id && invSlot.Count < k_MaxStackSize)
+					{
+						invSlot.Count++;
+						movedSlot.Count--;
+						if (movedSlot.Count == 0)
+							movedSlot = Slot{};
+					}
+					else
+					{
+						std::swap(invSlot, movedSlot);
+					}
+				}
 				player->SetPlayerInventory(inventory);
 			}
 			else if (shiftClicking)
 			{
 				// If shift-clicking, move the hovered inventory slot item to the hotbar (first empty slot or same item stack)
-				BlockId inventoryItem = inventory.At(hoveredInventorySlotIndex);
-				if (inventoryItem != BlockId::Air)
+				if (!invSlot.IsEmpty())
 				{
 					Inventory tmpHotbar = player->GetHotbar();
 					bool movedToHotbar = false;
 					// First try to move to an existing stack of the same item
 					for (int i = 0; i < tmpHotbar.Rows() * tmpHotbar.Columns(); ++i)
 					{
-						if (tmpHotbar.At(i) == inventoryItem)
+						Slot& hSlot = tmpHotbar.At(i);
+						if (hSlot.Id == invSlot.Id && hSlot.Count < k_MaxStackSize)
 						{
-							tmpHotbar.At(i) = inventoryItem; // To be replaced by stacking later
+							uint8_t leftover = MergeSlots(hSlot, invSlot);
+							invSlot = leftover > 0 ? Slot{invSlot.Id, leftover} : Slot{};
 							movedToHotbar = true;
-							break;
+							if (invSlot.IsEmpty())
+								break;
 						}
 					}
-					// If no existing stack, move to the first empty slot
-					if (!movedToHotbar)
+					// If no existing stack (or partial), move to the first empty slot
+					if (!invSlot.IsEmpty())
 					{
 						for (int i = 0; i < tmpHotbar.Rows() * tmpHotbar.Columns(); ++i)
 						{
-							if (tmpHotbar.At(i) == BlockId::Air)
+							if (tmpHotbar.At(i).IsEmpty())
 							{
-								tmpHotbar.At(i) = inventoryItem;
+								tmpHotbar.At(i) = invSlot;
+								invSlot = Slot{};
 								movedToHotbar = true;
 								break;
 							}
@@ -266,7 +397,6 @@ namespace onion::voxel
 					}
 					if (movedToHotbar)
 					{
-						inventory.At(hoveredInventorySlotIndex) = BlockId::Air;
 						player->SetPlayerInventory(inventory);
 						player->SetHotbar(tmpHotbar);
 					}
@@ -275,6 +405,7 @@ namespace onion::voxel
 		}
 		inventory.SelectedIndex() = hoveredInventorySlotIndex;
 		m_InventoryBlockMesh->SetSlotBorder(slotBorder);
+		m_InventoryBlockMesh->SetCountLabelTextHeight(s_TextHeight);
 		m_InventoryBlockMesh->SetInventory(inventory, slotSize, slotPadding);
 		if (m_InventoryBlockMesh->IsDirty())
 		{
@@ -369,18 +500,36 @@ namespace onion::voxel
 		{
 			if (startIndex + i < static_cast<int>(m_FilteredCreativeTabBlockIds.size()))
 			{
-				m_CreativeTabInventory.At(i) = m_FilteredCreativeTabBlockIds[startIndex + i];
+				// Creative tab always shows single-item slots (display only)
+				m_CreativeTabInventory.At(i) = Slot{m_FilteredCreativeTabBlockIds[startIndex + i], 1};
 			}
 			else
 			{
-				m_CreativeTabInventory.At(i) = BlockId::Air; // Empty slot
+				m_CreativeTabInventory.At(i) = Slot{}; // Empty slot
 			}
 		}
 
-		if (m_CreativeTabInventory.SelectedIndex() >= 0 && mouseClicked)
+		if (hoveredCreativeSlotIndex >= 0 && mouseLeftClicked)
 		{
-			// Pick the item if clicked
-			m_InventoryMovedItem.At(0) = m_CreativeTabInventory.At(m_CreativeTabInventory.SelectedIndex());
+			const BlockId clickedId = m_CreativeTabInventory.At(hoveredCreativeSlotIndex).Id;
+			Slot& movedSlot = m_InventoryMovedItem.At(0);
+
+			if (shiftDown)
+			{
+				// Shift+click: pick full stack
+				movedSlot = Slot{clickedId, k_MaxStackSize};
+			}
+			else if (!movedSlot.IsEmpty() && movedSlot.Id == clickedId)
+			{
+				// Same block clicked again: increment up to max
+				if (movedSlot.Count < k_MaxStackSize)
+					movedSlot.Count++;
+			}
+			else
+			{
+				// Different block or empty moved slot: drop current, pick 1 of new
+				movedSlot = Slot{clickedId, 1};
+			}
 		}
 
 		m_CreativeBlockMesh->SetSlotBorder(slotBorder);
@@ -503,7 +652,7 @@ namespace onion::voxel
 		m_CraftingOutputBlockMesh->Render(craftingOutputSlotTopLeft, s_ScreenWidth, s_ScreenHeight);
 
 		// ----- Render Moved Item Slot (the item being moved by the cursor) -----
-		if (m_InventoryMovedItem.At(0) != BlockId::Air)
+		if (!m_InventoryMovedItem.At(0).IsEmpty())
 		{
 			const glm::vec2 movedItemSlotPos = cursorPosition - (slotSize / 2.f);
 
@@ -521,8 +670,9 @@ namespace onion::voxel
 			glClear(GL_DEPTH_BUFFER_BIT);
 			glDisable(GL_SCISSOR_TEST);
 
-			m_MovedItemBlockMesh->SetSlotBorder(slotBorder);
-			m_MovedItemBlockMesh->SetInventory(m_InventoryMovedItem, slotSize, slotPadding);
+		m_MovedItemBlockMesh->SetSlotBorder(slotBorder);
+		m_MovedItemBlockMesh->SetCountLabelTextHeight(s_TextHeight);
+		m_MovedItemBlockMesh->SetInventory(m_InventoryMovedItem, slotSize, slotPadding);
 			if (m_MovedItemBlockMesh->IsDirty())
 			{
 				auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
@@ -537,17 +687,22 @@ namespace onion::voxel
 		// ---- Tooltip Rendering for Hotbar (if needed) ----
 		if (hoveredHotbarSlotIndex != -1)
 		{
-			BlockId hoveredBlockId = hotbar.At(hoveredHotbarSlotIndex);
-			if (hoveredBlockId != BlockId::Air) // Only show tooltip for non-empty slots
+			const Slot& hoveredSlot = hotbar.At(hoveredHotbarSlotIndex);
+			if (!hoveredSlot.IsEmpty()) // Only show tooltip for non-empty slots
 			{
 				if (dropKeyPressed)
 				{
-					hotbar.At(hoveredHotbarSlotIndex) = BlockId::Air; // Simulate dropping the item by clearing the slot
-					player->SetHotbar(hotbar); // Update the player's hotbar with the modified inventory
+					// Decrement count; clear if reaches 0
+					Slot& mutableSlot = hotbar.At(hoveredHotbarSlotIndex);
+					mutableSlot.Count--;
+					if (mutableSlot.Count == 0)
+						mutableSlot = Slot{};
+					hotbar.SelectedIndex() = hotbarRealSelectedIndex; // Don't change the selected index
+					player->SetHotbar(hotbar);
 				}
 				else
 				{
-					const std::string tooltipText = BuildTooltipText(hoveredBlockId);
+					const std::string tooltipText = BuildTooltipText(hoveredSlot.Id);
 					m_Tooltip.SetText(tooltipText);
 					m_Tooltip.SetTextHeight(s_TextHeight);
 					m_Tooltip.SetPosition(cursorPosition);
@@ -559,17 +714,20 @@ namespace onion::voxel
 		// ---- Tooltip Rendering for Inventory (if needed) ----
 		if (hoveredInventorySlotIndex != -1)
 		{
-			BlockId hoveredBlockId = inventory.At(hoveredInventorySlotIndex);
-			if (hoveredBlockId != BlockId::Air) // Only show tooltip for non-empty slots
+			const Slot& hoveredSlot = inventory.At(hoveredInventorySlotIndex);
+			if (!hoveredSlot.IsEmpty()) // Only show tooltip for non-empty slots
 			{
 				if (dropKeyPressed)
 				{
-					inventory.At(hoveredInventorySlotIndex) = BlockId::Air; // Clear the slot
-					player->SetPlayerInventory(inventory); // Update the player's inventory with the modified inventory
+					Slot& mutableSlot = inventory.At(hoveredInventorySlotIndex);
+					mutableSlot.Count--;
+					if (mutableSlot.Count == 0)
+						mutableSlot = Slot{};
+					player->SetPlayerInventory(inventory);
 				}
 				else
 				{
-					const std::string tooltipText = BuildTooltipText(hoveredBlockId);
+					const std::string tooltipText = BuildTooltipText(hoveredSlot.Id);
 					m_Tooltip.SetText(tooltipText);
 					m_Tooltip.SetTextHeight(s_TextHeight);
 					m_Tooltip.SetPosition(cursorPosition);
@@ -581,10 +739,10 @@ namespace onion::voxel
 		// ---- Tooltip Rendering for Creative Tab (if needed) ----
 		if (hoveredCreativeSlotIndex != -1)
 		{
-			BlockId hoveredBlockId = m_CreativeTabInventory.At(hoveredCreativeSlotIndex);
-			if (hoveredBlockId != BlockId::Air) // Only show tooltip for non-empty slots
+			const Slot& hoveredSlot = m_CreativeTabInventory.At(hoveredCreativeSlotIndex);
+			if (!hoveredSlot.IsEmpty()) // Only show tooltip for non-empty slots
 			{
-				const std::string tooltipText = BuildTooltipText(hoveredBlockId);
+				const std::string tooltipText = BuildTooltipText(hoveredSlot.Id);
 				m_Tooltip.SetText(tooltipText);
 				m_Tooltip.SetTextHeight(s_TextHeight);
 				m_Tooltip.SetPosition(cursorPosition);
@@ -593,7 +751,8 @@ namespace onion::voxel
 		}
 
 		// Update Inputs
-		m_WasMouseDown = mouseDown;
+		m_WasMouseLeftDown = mouseLeftDown;
+		m_WasMouseRightDown = mouseRightDown;
 	}
 
 	void InventoryPanel::Initialize()
@@ -743,7 +902,7 @@ namespace onion::voxel
 
 	void InventoryPanel::ClosePanel()
 	{
-		m_InventoryMovedItem.At(0) = BlockId::Air; // Clear the moved item when closing the panel
+		m_InventoryMovedItem.At(0) = Slot{}; // Clear the moved item when closing the panel
 
 		EvtRequestBackNavigation.Trigger(this);
 	}

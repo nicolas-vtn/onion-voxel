@@ -592,9 +592,9 @@ namespace onion::voxel
 		{
 			for (int col = 0; col < cols; ++col)
 			{
-				const BlockId blockId = inventory.At(row, col);
-				if (blockId == BlockId::Air)
-					continue;
+			const BlockId blockId = inventory.At(row, col).Id;
+			if (blockId == BlockId::Air)
+				continue;
 
 				// Slot top-left in normalized screen space
 				const float slotX = col * (slotSize.x + slotPadding.x);
