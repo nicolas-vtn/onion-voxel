@@ -9,6 +9,8 @@
 #include <renderer/assets_manager/AssetsManager.hpp>
 #include <renderer/debug_draws/DebugDraws.hpp>
 
+#include <shared/entities/entity/block_entity/BlockEntity.hpp>
+
 namespace onion::voxel
 {
 	EntityRenderer::EntityRenderer(const std::shared_ptr<Camera>& camera)
@@ -66,11 +68,16 @@ namespace onion::voxel
 		// Render DEBUG
 
 		if (EngineContext::Get().ShowDebugMenus)
-			RenderPlayerDebugPanel();
+			RenderEntityRendererPanel();
 
 		if (m_RenderPlayerBoundingBoxes)
 		{
 			RenderPlayersBoundingBoxes();
+		}
+
+		if (m_RenderDroppedItemBoundingBoxes)
+		{
+			RenderDroppedItemBoundingBoxes();
 		}
 
 		// Delete the textures that are in the deletion queue
@@ -656,6 +663,36 @@ namespace onion::voxel
 		m_VerticesEntities.insert(m_VerticesEntities.end(), tmpVertices.begin(), tmpVertices.end());
 	}
 
+	void EntityRenderer::RenderEntityRendererPanel()
+	{
+		ImGui::Begin("Entity Renderer");
+
+		ImGui::Checkbox("Player Debug Panel", &m_RenderPlayerDebugPanel);
+		ImGui::Checkbox("Render Player Boxes", &m_RenderPlayerBoundingBoxes);
+		ImGui::Checkbox("Render Dropped Item Boxes", &m_RenderDroppedItemBoundingBoxes);
+
+		ImGui::End();
+
+		if (m_RenderPlayerDebugPanel)
+			RenderPlayerDebugPanel();
+	}
+
+	void EntityRenderer::RenderDroppedItemBoundingBoxes()
+	{
+		const auto entities = EngineContext::Get().World->GetAllEntities();
+
+		for (const auto& entity : entities)
+		{
+			if (!entity || entity->Type != EntityType::Block)
+				continue;
+
+			const glm::vec3 pos = entity->GetPosition();
+			const glm::vec3 centerPos = pos + glm::vec3(0.f, BlockEntity::Size.y * 0.5f, 0.f);
+			DebugDraws::DrawWorldBoxCenterSize(
+				centerPos, BlockEntity::Size, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), 2, false);
+		}
+	}
+
 	void EntityRenderer::RenderPlayerDebugPanel()
 	{
 		std::shared_ptr<Player> player = EngineContext::Get().GetLocalPlayer();
@@ -664,8 +701,6 @@ namespace onion::voxel
 
 		// Global Options
 		ImGui::Text("Global Options");
-
-		ImGui::Checkbox("Render Player Boxes", &m_RenderPlayerBoundingBoxes);
 
 		ImGui::Separator();
 

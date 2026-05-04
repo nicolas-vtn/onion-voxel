@@ -78,6 +78,9 @@ namespace onion::voxel
 		std::shared_ptr<Player> LoadPlayer(const std::string& playerUUID);
 		void RemovePlayer(const std::string& playerUUID);
 
+		void AddEntity(const std::shared_ptr<Entity>& entity);
+		bool RemoveEntity(const std::string& uuid);
+
 		void RequestAllMissingChunks();
 
 		void UpdateBlock(const glm::ivec3& worldPosition, bool propagateToNeighbors);

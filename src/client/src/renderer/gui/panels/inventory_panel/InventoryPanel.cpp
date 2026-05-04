@@ -670,9 +670,9 @@ namespace onion::voxel
 			glClear(GL_DEPTH_BUFFER_BIT);
 			glDisable(GL_SCISSOR_TEST);
 
-		m_MovedItemBlockMesh->SetSlotBorder(slotBorder);
-		m_MovedItemBlockMesh->SetCountLabelTextHeight(s_TextHeight);
-		m_MovedItemBlockMesh->SetInventory(m_InventoryMovedItem, slotSize, slotPadding);
+			m_MovedItemBlockMesh->SetSlotBorder(slotBorder);
+			m_MovedItemBlockMesh->SetCountLabelTextHeight(s_TextHeight);
+			m_MovedItemBlockMesh->SetInventory(m_InventoryMovedItem, slotSize, slotPadding);
 			if (m_MovedItemBlockMesh->IsDirty())
 			{
 				auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
@@ -694,11 +694,13 @@ namespace onion::voxel
 				{
 					// Decrement count; clear if reaches 0
 					Slot& mutableSlot = hotbar.At(hoveredHotbarSlotIndex);
+					Slot droppedSlot{mutableSlot.Id, 1};
 					mutableSlot.Count--;
 					if (mutableSlot.Count == 0)
 						mutableSlot = Slot{};
 					hotbar.SelectedIndex() = hotbarRealSelectedIndex; // Don't change the selected index
 					player->SetHotbar(hotbar);
+					EvtItemDropped.Trigger(droppedSlot);
 				}
 				else
 				{
@@ -720,10 +722,12 @@ namespace onion::voxel
 				if (dropKeyPressed)
 				{
 					Slot& mutableSlot = inventory.At(hoveredInventorySlotIndex);
+					Slot droppedSlot{mutableSlot.Id, 1};
 					mutableSlot.Count--;
 					if (mutableSlot.Count == 0)
 						mutableSlot = Slot{};
 					player->SetPlayerInventory(inventory);
+					EvtItemDropped.Trigger(droppedSlot);
 				}
 				else
 				{

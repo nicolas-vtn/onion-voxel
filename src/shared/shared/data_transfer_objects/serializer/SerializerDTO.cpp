@@ -368,11 +368,31 @@ namespace onion::voxel
 			dto.Hotbar = SerializeInventory(entity.GetHotbar());
 		if (entity.HasPlayerInventory())
 			dto.Inventory = SerializeInventory(entity.GetPlayerInventory());
+
+		// BlockEntity-specific serialization
+		if (entity.Type == EntityType::Block)
+		{
+			const auto& blockEntity = static_cast<const BlockEntity&>(entity);
+			dto.DroppedSlot = blockEntity.GetSlot();
+			dto.Lifetime = blockEntity.GetLifetime();
+		}
+
 		return dto;
 	}
 
 	std::shared_ptr<Entity> SerializerDTO::DeserializeEntity(const EntityDTO& dto)
 	{
+		if (static_cast<EntityType>(dto.Type) == EntityType::Block)
+		{
+			auto blockEntity = std::make_shared<BlockEntity>(dto.UUID);
+			blockEntity->SetState(static_cast<Entity::State>(dto.State));
+			ApplyEntityDTO(dto, blockEntity);
+			if (dto.DroppedSlot.has_value())
+				blockEntity->SetSlot(*dto.DroppedSlot);
+			blockEntity->SetLifetime(dto.Lifetime);
+			return blockEntity;
+		}
+
 		auto entity = std::make_shared<Entity>(static_cast<EntityType>(dto.Type), dto.UUID);
 		entity->SetState(static_cast<Entity::State>(dto.State));
 		ApplyEntityDTO(dto, entity);

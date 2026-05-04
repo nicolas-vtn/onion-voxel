@@ -1,8 +1,14 @@
 #include "Server.hpp"
 
+#include <cmath>
 #include <iostream>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <shared/data_transfer_objects/serializer/SerializerDTO.hpp>
+#include <shared/entities/entity/block_entity/BlockEntity.hpp>
 #include <shared/utils/Utils.hpp>
 
 namespace onion::voxel
@@ -51,6 +57,7 @@ namespace onion::voxel
 	void Server::Start()
 	{
 		m_TimerSendEvents.Start();
+		m_TimerPhysicsTick.Start();
 		m_NetworkServer.Start();
 		m_IsRunning.store(true);
 	}
@@ -58,6 +65,7 @@ namespace onion::voxel
 	void Server::Stop()
 	{
 		m_TimerSendEvents.Stop();
+		m_TimerPhysicsTick.Stop();
 		m_NetworkServer.Stop();
 		m_IsRunning.store(false);
 	}
@@ -93,13 +101,20 @@ namespace onion::voxel
 		m_WorldManager->SetChunkPersistanceDistance(m_Config.serverData.SimulationDistance);
 		m_WorldManager->SetChunkLoadingDistance(m_Config.serverData.SimulationDistance);
 
+		m_PhysicsEngine = std::make_unique<PhysicsEngine>(*m_WorldManager);
+
 		SubscribeToNetworkServerEvents();
 		SubscribeToWorldManagerEvents();
 
-		// Setup Timer
+		// Setup send-events timer (100 ms)
 		m_TimerSendEvents.setTimeoutFunction([this]() { Handle_TimerSendEvents(); });
 		std::chrono::milliseconds defaultElapsedPeriod(100);
 		m_TimerSendEvents.setElapsedPeriod(defaultElapsedPeriod);
+
+		// Setup physics tick timer (50 ms = 20 Hz)
+		m_LastPhysicsTick = std::chrono::steady_clock::now();
+		m_TimerPhysicsTick.setTimeoutFunction([this]() { Handle_TimerPhysicsTick(); });
+		m_TimerPhysicsTick.setElapsedPeriod(std::chrono::milliseconds(50));
 	}
 
 	void Server::LoadConfiguration()
@@ -177,6 +192,10 @@ namespace onion::voxel
 				else if constexpr (std::is_same_v<T, BlocksChangedMsg>)
 				{
 					Handle_BlocksChangedMsgReceived(args, msg);
+				}
+				else if constexpr (std::is_same_v<T, ItemDroppedMsg>)
+				{
+					Handle_ItemDroppedMsgReceived(args, msg);
 				}
 				else
 				{
@@ -279,6 +298,77 @@ namespace onion::voxel
 		}
 
 		m_WorldManager->SetBlocks(changedBlocks, WorldManager::BlocksChangedEventArgs::eOrigin::ClientRequest, true);
+	}
+
+	void Server::Handle_ItemDroppedMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
+											   const ItemDroppedMsg& msg)
+	{
+		// Resolve sender's player
+		std::string playerUUID;
+		{
+			std::shared_lock lock(m_MutexPlayers);
+			auto it = m_ClientHandleToPlayerInfo.find(args.Sender);
+			if (it == m_ClientHandleToPlayerInfo.end())
+				return;
+			playerUUID = it->second.UUID;
+		}
+
+		std::shared_ptr<Player> player = m_WorldManager->GetPlayer(playerUUID);
+		if (!player)
+			return;
+
+		// Spawn position: player head (eye position)
+		const glm::vec3 spawnPos = player->GetEyePosition();
+
+		// Initial velocity: forward direction * 5 m/s + small upward nudge
+		const glm::vec3 forward = player->GetFacing();
+		const glm::vec3 initialVelocity = forward * 5.f + glm::vec3(0.f, 2.f, 0.f);
+
+		// Create the BlockEntity
+		auto blockEntity = std::make_shared<BlockEntity>(Utils::GenerateUUID());
+		blockEntity->SetSlot(Slot{static_cast<BlockId>(msg.BlockId), msg.Count});
+
+		Transform t = blockEntity->GetTransform();
+		t.Position = spawnPos;
+		blockEntity->SetTransform(t);
+
+		PhysicsBody pb = blockEntity->GetPhysicsBody();
+		pb.Velocity = initialVelocity;
+		blockEntity->SetPhysicsBody(pb);
+
+		m_WorldManager->AddEntity(blockEntity);
+
+		std::cout << "Spawned BlockEntity UUID=" << blockEntity->UUID << " for player " << playerUUID << "\n";
+	}
+
+	void Server::Handle_TimerPhysicsTick()
+	{
+		// Compute delta time
+		auto now = std::chrono::steady_clock::now();
+		float deltaTime = std::chrono::duration<float>(now - m_LastPhysicsTick).count();
+		m_LastPhysicsTick = now;
+
+		// Update physics for all entities (includes BlockEntities)
+		m_PhysicsEngine->Update(deltaTime);
+
+		// Tick lifetimes and remove expired BlockEntities
+		auto entities = m_WorldManager->GetAllEntities();
+		std::vector<std::string> toRemove;
+		for (const auto& entity : entities)
+		{
+			if (entity->Type == EntityType::Block)
+			{
+				auto blockEntity = std::static_pointer_cast<BlockEntity>(entity);
+				blockEntity->DecrementLifetime(deltaTime);
+				if (blockEntity->IsExpired())
+					toRemove.push_back(entity->UUID);
+			}
+		}
+		for (const auto& uuid : toRemove)
+		{
+			m_WorldManager->RemoveEntity(uuid);
+			std::cout << "Despawned expired BlockEntity UUID=" << uuid << "\n";
+		}
 	}
 
 	void Server::Handle_ClientConnected(const NetworkServer::ClientConnectedEventArgs& args)

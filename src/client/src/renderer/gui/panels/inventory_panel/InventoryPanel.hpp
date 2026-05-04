@@ -28,6 +28,7 @@ namespace onion::voxel
 		// ----- Public Events -----
 	  public:
 		Event<const GuiElement*> EvtRequestBackNavigation;
+		Event<Slot> EvtItemDropped;
 
 		// ----- Controls -----
 	  private:

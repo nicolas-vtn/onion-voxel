@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <shared/data_transfer_objects/serializer/SerializerDTO.hpp>
+#include <shared/network_messages/item_dropped_msg/ItemDroppedMsg.hpp>
 #include <shared/utils/Utils.hpp>
 
 namespace onion::voxel
@@ -249,6 +250,9 @@ namespace onion::voxel
 
 		m_RendererEventHandles.push_back(m_Renderer.EvtRenderDistanceChanged.Subscribe(
 			[this](uint8_t renderDistance) { Handle_RenderDistanceChanged(renderDistance); }));
+
+		m_RendererEventHandles.push_back(
+			m_Renderer.EvtItemDropped.Subscribe([this](const Slot& slot) { Handle_ItemDropped(slot); }));
 	}
 
 	void Client::Handle_RenderDistanceChanged(uint8_t renderDistance)
@@ -257,6 +261,17 @@ namespace onion::voxel
 		{
 			m_LocalhostServer->SetChunkLoadingDistance(renderDistance);
 		}
+	}
+
+	void Client::Handle_ItemDropped(const Slot& slot)
+	{
+		if (!m_NetworkClient.IsRunning())
+			return;
+
+		ItemDroppedMsg msg;
+		msg.BlockId = static_cast<uint16_t>(slot.Id);
+		msg.Count = slot.Count;
+		m_NetworkClient.Send(std::move(msg), true);
 	}
 
 	void Client::SubscribeToNetworkClientEvents()

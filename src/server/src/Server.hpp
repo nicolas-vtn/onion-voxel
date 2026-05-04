@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <shared_mutex>
 #include <string>
 #include <thread>
@@ -11,6 +12,7 @@
 #include "ServerConfiguration.hpp"
 #include "network_server/NetworkServer.hpp"
 
+#include <shared/physics/PhysicsEngine.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
 namespace onion::voxel
@@ -66,6 +68,8 @@ namespace onion::voxel
 												   const RequestChunksMsg& msg);
 		void Handle_BlocksChangedMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
 											 const BlocksChangedMsg& msg);
+		void Handle_ItemDroppedMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
+										   const ItemDroppedMsg& msg);
 
 		// ----- World Manager / Generation -----
 	  private:
@@ -77,11 +81,20 @@ namespace onion::voxel
 		void Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk);
 		void Handle_BlocksChanged(const WorldManager::BlocksChangedEventArgs& args);
 
+		// ----- Physics Engine -----
+	  private:
+		std::unique_ptr<PhysicsEngine> m_PhysicsEngine;
+
 		// ----- Timer Send Events -----
 	  private:
 		Timer m_TimerSendEvents;
-
 		void Handle_TimerSendEvents();
+
+		// ----- Timer Physics Tick -----
+	  private:
+		Timer m_TimerPhysicsTick;
+		std::chrono::steady_clock::time_point m_LastPhysicsTick;
+		void Handle_TimerPhysicsTick();
 
 		// ----- Players -----
 	  private:

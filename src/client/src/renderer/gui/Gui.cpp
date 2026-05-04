@@ -159,6 +159,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_InventoryPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
 																					 { Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(
+			m_InventoryPanel.EvtItemDropped.Subscribe([this](const Slot& slot) { EvtItemDropped.Trigger(slot); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)

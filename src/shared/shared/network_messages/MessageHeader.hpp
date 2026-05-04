@@ -22,7 +22,8 @@ namespace onion::voxel
 			RequestChunks,
 			EntitySnapshot,
 			ServerMOTD,
-			RequestMotd
+			RequestMotd,
+			ItemDropped
 		};
 
 		eType Type = eType::None;

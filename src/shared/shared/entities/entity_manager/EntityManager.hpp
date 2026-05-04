@@ -28,6 +28,8 @@ namespace onion::voxel
 		glm::ivec3 GetPlayerPosition(const std::string& uuid) const;
 		std::unordered_map<std::string, glm::vec3> GetAllPlayersPosition() const;
 		void SetPlayerPosition(const std::string& uuid, const glm::vec3& newPosition);
+		void AddEntity(const std::shared_ptr<Entity>& entity);
+		bool RemoveEntity(const std::string& uuid);
 		void UpdateEntities(const std::vector<std::shared_ptr<Entity>>& entities);
 
 		void ClearAllEntities();

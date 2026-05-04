@@ -17,8 +17,8 @@
 #include <shared/entities/entity_manager/EntityManager.hpp>
 #include <shared/http_file_downloader/HttpFileDownloader.hpp>
 
-#include "cuboid.hpp"
 #include "TextureTileMapper.hpp"
+#include "cuboid.hpp"
 #include "skeleton/SkeletonPlayer.hpp"
 
 namespace onion::voxel
@@ -139,9 +139,13 @@ namespace onion::voxel
 
 		// ------- DEBUG RENDERING -------
 	  private:
+		void RenderEntityRendererPanel();
 		void RenderPlayerDebugPanel();
+		void RenderDroppedItemBoundingBoxes();
 
+		bool m_RenderPlayerDebugPanel{false};
 		bool m_RenderPlayerBoundingBoxes{true};
+		bool m_RenderDroppedItemBoundingBoxes{false};
 		void RenderPlayersBoundingBoxes();
 
 		// ------- ENUMS -------

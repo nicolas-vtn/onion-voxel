@@ -1,5 +1,6 @@
 #include "EntityManager.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 
 namespace onion::voxel
@@ -89,6 +90,34 @@ namespace onion::voxel
 		{
 			throw std::runtime_error("Player with UUID " + uuid + " not found.");
 		}
+	}
+
+	void EntityManager::AddEntity(const std::shared_ptr<Entity>& entity)
+	{
+		std::unique_lock lock(m_MutexEntities);
+		// Check for duplicate UUID
+		auto it = std::find_if(m_Entities.begin(),
+							   m_Entities.end(),
+							   [&entity](const std::shared_ptr<Entity>& e) { return e->UUID == entity->UUID; });
+		if (it != m_Entities.end())
+		{
+			throw std::runtime_error("Entity with UUID " + entity->UUID + " already exists.");
+		}
+		m_Entities.push_back(entity);
+	}
+
+	bool EntityManager::RemoveEntity(const std::string& uuid)
+	{
+		std::unique_lock lock(m_MutexEntities);
+		auto it = std::find_if(m_Entities.begin(),
+							   m_Entities.end(),
+							   [&uuid](const std::shared_ptr<Entity>& e) { return e->UUID == uuid; });
+		if (it != m_Entities.end())
+		{
+			m_Entities.erase(it);
+			return true;
+		}
+		return false;
 	}
 
 	void EntityManager::UpdateEntities(const std::vector<std::shared_ptr<Entity>>& entities)

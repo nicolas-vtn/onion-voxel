@@ -101,6 +101,16 @@ namespace onion::voxel
 		m_EntityManager->RemovePlayer(playerUUID);
 	}
 
+	void WorldManager::AddEntity(const std::shared_ptr<Entity>& entity)
+	{
+		m_EntityManager->AddEntity(entity);
+	}
+
+	bool WorldManager::RemoveEntity(const std::string& uuid)
+	{
+		return m_EntityManager->RemoveEntity(uuid);
+	}
+
 	void WorldManager::AddChunk(const std::shared_ptr<Chunk> chunk)
 	{
 		std::unique_lock lock(m_MutexChunks);

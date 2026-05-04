@@ -677,10 +677,12 @@ namespace onion::voxel
 			Slot& selectedSlotRef = hotbar.At(selectedSlot);
 			if (!selectedSlotRef.IsEmpty())
 			{
+				Slot droppedSlot{selectedSlotRef.Id, 1};
 				selectedSlotRef.Count--;
 				if (selectedSlotRef.Count == 0)
 					selectedSlotRef = Slot{};
 				player->SetHotbar(hotbar);
+				EvtItemDropped.Trigger(droppedSlot);
 			}
 		}
 
@@ -1325,6 +1327,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_Gui.EvtUserSettingsChanged.Subscribe([this](const UserSettingsChangedEventArgs& args)
 																		{ Handle_UserSettingsChanged(args); }));
+
+		m_EventHandles.push_back(
+			m_Gui.EvtItemDropped.Subscribe([this](const Slot& slot) { EvtItemDropped.Trigger(slot); }));
 	}
 
 	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)

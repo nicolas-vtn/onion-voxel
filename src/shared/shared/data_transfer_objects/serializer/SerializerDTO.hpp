@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <shared/entities/entity/Entity.hpp>
+#include <shared/entities/entity/block_entity/BlockEntity.hpp>
 #include <shared/entities/entity/player/Player.hpp>
 #include <shared/world/chunk/Chunk.hpp>
 

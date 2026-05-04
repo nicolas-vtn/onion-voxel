@@ -31,9 +31,24 @@ namespace onion::voxel
 		std::optional<InventoryDTO> Hotbar;
 		std::optional<InventoryDTO> Inventory;
 
+		// BlockEntity-specific fields (populated only when Type == EntityType::Block)
+		std::optional<Slot> DroppedSlot;
+		float Lifetime = 0.f;
+
 		template <class Archive> void serialize(Archive& ar)
 		{
-			ar(Type, UUID, State, Transform, PhysicsBody, Health, Hunger, Experience, Hotbar, Inventory);
+			ar(Type,
+			   UUID,
+			   State,
+			   Transform,
+			   PhysicsBody,
+			   Health,
+			   Hunger,
+			   Experience,
+			   Hotbar,
+			   Inventory,
+			   DroppedSlot,
+			   Lifetime);
 		}
 	};
 } // namespace onion::voxel
