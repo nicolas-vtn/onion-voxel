@@ -1054,7 +1054,7 @@ namespace onion::voxel
 					float deltaX = moveDir.x * maxSpeed * static_cast<float>(m_DeltaTime) +
 						physics.Velocity.x * static_cast<float>(m_DeltaTime);
 					glm::vec3 testPos = currentPos + glm::vec3(deltaX, 0.0f, 0.0f);
-					if (!m_PhysicsEngine.HasGroundSupport(testPos, physics.HalfSize, physics.Offset))
+					if (!m_PhysicsEngine.HasGroundSupport(testPos, physics.Size * 0.5f, physics.CenterOffset))
 					{
 						moveDir.x = 0.0f;
 						physics.Velocity.x = 0.0f;
@@ -1066,7 +1066,7 @@ namespace onion::voxel
 					float deltaZ = moveDir.z * maxSpeed * static_cast<float>(m_DeltaTime) +
 						physics.Velocity.z * static_cast<float>(m_DeltaTime);
 					glm::vec3 testPos = currentPos + glm::vec3(0.0f, 0.0f, deltaZ);
-					if (!m_PhysicsEngine.HasGroundSupport(testPos, physics.HalfSize, physics.Offset))
+					if (!m_PhysicsEngine.HasGroundSupport(testPos, physics.Size * 0.5f, physics.CenterOffset))
 					{
 						moveDir.z = 0.0f;
 						physics.Velocity.z = 0.0f;

@@ -242,8 +242,8 @@ namespace onion::voxel
 		dto.Velocity = physicsBody.Velocity;
 		dto.OnGround = physicsBody.OnGround;
 		dto.IsFlying = physicsBody.IsFlying;
-		dto.HalfSize = physicsBody.HalfSize;
-		dto.Offset = physicsBody.Offset;
+		dto.Size = physicsBody.Size;
+		dto.CenterOffset = physicsBody.CenterOffset;
 		return dto;
 	}
 
@@ -253,8 +253,8 @@ namespace onion::voxel
 		physicsBody.Velocity = dto.Velocity;
 		physicsBody.OnGround = dto.OnGround;
 		physicsBody.IsFlying = dto.IsFlying;
-		physicsBody.HalfSize = dto.HalfSize;
-		physicsBody.Offset = dto.Offset;
+		physicsBody.Size = dto.Size;
+		physicsBody.CenterOffset = dto.CenterOffset;
 		return physicsBody;
 	}
 

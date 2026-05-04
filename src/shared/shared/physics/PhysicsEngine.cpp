@@ -17,9 +17,10 @@ namespace
 
 	AABBWorld ComputeAABB(const Transform& t, const PhysicsBody& p)
 	{
-		glm::vec3 center = t.Position + p.Offset;
+		glm::vec3 center = t.Position + p.CenterOffset;
+		glm::vec3 halfSize = p.Size * 0.5f;
 
-		return {center - p.HalfSize, center + p.HalfSize};
+		return {center - halfSize, center + halfSize};
 	}
 
 	// ---------------------------------------------------------------------------
@@ -255,7 +256,7 @@ namespace onion::voxel
 
 		glm::vec3 pos = transform.Position;
 		glm::vec3 vel = physics.Velocity;
-		glm::vec3 half = physics.HalfSize;
+		glm::vec3 half = physics.Size * 0.5f;
 
 		constexpr float epsilon = 0.0001f; // Small value to prevent floating-point issues
 
@@ -264,7 +265,7 @@ namespace onion::voxel
 		// === Y AXIS (vertical first = important for gravity) ===
 		pos.y += vel.y * dt; // Move the entity according to its velocity before checking for collisions
 		{
-			glm::vec3 center = pos + physics.Offset;
+			glm::vec3 center = pos + physics.CenterOffset;
 			AABBWorld box{center - half, center + half};
 
 			int minX = (int) std::floor(box.Min.x);
@@ -314,7 +315,7 @@ namespace onion::voxel
 		// === X AXIS ===
 		pos.x += vel.x * dt;
 		{
-			glm::vec3 center = pos + physics.Offset;
+			glm::vec3 center = pos + physics.CenterOffset;
 			AABBWorld box{center - half, center + half};
 
 			int minX = (int) std::floor(box.Min.x);
@@ -358,7 +359,7 @@ namespace onion::voxel
 		// === Z AXIS ===
 		pos.z += vel.z * dt;
 		{
-			glm::vec3 center = pos + physics.Offset;
+			glm::vec3 center = pos + physics.CenterOffset;
 			AABBWorld box{center - half, center + half};
 
 			int minX = (int) std::floor(box.Min.x);
@@ -405,7 +406,7 @@ namespace onion::voxel
 
 		// Teleport to surface if still colliding after resolution (prevents getting stuck in blocks)
 		int safety = 0;
-		while (LegacyIsCollidingWithTerrain(transform.Position, half, physics.Offset) && safety++ < 20)
+		while (LegacyIsCollidingWithTerrain(transform.Position, half, physics.CenterOffset) && safety++ < 20)
 		{
 			transform.Position.y += 1.0f; // Move up by 1 block until no longer colliding
 		}
@@ -446,8 +447,8 @@ namespace onion::voxel
 
 		constexpr float EPSILON = 0.001f;
 
-		const glm::vec3 half = physics.HalfSize;
-		const glm::vec3 offset = physics.Offset;
+		const glm::vec3 half = physics.Size * 0.5f;
+		const glm::vec3 offset = physics.CenterOffset;
 
 		glm::vec3 pos = transform.Position;
 		glm::vec3 vel = physics.Velocity;
@@ -610,9 +611,9 @@ namespace onion::voxel
 
 	bool PhysicsEngine::LegacyIsCollidingWithTerrain(const glm::vec3& position,
 													 const glm::vec3& halfSize,
-													 const glm::vec3& offset)
+													 const glm::vec3& centerOffset)
 	{
-		glm::vec3 center = position + offset;
+		glm::vec3 center = position + centerOffset;
 		glm::vec3 min = center - halfSize;
 		glm::vec3 max = center + halfSize;
 
@@ -646,9 +647,9 @@ namespace onion::voxel
 	}
 
 	bool
-	PhysicsEngine::IsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset)
+	PhysicsEngine::IsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& centerOffset)
 	{
-		glm::vec3 center = position + offset;
+		glm::vec3 center = position + centerOffset;
 		glm::vec3 min = center - halfSize;
 		glm::vec3 max = center + halfSize;
 
@@ -716,13 +717,13 @@ namespace onion::voxel
 	// so we discard that velocity component so the player stays on the edge.
 	// -------------------------------------------------------------------------
 	bool
-	PhysicsEngine::HasGroundSupport(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset) const
+	PhysicsEngine::HasGroundSupport(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& centerOffset) const
 	{
-		// The feet centre is at (position + offset) - (0, halfSize.y, 0).
+		// The feet centre is at (position + centerOffset) - (0, halfSize.y, 0).
 		// We probe a thin horizontal slab just below that point.
 		constexpr float probeEpsilon = 0.51f; // how far below feet we look
 
-		glm::vec3 center = position + offset;
+		glm::vec3 center = position + centerOffset;
 		glm::vec3 feetMin = {center.x - halfSize.x, center.y - halfSize.y - probeEpsilon, center.z - halfSize.z};
 		glm::vec3 feetMax = {center.x + halfSize.x, center.y - halfSize.y, center.z + halfSize.z};
 
