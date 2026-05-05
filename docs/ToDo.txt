@@ -9,8 +9,6 @@
 - Add Player Names display on top of head in Multiplayer
 - Add Player list display (tab)
 - Particules (breaking blocks, footsteps, ...)
-- Add Block Stacking (stack blocks in inventory and hotbar)
-- Add Dropped items (and pickup)
 - First person view : Arm and selected block. (+ Movement on walking, placing and breaking)
 - Support model face culling ( Can optimize face cutout culling issue (double cutout render pass))
 
