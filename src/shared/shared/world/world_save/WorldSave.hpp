@@ -8,6 +8,7 @@
 
 #include <shared/entities/entity/player/Player.hpp>
 #include <shared/world/chunk/Chunk.hpp>
+#include <shared/world/world_save/ChunkSaveData.hpp>
 
 #include "WorldInfos.hpp"
 
@@ -29,8 +30,8 @@ namespace onion::voxel
 		static bool GetWorldInfos(const std::filesystem::path& saveDirectory, WorldInfos& outInfos);
 		static bool DeleteWorld(const WorldInfos& infos);
 
-		void SaveChunkAsync(const std::shared_ptr<Chunk>& chunk);
-		std::shared_ptr<Chunk> LoadChunk(const glm::ivec2& chunkPosition);
+		void SaveChunkAsync(const ChunkSaveData& chunkSaveData);
+		ChunkSaveData LoadChunk(const glm::ivec2& chunkPosition);
 
 		void SavePlayersAsync(const std::unordered_map<std::string, std::shared_ptr<Player>>& players);
 		void SavePlayerAsync(const std::shared_ptr<Player>& player);
@@ -59,7 +60,7 @@ namespace onion::voxel
 		mutable std::mutex m_MutexDiskAccess;
 
 		mutable std::mutex m_MutexChunksToSave;
-		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> m_ChunksToSave;
+		std::unordered_map<glm::ivec2, ChunkSaveData> m_ChunksToSave;
 
 		mutable std::mutex m_MutexPlayersToSave;
 		std::unordered_map<std::string, std::shared_ptr<Player>> m_PlayersToSave;

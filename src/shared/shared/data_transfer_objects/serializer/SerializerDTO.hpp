@@ -6,6 +6,7 @@
 #include <shared/entities/entity/block_entity/BlockEntity.hpp>
 #include <shared/entities/entity/player/Player.hpp>
 #include <shared/world/chunk/Chunk.hpp>
+#include <shared/world/world_save/ChunkSaveData.hpp>
 
 #include <shared/data_transfer_objects/DTOs/DTOs.hpp>
 
@@ -17,6 +18,8 @@ namespace onion::voxel
 	  public:
 		static ChunkDTO SerializeChunk(std::shared_ptr<Chunk> chunk);
 		static std::shared_ptr<Chunk> DeserializeChunk(const ChunkDTO& dto);
+		static ChunkSaveDataDTO SerializeChunkSaveData(const ChunkSaveData& data);
+		static ChunkSaveData DeserializeChunkSaveData(const ChunkSaveDataDTO& dto);
 
 		// ----- SUB CHUNK -----
 	  public:

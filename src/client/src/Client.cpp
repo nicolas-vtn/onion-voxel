@@ -1,6 +1,7 @@
 #include "Client.hpp"
 
 #include <iostream>
+#include <unordered_set>
 
 #include <shared/data_transfer_objects/serializer/SerializerDTO.hpp>
 #include <shared/network_messages/item_dropped_msg/ItemDroppedMsg.hpp>
@@ -405,10 +406,12 @@ namespace onion::voxel
 		}
 
 		std::vector<std::shared_ptr<Entity>> entities;
+		std::unordered_set<std::string> entityUUIDs;
 		for (const auto& entityDTO : msg.Entities)
 		{
 			// Deserialize the entity and add it to the list of entities to update in the EntityManager
 			std::shared_ptr<Entity> entity = SerializerDTO::DeserializeEntity(entityDTO);
+			entityUUIDs.insert(entity->UUID);
 			entities.push_back(entity);
 		}
 
@@ -432,6 +435,12 @@ namespace onion::voxel
 
 		m_WorldManager->UpdateEntities(players);
 		m_WorldManager->UpdateEntities(entities);
+
+		auto removedEntities = m_WorldManager->RemoveEntitiesNotIn(entityUUIDs);
+		for (const auto& entity : removedEntities)
+		{
+			std::cout << "Removing entity with UUID " << entity->UUID << " from EntityManager\n";
+		}
 	}
 
 	void Client::SendPlayerInfosToServer()

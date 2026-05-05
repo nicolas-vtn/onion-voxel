@@ -1,5 +1,7 @@
 #include "SerializerDTO.hpp"
 
+#include <iostream>
+
 namespace onion::voxel
 {
 	SubChunkDTO SerializerDTO::SerializeSubChunk(const SubChunk& sc)
@@ -147,6 +149,40 @@ namespace onion::voxel
 
 		return chunk;
 	};
+
+	ChunkSaveDataDTO SerializerDTO::SerializeChunkSaveData(const ChunkSaveData& data)
+	{
+		ChunkSaveDataDTO dto;
+		dto.Chunk = SerializeChunk(data.Chunk);
+		dto.Entities.reserve(data.Entities.size());
+
+		for (const auto& entity : data.Entities)
+		{
+			if (!entity)
+			{
+				std::cerr << "Skipping null entity while serializing chunk save data.\n";
+				continue;
+			}
+
+			dto.Entities.emplace_back(SerializeEntity(*entity));
+		}
+
+		return dto;
+	}
+
+	ChunkSaveData SerializerDTO::DeserializeChunkSaveData(const ChunkSaveDataDTO& dto)
+	{
+		ChunkSaveData data;
+		data.Chunk = DeserializeChunk(dto.Chunk);
+		data.Entities.reserve(dto.Entities.size());
+
+		for (const EntityDTO& entityDTO : dto.Entities)
+		{
+			data.Entities.emplace_back(DeserializeEntity(entityDTO));
+		}
+
+		return data;
+	}
 
 	BlockStateDTO SerializerDTO::SerializeBlockState(const BlockState& block)
 	{

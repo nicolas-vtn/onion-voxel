@@ -3,6 +3,7 @@
 #include <memory>
 #include <shared_mutex>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <onion/Event.hpp>
@@ -29,8 +30,13 @@ namespace onion::voxel
 		std::unordered_map<std::string, glm::vec3> GetAllPlayersPosition() const;
 		void SetPlayerPosition(const std::string& uuid, const glm::vec3& newPosition);
 		void AddEntity(const std::shared_ptr<Entity>& entity);
+		void AddOrUpdateEntity(const std::shared_ptr<Entity>& entity);
+		std::shared_ptr<Entity> GetEntity(const std::string& uuid) const;
 		bool RemoveEntity(const std::string& uuid);
 		void UpdateEntities(const std::vector<std::shared_ptr<Entity>>& entities);
+		std::vector<std::shared_ptr<Entity>> RemoveEntitiesNotIn(const std::unordered_set<std::string>& uuidsToKeep);
+		std::vector<std::shared_ptr<Entity>> GetEntitiesInChunk(const glm::ivec2& chunkPosition) const;
+		std::vector<std::shared_ptr<Entity>> ExtractEntitiesInChunk(const glm::ivec2& chunkPosition);
 
 		void ClearAllEntities();
 
@@ -51,6 +57,6 @@ namespace onion::voxel
 		std::unordered_map<std::string, std::shared_ptr<Player>> m_Players;
 
 		mutable std::shared_mutex m_MutexEntities;
-		std::vector<std::shared_ptr<Entity>> m_Entities;
+		std::unordered_map<std::string, std::shared_ptr<Entity>> m_Entities;
 	};
 } // namespace onion::voxel

@@ -106,9 +106,25 @@ namespace onion::voxel
 		m_EntityManager->AddEntity(entity);
 	}
 
+	void WorldManager::AddOrUpdateEntity(const std::shared_ptr<Entity>& entity)
+	{
+		m_EntityManager->AddOrUpdateEntity(entity);
+	}
+
+	std::shared_ptr<Entity> WorldManager::GetEntity(const std::string& uuid) const
+	{
+		return m_EntityManager->GetEntity(uuid);
+	}
+
 	bool WorldManager::RemoveEntity(const std::string& uuid)
 	{
 		return m_EntityManager->RemoveEntity(uuid);
+	}
+
+	std::vector<std::shared_ptr<Entity>>
+	WorldManager::RemoveEntitiesNotIn(const std::unordered_set<std::string>& uuidsToKeep)
+	{
+		return m_EntityManager->RemoveEntitiesNotIn(uuidsToKeep);
 	}
 
 	void WorldManager::AddChunk(const std::shared_ptr<Chunk> chunk)
@@ -360,6 +376,11 @@ namespace onion::voxel
 		return m_EntityManager->GetAllEntities();
 	}
 
+	std::vector<std::shared_ptr<Entity>> WorldManager::GetEntitiesInChunk(const glm::ivec2& chunkPosition) const
+	{
+		return m_EntityManager->GetEntitiesInChunk(chunkPosition);
+	}
+
 	std::unordered_map<std::string, std::shared_ptr<Player>> WorldManager::GetAllPlayers() const
 	{
 		return m_EntityManager->GetAllPlayers();
@@ -406,11 +427,11 @@ namespace onion::voxel
 		m_InternalEventHandles.push_back(
 			EvtChunkAdded.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkAdded(chunk); }));
 
+		m_InternalEventHandles.push_back(
+			EvtChunkRemoved.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkRemoved(chunk); }));
+
 		if (m_WorldSave)
 		{
-			m_InternalEventHandles.push_back(
-				EvtChunkRemoved.Subscribe([this](const std::shared_ptr<Chunk>& chunk) { Handle_ChunkRemoved(chunk); }));
-
 			m_InternalEventHandles.push_back(m_EntityManager->EvtPlayerAdded.Subscribe(
 				[this](const std::shared_ptr<Player>& player) { Handle_PlayerAdded(player); }));
 
@@ -653,19 +674,19 @@ namespace onion::voxel
 			return;
 		}
 
-		std::vector<std::shared_ptr<Chunk>> chunksToAdd;
+		std::vector<ChunkSaveData> chunksToAdd;
 		std::vector<glm::ivec2> chunksToGenerate;
 
 		for (const auto& chunkPos : chunkPositions)
 		{
 			if (!IsChunkLoaded(chunkPos))
 			{
-				std::shared_ptr<Chunk> chunk = m_WorldSave->LoadChunk(chunkPos);
+				ChunkSaveData chunkSaveData = m_WorldSave->LoadChunk(chunkPos);
 
 				// If Chunk found
-				if (chunk)
+				if (chunkSaveData.Chunk)
 				{
-					chunksToAdd.push_back(chunk);
+					chunksToAdd.push_back(std::move(chunkSaveData));
 				}
 				else
 				{
@@ -678,9 +699,22 @@ namespace onion::voxel
 		// Add loaded chunks to world
 		{
 			std::lock_guard lock(m_MutexChunks);
-			for (const auto& chunk : chunksToAdd)
+			for (const auto& chunkSaveData : chunksToAdd)
 			{
-				m_Chunks[chunk->GetPosition()] = chunk;
+				m_Chunks[chunkSaveData.Chunk->GetPosition()] = chunkSaveData.Chunk;
+			}
+		}
+
+		for (const auto& chunkSaveData : chunksToAdd)
+		{
+			for (const auto& entity : chunkSaveData.Entities)
+			{
+				if (m_EntityManager->GetEntity(entity->UUID))
+				{
+					std::cerr << "Replacing duplicate entity UUID from loaded chunk save: " << entity->UUID << "\n";
+				}
+
+				m_EntityManager->AddOrUpdateEntity(entity);
 			}
 		}
 
@@ -761,9 +795,14 @@ namespace onion::voxel
 
 	void WorldManager::Handle_ChunkRemoved(const std::shared_ptr<Chunk>& chunk)
 	{
+		std::vector<std::shared_ptr<Entity>> entities = m_EntityManager->ExtractEntitiesInChunk(chunk->GetPosition());
+
 		if (m_WorldSave)
 		{
-			m_WorldSave->SaveChunkAsync(chunk);
+			ChunkSaveData chunkSaveData;
+			chunkSaveData.Chunk = chunk;
+			chunkSaveData.Entities = std::move(entities);
+			m_WorldSave->SaveChunkAsync(chunkSaveData);
 		}
 	}
 

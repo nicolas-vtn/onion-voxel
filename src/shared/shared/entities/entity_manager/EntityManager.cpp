@@ -1,7 +1,8 @@
 #include "EntityManager.hpp"
 
-#include <algorithm>
 #include <stdexcept>
+
+#include <shared/utils/Utils.hpp>
 
 namespace onion::voxel
 {
@@ -95,23 +96,36 @@ namespace onion::voxel
 	void EntityManager::AddEntity(const std::shared_ptr<Entity>& entity)
 	{
 		std::unique_lock lock(m_MutexEntities);
-		// Check for duplicate UUID
-		auto it = std::find_if(m_Entities.begin(),
-							   m_Entities.end(),
-							   [&entity](const std::shared_ptr<Entity>& e) { return e->UUID == entity->UUID; });
+		auto it = m_Entities.find(entity->UUID);
 		if (it != m_Entities.end())
 		{
 			throw std::runtime_error("Entity with UUID " + entity->UUID + " already exists.");
 		}
-		m_Entities.push_back(entity);
+		m_Entities[entity->UUID] = entity;
+	}
+
+	void EntityManager::AddOrUpdateEntity(const std::shared_ptr<Entity>& entity)
+	{
+		std::unique_lock lock(m_MutexEntities);
+		m_Entities[entity->UUID] = entity;
+	}
+
+	std::shared_ptr<Entity> EntityManager::GetEntity(const std::string& uuid) const
+	{
+		std::shared_lock lock(m_MutexEntities);
+		auto it = m_Entities.find(uuid);
+		if (it != m_Entities.end())
+		{
+			return it->second;
+		}
+
+		return nullptr;
 	}
 
 	bool EntityManager::RemoveEntity(const std::string& uuid)
 	{
 		std::unique_lock lock(m_MutexEntities);
-		auto it = std::find_if(m_Entities.begin(),
-							   m_Entities.end(),
-							   [&uuid](const std::shared_ptr<Entity>& e) { return e->UUID == uuid; });
+		auto it = m_Entities.find(uuid);
 		if (it != m_Entities.end())
 		{
 			m_Entities.erase(it);
@@ -139,20 +153,31 @@ namespace onion::voxel
 			else
 			{
 				// Update or add non-player entity
-				auto it = std::find_if(m_Entities.begin(),
-									   m_Entities.end(),
-									   [&entity](const std::shared_ptr<Entity>& e) { return e->UUID == entity->UUID; });
-
-				if (it != m_Entities.end())
-				{
-					*it = entity; // Update existing entity
-				}
-				else
-				{
-					m_Entities.push_back(entity); // Add new entity
-				}
+				m_Entities[entity->UUID] = entity;
 			}
 		}
+	}
+
+	std::vector<std::shared_ptr<Entity>>
+	EntityManager::RemoveEntitiesNotIn(const std::unordered_set<std::string>& uuidsToKeep)
+	{
+		std::unique_lock lock(m_MutexEntities);
+		std::vector<std::shared_ptr<Entity>> removedEntities;
+
+		for (auto it = m_Entities.begin(); it != m_Entities.end();)
+		{
+			if (uuidsToKeep.find(it->first) == uuidsToKeep.end())
+			{
+				removedEntities.push_back(it->second);
+				it = m_Entities.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+
+		return removedEntities;
 	}
 
 	std::unordered_map<std::string, std::shared_ptr<Player>> EntityManager::GetAllPlayers() const
@@ -165,15 +190,62 @@ namespace onion::voxel
 	std::vector<std::shared_ptr<Entity>> EntityManager::GetAllEntities() const
 	{
 		std::shared_lock lock(m_MutexEntities);
-		// Return a copy of the entities vector to avoid potential issues with concurrent access
-		return m_Entities;
+		std::vector<std::shared_ptr<Entity>> entities;
+		entities.reserve(m_Entities.size());
+		for (const auto& [uuid, entity] : m_Entities)
+		{
+			entities.push_back(entity);
+		}
+		return entities;
+	}
+
+	std::vector<std::shared_ptr<Entity>> EntityManager::GetEntitiesInChunk(const glm::ivec2& chunkPosition) const
+	{
+		std::shared_lock lock(m_MutexEntities);
+		std::vector<std::shared_ptr<Entity>> entities;
+
+		for (const auto& [uuid, entity] : m_Entities)
+		{
+			if (!entity->HasTransform())
+			{
+				continue;
+			}
+
+			if (Utils::WorldToChunkPosition(entity->GetTransform().Position) == chunkPosition)
+			{
+				entities.push_back(entity);
+			}
+		}
+
+		return entities;
+	}
+
+	std::vector<std::shared_ptr<Entity>> EntityManager::ExtractEntitiesInChunk(const glm::ivec2& chunkPosition)
+	{
+		std::unique_lock lock(m_MutexEntities);
+		std::vector<std::shared_ptr<Entity>> entities;
+
+		for (auto it = m_Entities.begin(); it != m_Entities.end();)
+		{
+			const auto& entity = it->second;
+			if (entity->HasTransform() && Utils::WorldToChunkPosition(entity->GetTransform().Position) == chunkPosition)
+			{
+				entities.push_back(entity);
+				it = m_Entities.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+
+		return entities;
 	}
 
 	void EntityManager::ClearAllEntities()
 	{
-		// Backups entities before clearing so they can be used to trigger events after unlocking
+		// Backups players before clearing so they can be used to trigger events after unlocking
 		auto playersRemoved = GetAllPlayers();
-		auto entitiesRemoved = GetAllEntities();
 		{
 			std::unique_lock lock(m_MutexEntities);
 			std::unique_lock lockPlayers(m_MutexPlayers);
