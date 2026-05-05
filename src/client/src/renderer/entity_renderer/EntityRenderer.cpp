@@ -5,17 +5,25 @@
 
 #include <chrono>
 #include <iostream>
+#include <limits>
+#include <numbers>
+
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <renderer/assets_manager/AssetsManager.hpp>
 #include <renderer/debug_draws/DebugDraws.hpp>
+#include <renderer/world_renderer/chunk_mesh/MeshBuilder.hpp>
 
 #include <shared/entities/entity/block_entity/BlockEntity.hpp>
 
+#include "block_entity_mesh/BlockEntityMesh.hpp"
+
 namespace onion::voxel
 {
-	EntityRenderer::EntityRenderer(const std::shared_ptr<Camera>& camera)
-		: m_Camera(camera), m_ShaderEntity(AssetsManager::GetShadersDirectory() / "entity.vert",
-										   AssetsManager::GetShadersDirectory() / "entity.frag")
+	EntityRenderer::EntityRenderer(const std::shared_ptr<Camera>& camera, const MeshBuilder& meshBuilder)
+		: m_Camera(camera), m_MeshBuilder(meshBuilder),
+		  m_ShaderEntity(AssetsManager::GetShadersDirectory() / "entity.vert",
+						 AssetsManager::GetShadersDirectory() / "entity.frag")
 	{
 
 		// Starts the thread that will download the player skins asynchronously
@@ -111,6 +119,9 @@ namespace onion::voxel
 			// Build the mesh for the entity
 			BuildEntityMesh(entity);
 		}
+
+		// Render dropped block entities (spinning + bobbing world-space meshes)
+		RenderDroppedItems();
 
 		if (m_VerticesEntities.empty())
 			return;
@@ -210,6 +221,71 @@ namespace onion::voxel
 
 			default:
 				break;
+		}
+	}
+
+	void EntityRenderer::RenderDroppedItems()
+	{
+		const auto entities = EngineContext::Get().World->GetAllEntities();
+
+		if (entities.empty())
+			return;
+
+		const glm::mat4 viewProjMatrix = m_Camera->GetViewProjectionMatrix();
+
+		// Absolute time in seconds (as float) for animation
+		using namespace std::chrono;
+		const float t = duration<float>(steady_clock::now().time_since_epoch()).count();
+
+		for (const auto& entity : entities)
+		{
+			if (!entity || entity->Type != EntityType::Block)
+				continue;
+
+			const auto blockEntity = std::dynamic_pointer_cast<BlockEntity>(entity);
+			if (!blockEntity)
+				continue;
+
+			const BlockId blockId = blockEntity->GetSlot().Id;
+			if (blockId == BlockId::Air)
+				continue;
+
+			auto mesh = BlockEntityMesh::GetOrCreate(blockId, m_MeshBuilder);
+			if (!mesh)
+				continue;
+
+			// Derive a deterministic per-entity phase from the UUID so items dropped
+			// at different times are never in sync with each other.
+			uint32_t uuidHash = 0;
+			for (const char c : blockEntity->UUID)
+				uuidHash = uuidHash * 31u + static_cast<unsigned char>(c);
+			const float phase = static_cast<float>(uuidHash) / static_cast<float>(std::numeric_limits<uint32_t>::max())
+								* std::numbers::pi_v<float> * 2.0f;
+
+			// Animation: 5 rotations/31 s spin, 10 bounces/31 s bob.
+			// Hover height is measured from the entity Transform position to the bottom face
+			// of the rendered cube. Cube is a unit cube scaled by BLOCK_SCALE (0.25), so its
+			// bottom face sits at -0.5*0.25 = -0.125 relative to the origin.
+			//   lowest  bottom = 0.125   → origin at 0.125  + 0.125 = 0.25
+			//   highest bottom = 0.3125  → origin at 0.3125 + 0.125 = 0.4375
+			//   HOVER_HEIGHT  = midpoint   = (0.25 + 0.4375) / 2   = 0.34375
+			//   BOB_AMPLITUDE = half-range = (0.4375 - 0.25) / 2   = 0.09375
+			constexpr float BOB_AMPLITUDE  = 0.09375f;
+			constexpr float BOB_FREQUENCY  = 10.0f / 31.0f;
+			constexpr float SPIN_SPEED_DEG = 5.0f / 31.0f * 360.0f;
+			constexpr float HOVER_HEIGHT   = 0.34375f;
+			constexpr float BLOCK_SCALE    = 0.25f; // matches BlockEntity::Size
+
+			const float bob = BOB_AMPLITUDE * std::sin(t * BOB_FREQUENCY * std::numbers::pi_v<float> * 2.0f + phase);
+			const float yawDeg = std::fmod(t * SPIN_SPEED_DEG + glm::degrees(phase), 360.0f);
+
+			const glm::vec3 worldPos = blockEntity->GetPosition() + glm::vec3(0.0f, HOVER_HEIGHT + bob, 0.0f);
+
+			glm::mat4 model = glm::translate(glm::mat4(1.0f), worldPos);
+			model = glm::rotate(model, glm::radians(yawDeg), glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(BLOCK_SCALE));
+
+			mesh->Render(model, viewProjMatrix);
 		}
 	}
 

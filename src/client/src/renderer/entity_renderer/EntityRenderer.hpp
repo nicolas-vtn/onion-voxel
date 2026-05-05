@@ -23,6 +23,7 @@
 
 namespace onion::voxel
 {
+	class MeshBuilder;
 
 	class EntityRenderer
 	{
@@ -37,7 +38,7 @@ namespace onion::voxel
 
 		// ------- CONSTRUCTOR & DESTRUCTOR -------
 	  public:
-		EntityRenderer(const std::shared_ptr<Camera>& camera);
+		EntityRenderer(const std::shared_ptr<Camera>& camera, const MeshBuilder& meshBuilder);
 		~EntityRenderer() = default;
 
 		// ------- RENDERING -------
@@ -62,6 +63,8 @@ namespace onion::voxel
 		void BuildPlayerMesh_Legacy(const SkeletonPlayer& skeleton);
 		void BuildPlayerMesh_Modern(const SkeletonPlayer& skeleton);
 
+		void RenderDroppedItems();
+
 		// ------- RENDER DATA -------
 	  private:
 		std::vector<float> m_VerticesEntities;
@@ -83,6 +86,10 @@ namespace onion::voxel
 		// ------- CAMERA -------
 	  private:
 		std::shared_ptr<Camera> m_Camera;
+
+		// ------- MESH BUILDER -------
+	  private:
+		const MeshBuilder& m_MeshBuilder;
 
 		// ------ ASYNC SKIN LOADER ------
 	  private:
@@ -197,3 +204,4 @@ namespace onion::voxel
 	};
 
 } // namespace onion::voxel
+

@@ -9,11 +9,12 @@ out vec3 Tint;
 flat out uint Facing;
 
 uniform mat4 u_ViewProjMatrix;
+uniform mat4 u_ModelMatrix;   // identity for UI passes, world transform for dropped items
 uniform vec2 u_PositionOffset;
 
 void main()
 {
-    vec3 pos = aPos + vec3(u_PositionOffset, 0.0);
+    vec3 pos = (u_ModelMatrix * vec4(aPos, 1.0)).xyz + vec3(u_PositionOffset, 0.0);
     gl_Position = u_ViewProjMatrix * vec4(pos, 1.0);
 
     TexCoord = aTexCoord;
