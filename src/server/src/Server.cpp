@@ -1,5 +1,6 @@
 #include "Server.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 
@@ -9,6 +10,7 @@
 
 #include <shared/data_transfer_objects/serializer/SerializerDTO.hpp>
 #include <shared/entities/entity/block_entity/BlockEntity.hpp>
+#include <shared/network_messages/item_picked_up_msg/ItemPickedUpMsg.hpp>
 #include <shared/utils/Utils.hpp>
 
 namespace onion::voxel
@@ -351,23 +353,193 @@ namespace onion::voxel
 		// Update physics for all entities (includes BlockEntities)
 		m_PhysicsEngine->Update(deltaTime);
 
-		// Tick lifetimes and remove expired BlockEntities
+		// Tick cooldowns/lifetimes and collect BlockEntities
 		auto entities = m_WorldManager->GetAllEntities();
+		std::vector<std::shared_ptr<BlockEntity>> blockEntities;
 		std::vector<std::string> toRemove;
+
 		for (const auto& entity : entities)
 		{
-			if (entity->Type == EntityType::Block)
-			{
-				auto blockEntity = std::static_pointer_cast<BlockEntity>(entity);
-				blockEntity->DecrementLifetime(deltaTime);
-				if (blockEntity->IsExpired())
-					toRemove.push_back(entity->UUID);
-			}
+			if (entity->Type != EntityType::Block)
+				continue;
+
+			auto blockEntity = std::static_pointer_cast<BlockEntity>(entity);
+			blockEntity->DecrementPickupCooldown(deltaTime);
+			blockEntity->DecrementLifetime(deltaTime);
+
+			if (blockEntity->IsExpired())
+				toRemove.push_back(entity->UUID);
+			else
+				blockEntities.push_back(blockEntity);
 		}
+
 		for (const auto& uuid : toRemove)
 		{
 			m_WorldManager->RemoveEntity(uuid);
 			std::cout << "Despawned expired BlockEntity UUID=" << uuid << "\n";
+		}
+
+		// -----------------------------------------------------------------
+		// Pickup detection: test AABB overlap between each player and each
+		// BlockEntity that has completed its pickup cooldown.
+		// -----------------------------------------------------------------
+		auto players = m_WorldManager->GetAllPlayers();
+
+		for (auto& [playerUUID, player] : players)
+		{
+			if (!player->HasTransform() || !player->HasPhysicsBody())
+				continue;
+
+			// Find the player's ClientHandle for sending messages
+			auto infoIt = m_UUIDToPlayerInfo.find(playerUUID);
+			if (infoIt == m_UUIDToPlayerInfo.end())
+				continue;
+			const uint32_t clientHandle = infoIt->second.ClientHandle;
+
+			// Player AABB
+			const glm::vec3 playerPos = player->GetTransform().Position;
+			const PhysicsBody playerPb = player->GetPhysicsBody();
+			const glm::vec3 playerCenter = playerPos + playerPb.CenterOffset;
+			const glm::vec3 playerHalf = playerPb.Size * 0.5f;
+			const glm::vec3 playerMin = playerCenter - playerHalf;
+			const glm::vec3 playerMax = playerCenter + playerHalf;
+
+			for (auto& blockEntity : blockEntities)
+			{
+				if (!blockEntity->CanBePickedUp())
+					continue;
+				if (!blockEntity->HasTransform() || !blockEntity->HasPhysicsBody())
+					continue;
+
+				// BlockEntity AABB
+				const glm::vec3 bePos = blockEntity->GetTransform().Position;
+				const PhysicsBody bePb = blockEntity->GetPhysicsBody();
+				const glm::vec3 beCenter = bePos + bePb.CenterOffset;
+				const glm::vec3 beHalf = bePb.Size * 0.5f;
+				const glm::vec3 beMin = beCenter - beHalf;
+				const glm::vec3 beMax = beCenter + beHalf;
+
+				// AABB overlap test
+				const bool overlaps = playerMax.x > beMin.x && playerMin.x < beMax.x &&
+									  playerMax.y > beMin.y && playerMin.y < beMax.y &&
+									  playerMax.z > beMin.z && playerMin.z < beMax.z;
+				if (!overlaps)
+					continue;
+
+				// ---------------------------------------------------------
+				// Pickup logic: partial pickup supported.
+				// Pass 1 — fill existing matching stacks (hotbar first).
+				// Pass 2 — fill empty slots (hotbar first).
+				// ---------------------------------------------------------
+				const BlockId blockId = blockEntity->GetSlot().Id;
+				int remaining = static_cast<int>(blockEntity->GetSlot().Count);
+
+				if (remaining <= 0 || blockId == BlockId::Air)
+					continue;
+
+				// We need mutable inventory copies — modify, then write back.
+				Inventory hotbar = player->GetHotbar();
+				Inventory inventory = player->GetPlayerInventory();
+
+				// tryAddInv: iterate hotbar then main inventory, either filling
+				// existing matching stacks (mustMatch=true) or empty slots (mustMatch=false).
+				auto tryAddInv = [&](bool mustMatch)
+				{
+					for (int i = 0; i < hotbar.Rows() * hotbar.Columns() && remaining > 0; ++i)
+					{
+						Slot& slot = hotbar.At(i);
+						if (mustMatch)
+						{
+							if (slot.Id != blockId || slot.Count >= k_MaxStackSize)
+								continue;
+						}
+						else
+						{
+							if (!slot.IsEmpty())
+								continue;
+						}
+						const int canAdd = mustMatch
+							? std::min(static_cast<int>(k_MaxStackSize - slot.Count), remaining)
+							: std::min(static_cast<int>(k_MaxStackSize), remaining);
+						if (canAdd <= 0)
+							continue;
+						if (mustMatch)
+							slot.Count += static_cast<uint8_t>(canAdd);
+						else
+							slot = Slot{blockId, static_cast<uint8_t>(canAdd)};
+						remaining -= canAdd;
+
+						ItemPickedUpMsg msg;
+						msg.IsHotbar = true;
+						msg.Index = static_cast<uint8_t>(i);
+						msg.ItemId = static_cast<uint16_t>(blockId);
+						msg.Count = slot.Count;
+						m_NetworkServer.Send(clientHandle, msg);
+					}
+
+					for (int i = 0; i < inventory.Rows() * inventory.Columns() && remaining > 0; ++i)
+					{
+						Slot& slot = inventory.At(i);
+						if (mustMatch)
+						{
+							if (slot.Id != blockId || slot.Count >= k_MaxStackSize)
+								continue;
+						}
+						else
+						{
+							if (!slot.IsEmpty())
+								continue;
+						}
+						const int canAdd = mustMatch
+							? std::min(static_cast<int>(k_MaxStackSize - slot.Count), remaining)
+							: std::min(static_cast<int>(k_MaxStackSize), remaining);
+						if (canAdd <= 0)
+							continue;
+						if (mustMatch)
+							slot.Count += static_cast<uint8_t>(canAdd);
+						else
+							slot = Slot{blockId, static_cast<uint8_t>(canAdd)};
+						remaining -= canAdd;
+
+						ItemPickedUpMsg msg;
+						msg.IsHotbar = false;
+						msg.Index = static_cast<uint8_t>(i);
+						msg.ItemId = static_cast<uint16_t>(blockId);
+						msg.Count = slot.Count;
+						m_NetworkServer.Send(clientHandle, msg);
+					}
+				};
+
+				const int originalRemaining = remaining;
+				tryAddInv(true);  // Pass 1: fill existing stacks
+				tryAddInv(false); // Pass 2: fill empty slots
+
+				// Write inventories back if anything was picked up
+				if (remaining < originalRemaining)
+				{
+					player->SetHotbar(hotbar);
+					player->SetPlayerInventory(inventory);
+				}
+
+				if (remaining <= 0)
+				{
+					// Fully picked up — remove entity
+					toRemove.push_back(blockEntity->UUID);
+				}
+				else
+				{
+					// Partial pickup — update remaining count and reset lifetime
+					blockEntity->SetSlot(Slot{blockId, static_cast<uint8_t>(remaining)});
+					blockEntity->SetLifetime(BlockEntity::DefaultLifetime);
+				}
+			}
+
+			// Remove any fully-picked-up entities (avoid double-remove with expired list)
+			for (const auto& uuid : toRemove)
+			{
+				m_WorldManager->RemoveEntity(uuid);
+			}
+			toRemove.clear();
 		}
 	}
 

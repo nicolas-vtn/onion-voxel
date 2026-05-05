@@ -23,7 +23,8 @@ namespace onion::voxel
 			EntitySnapshot,
 			ServerMOTD,
 			RequestMotd,
-			ItemDropped
+			ItemDropped,
+			ItemPickedUp
 		};
 
 		eType Type = eType::None;

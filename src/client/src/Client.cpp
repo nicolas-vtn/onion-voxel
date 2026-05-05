@@ -5,6 +5,7 @@
 
 #include <shared/data_transfer_objects/serializer/SerializerDTO.hpp>
 #include <shared/network_messages/item_dropped_msg/ItemDroppedMsg.hpp>
+#include <shared/network_messages/item_picked_up_msg/ItemPickedUpMsg.hpp>
 #include <shared/utils/Utils.hpp>
 
 namespace onion::voxel
@@ -320,6 +321,10 @@ namespace onion::voxel
 				{
 					Handle_EntitySnapshotMessageReceived(msg);
 				}
+				else if constexpr (std::is_same_v<T, ItemPickedUpMsg>)
+				{
+					Handle_ItemPickedUpMsgReceived(msg);
+				}
 				else
 				{
 					std::cout << "Received unhandled message type from server\n";
@@ -456,6 +461,37 @@ namespace onion::voxel
 		playerInfoMsg.player = SerializerDTO::SerializePlayer(*player);
 
 		m_NetworkClient.Send(std::move(playerInfoMsg), false);
+	}
+
+	void Client::Handle_ItemPickedUpMsgReceived(const ItemPickedUpMsg& msg)
+	{
+		const auto player = m_WorldManager->GetPlayer(m_Config.clientData.UUID);
+		if (!player)
+			return;
+
+		const BlockId blockId = static_cast<BlockId>(msg.ItemId);
+		const Slot newSlot{blockId, msg.Count};
+
+		if (msg.IsHotbar)
+		{
+			if (!player->HasHotbar())
+				return;
+			Inventory hotbar = player->GetHotbar();
+			if (msg.Index >= hotbar.Rows() * hotbar.Columns())
+				return;
+			hotbar.At(msg.Index) = newSlot;
+			player->SetHotbar(hotbar);
+		}
+		else
+		{
+			if (!player->HasPlayerInventory())
+				return;
+			Inventory inventory = player->GetPlayerInventory();
+			if (msg.Index >= inventory.Rows() * inventory.Columns())
+				return;
+			inventory.At(msg.Index) = newSlot;
+			player->SetPlayerInventory(inventory);
+		}
 	}
 
 } // namespace onion::voxel

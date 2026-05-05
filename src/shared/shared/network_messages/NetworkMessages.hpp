@@ -9,6 +9,7 @@
 #include "client_info_msg/ClientInfoMsg.hpp"
 #include "entity_snapshot_msg/EntitySnapshotMsg.hpp"
 #include "item_dropped_msg/ItemDroppedMsg.hpp"
+#include "item_picked_up_msg/ItemPickedUpMsg.hpp"
 #include "player_infos_msg/PlayerInfosMsg.hpp"
 #include "request_chunks_msg/RequestChunksMsg.hpp"
 #include "request_motd_msg/RequestMotdMsg.hpp"
@@ -28,7 +29,8 @@ namespace onion::voxel
 										EntitySnapshotMsg,
 										ServerMotdMsg,
 										RequestMotdMsg,
-										ItemDroppedMsg>;
+										ItemDroppedMsg,
+										ItemPickedUpMsg>;
 
 	inline NetworkMessage DeserializeMessage(cereal::BinaryInputArchive& archive, MessageHeader::eType type)
 	{
@@ -97,14 +99,21 @@ namespace onion::voxel
 					return msg;
 				}
 
-			case MessageHeader::eType::ItemDropped:
-				{
-					ItemDroppedMsg msg;
-					archive(msg);
-					return msg;
-				}
+		case MessageHeader::eType::ItemDropped:
+			{
+				ItemDroppedMsg msg;
+				archive(msg);
+				return msg;
+			}
 
-			default:
+		case MessageHeader::eType::ItemPickedUp:
+			{
+				ItemPickedUpMsg msg;
+				archive(msg);
+				return msg;
+			}
+
+		default:
 				throw std::runtime_error("Unknown message type");
 		}
 	}

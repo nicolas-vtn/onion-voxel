@@ -683,6 +683,8 @@ namespace onion::voxel
 
 		// ---- Key Drop Input Handling ----
 		bool dropKeyPressed = EngineContext::Get().Keys->GetKeyState(eAction::DropItem).IsPressed;
+		const bool ctrlHeld = EngineContext::Get().Inputs->IsKeyPressed(Key::LeftControl) ||
+							  EngineContext::Get().Inputs->IsKeyPressed(Key::RightControl);
 
 		// ---- Tooltip Rendering for Hotbar (if needed) ----
 		if (hoveredHotbarSlotIndex != -1)
@@ -692,13 +694,14 @@ namespace onion::voxel
 			{
 				if (dropKeyPressed)
 				{
-					// Decrement count; clear if reaches 0
+					// Ctrl+Drop drops the full stack; plain Drop drops one item
 					Slot& mutableSlot = hotbar.At(hoveredHotbarSlotIndex);
-					Slot droppedSlot{mutableSlot.Id, 1};
-					mutableSlot.Count--;
+					const uint8_t dropCount = ctrlHeld ? mutableSlot.Count : 1;
+					Slot droppedSlot{mutableSlot.Id, dropCount};
+					mutableSlot.Count -= dropCount;
 					if (mutableSlot.Count == 0)
 						mutableSlot = Slot{};
-					hotbar.SelectedIndex() = hotbarRealSelectedIndex; // Don't change the selected index
+					hotbar.SelectedIndex() = hotbarRealSelectedIndex;
 					player->SetHotbar(hotbar);
 					EvtItemDropped.Trigger(droppedSlot);
 				}
@@ -721,9 +724,11 @@ namespace onion::voxel
 			{
 				if (dropKeyPressed)
 				{
+					// Ctrl+Drop drops the full stack; plain Drop drops one item
 					Slot& mutableSlot = inventory.At(hoveredInventorySlotIndex);
-					Slot droppedSlot{mutableSlot.Id, 1};
-					mutableSlot.Count--;
+					const uint8_t dropCount = ctrlHeld ? mutableSlot.Count : 1;
+					Slot droppedSlot{mutableSlot.Id, dropCount};
+					mutableSlot.Count -= dropCount;
 					if (mutableSlot.Count == 0)
 						mutableSlot = Slot{};
 					player->SetPlayerInventory(inventory);

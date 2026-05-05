@@ -52,4 +52,18 @@ namespace onion::voxel
 			m_Lifetime = 0.f;
 	}
 
+	bool BlockEntity::CanBePickedUp() const
+	{
+		std::shared_lock lock(m_MutexBlock);
+		return m_PickupCooldown <= 0.f;
+	}
+
+	void BlockEntity::DecrementPickupCooldown(float delta)
+	{
+		std::unique_lock lock(m_MutexBlock);
+		m_PickupCooldown -= delta;
+		if (m_PickupCooldown < 0.f)
+			m_PickupCooldown = 0.f;
+	}
+
 } // namespace onion::voxel

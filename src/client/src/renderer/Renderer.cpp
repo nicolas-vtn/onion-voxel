@@ -673,12 +673,14 @@ namespace onion::voxel
 		KeyState dropItemKeyState = m_KeyBinds.GetKeyState(eAction::DropItem);
 		if (dropItemKeyState.IsPressed)
 		{
-			// Decrement count by 1; clear to Air if it reaches 0
 			Slot& selectedSlotRef = hotbar.At(selectedSlot);
 			if (!selectedSlotRef.IsEmpty())
 			{
-				Slot droppedSlot{selectedSlotRef.Id, 1};
-				selectedSlotRef.Count--;
+			const bool ctrlHeld = m_InputsManager.IsKeyPressed(Key::LeftControl) ||
+								  m_InputsManager.IsKeyPressed(Key::RightControl);
+				const uint8_t dropCount = ctrlHeld ? selectedSlotRef.Count : 1;
+				Slot droppedSlot{selectedSlotRef.Id, dropCount};
+				selectedSlotRef.Count -= dropCount;
 				if (selectedSlotRef.Count == 0)
 					selectedSlotRef = Slot{};
 				player->SetHotbar(hotbar);
