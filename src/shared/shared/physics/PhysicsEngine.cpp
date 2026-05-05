@@ -544,7 +544,7 @@ namespace onion::voxel
 
 			constexpr float STEP_EPSILON = 0.01f; // Small value to prevent floating-point issues
 
-			if (wasOnGround && IsCollidingWithTerrain(playerPos, half, offset))
+			if (wasOnGround && entity->Type != EntityType::Block && IsCollidingWithTerrain(playerPos, half, offset))
 			{
 				float stepHeight = 0.0f;
 				while (stepHeight < MAX_STEP_HEIGHT && IsCollidingWithTerrain(playerPos, half, offset))

@@ -44,6 +44,7 @@ namespace onion::voxel
 		// ------- RENDERING -------
 	  public:
 		void RenderEntities(std::vector<std::string> HiddenEntities = std::vector<std::string>());
+		void RenderDroppedItems();
 
 		void ReloadTextures();
 
@@ -62,8 +63,6 @@ namespace onion::voxel
 		void BuildPlayerMesh(const SkeletonPlayer& skeleton, EntityRenderer::SkinVersion skinVersion);
 		void BuildPlayerMesh_Legacy(const SkeletonPlayer& skeleton);
 		void BuildPlayerMesh_Modern(const SkeletonPlayer& skeleton);
-
-		void RenderDroppedItems();
 
 		// ------- RENDER DATA -------
 	  private:

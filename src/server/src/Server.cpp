@@ -320,9 +320,9 @@ namespace onion::voxel
 		// Spawn position: player head (eye position)
 		const glm::vec3 spawnPos = player->GetEyePosition();
 
-		// Initial velocity: forward direction * 5 m/s + small upward nudge
+		// Initial velocity: forward direction * 7 m/s + small upward nudge
 		const glm::vec3 forward = player->GetFacing();
-		const glm::vec3 initialVelocity = forward * 5.f + glm::vec3(0.f, 2.f, 0.f);
+		const glm::vec3 initialVelocity = forward * 7.f + glm::vec3(0.f, 2.5f, 0.f);
 
 		// Create the BlockEntity
 		auto blockEntity = std::make_shared<BlockEntity>(Utils::GenerateUUID());

@@ -120,9 +120,6 @@ namespace onion::voxel
 			BuildEntityMesh(entity);
 		}
 
-		// Render dropped block entities (spinning + bobbing world-space meshes)
-		RenderDroppedItems();
-
 		if (m_VerticesEntities.empty())
 			return;
 

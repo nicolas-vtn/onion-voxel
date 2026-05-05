@@ -1713,6 +1713,8 @@ namespace onion::voxel
 
 			m_WorldRenderer.Render();
 
+			m_EntityRenderer.RenderDroppedItems();
+
 			m_Gui.RenderGameHUD();
 
 			// Render the Player entity only when in freecam mode.
