@@ -47,13 +47,13 @@ namespace onion::voxel
 		void LegacyResolveTerrainCollisions(std::shared_ptr<Entity> entity, float deltaTime);
 
 		bool
-		LegacyIsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset);
-		bool IsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset);
+		LegacyIsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& centerOffset);
+		bool IsCollidingWithTerrain(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& centerOffset);
 
 		// Returns true if there is at least one solid block directly beneath the
-		// AABB defined by (position, halfSize, offset). Used by sneak edge-prevention.
+		// AABB defined by (position, halfSize, centerOffset). Used by sneak edge-prevention.
 	  public:
-		bool HasGroundSupport(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& offset) const;
+		bool HasGroundSupport(const glm::vec3& position, const glm::vec3& halfSize, const glm::vec3& centerOffset) const;
 
 		// ----- Private Constants -----
 	  private:

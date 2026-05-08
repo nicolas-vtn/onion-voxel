@@ -11,6 +11,7 @@
 #include <shared/world/chunk/Chunk.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
+#include <renderer/item_mesh/ItemMesh.hpp>
 #include <renderer/gui/ui_block_mesh/UiBlockMesh.hpp>
 #include <renderer/world_renderer/block_render_registry/BlockRenderRegistry.hpp>
 
@@ -18,6 +19,8 @@
 
 namespace onion::voxel
 {
+	class BlockEntityMesh;
+
 	class MeshBuilder
 	{
 		// ----- Constructor / Destructor -----
@@ -36,6 +39,10 @@ namespace onion::voxel
 		double GetChunkMeshUpdatesPerSecond() const;
 
 		void UpdateUiBlockMesh(const std::shared_ptr<UiBlockMesh> uiBlockMesh) const;
+
+		/// @brief Builds a canonical unit-cube mesh (in local [-0.5..+0.5] space) for the given block.
+		/// The result is written into @p mesh and BuffersUpdated() is called.
+		void BuildBlockEntityMesh(BlockEntityMesh& mesh, BlockId blockId) const;
 
 		size_t GetMeshBuilderThreadCount() const;
 		void SetMeshBuilderThreadCount(size_t count);
@@ -106,7 +113,7 @@ namespace onion::voxel
 							const TextureInfo& faceTexture,
 							const TextureAtlas::AtlasEntry& uv);
 
-		static void AddUiFace(UiBlockMesh& mesh,
+		static void AddUiFace(ItemMesh& mesh,
 							  const FaceBuildDesc& f,
 							  const TextureInfo& faceTexture,
 							  const TextureAtlas::AtlasEntry& uv);

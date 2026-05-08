@@ -1,8 +1,16 @@
 #include "Server.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <shared/data_transfer_objects/serializer/SerializerDTO.hpp>
+#include <shared/entities/entity/block_entity/BlockEntity.hpp>
+#include <shared/network_messages/item_picked_up_msg/ItemPickedUpMsg.hpp>
 #include <shared/utils/Utils.hpp>
 
 namespace onion::voxel
@@ -51,6 +59,7 @@ namespace onion::voxel
 	void Server::Start()
 	{
 		m_TimerSendEvents.Start();
+		m_TimerPhysicsTick.Start();
 		m_NetworkServer.Start();
 		m_IsRunning.store(true);
 	}
@@ -58,6 +67,7 @@ namespace onion::voxel
 	void Server::Stop()
 	{
 		m_TimerSendEvents.Stop();
+		m_TimerPhysicsTick.Stop();
 		m_NetworkServer.Stop();
 		m_IsRunning.store(false);
 	}
@@ -93,13 +103,20 @@ namespace onion::voxel
 		m_WorldManager->SetChunkPersistanceDistance(m_Config.serverData.SimulationDistance);
 		m_WorldManager->SetChunkLoadingDistance(m_Config.serverData.SimulationDistance);
 
+		m_PhysicsEngine = std::make_unique<PhysicsEngine>(*m_WorldManager);
+
 		SubscribeToNetworkServerEvents();
 		SubscribeToWorldManagerEvents();
 
-		// Setup Timer
+		// Setup send-events timer (100 ms)
 		m_TimerSendEvents.setTimeoutFunction([this]() { Handle_TimerSendEvents(); });
 		std::chrono::milliseconds defaultElapsedPeriod(100);
 		m_TimerSendEvents.setElapsedPeriod(defaultElapsedPeriod);
+
+		// Setup physics tick timer (50 ms = 20 Hz)
+		m_LastPhysicsTick = std::chrono::steady_clock::now();
+		m_TimerPhysicsTick.setTimeoutFunction([this]() { Handle_TimerPhysicsTick(); });
+		m_TimerPhysicsTick.setElapsedPeriod(std::chrono::milliseconds(50));
 	}
 
 	void Server::LoadConfiguration()
@@ -177,6 +194,10 @@ namespace onion::voxel
 				else if constexpr (std::is_same_v<T, BlocksChangedMsg>)
 				{
 					Handle_BlocksChangedMsgReceived(args, msg);
+				}
+				else if constexpr (std::is_same_v<T, ItemDroppedMsg>)
+				{
+					Handle_ItemDroppedMsgReceived(args, msg);
 				}
 				else
 				{
@@ -279,6 +300,247 @@ namespace onion::voxel
 		}
 
 		m_WorldManager->SetBlocks(changedBlocks, WorldManager::BlocksChangedEventArgs::eOrigin::ClientRequest, true);
+	}
+
+	void Server::Handle_ItemDroppedMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
+											   const ItemDroppedMsg& msg)
+	{
+		// Resolve sender's player
+		std::string playerUUID;
+		{
+			std::shared_lock lock(m_MutexPlayers);
+			auto it = m_ClientHandleToPlayerInfo.find(args.Sender);
+			if (it == m_ClientHandleToPlayerInfo.end())
+				return;
+			playerUUID = it->second.UUID;
+		}
+
+		std::shared_ptr<Player> player = m_WorldManager->GetPlayer(playerUUID);
+		if (!player)
+			return;
+
+		// Spawn position: player head (eye position)
+		const glm::vec3 spawnPos = player->GetEyePosition();
+
+		// Initial velocity: forward direction * 7 m/s + small upward nudge
+		const glm::vec3 forward = player->GetFacing();
+		const glm::vec3 initialVelocity = forward * 7.f + glm::vec3(0.f, 2.5f, 0.f);
+
+		// Create the BlockEntity
+		auto blockEntity = std::make_shared<BlockEntity>(Utils::GenerateUUID());
+		blockEntity->SetSlot(Slot{static_cast<BlockId>(msg.BlockId), msg.Count});
+
+		Transform t = blockEntity->GetTransform();
+		t.Position = spawnPos;
+		blockEntity->SetTransform(t);
+
+		PhysicsBody pb = blockEntity->GetPhysicsBody();
+		pb.Velocity = initialVelocity;
+		blockEntity->SetPhysicsBody(pb);
+
+		m_WorldManager->AddEntity(blockEntity);
+
+		std::cout << "Spawned BlockEntity UUID=" << blockEntity->UUID << " for player " << playerUUID << "\n";
+	}
+
+	void Server::Handle_TimerPhysicsTick()
+	{
+		// Compute delta time
+		auto now = std::chrono::steady_clock::now();
+		float deltaTime = std::chrono::duration<float>(now - m_LastPhysicsTick).count();
+		m_LastPhysicsTick = now;
+
+		// Update physics for all entities (includes BlockEntities)
+		m_PhysicsEngine->Update(deltaTime);
+
+		// Tick cooldowns/lifetimes and collect BlockEntities
+		auto entities = m_WorldManager->GetAllEntities();
+		std::vector<std::shared_ptr<BlockEntity>> blockEntities;
+		std::vector<std::string> toRemove;
+
+		for (const auto& entity : entities)
+		{
+			if (entity->Type != EntityType::Block)
+				continue;
+
+			auto blockEntity = std::static_pointer_cast<BlockEntity>(entity);
+			blockEntity->DecrementPickupCooldown(deltaTime);
+			blockEntity->DecrementLifetime(deltaTime);
+
+			if (blockEntity->IsExpired())
+				toRemove.push_back(entity->UUID);
+			else
+				blockEntities.push_back(blockEntity);
+		}
+
+		for (const auto& uuid : toRemove)
+		{
+			m_WorldManager->RemoveEntity(uuid);
+			std::cout << "Despawned expired BlockEntity UUID=" << uuid << "\n";
+		}
+
+		// -----------------------------------------------------------------
+		// Pickup detection: test AABB overlap between each player and each
+		// BlockEntity that has completed its pickup cooldown.
+		// -----------------------------------------------------------------
+		auto players = m_WorldManager->GetAllPlayers();
+
+		for (auto& [playerUUID, player] : players)
+		{
+			if (!player->HasTransform() || !player->HasPhysicsBody())
+				continue;
+
+			// Find the player's ClientHandle for sending messages
+			auto infoIt = m_UUIDToPlayerInfo.find(playerUUID);
+			if (infoIt == m_UUIDToPlayerInfo.end())
+				continue;
+			const uint32_t clientHandle = infoIt->second.ClientHandle;
+
+			// Player AABB
+			const glm::vec3 playerPos = player->GetTransform().Position;
+			const PhysicsBody playerPb = player->GetPhysicsBody();
+			const glm::vec3 playerCenter = playerPos + playerPb.CenterOffset;
+			const glm::vec3 playerHalf = playerPb.Size * 0.5f;
+			const glm::vec3 playerMin = playerCenter - playerHalf;
+			const glm::vec3 playerMax = playerCenter + playerHalf;
+
+			for (auto& blockEntity : blockEntities)
+			{
+				if (!blockEntity->CanBePickedUp())
+					continue;
+				if (!blockEntity->HasTransform() || !blockEntity->HasPhysicsBody())
+					continue;
+
+				// BlockEntity AABB
+				const glm::vec3 bePos = blockEntity->GetTransform().Position;
+				const PhysicsBody bePb = blockEntity->GetPhysicsBody();
+				const glm::vec3 beCenter = bePos + bePb.CenterOffset;
+				const glm::vec3 beHalf = bePb.Size * 0.5f;
+				const glm::vec3 beMin = beCenter - beHalf;
+				const glm::vec3 beMax = beCenter + beHalf;
+
+				// AABB overlap test
+				const bool overlaps = playerMax.x > beMin.x && playerMin.x < beMax.x &&
+									  playerMax.y > beMin.y && playerMin.y < beMax.y &&
+									  playerMax.z > beMin.z && playerMin.z < beMax.z;
+				if (!overlaps)
+					continue;
+
+				// ---------------------------------------------------------
+				// Pickup logic: partial pickup supported.
+				// Pass 1 — fill existing matching stacks (hotbar first).
+				// Pass 2 — fill empty slots (hotbar first).
+				// ---------------------------------------------------------
+				const BlockId blockId = blockEntity->GetSlot().Id;
+				int remaining = static_cast<int>(blockEntity->GetSlot().Count);
+
+				if (remaining <= 0 || blockId == BlockId::Air)
+					continue;
+
+				// We need mutable inventory copies — modify, then write back.
+				Inventory hotbar = player->GetHotbar();
+				Inventory inventory = player->GetPlayerInventory();
+
+				// tryAddInv: iterate hotbar then main inventory, either filling
+				// existing matching stacks (mustMatch=true) or empty slots (mustMatch=false).
+				auto tryAddInv = [&](bool mustMatch)
+				{
+					for (int i = 0; i < hotbar.Rows() * hotbar.Columns() && remaining > 0; ++i)
+					{
+						Slot& slot = hotbar.At(i);
+						if (mustMatch)
+						{
+							if (slot.Id != blockId || slot.Count >= k_MaxStackSize)
+								continue;
+						}
+						else
+						{
+							if (!slot.IsEmpty())
+								continue;
+						}
+						const int canAdd = mustMatch
+							? std::min(static_cast<int>(k_MaxStackSize - slot.Count), remaining)
+							: std::min(static_cast<int>(k_MaxStackSize), remaining);
+						if (canAdd <= 0)
+							continue;
+						if (mustMatch)
+							slot.Count += static_cast<uint8_t>(canAdd);
+						else
+							slot = Slot{blockId, static_cast<uint8_t>(canAdd)};
+						remaining -= canAdd;
+
+						ItemPickedUpMsg msg;
+						msg.IsHotbar = true;
+						msg.Index = static_cast<uint8_t>(i);
+						msg.ItemId = static_cast<uint16_t>(blockId);
+						msg.Count = slot.Count;
+						m_NetworkServer.Send(clientHandle, msg);
+					}
+
+					for (int i = 0; i < inventory.Rows() * inventory.Columns() && remaining > 0; ++i)
+					{
+						Slot& slot = inventory.At(i);
+						if (mustMatch)
+						{
+							if (slot.Id != blockId || slot.Count >= k_MaxStackSize)
+								continue;
+						}
+						else
+						{
+							if (!slot.IsEmpty())
+								continue;
+						}
+						const int canAdd = mustMatch
+							? std::min(static_cast<int>(k_MaxStackSize - slot.Count), remaining)
+							: std::min(static_cast<int>(k_MaxStackSize), remaining);
+						if (canAdd <= 0)
+							continue;
+						if (mustMatch)
+							slot.Count += static_cast<uint8_t>(canAdd);
+						else
+							slot = Slot{blockId, static_cast<uint8_t>(canAdd)};
+						remaining -= canAdd;
+
+						ItemPickedUpMsg msg;
+						msg.IsHotbar = false;
+						msg.Index = static_cast<uint8_t>(i);
+						msg.ItemId = static_cast<uint16_t>(blockId);
+						msg.Count = slot.Count;
+						m_NetworkServer.Send(clientHandle, msg);
+					}
+				};
+
+				const int originalRemaining = remaining;
+				tryAddInv(true);  // Pass 1: fill existing stacks
+				tryAddInv(false); // Pass 2: fill empty slots
+
+				// Write inventories back if anything was picked up
+				if (remaining < originalRemaining)
+				{
+					player->SetHotbar(hotbar);
+					player->SetPlayerInventory(inventory);
+				}
+
+				if (remaining <= 0)
+				{
+					// Fully picked up — remove entity
+					toRemove.push_back(blockEntity->UUID);
+				}
+				else
+				{
+					// Partial pickup — update remaining count and reset lifetime
+					blockEntity->SetSlot(Slot{blockId, static_cast<uint8_t>(remaining)});
+					blockEntity->SetLifetime(BlockEntity::DefaultLifetime);
+				}
+			}
+
+			// Remove any fully-picked-up entities (avoid double-remove with expired list)
+			for (const auto& uuid : toRemove)
+			{
+				m_WorldManager->RemoveEntity(uuid);
+			}
+			toRemove.clear();
+		}
 	}
 
 	void Server::Handle_ClientConnected(const NetworkServer::ClientConnectedEventArgs& args)

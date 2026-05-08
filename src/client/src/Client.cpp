@@ -1,8 +1,11 @@
 #include "Client.hpp"
 
 #include <iostream>
+#include <unordered_set>
 
 #include <shared/data_transfer_objects/serializer/SerializerDTO.hpp>
+#include <shared/network_messages/item_dropped_msg/ItemDroppedMsg.hpp>
+#include <shared/network_messages/item_picked_up_msg/ItemPickedUpMsg.hpp>
 #include <shared/utils/Utils.hpp>
 
 namespace onion::voxel
@@ -249,6 +252,9 @@ namespace onion::voxel
 
 		m_RendererEventHandles.push_back(m_Renderer.EvtRenderDistanceChanged.Subscribe(
 			[this](uint8_t renderDistance) { Handle_RenderDistanceChanged(renderDistance); }));
+
+		m_RendererEventHandles.push_back(
+			m_Renderer.EvtItemDropped.Subscribe([this](const Slot& slot) { Handle_ItemDropped(slot); }));
 	}
 
 	void Client::Handle_RenderDistanceChanged(uint8_t renderDistance)
@@ -257,6 +263,17 @@ namespace onion::voxel
 		{
 			m_LocalhostServer->SetChunkLoadingDistance(renderDistance);
 		}
+	}
+
+	void Client::Handle_ItemDropped(const Slot& slot)
+	{
+		if (!m_NetworkClient.IsRunning())
+			return;
+
+		ItemDroppedMsg msg;
+		msg.BlockId = static_cast<uint16_t>(slot.Id);
+		msg.Count = slot.Count;
+		m_NetworkClient.Send(std::move(msg), true);
 	}
 
 	void Client::SubscribeToNetworkClientEvents()
@@ -303,6 +320,10 @@ namespace onion::voxel
 				else if constexpr (std::is_same_v<T, EntitySnapshotMsg>)
 				{
 					Handle_EntitySnapshotMessageReceived(msg);
+				}
+				else if constexpr (std::is_same_v<T, ItemPickedUpMsg>)
+				{
+					Handle_ItemPickedUpMsgReceived(msg);
 				}
 				else
 				{
@@ -390,10 +411,12 @@ namespace onion::voxel
 		}
 
 		std::vector<std::shared_ptr<Entity>> entities;
+		std::unordered_set<std::string> entityUUIDs;
 		for (const auto& entityDTO : msg.Entities)
 		{
 			// Deserialize the entity and add it to the list of entities to update in the EntityManager
 			std::shared_ptr<Entity> entity = SerializerDTO::DeserializeEntity(entityDTO);
+			entityUUIDs.insert(entity->UUID);
 			entities.push_back(entity);
 		}
 
@@ -417,6 +440,12 @@ namespace onion::voxel
 
 		m_WorldManager->UpdateEntities(players);
 		m_WorldManager->UpdateEntities(entities);
+
+		auto removedEntities = m_WorldManager->RemoveEntitiesNotIn(entityUUIDs);
+		for (const auto& entity : removedEntities)
+		{
+			std::cout << "Removing entity with UUID " << entity->UUID << " from EntityManager\n";
+		}
 	}
 
 	void Client::SendPlayerInfosToServer()
@@ -432,6 +461,37 @@ namespace onion::voxel
 		playerInfoMsg.player = SerializerDTO::SerializePlayer(*player);
 
 		m_NetworkClient.Send(std::move(playerInfoMsg), false);
+	}
+
+	void Client::Handle_ItemPickedUpMsgReceived(const ItemPickedUpMsg& msg)
+	{
+		const auto player = m_WorldManager->GetPlayer(m_Config.clientData.UUID);
+		if (!player)
+			return;
+
+		const BlockId blockId = static_cast<BlockId>(msg.ItemId);
+		const Slot newSlot{blockId, msg.Count};
+
+		if (msg.IsHotbar)
+		{
+			if (!player->HasHotbar())
+				return;
+			Inventory hotbar = player->GetHotbar();
+			if (msg.Index >= hotbar.Rows() * hotbar.Columns())
+				return;
+			hotbar.At(msg.Index) = newSlot;
+			player->SetHotbar(hotbar);
+		}
+		else
+		{
+			if (!player->HasPlayerInventory())
+				return;
+			Inventory inventory = player->GetPlayerInventory();
+			if (msg.Index >= inventory.Rows() * inventory.Columns())
+				return;
+			inventory.At(msg.Index) = newSlot;
+			player->SetPlayerInventory(inventory);
+		}
 	}
 
 } // namespace onion::voxel

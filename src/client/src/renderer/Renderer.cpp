@@ -27,7 +27,7 @@ namespace onion::voxel
 		: m_WorldManager(worldManager),
 		  m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), m_WindowWidth, m_WindowHeight)),
 		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager),
-		  m_EntityRenderer(m_Camera), m_FovSmoother(m_Camera)
+		  m_EntityRenderer(m_Camera, m_WorldRenderer.GetMeshBuilder()), m_FovSmoother(m_Camera)
 	{
 		// Setup Timer Save UserSettings
 		m_TimerDelayedSaveUserSettings.setTimeoutFunction([this]() { SaveUserSettings(); });
@@ -667,14 +667,25 @@ namespace onion::voxel
 		glm::vec3 rayDirection = m_Camera->GetFront();
 
 		m_CurrentRaycastHit = Raycaster::Raycast(*m_WorldManager, rayOrigin, rayDirection, 10.0f, 500);
+		EngineContext::Get().LookedAtBlock = m_CurrentRaycastHit;
 
 		// ----- DROP ITEM -----
 		KeyState dropItemKeyState = m_KeyBinds.GetKeyState(eAction::DropItem);
 		if (dropItemKeyState.IsPressed)
 		{
-			// Set air as the selected Hotbar slot
-			hotbar.Content()[selectedSlot] = BlockId::Air;
-			player->SetHotbar(hotbar);
+			Slot& selectedSlotRef = hotbar.At(selectedSlot);
+			if (!selectedSlotRef.IsEmpty())
+			{
+			const bool ctrlHeld = m_InputsManager.IsKeyPressed(Key::LeftControl) ||
+								  m_InputsManager.IsKeyPressed(Key::RightControl);
+				const uint8_t dropCount = ctrlHeld ? selectedSlotRef.Count : 1;
+				Slot droppedSlot{selectedSlotRef.Id, dropCount};
+				selectedSlotRef.Count -= dropCount;
+				if (selectedSlotRef.Count == 0)
+					selectedSlotRef = Slot{};
+				player->SetHotbar(hotbar);
+				EvtItemDropped.Trigger(droppedSlot);
+			}
 		}
 
 		// ----- PROCESS BLOCK DESTROY -----
@@ -696,43 +707,56 @@ namespace onion::voxel
 		if (interactKeyState.IsPressed && m_CurrentRaycastHit.has_value())
 		{
 			const Block& adjacentBlock = m_CurrentRaycastHit->AdjacentBlock;
-			BlockId placedId = hotbar.Content()[selectedSlot];
+			Slot& selectedSlotRef = hotbar.At(selectedSlot);
+			BlockId placedId = selectedSlotRef.Id;
 
-			// Resolve the correct variant based on player orientation and hit face.
-			PlacementContext ctx;
-			ctx.Id = placedId;
-			ctx.PlayerLookDir = m_Camera->GetFront();
-			ctx.HitFaceNormal = m_CurrentRaycastHit->HitFaceNormal;
-			ctx.HitPosition = m_CurrentRaycastHit->HitPosition;
-			ctx.HitBlock = m_CurrentRaycastHit->HitBlock;
-			ctx.PlacePosition = adjacentBlock.Position;
-			ctx.World = m_WorldManager.get();
-
-			PlacementResult placement = BlockPlacementResolver::Resolve(ctx);
-			uint8_t variantIndex = BlockstateRegistry::GetVariantIndex(placement.Id, placement.Properties);
-
-			Block blockToPlace = Block(placement.Position, BlockState(placement.Id, variantIndex));
-
-			bool isAir = m_WorldManager->GetBlock(placement.Position).ID == BlockId::Air;
-			bool collidesWithAnyPlayer = false;
-			for (const auto& [uuid, aPlayer] : m_WorldManager->GetAllPlayers())
+			if (placedId != BlockId::Air)
 			{
-				if (m_PhysicsEngine.IsPlayerCollidingWithBlock(aPlayer, blockToPlace.State, blockToPlace.Position))
+				// Resolve the correct variant based on player orientation and hit face.
+				PlacementContext ctx;
+				ctx.Id = placedId;
+				ctx.PlayerLookDir = m_Camera->GetFront();
+				ctx.HitFaceNormal = m_CurrentRaycastHit->HitFaceNormal;
+				ctx.HitPosition = m_CurrentRaycastHit->HitPosition;
+				ctx.HitBlock = m_CurrentRaycastHit->HitBlock;
+				ctx.PlacePosition = adjacentBlock.Position;
+				ctx.World = m_WorldManager.get();
+
+				PlacementResult placement = BlockPlacementResolver::Resolve(ctx);
+				uint8_t variantIndex = BlockstateRegistry::GetVariantIndex(placement.Id, placement.Properties);
+
+				Block blockToPlace = Block(placement.Position, BlockState(placement.Id, variantIndex));
+
+				bool isAir = m_WorldManager->GetBlock(placement.Position).ID == BlockId::Air;
+				bool collidesWithAnyPlayer = false;
+				for (const auto& [uuid, aPlayer] : m_WorldManager->GetAllPlayers())
 				{
-					collidesWithAnyPlayer = true;
-					break;
+					if (m_PhysicsEngine.IsPlayerCollidingWithBlock(aPlayer, blockToPlace.State, blockToPlace.Position))
+					{
+						collidesWithAnyPlayer = true;
+						break;
+					}
 				}
-			}
-			bool canPlace = (placement.IsPromotion || isAir) && !collidesWithAnyPlayer;
+				bool canPlace = (placement.IsPromotion || isAir) && !collidesWithAnyPlayer;
 
-			if (canPlace)
-			{
-				bool success = m_WorldManager->SetBlock(
-					blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
+				if (canPlace)
+				{
+					bool success = m_WorldManager->SetBlock(
+						blockToPlace, WorldManager::BlocksChangedEventArgs::eOrigin::PlayerAction, true);
 
-				std::cout << "Attempting to place block at " << blockToPlace.Position.x << ", "
-						  << blockToPlace.Position.y << ", " << blockToPlace.Position.z
-						  << " - Success: " << (success ? "Yes" : "No") << std::endl;
+					std::cout << "Attempting to place block at " << blockToPlace.Position.x << ", "
+							  << blockToPlace.Position.y << ", " << blockToPlace.Position.z
+							  << " - Success: " << (success ? "Yes" : "No") << std::endl;
+
+					if (success)
+					{
+						// Decrement slot count; clear if reaches 0
+						selectedSlotRef.Count--;
+						if (selectedSlotRef.Count == 0)
+							selectedSlotRef = Slot{};
+						player->SetHotbar(hotbar);
+					}
+				}
 			}
 		}
 
@@ -744,7 +768,32 @@ namespace onion::voxel
 			std::cout << "Picking block at " << hitBlock.Position.x << ", " << hitBlock.Position.y << ", "
 					  << hitBlock.Position.z << " - Block : " << BlockIds::GetName(hitBlock.ID()) << std::endl;
 
-			hotbar.Content()[selectedSlot] = hitBlock.ID();
+			const BlockId pickedId = hitBlock.ID();
+
+			// Search for an existing slot with the same Id in the hotbar
+			int existingSlotIdx = -1;
+			for (int i = 0; i < hotbar.Rows() * hotbar.Columns(); ++i)
+			{
+				if (hotbar.At(i).Id == pickedId && !hotbar.At(i).IsEmpty())
+				{
+					existingSlotIdx = i;
+					break;
+				}
+			}
+
+			if (existingSlotIdx >= 0)
+			{
+				// Move selected index to that slot and increment count (up to max)
+				hotbar.SelectedIndex() = existingSlotIdx;
+				Slot& existSlot = hotbar.At(existingSlotIdx);
+				if (existSlot.Count < k_MaxStackSize)
+					existSlot.Count++;
+			}
+			else
+			{
+				// Replace current selected slot
+				hotbar.At(selectedSlot) = Slot{pickedId, 1};
+			}
 
 			player->SetHotbar(hotbar);
 		}
@@ -1009,7 +1058,7 @@ namespace onion::voxel
 					float deltaX = moveDir.x * maxSpeed * static_cast<float>(m_DeltaTime) +
 						physics.Velocity.x * static_cast<float>(m_DeltaTime);
 					glm::vec3 testPos = currentPos + glm::vec3(deltaX, 0.0f, 0.0f);
-					if (!m_PhysicsEngine.HasGroundSupport(testPos, physics.HalfSize, physics.Offset))
+					if (!m_PhysicsEngine.HasGroundSupport(testPos, physics.Size * 0.5f, physics.CenterOffset))
 					{
 						moveDir.x = 0.0f;
 						physics.Velocity.x = 0.0f;
@@ -1021,7 +1070,7 @@ namespace onion::voxel
 					float deltaZ = moveDir.z * maxSpeed * static_cast<float>(m_DeltaTime) +
 						physics.Velocity.z * static_cast<float>(m_DeltaTime);
 					glm::vec3 testPos = currentPos + glm::vec3(0.0f, 0.0f, deltaZ);
-					if (!m_PhysicsEngine.HasGroundSupport(testPos, physics.HalfSize, physics.Offset))
+					if (!m_PhysicsEngine.HasGroundSupport(testPos, physics.Size * 0.5f, physics.CenterOffset))
 					{
 						moveDir.z = 0.0f;
 						physics.Velocity.z = 0.0f;
@@ -1280,6 +1329,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_Gui.EvtUserSettingsChanged.Subscribe([this](const UserSettingsChangedEventArgs& args)
 																		{ Handle_UserSettingsChanged(args); }));
+
+		m_EventHandles.push_back(
+			m_Gui.EvtItemDropped.Subscribe([this](const Slot& slot) { EvtItemDropped.Trigger(slot); }));
 	}
 
 	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)
@@ -1327,6 +1379,7 @@ namespace onion::voxel
 			m_WorldRenderer.DeleteChunkMeshes();
 
 			m_CurrentRaycastHit = std::nullopt; // Reset HitBlock
+			EngineContext::Get().LookedAtBlock = std::nullopt;
 
 			m_Gui.SetIsInGame(false);
 
@@ -1661,6 +1714,8 @@ namespace onion::voxel
 			}
 
 			m_WorldRenderer.Render();
+
+			m_EntityRenderer.RenderDroppedItems();
 
 			m_Gui.RenderGameHUD();
 

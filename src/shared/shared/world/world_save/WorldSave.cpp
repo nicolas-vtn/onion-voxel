@@ -84,13 +84,18 @@ namespace onion::voxel
 		}
 	}
 
-	void WorldSave::SaveChunkAsync(const std::shared_ptr<Chunk>& chunk)
+	void WorldSave::SaveChunkAsync(const ChunkSaveData& chunkSaveData)
 	{
+		if (!chunkSaveData.Chunk)
+		{
+			throw std::runtime_error("Cannot save a null chunk.");
+		}
+
 		std::lock_guard lock(m_MutexChunksToSave);
-		m_ChunksToSave[chunk->GetPosition()] = chunk;
+		m_ChunksToSave[chunkSaveData.Chunk->GetPosition()] = chunkSaveData;
 	}
 
-	std::shared_ptr<Chunk> WorldSave::LoadChunk(const glm::ivec2& chunkPosition)
+	ChunkSaveData WorldSave::LoadChunk(const glm::ivec2& chunkPosition)
 	{
 		// First check if the chunk is in the chunks to save map.
 		{
@@ -98,16 +103,15 @@ namespace onion::voxel
 			auto it = m_ChunksToSave.find(chunkPosition);
 			if (it != m_ChunksToSave.end())
 			{
-				auto chunk = it->second;
+				ChunkSaveData chunkSaveData = it->second;
 				m_ChunksToSave.erase(it);
-				return chunk;
+				return chunkSaveData;
 			}
 		}
 
 		std::vector<uint8_t> chunkData;
 		{
 			std::lock_guard lock(m_MutexDiskAccess);
-			std::string chunkFileName = GetChunkFileName(chunkPosition);
 			std::filesystem::path chunkFilePath = GetChunkFilePath(m_SaveDirectory, chunkPosition);
 
 			if (std::filesystem::exists(chunkFilePath))
@@ -122,12 +126,12 @@ namespace onion::voxel
 			}
 			else
 			{
-				return nullptr;
+				return {};
 			}
 		}
 
 		if (chunkData.empty())
-			return nullptr;
+			return {};
 
 		// Create a stream from the raw buffer
 		std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
@@ -137,12 +141,10 @@ namespace onion::voxel
 		// Deserialize with cereal
 		cereal::BinaryInputArchive archive(ss);
 
-		ChunkDTO dto;
+		ChunkSaveDataDTO dto;
 		archive(dto);
 
-		std::shared_ptr<Chunk> chunk = SerializerDTO::DeserializeChunk(dto);
-
-		return chunk;
+		return SerializerDTO::DeserializeChunkSaveData(dto);
 	}
 
 	void WorldSave::SavePlayersAsync(const std::unordered_map<std::string, std::shared_ptr<Player>>& players)
@@ -291,7 +293,7 @@ namespace onion::voxel
 
 	void WorldSave::SaveChunks()
 	{
-		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> chunksToSaveCopy;
+		std::unordered_map<glm::ivec2, ChunkSaveData> chunksToSaveCopy;
 		{
 			std::lock_guard lock(m_MutexChunksToSave);
 			chunksToSaveCopy = m_ChunksToSave;
@@ -299,12 +301,11 @@ namespace onion::voxel
 		}
 
 		std::vector<std::pair<std::filesystem::path, std::vector<uint8_t>>> chunksDataToWrite;
-		for (const auto& [chunkPos, chunk] : chunksToSaveCopy)
+		for (const auto& [chunkPos, chunkSaveData] : chunksToSaveCopy)
 		{
-			const std::string chunkFileName = GetChunkFileName(chunkPos);
 			std::filesystem::path chunkFilePath = GetChunkFilePath(m_SaveDirectory, chunkPos);
 
-			ChunkDTO chunkDto = SerializerDTO::SerializeChunk(chunk);
+			ChunkSaveDataDTO chunkDto = SerializerDTO::SerializeChunkSaveData(chunkSaveData);
 			std::ostringstream stream(std::ios::binary);
 			cereal::BinaryOutputArchive archive(stream);
 			archive(chunkDto);

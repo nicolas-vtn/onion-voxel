@@ -6,6 +6,7 @@ namespace onion::voxel
 	{
 		None = 0,
 		Player = 1,
+		Block = 2,
 
 		Count,
 	};

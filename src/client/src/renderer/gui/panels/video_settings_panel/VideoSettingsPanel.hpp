@@ -40,6 +40,9 @@ namespace onion::voxel
 		Slider m_RenderDistance_Slider;
 		Slider m_SimulationDistance_Slider;
 
+		Label m_WailaTitle_Label;
+		Button m_Waila_Button;
+
 		Button m_Done_Button;
 
 		// ----- Settings -----
@@ -67,5 +70,6 @@ namespace onion::voxel
 
 		void Handle_RenderDistance_Changed(const Slider& sender);
 		void Handle_SimulationDistance_Changed(const Slider& sender);
+		void Handle_Waila_Click(const Button& sender);
 	};
 } // namespace onion::voxel

@@ -194,6 +194,7 @@ namespace onion::voxel
 				SimulationDistance_Changed = true;
 				MaxFPS_Changed = true;
 				VSyncEnabled_Changed = true;
+				WailaEnabled_Changed = true;
 				FOV_Changed = true;
 				MouseSensitivity_Changed = true;
 				MouseScrollSensitivity_Changed = true;
@@ -211,6 +212,7 @@ namespace onion::voxel
 
 		bool MaxFPS_Changed = false;
 		bool VSyncEnabled_Changed = false;
+		bool WailaEnabled_Changed = false;
 
 		bool FOV_Changed = false;
 

@@ -79,6 +79,7 @@ namespace onion::voxel
 		Event<const ServerInfos&> EvtRequestStartMultiplayerGame;
 		Event<uint8_t> EvtRenderDistanceChanged;
 		Event<bool> EvtRequestQuitToMainMenu;
+		Event<Slot> EvtItemDropped;
 
 		// ----- Internal Methods -----
 	  private:

@@ -17,12 +17,13 @@
 #include <shared/entities/entity_manager/EntityManager.hpp>
 #include <shared/http_file_downloader/HttpFileDownloader.hpp>
 
-#include "cuboid.hpp"
 #include "TextureTileMapper.hpp"
+#include "cuboid.hpp"
 #include "skeleton/SkeletonPlayer.hpp"
 
 namespace onion::voxel
 {
+	class MeshBuilder;
 
 	class EntityRenderer
 	{
@@ -37,12 +38,13 @@ namespace onion::voxel
 
 		// ------- CONSTRUCTOR & DESTRUCTOR -------
 	  public:
-		EntityRenderer(const std::shared_ptr<Camera>& camera);
+		EntityRenderer(const std::shared_ptr<Camera>& camera, const MeshBuilder& meshBuilder);
 		~EntityRenderer() = default;
 
 		// ------- RENDERING -------
 	  public:
 		void RenderEntities(std::vector<std::string> HiddenEntities = std::vector<std::string>());
+		void RenderDroppedItems();
 
 		void ReloadTextures();
 
@@ -83,6 +85,10 @@ namespace onion::voxel
 		// ------- CAMERA -------
 	  private:
 		std::shared_ptr<Camera> m_Camera;
+
+		// ------- MESH BUILDER -------
+	  private:
+		const MeshBuilder& m_MeshBuilder;
 
 		// ------ ASYNC SKIN LOADER ------
 	  private:
@@ -139,9 +145,13 @@ namespace onion::voxel
 
 		// ------- DEBUG RENDERING -------
 	  private:
+		void RenderEntityRendererPanel();
 		void RenderPlayerDebugPanel();
+		void RenderDroppedItemBoundingBoxes();
 
+		bool m_RenderPlayerDebugPanel{false};
 		bool m_RenderPlayerBoundingBoxes{true};
+		bool m_RenderDroppedItemBoundingBoxes{false};
 		void RenderPlayersBoundingBoxes();
 
 		// ------- ENUMS -------
@@ -193,3 +203,4 @@ namespace onion::voxel
 	};
 
 } // namespace onion::voxel
+

@@ -3,6 +3,7 @@
 #include <renderer/gui/GuiElement.hpp>
 #include <renderer/gui/controls/label/Label.hpp>
 #include <renderer/gui/controls/sprite/Sprite.hpp>
+#include <renderer/gui/controls/tooltip/Tooltip.hpp>
 
 #include <renderer/gui/ui_block_mesh/UiBlockMesh.hpp>
 
@@ -36,13 +37,20 @@ namespace onion::voxel
 		Sprite m_ExperienceBarProgress_Sprite;
 		Label m_ExperienceLevel_Label;
 		Label m_SelectedBlockName_Label;
+		Label m_Fps_Label;
 
 		std::shared_ptr<UiBlockMesh> m_UiBlockMesh = std::make_shared<UiBlockMesh>(Inventory{1, 9});
+
+		// ----- WAILA (What Am I Looking At) -----
+		Tooltip m_WailaTooltip;
+		std::shared_ptr<UiBlockMesh> m_WailaBlockMesh = std::make_shared<UiBlockMesh>(Inventory{1, 1});
 
 		// ----- State -----
 	  private:
 		int m_PreviousSelectedHotbarIndex = -1; // The previously selected hotbar index
 		double m_SelectedBlockTime = 0.0;		// Time in seconds that the currently selected block has been selected.
+		double m_LastFrameTime = 0.0;			// glfwGetTime() value at the previous frame, used to compute delta.
+		float m_SmoothedFps = 0.f;				// Exponentially smoothed FPS value.
 
 		// ----- Private Helpers -----
 	  private:

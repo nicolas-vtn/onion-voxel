@@ -28,6 +28,7 @@ namespace onion::voxel
 		// ----- Public Events -----
 	  public:
 		Event<const GuiElement*> EvtRequestBackNavigation;
+		Event<Slot> EvtItemDropped;
 
 		// ----- Controls -----
 	  private:
@@ -77,7 +78,8 @@ namespace onion::voxel
 		int m_MaxPageIndex = 0;
 		std::string m_LastSearchQuery = "hqsdfdjshfgjdhsgfdhsgfds";
 
-		bool m_WasMouseDown = false;
+		bool m_WasMouseLeftDown = false;
+		bool m_WasMouseRightDown = false;
 
 		Inventory m_CraftingInventory{2, 2};
 		Inventory m_CraftingOutputInventory{1, 1};

@@ -65,6 +65,7 @@ namespace onion::voxel
 		void Handle_ChunkDataMessageReceived(const ChunkDataMsg& msg);
 		void Handle_BlocksChangedMessageReceived(const BlocksChangedMsg& msg);
 		void Handle_EntitySnapshotMessageReceived(const EntitySnapshotMsg& msg);
+		void Handle_ItemPickedUpMsgReceived(const ItemPickedUpMsg& msg);
 
 		Timer m_TimerSendPlayerInfos;
 		void SendPlayerInfosToServer();
@@ -95,6 +96,7 @@ namespace onion::voxel
 		void SubscribeToRendererEvents();
 
 		void Handle_RenderDistanceChanged(uint8_t renderDistance);
+		void Handle_ItemDropped(const Slot& slot);
 
 		// ----- Logger -----
 	  private:

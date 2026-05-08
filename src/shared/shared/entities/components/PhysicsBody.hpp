@@ -12,8 +12,12 @@ namespace onion::voxel
 
 		float Mass = 1.f;
 
-		glm::vec3 HalfSize{1.f};
-		glm::vec3 Offset{0.f};
+		// Full extents of the AABB (width, height, depth in world units).
+		glm::vec3 Size{1.f};
+
+		// Offset from Transform.Position to the centre of the AABB.
+		// e.g. for a player whose origin is at the feet: CenterOffset = (0, Size.y * 0.5, 0)
+		glm::vec3 CenterOffset{0.f};
 	};
 
 } // namespace onion::voxel

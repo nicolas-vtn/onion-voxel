@@ -18,7 +18,8 @@ namespace onion::voxel
 			  "ExperienceBarProgress_Sprite", s_PathExperienceBarProgress, Sprite::eOrigin::ResourcePack),
 		  m_HeartContainer_Sprite("HeartContainer_Sprite", s_PathHeartContainer, Sprite::eOrigin::ResourcePack),
 		  m_HungerEmpty_Sprite("HungerEmpty_Sprite", s_PathHungerEmpty, Sprite::eOrigin::ResourcePack),
-		  m_ExperienceLevel_Label("ExperienceLevel_Label"), m_SelectedBlockName_Label("SelectedBlockName_Label")
+		  m_ExperienceLevel_Label("ExperienceLevel_Label"), m_SelectedBlockName_Label("SelectedBlockName_Label"),
+		  m_Fps_Label("Fps_Label"), m_WailaTooltip("WailaTooltip")
 	{
 		m_ExperienceBarBackground_Sprite.SetZOffset(0.4f);
 		m_ExperienceBarProgress_Sprite.SetZOffset(0.45f);
@@ -30,8 +31,15 @@ namespace onion::voxel
 		m_SelectedBlockName_Label.SetZOffset(0.5f);
 		m_SelectedBlockName_Label.SetTextAlignment(Font::eTextAlignment::Center);
 
+		m_Fps_Label.SetZOffset(0.5f);
+		m_Fps_Label.SetTextAlignment(Font::eTextAlignment::Left);
+
 		m_UiBlockMesh->SetRenderSelectedHighlight(false);
 		m_UiBlockMesh->SetSlotBorder(0.f);
+
+		m_WailaTooltip.SetZOffset(0.85f);
+		m_WailaBlockMesh->SetRenderSelectedHighlight(false);
+		m_WailaBlockMesh->SetSlotBorder(0.f);
 	}
 
 	void HudPanel::Render()
@@ -89,6 +97,23 @@ namespace onion::voxel
 		int screenCenterX = static_cast<int>(std::round(s_ScreenWidth * 0.5f));
 		int screenBottom = static_cast<int>(s_ScreenHeight);
 
+		// ---- FPS (top-left) ----
+		{
+			double now = glfwGetTime();
+			double delta = now - m_LastFrameTime;
+			m_LastFrameTime = now;
+			if (delta > 0.0)
+			{
+				float instant = static_cast<float>(1.0 / delta);
+				m_SmoothedFps += (instant - m_SmoothedFps) * 0.1f;
+			}
+			int fps = static_cast<int>(std::round(m_SmoothedFps));
+			m_Fps_Label.SetText("Fps: " + std::to_string(fps));
+			m_Fps_Label.SetTextHeight(s_TextHeight);
+			m_Fps_Label.SetPosition({s_ScreenWidth * (10.f / 1920.f), s_ScreenHeight * (20.f / 1009.f)});
+			m_Fps_Label.Render();
+		}
+
 		// ---- Hotbar (bottom-center) ----
 		float hotbarHeightRatio = 86.f / 1009.f;
 		int hotbarHeight = static_cast<int>(s_ScreenHeight * hotbarHeightRatio);
@@ -125,6 +150,7 @@ namespace onion::voxel
 		glm::vec2 firstSlotTopLeft = {s_ScreenWidth * firstSlotLeftXborderRatio,
 									  s_ScreenHeight * firstSlotTopYborderRatio};
 		m_UiBlockMesh->SetInventory(playerHotbar, slotSize, slotPadding);
+		m_UiBlockMesh->SetCountLabelTextHeight(s_TextHeight);
 		if (m_UiBlockMesh->IsDirty())
 		{
 			auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
@@ -263,10 +289,10 @@ namespace onion::voxel
 		float textFadeStrength = GetSelectedBlockNameFadeInFactor();
 		if (textFadeStrength > 0.f)
 		{
-			BlockId selectedBlockId = playerHotbar.At(playerHotbar.SelectedIndex());
-			if (selectedBlockId != BlockId::Air)
-			{
-				std::string blockName = BlockIds::GetName(playerHotbar.At(playerHotbar.SelectedIndex()));
+		BlockId selectedBlockId = playerHotbar.At(playerHotbar.SelectedIndex()).Id;
+		if (selectedBlockId != BlockId::Air)
+		{
+			std::string blockName = BlockIds::GetName(playerHotbar.At(playerHotbar.SelectedIndex()).Id);
 				const float labelYposRatio = (812.f - 23.f) / 1009.f;
 				const float labelPosY = std::round(s_ScreenHeight * labelYposRatio);
 				m_SelectedBlockName_Label.SetText(blockName);
@@ -275,6 +301,56 @@ namespace onion::voxel
 				glm::vec4 textColor = glm::vec4(1.f, 1.f, 1.f, textFadeStrength);
 				m_SelectedBlockName_Label.SetCustomTextColor(textColor);
 				m_SelectedBlockName_Label.Render();
+			}
+		}
+
+		// ---- WAILA (What Am I Looking At) ----
+		if (EngineContext::Get().Settings().Video.WailaEnabled)
+		{
+			const auto& lookedAt = EngineContext::Get().LookedAtBlock;
+			if (lookedAt.has_value() && lookedAt->HitBlock.State.ID != BlockId::Air)
+			{
+				const BlockId wailaBlockId = lookedAt->HitBlock.State.ID;
+
+				// Build tooltip text — leading spaces reserve room for the block miniature on the left.
+				// NOTE: spaces on line 2 must come AFTER the format codes (§9§o), not before them.
+				// SegmentText splits on § boundaries, so any text before a § is flushed into the previous
+				// segment. Spaces placed before §9§o would end up in segment 1 and their cursor advance
+				// would be discarded when RenderText resets X to startX after the newline.
+				static constexpr std::string_view k_WailaSpaces = "      "; // 6 spaces
+				const std::string wailaLine1 = std::string(k_WailaSpaces) + BlockIds::GetName(wailaBlockId);
+				const std::string wailaLine2 = "§9§o" + std::string(k_WailaSpaces) + "Onion::Voxel§r§r";
+
+				m_WailaTooltip.SetText(wailaLine1 + "\n" + wailaLine2);
+				m_WailaTooltip.SetTextHeight(s_TextHeight);
+
+				// Position: top-center — m_Position.y is the vertical center of the tooltip box.
+				const float wailaTooltipY = s_ScreenHeight * (60.f / 1009.f);
+				m_WailaTooltip.SetPositionCentered({0.f, wailaTooltipY});
+
+				// Compute where the block mesh should go (inner top-left of the tooltip content area).
+				const glm::ivec2 innerTopLeft = m_WailaTooltip.GetInnerTopLeft();
+
+				// Block mesh: square slot sized to span the full inner content height (two text lines + gap).
+				const float blockSize = s_TextHeight * 2.6f;
+				const glm::vec2 wailaSlotSize = {blockSize, blockSize};
+
+				// Center the block mesh vertically within the content area.
+				const float blockTopY = innerTopLeft.y + (s_TextHeight * 2.2f) / 2.f - blockSize / 2.f;
+				const glm::vec2 blockTopLeft = {(float) innerTopLeft.x, blockTopY};
+
+				// Update block mesh inventory.
+			Inventory wailaInv{1, 1};
+			wailaInv.Content()[0] = Slot{wailaBlockId, 1};
+				m_WailaBlockMesh->SetInventory(wailaInv, wailaSlotSize, {0.f, 0.f});
+				if (m_WailaBlockMesh->IsDirty())
+				{
+					auto& meshBuilder = EngineContext::Get().WrldRenderer->GetMeshBuilder();
+					meshBuilder.UpdateUiBlockMesh(m_WailaBlockMesh);
+				}
+
+				m_WailaTooltip.Render();
+				m_WailaBlockMesh->Render(blockTopLeft, s_ScreenWidth, s_ScreenHeight);
 			}
 		}
 
@@ -313,6 +389,8 @@ namespace onion::voxel
 		m_ExperienceBarBackground_Sprite.Initialize();
 		m_ExperienceBarProgress_Sprite.Initialize();
 		m_ExperienceLevel_Label.Initialize();
+		m_Fps_Label.Initialize();
+		m_WailaTooltip.Initialize();
 
 		SetInitState(true);
 	}
@@ -330,7 +408,10 @@ namespace onion::voxel
 		m_ExperienceBarBackground_Sprite.Delete();
 		m_ExperienceBarProgress_Sprite.Delete();
 		m_ExperienceLevel_Label.Delete();
+		m_Fps_Label.Delete();
 		m_UiBlockMesh->Delete();
+		m_WailaTooltip.Delete();
+		m_WailaBlockMesh->Delete();
 
 		SetDeletedState(true);
 	}
@@ -348,6 +429,9 @@ namespace onion::voxel
 		m_ExperienceBarBackground_Sprite.ReloadTextures();
 		m_ExperienceBarProgress_Sprite.ReloadTextures();
 		m_ExperienceLevel_Label.ReloadTextures();
+		m_Fps_Label.ReloadTextures();
+		m_WailaTooltip.ReloadTextures();
+		m_WailaBlockMesh->SetDirty(true);
 	}
 
 	float HudPanel::GetSelectedBlockNameFadeInFactor() const

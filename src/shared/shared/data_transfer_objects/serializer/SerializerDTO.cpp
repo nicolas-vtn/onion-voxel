@@ -1,5 +1,7 @@
 #include "SerializerDTO.hpp"
 
+#include <iostream>
+
 namespace onion::voxel
 {
 	SubChunkDTO SerializerDTO::SerializeSubChunk(const SubChunk& sc)
@@ -148,6 +150,40 @@ namespace onion::voxel
 		return chunk;
 	};
 
+	ChunkSaveDataDTO SerializerDTO::SerializeChunkSaveData(const ChunkSaveData& data)
+	{
+		ChunkSaveDataDTO dto;
+		dto.Chunk = SerializeChunk(data.Chunk);
+		dto.Entities.reserve(data.Entities.size());
+
+		for (const auto& entity : data.Entities)
+		{
+			if (!entity)
+			{
+				std::cerr << "Skipping null entity while serializing chunk save data.\n";
+				continue;
+			}
+
+			dto.Entities.emplace_back(SerializeEntity(*entity));
+		}
+
+		return dto;
+	}
+
+	ChunkSaveData SerializerDTO::DeserializeChunkSaveData(const ChunkSaveDataDTO& dto)
+	{
+		ChunkSaveData data;
+		data.Chunk = DeserializeChunk(dto.Chunk);
+		data.Entities.reserve(dto.Entities.size());
+
+		for (const EntityDTO& entityDTO : dto.Entities)
+		{
+			data.Entities.emplace_back(DeserializeEntity(entityDTO));
+		}
+
+		return data;
+	}
+
 	BlockStateDTO SerializerDTO::SerializeBlockState(const BlockState& block)
 	{
 		BlockStateDTO dto;
@@ -242,8 +278,8 @@ namespace onion::voxel
 		dto.Velocity = physicsBody.Velocity;
 		dto.OnGround = physicsBody.OnGround;
 		dto.IsFlying = physicsBody.IsFlying;
-		dto.HalfSize = physicsBody.HalfSize;
-		dto.Offset = physicsBody.Offset;
+		dto.Size = physicsBody.Size;
+		dto.CenterOffset = physicsBody.CenterOffset;
 		return dto;
 	}
 
@@ -253,8 +289,8 @@ namespace onion::voxel
 		physicsBody.Velocity = dto.Velocity;
 		physicsBody.OnGround = dto.OnGround;
 		physicsBody.IsFlying = dto.IsFlying;
-		physicsBody.HalfSize = dto.HalfSize;
-		physicsBody.Offset = dto.Offset;
+		physicsBody.Size = dto.Size;
+		physicsBody.CenterOffset = dto.CenterOffset;
 		return physicsBody;
 	}
 
@@ -368,11 +404,31 @@ namespace onion::voxel
 			dto.Hotbar = SerializeInventory(entity.GetHotbar());
 		if (entity.HasPlayerInventory())
 			dto.Inventory = SerializeInventory(entity.GetPlayerInventory());
+
+		// BlockEntity-specific serialization
+		if (entity.Type == EntityType::Block)
+		{
+			const auto& blockEntity = static_cast<const BlockEntity&>(entity);
+			dto.DroppedSlot = blockEntity.GetSlot();
+			dto.Lifetime = blockEntity.GetLifetime();
+		}
+
 		return dto;
 	}
 
 	std::shared_ptr<Entity> SerializerDTO::DeserializeEntity(const EntityDTO& dto)
 	{
+		if (static_cast<EntityType>(dto.Type) == EntityType::Block)
+		{
+			auto blockEntity = std::make_shared<BlockEntity>(dto.UUID);
+			blockEntity->SetState(static_cast<Entity::State>(dto.State));
+			ApplyEntityDTO(dto, blockEntity);
+			if (dto.DroppedSlot.has_value())
+				blockEntity->SetSlot(*dto.DroppedSlot);
+			blockEntity->SetLifetime(dto.Lifetime);
+			return blockEntity;
+		}
+
 		auto entity = std::make_shared<Entity>(static_cast<EntityType>(dto.Type), dto.UUID);
 		entity->SetState(static_cast<Entity::State>(dto.State));
 		ApplyEntityDTO(dto, entity);

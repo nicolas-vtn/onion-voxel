@@ -3,6 +3,7 @@
 #include "BlockDTO.hpp"
 #include "BlockStateDTO.hpp"
 #include "ChunkDTO.hpp"
+#include "ChunkSaveDataDTO.hpp"
 #include "EntityDTO.hpp"
 #include "ExperienceDTO.hpp"
 #include "HealthDTO.hpp"

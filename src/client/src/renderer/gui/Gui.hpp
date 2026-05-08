@@ -67,6 +67,7 @@ namespace onion::voxel
 		Event<bool> EvtRequestBackToGame;
 		Event<bool> EvtRequestBack;
 		Event<const UserSettingsChangedEventArgs&> EvtUserSettingsChanged;
+		Event<Slot> EvtItemDropped;
 
 		// ----- Panels -----
 	  private:

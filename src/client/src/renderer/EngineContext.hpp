@@ -1,10 +1,12 @@
 #pragma once
 
+#include <optional>
 #include <shared_mutex>
 
 #include <renderer/assets_manager/AssetsManager.hpp>
 #include <renderer/inputs_manager/inputs_manager.hpp>
 #include <renderer/key_binds/KeyBinds.hpp>
+#include <shared/world/raycast/Raycast.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 #include <user_settings/UserSettings.hpp>
 
@@ -27,6 +29,10 @@ namespace onion::voxel
 		WorldRenderer* WrldRenderer;
 		std::atomic_bool ShowDebugMenus{true};
 		std::atomic<uint64_t> FrameCount{0};
+
+		/// @brief The block the local player is currently looking at. Written by Renderer each frame.
+		/// std::nullopt when the player is not looking at any block (e.g. in the main menu or looking at the sky).
+		std::optional<RaycastHit> LookedAtBlock;
 
 		UserSettings Settings() const
 		{

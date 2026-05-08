@@ -5,6 +5,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <shared/utils/Stopwatch.hpp>
 
+#include <renderer/entity_renderer/block_entity_mesh/BlockEntityMesh.hpp>
+
 namespace onion::voxel
 {
 	MeshBuilder::MeshBuilder(std::shared_ptr<WorldManager> worldManager, std::shared_ptr<TextureAtlas> textureAtlas)
@@ -535,6 +537,8 @@ namespace onion::voxel
 	void MeshBuilder::ReloadTextures()
 	{
 		m_BlockRenderRegistry.ReloadTextures();
+		// Clear cached block entity meshes so they are rebuilt with the new atlas on next use
+		BlockEntityMesh::ClearCache();
 	}
 
 	void MeshBuilder::UpdateChunkMeshAsync(const std::shared_ptr<ChunkMesh> chunkMesh)
@@ -592,9 +596,9 @@ namespace onion::voxel
 		{
 			for (int col = 0; col < cols; ++col)
 			{
-				const BlockId blockId = inventory.At(row, col);
-				if (blockId == BlockId::Air)
-					continue;
+			const BlockId blockId = inventory.At(row, col).Id;
+			if (blockId == BlockId::Air)
+				continue;
 
 				// Slot top-left in normalized screen space
 				const float slotX = col * (slotSize.x + slotPadding.x);
@@ -744,8 +748,95 @@ namespace onion::voxel
 		return m_BlockRenderRegistry.GetAllTextureNames();
 	}
 
-	void MeshBuilder::RecordExecution()
+	void MeshBuilder::BuildBlockEntityMesh(BlockEntityMesh& mesh, BlockId blockId) const
 	{
+		std::unique_lock lock(mesh.m_Mutex);
+
+		mesh.m_TextureAtlas = m_TextureAtlas;
+
+		mesh.m_VerticesOpaque.clear();
+		mesh.m_IndicesOpaque.clear();
+		mesh.m_VerticesCutout.clear();
+		mesh.m_IndicesCutout.clear();
+		mesh.m_VerticesTransparent.clear();
+		mesh.m_IndicesTransparent.clear();
+
+		const auto& blockstateRegistry = BlockstateRegistry::Get();
+
+		auto registryIt = blockstateRegistry.find(blockId);
+		if (registryIt == blockstateRegistry.end() || registryIt->second.empty())
+		{
+			mesh.BuffersUpdated();
+			return;
+		}
+
+		// Use the default (first) variant for the dropped item appearance.
+		// We build the mesh in local [-0.5..+0.5] space with no GUI display transform.
+		// The GUI transform is designed for screen-space isometric projection (it uses a negative
+		// scale to flip Y). In world-space rendering the modelMatrix passed to Render() handles
+		// all positioning, scale, and rotation — so we just bake per-element geometry directly.
+		constexpr size_t variantIdx = 0;
+
+		const BlockTextures& blockTextures = m_BlockRenderRegistry.Get(blockId, static_cast<uint8_t>(variantIdx));
+
+		// Full-cube PAO used only to enumerate all 6 face directions
+		PointsAndOcclusion unitCube;
+		unitCube.p000 = {-0.5f, -0.5f, -0.5f};
+		unitCube.p001 = {-0.5f, -0.5f, +0.5f};
+		unitCube.p010 = {-0.5f, +0.5f, -0.5f};
+		unitCube.p011 = {-0.5f, +0.5f, +0.5f};
+		unitCube.p100 = {+0.5f, -0.5f, -0.5f};
+		unitCube.p101 = {+0.5f, -0.5f, +0.5f};
+		unitCube.p110 = {+0.5f, +0.5f, -0.5f};
+		unitCube.p111 = {+0.5f, +0.5f, +0.5f};
+
+		for (const FaceBuildDesc& f : GetBlockFaceBuildDescs(unitCube))
+		{
+			const int faceIdx = static_cast<int>(f.face);
+
+			// Normal faces — use per-element local PAO (no extra transform needed)
+			for (const TextureInfo& faceTex : blockTextures.faces)
+			{
+				if (static_cast<int>(faceTex.face) != faceIdx)
+					continue;
+				if (faceTex.texture == UINT16_MAX)
+					continue;
+
+				const PointsAndOcclusion elemPao = GetElementLocalPao(faceTex);
+
+				for (const FaceBuildDesc& ef : GetBlockFaceBuildDescs(elemPao))
+				{
+					if (static_cast<int>(ef.face) != faceIdx)
+						continue;
+					const auto atlasEntry = m_TextureAtlas->GetAtlasEntry(faceTex.texture);
+					AddUiFace(mesh, ef, faceTex, atlasEntry);
+				}
+			}
+
+			// Overlay faces
+			for (const TextureInfo& overlayTex : blockTextures.overlay)
+			{
+				if (static_cast<int>(overlayTex.face) != faceIdx)
+					continue;
+				if (overlayTex.texture == UINT16_MAX)
+					continue;
+
+				const PointsAndOcclusion elemPao = GetElementLocalPao(overlayTex);
+
+				for (const FaceBuildDesc& ef : GetBlockFaceBuildDescs(elemPao))
+				{
+					if (static_cast<int>(ef.face) != faceIdx)
+						continue;
+					const auto atlasEntry = m_TextureAtlas->GetAtlasEntry(overlayTex.texture);
+					AddUiFace(mesh, ef, overlayTex, atlasEntry);
+				}
+			}
+		}
+
+		mesh.BuffersUpdated();
+	}
+
+	void MeshBuilder::RecordExecution()	{
 		auto now = std::chrono::steady_clock::now();
 
 		std::lock_guard lock(m_ExecutionTimesMutex);
@@ -884,12 +975,12 @@ namespace onion::voxel
 		}
 	}
 
-	void MeshBuilder::AddUiFace(UiBlockMesh& mesh,
+	void MeshBuilder::AddUiFace(ItemMesh& mesh,
 								const FaceBuildDesc& f,
 								const TextureInfo& faceTexture,
 								const TextureAtlas::AtlasEntry& uv)
 	{
-		std::vector<UiBlockMesh::Vertex>* vertices = nullptr;
+		std::vector<ItemMesh::Vertex>* vertices = nullptr;
 		std::vector<uint32_t>* indices = nullptr;
 
 		switch (faceTexture.textureType)
@@ -955,7 +1046,7 @@ namespace onion::voxel
 
 		auto makeVertex = [&](const glm::vec3& p, const glm::vec2& texUv)
 		{
-			UiBlockMesh::Vertex vert;
+			ItemMesh::Vertex vert;
 
 			vert.x = p.x;
 			vert.y = p.y;

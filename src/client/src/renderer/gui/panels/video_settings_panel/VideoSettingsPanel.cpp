@@ -9,7 +9,9 @@ namespace onion::voxel
 		  m_DisplayTitle_Label(name + "_DisplayTitle_Label"), m_MaxFps_Slider(name + "_MaxFps_Slider"),
 		  m_Vsync_Button(name + "_Vsync_Button"), m_QualAndPerfTitle_Label(name + "_QualAndPerfTitle_Label"),
 		  m_RenderDistance_Slider(name + "_RenderDistance_Slider"),
-		  m_SimulationDistance_Slider(name + "_SimulationDistance_Slider"), m_Done_Button(name + "_Done_Button")
+		  m_SimulationDistance_Slider(name + "_SimulationDistance_Slider"),
+		  m_WailaTitle_Label(name + "_WailaTitle_Label"), m_Waila_Button(name + "_Waila_Button"),
+		  m_Done_Button(name + "_Done_Button")
 	{
 		SubscribeToControlEvents();
 
@@ -26,6 +28,9 @@ namespace onion::voxel
 
 		m_RenderDistance_Slider.SetMaxValue(s_RenderDistance_MaxValue - s_RenderDistance_MinValue);
 		m_SimulationDistance_Slider.SetMaxValue(s_SimulationDistance_MaxValue - s_SimulationDistance_MinValue);
+
+		m_WailaTitle_Label.SetText("WAILA (What Am I Looking At)");
+		m_WailaTitle_Label.SetTextAlignment(Font::eTextAlignment::Left);
 
 		m_Done_Button.SetText("Done");
 	}
@@ -166,12 +171,39 @@ namespace onion::voxel
 			m_Scroller.GetControlVisibleArea(m_SimulationDistance_Slider.GetPosition(), simulationDistanceSliderSize));
 		m_SimulationDistance_Slider.Render();
 
+		// ----- Render WAILA Settings Title Label -----
+		const int wailaTitleY = simulationDistanceSliderPosition.y + spacingYBetweenSections;
+		const glm::ivec2 wailaTitlePosition(leftX, wailaTitleY);
+		m_WailaTitle_Label.SetPosition(wailaTitlePosition + scrollerOffset);
+		m_WailaTitle_Label.SetTextHeight(s_TextHeight);
+		m_WailaTitle_Label.Render();
+
+		// Build Layout Grid for WAILA Settings (1 row, 2 columns — button occupies first cell, same size as VSync)
+		const int wailaRows = 1;
+		const int tableWailaHeight = s_ControlHeight * wailaRows + verticalSpacing * (wailaRows - 1);
+		const glm::ivec2 tableWailaSize(tablesWidth, tableWailaHeight);
+		const TableLayout wailaSettingsLayout =
+			LayoutHelper::CreateTableLayout(wailaRows, 2, tableWailaSize, horizontalSpacing, verticalSpacing);
+		const int topLeftYWaila = wailaTitlePosition.y + textHeight;
+		const glm::ivec2 tableWailaTopLeftCorner(leftX, topLeftYWaila);
+
+		// ----- Render WAILA Toggle Button -----
+		const glm::ivec2 wailaButtonSize = wailaSettingsLayout.GetCellSize();
+		const glm::ivec2 wailaButtonPosition =
+			wailaSettingsLayout.GetElementPosition(0, 0) + tableWailaTopLeftCorner;
+		const std::string wailaButtonText = "WAILA : " + std::string(userSettings.Video.WailaEnabled ? "On" : "Off");
+		m_Waila_Button.SetSize(wailaButtonSize);
+		m_Waila_Button.SetPosition(wailaButtonPosition + scrollerOffset);
+		m_Waila_Button.SetText(wailaButtonText);
+		m_Waila_Button.SetVisibility(m_Scroller.GetControlVisibleArea(m_Waila_Button.GetPosition(), wailaButtonSize));
+		m_Waila_Button.Render();
+
 		// Stop Scroller Cissoring
 		m_Scroller.StopCissoring();
 
 		// ----- Update Scrolling Area Height -----
 		const int contentHeight =
-			simulationDistanceSliderPosition.y + (simulationDistanceSliderSize.y / 2) - topLeftCorner.y;
+			wailaButtonPosition.y + (wailaButtonSize.y / 2) - topLeftCorner.y;
 		m_Scroller.SetScrollAreaHeight(contentHeight);
 
 		// ----- Render Done Button -----
@@ -193,6 +225,8 @@ namespace onion::voxel
 		m_QualAndPerfTitle_Label.Initialize();
 		m_RenderDistance_Slider.Initialize();
 		m_SimulationDistance_Slider.Initialize();
+		m_WailaTitle_Label.Initialize();
+		m_Waila_Button.Initialize();
 		m_Done_Button.Initialize();
 
 		UserSettings settings = EngineContext::Get().Settings();
@@ -214,6 +248,8 @@ namespace onion::voxel
 		m_QualAndPerfTitle_Label.Delete();
 		m_RenderDistance_Slider.Delete();
 		m_SimulationDistance_Slider.Delete();
+		m_WailaTitle_Label.Delete();
+		m_Waila_Button.Delete();
 		m_Done_Button.Delete();
 
 		SetDeletedState(true);
@@ -229,6 +265,8 @@ namespace onion::voxel
 		m_QualAndPerfTitle_Label.ReloadTextures();
 		m_RenderDistance_Slider.ReloadTextures();
 		m_SimulationDistance_Slider.ReloadTextures();
+		m_WailaTitle_Label.ReloadTextures();
+		m_Waila_Button.ReloadTextures();
 		m_Done_Button.ReloadTextures();
 	}
 
@@ -248,6 +286,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(m_SimulationDistance_Slider.EvtValueChanged.Subscribe(
 			[this](const Slider& sender) { Handle_SimulationDistance_Changed(sender); }));
+
+		m_EventHandles.push_back(
+			m_Waila_Button.EvtClick.Subscribe([this](const Button& sender) { Handle_Waila_Click(sender); }));
 	}
 
 	void VideoSettingsPanel::Handle_Done_Click(const Button& sender)
@@ -313,6 +354,19 @@ namespace onion::voxel
 
 		UserSettingsChangedEventArgs args(settings);
 		args.SimulationDistance_Changed = true;
+
+		EvtUserSettingsChanged.Trigger(args);
+	}
+
+	void VideoSettingsPanel::Handle_Waila_Click(const Button& sender)
+	{
+		(void) sender;
+
+		UserSettings settings = EngineContext::Get().Settings();
+		settings.Video.WailaEnabled = !settings.Video.WailaEnabled;
+
+		UserSettingsChangedEventArgs args(settings);
+		args.WailaEnabled_Changed = true;
 
 		EvtUserSettingsChanged.Trigger(args);
 	}

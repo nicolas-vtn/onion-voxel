@@ -37,6 +37,8 @@ add_executable(OnionVoxel
 
 	"src/renderer/gui/ui_block_mesh/UiBlockMesh.cpp"
 
+	"src/renderer/item_mesh/ItemMesh.cpp"
+
 	"src/renderer/gui/nine_slice_sprite/NineSliceSprite.cpp"
 	"src/renderer/gui/font/Font.cpp"
 	"src/renderer/gui/colored_background/ColoredBackground.cpp"
@@ -96,6 +98,7 @@ add_executable(OnionVoxel
 	"src/renderer/entity_renderer/skeleton/SkeletonPlayer.cpp"
 	"src/renderer/entity_renderer/skeleton/skeleton.cpp"
 	"src/renderer/entity_renderer/TextureTileMapper.cpp"
+	"src/renderer/entity_renderer/block_entity_mesh/BlockEntityMesh.cpp"
 
 	"src/user_settings/UserSettings.cpp"
 

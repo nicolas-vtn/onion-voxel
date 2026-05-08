@@ -8,8 +8,8 @@ namespace onion::voxel
 		SetTransform(Transform{});
 
 		PhysicsBody physicsBody;
-		physicsBody.HalfSize = Size * 0.5f;
-		physicsBody.Offset = glm::vec3(0.f, Size.y * 0.5f, 0.f);
+		physicsBody.Size = Size;
+		physicsBody.CenterOffset = glm::vec3(0.f, Size.y * 0.5f, 0.f);
 		SetPhysicsBody(physicsBody);
 
 		Inventory hotbar(1, 9);

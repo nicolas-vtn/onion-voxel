@@ -36,6 +36,17 @@ namespace onion::voxel
 		void SetPosition(const glm::vec2& position);
 		glm::vec2 GetPosition() const;
 
+		/// @brief Sets the tooltip to center mode. In this mode the tooltip is always
+		/// horizontally centered on the screen and m_Position.y is the vertical center of the box.
+		/// The X component of position is ignored.
+		void SetPositionCentered(const glm::vec2& position);
+
+		/// @brief Returns the inner top-left pixel of the tooltip (i.e. the content area after padding),
+		/// based on the current text, text height, and position. Useful for placing overlays (e.g. a block mesh)
+		/// inside the tooltip before calling Render().
+		/// @note Call SetText() and SetTextHeight() before calling this.
+		glm::ivec2 GetInnerTopLeft();
+
 		/// @brief Sets the text height in pixels. Controls both font size and tooltip height.
 		void SetTextHeight(float textHeight);
 		float GetTextHeight() const;
@@ -52,6 +63,7 @@ namespace onion::voxel
 		// ----- Properties -----
 	  private:
 		glm::vec2 m_Position{0.f, 0.f};
+		bool m_Centered{false};
 		float m_TextHeight{16.f};
 		float m_ZOffset{0.f};
 		float m_DeltaZ{0.01f};
