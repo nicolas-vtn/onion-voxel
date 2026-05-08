@@ -637,7 +637,7 @@ namespace onion::voxel
 
 		// ----- RETREVE USEFULL PLAYER INFO -----
 		Inventory hotbar = player->GetHotbar();
-		size_t selectedSlot = hotbar.SelectedIndex();
+		int selectedSlot = hotbar.SelectedIndex();
 
 		// ----- HOTBAR SELECTION -----
 		static constexpr std::array<eAction, 9> hotbarActions = {
@@ -676,8 +676,8 @@ namespace onion::voxel
 			Slot& selectedSlotRef = hotbar.At(selectedSlot);
 			if (!selectedSlotRef.IsEmpty())
 			{
-			const bool ctrlHeld = m_InputsManager.IsKeyPressed(Key::LeftControl) ||
-								  m_InputsManager.IsKeyPressed(Key::RightControl);
+				const bool ctrlHeld =
+					m_InputsManager.IsKeyPressed(Key::LeftControl) || m_InputsManager.IsKeyPressed(Key::RightControl);
 				const uint8_t dropCount = ctrlHeld ? selectedSlotRef.Count : 1;
 				Slot droppedSlot{selectedSlotRef.Id, dropCount};
 				selectedSlotRef.Count -= dropCount;
