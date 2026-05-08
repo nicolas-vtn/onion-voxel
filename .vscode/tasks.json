@@ -6,7 +6,13 @@
             "type": "shell",
             "command": "if [ ! -d out/build/x64-Debug ]; then cmake -S . -B out/build/x64-Debug -G Ninja -DCMAKE_BUILD_TYPE=Debug; fi && cmake --build out/build/x64-Debug && cmake --install out/build/x64-Debug --prefix out/install/x64-Debug",
             "windows": {
-                "command": "cmd /c \"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64 && cmake --build out/build/x64-Debug && cmake --install out/build/x64-Debug --prefix out/install/x64-Debug"
+                "command": "\"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64 && cmake --build out/build/x64-Debug && cmake --install out/build/x64-Debug --prefix out/install/x64-Debug",
+                "options": {
+                    "shell": {
+                        "executable": "cmd.exe",
+                        "args": ["/d", "/c"]
+                    }
+                }
             },
             "group": "build",
             "presentation": {
@@ -20,7 +26,13 @@
             "type": "shell",
             "command": "if [ ! -d out/build/x64-Release ]; then cmake -S . -B out/build/x64-Release -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo; fi && cmake --build out/build/x64-Release && cmake --install out/build/x64-Release --prefix out/install/x64-Release",
             "windows": {
-                "command": "cmd /c \"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64 && cmake --build out/build/x64-Release && cmake --install out/build/x64-Release --prefix out/install/x64-Release"
+                "command": "\"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64 && cmake --build out/build/x64-Release && cmake --install out/build/x64-Release --prefix out/install/x64-Release",
+                "options": {
+                    "shell": {
+                        "executable": "cmd.exe",
+                        "args": ["/d", "/c"]
+                    }
+                }
             },
             "group": "build",
             "presentation": {
