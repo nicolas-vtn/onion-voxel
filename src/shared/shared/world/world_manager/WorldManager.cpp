@@ -684,7 +684,7 @@ namespace onion::voxel
 				ChunkSaveData chunkSaveData = m_WorldSave->LoadChunk(chunkPos);
 
 				// If Chunk found
-				if (chunkSaveData.Chunk)
+				if (chunkSaveData.ChunkData)
 				{
 					chunksToAdd.push_back(std::move(chunkSaveData));
 				}
@@ -701,7 +701,7 @@ namespace onion::voxel
 			std::lock_guard lock(m_MutexChunks);
 			for (const auto& chunkSaveData : chunksToAdd)
 			{
-				m_Chunks[chunkSaveData.Chunk->GetPosition()] = chunkSaveData.Chunk;
+				m_Chunks[chunkSaveData.ChunkData->GetPosition()] = chunkSaveData.ChunkData;
 			}
 		}
 
@@ -800,7 +800,7 @@ namespace onion::voxel
 		if (m_WorldSave)
 		{
 			ChunkSaveData chunkSaveData;
-			chunkSaveData.Chunk = chunk;
+			chunkSaveData.ChunkData = chunk;
 			chunkSaveData.Entities = std::move(entities);
 			m_WorldSave->SaveChunkAsync(chunkSaveData);
 		}

@@ -10,7 +10,7 @@ namespace onion::voxel
 {
 	struct ChunkSaveData
 	{
-		std::shared_ptr<Chunk> Chunk;
+		std::shared_ptr<Chunk> ChunkData;
 		std::vector<std::shared_ptr<Entity>> Entities;
 	};
 } // namespace onion::voxel

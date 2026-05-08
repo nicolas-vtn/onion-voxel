@@ -1,0 +1,33 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build & Install x64-Debug",
+            "type": "shell",
+            "command": "if [ ! -d out/build/x64-Debug ]; then cmake -S . -B out/build/x64-Debug -G Ninja -DCMAKE_BUILD_TYPE=Debug; fi && cmake --build out/build/x64-Debug && cmake --install out/build/x64-Debug --prefix out/install/x64-Debug",
+            "windows": {
+                "command": "cmd /c \"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64 && cmake --build out/build/x64-Debug && cmake --install out/build/x64-Debug --prefix out/install/x64-Debug"
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Build & Install x64-Release",
+            "type": "shell",
+            "command": "if [ ! -d out/build/x64-Release ]; then cmake -S . -B out/build/x64-Release -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo; fi && cmake --build out/build/x64-Release && cmake --install out/build/x64-Release --prefix out/install/x64-Release",
+            "windows": {
+                "command": "cmd /c \"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64 && cmake --build out/build/x64-Release && cmake --install out/build/x64-Release --prefix out/install/x64-Release"
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

@@ -86,13 +86,13 @@ namespace onion::voxel
 
 	void WorldSave::SaveChunkAsync(const ChunkSaveData& chunkSaveData)
 	{
-		if (!chunkSaveData.Chunk)
+		if (!chunkSaveData.ChunkData)
 		{
 			throw std::runtime_error("Cannot save a null chunk.");
 		}
 
 		std::lock_guard lock(m_MutexChunksToSave);
-		m_ChunksToSave[chunkSaveData.Chunk->GetPosition()] = chunkSaveData;
+		m_ChunksToSave[chunkSaveData.ChunkData->GetPosition()] = chunkSaveData;
 	}
 
 	ChunkSaveData WorldSave::LoadChunk(const glm::ivec2& chunkPosition)

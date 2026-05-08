@@ -1,5 +1,7 @@
 #include "BlockEntity.hpp"
 
+#include <mutex>
+
 namespace onion::voxel
 {
 	BlockEntity::BlockEntity(const std::string& uuid) : Entity(EntityType::Block, uuid)

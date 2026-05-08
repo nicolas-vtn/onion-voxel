@@ -153,7 +153,7 @@ namespace onion::voxel
 	ChunkSaveDataDTO SerializerDTO::SerializeChunkSaveData(const ChunkSaveData& data)
 	{
 		ChunkSaveDataDTO dto;
-		dto.Chunk = SerializeChunk(data.Chunk);
+		dto.Chunk = SerializeChunk(data.ChunkData);
 		dto.Entities.reserve(data.Entities.size());
 
 		for (const auto& entity : data.Entities)
@@ -173,7 +173,7 @@ namespace onion::voxel
 	ChunkSaveData SerializerDTO::DeserializeChunkSaveData(const ChunkSaveDataDTO& dto)
 	{
 		ChunkSaveData data;
-		data.Chunk = DeserializeChunk(dto.Chunk);
+		data.ChunkData = DeserializeChunk(dto.Chunk);
 		data.Entities.reserve(dto.Entities.size());
 
 		for (const EntityDTO& entityDTO : dto.Entities)

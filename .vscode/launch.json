@@ -1,0 +1,69 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Client (Debug)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/install/x64-Debug/client/OnionVoxel",
+            "cwd": "${workspaceFolder}/out/install/x64-Debug/client",
+            "args": [],
+            "stopAtEntry": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "Build & Install x64-Debug",
+            "windows": {
+                "type": "cppvsdbg",
+                "program": "${workspaceFolder}/out/install/x64-Debug/client/OnionVoxel.exe",
+                "cwd": "${workspaceFolder}/out/install/x64-Debug/client"
+            }
+        },
+        {
+            "name": "Server (Debug)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/install/x64-Debug/server/OnionVoxelServer",
+            "cwd": "${workspaceFolder}/out/install/x64-Debug/server",
+            "args": [],
+            "stopAtEntry": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "Build & Install x64-Debug",
+            "windows": {
+                "type": "cppvsdbg",
+                "program": "${workspaceFolder}/out/install/x64-Debug/server/OnionVoxelServer.exe",
+                "cwd": "${workspaceFolder}/out/install/x64-Debug/server"
+            }
+        },
+        {
+            "name": "Client (Release)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/install/x64-Release/client/OnionVoxel",
+            "cwd": "${workspaceFolder}/out/install/x64-Release/client",
+            "args": [],
+            "stopAtEntry": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "Build & Install x64-Release",
+            "windows": {
+                "type": "cppvsdbg",
+                "program": "${workspaceFolder}/out/install/x64-Release/client/OnionVoxel.exe",
+                "cwd": "${workspaceFolder}/out/install/x64-Release/client"
+            }
+        },
+        {
+            "name": "Server (Release)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/install/x64-Release/server/OnionVoxelServer",
+            "cwd": "${workspaceFolder}/out/install/x64-Release/server",
+            "args": [],
+            "stopAtEntry": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "Build & Install x64-Release",
+            "windows": {
+                "type": "cppvsdbg",
+                "program": "${workspaceFolder}/out/install/x64-Release/server/OnionVoxelServer.exe",
+                "cwd": "${workspaceFolder}/out/install/x64-Release/server"
+            }
+        }
+    ]
+}

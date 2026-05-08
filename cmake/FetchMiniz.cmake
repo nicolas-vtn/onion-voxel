@@ -17,7 +17,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(miniz)
 
-target_include_directories(miniz
+target_include_directories(miniz SYSTEM
     PUBLIC
         ${miniz_SOURCE_DIR}
 )
