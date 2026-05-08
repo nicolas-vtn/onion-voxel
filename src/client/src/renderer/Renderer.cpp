@@ -423,6 +423,7 @@ namespace onion::voxel
 				// Reload everything that uses assets
 				m_Gui.ReloadTextures();
 				m_WorldRenderer.ReloadTextures();
+				m_WorldRenderer.MarkAllChunkMeshesDirty();
 				m_EntityRenderer.ReloadTextures();
 			}
 		}

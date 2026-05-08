@@ -7,6 +7,17 @@ The project focuses on building a lightweight, custom game engine from the groun
 
 ---
 
+## Platform Support
+
+| Platform | Status |
+|----------|--------|
+| **Windows (MSVC)** | Primary development platform — fully supported |
+| **Linux (GCC/Clang)** | Compiles and runs (tested on Ubuntu via VSCode) |
+
+> **Linux caveat**: There is a known bug where the camera does not move at all, likely caused by a Wayland input issue. The project has been developed and compiled primarily on **Windows with MSVC** — that is the recommended environment. Linux support is experimental.
+
+---
+
 ## 📷 Screenshots
 
 <details>
@@ -27,6 +38,10 @@ Key Binds Menu | Multiplayer with 3 Players
 ![World Classic](screenshots/WorldClassic.jpg) | ![World Classic No Biomes](screenshots/WorldClassicNoBiomes.jpg)
 :---:|:---:
 World Classic | World Classic No Biomes
+
+![Demo Blocks](screenshots/WorldDemoBlocks.png) |
+:---:|
+Demo Blocks |
 
 </details>
 
@@ -177,7 +192,10 @@ Central coordinators for subsystems:
 - **AssetsManager**: Resource pack loading and texture management
 
 #### Client-Server Synchronization
-- **Server Authority**: Server has final say on all world state (well ... Not yet hahaha)
+- **Server Authority**: The server is **not authoritative yet** — implementing full server authority is complex and has been deferred.
+  - The server handles chunk generation, chunk distribution, and physics for non-player entities
+  - The client handles its own player movement and actions, sends them to the server, which broadcasts to other players
+  - The server **trusts the client blindly** — there is no validation or anti-cheat
 - **Client Prediction**: Immediate local updates with server reconciliation
 - **Chunk Streaming**: Only send/load chunks near players (simulation distance)
 - **Entity Snapshots**: Periodic broadcasts for multiplayer synchronization
@@ -196,7 +214,7 @@ Central coordinators for subsystems:
 
 #### Chunk System
 - **Chunk**: 64x64 blocks (XZ), variable height divided into SubChunks
-- **SubChunk**: 64x64x64 blocks (262 144 voxels) with palette compression
+- **SubChunk**: 64x64x64 blocks (262 144 voxels) with palette compression
 - **Palette**: Stores unique block types, block indices reference palette entries
 - **Benefits**: Memory efficient (many air blocks = single palette entry), fast serialization
 
@@ -218,7 +236,12 @@ Central coordinators for subsystems:
 ## 🚀 Features
 
 ### Core Gameplay
-* **Player Movements and Actions**: Walk, Run, Jump, Fly, Break Blocks, Place Cobblestone, Collision Detection, FreeCam mode
+* **Player Movement**: Walk, sprint, jump, fly, sneak (with coyote time and edge detection), FreeCam mode
+* **Player Actions**: Break blocks, place blocks, pick block (middle-click), drop item (Q key)
+* **Block Placement**: Orientation-aware placement — logs, stairs, slabs, buttons, fences, walls, and glass panes all connect or orient correctly based on context
+* **Collision Detection**: Swept AABB collision against block model geometry (not just full cubes) — stairs, slabs, fences, etc. all have correct hitboxes
+* **Step-up**: Player automatically steps up slabs, stairs, and other partial blocks up to 0.6 blocks in height
+* **Item Stacks**: Items have stack sizes
 * **Singleplayer**: Local world generation and gameplay with save/load support
 * **Multiplayer**: Client-server architecture for online play with entity and chunk synchronization
 
@@ -231,9 +254,24 @@ Central coordinators for subsystems:
   * **Classic No Biomes**: Mountains, Forest and Sea without biome variation
   * **Classic**: Full biome support (Ocean, Desert, Snow, Plains, Mountains)
   * **BiomeVisualizer**: Superflat version of "Classic" for testing biome distribution
+  * **DemoBlocks**: Showcase world that displays all available blocks and variants
   </details>
 
-* **World Saving/Loading**: Serialization of world data for persistence (chunk-based)
+* **Block Updates**: Neighbour-aware block state propagation — fences, walls, and glass panes update their connections automatically when adjacent blocks change
+* **Dropped Items**: Blocks dropped via Q key become persistent world entities (`BlockEntity`) saved with the chunk
+* **World Saving/Loading**: Serialization of world data for persistence (chunks + entities)
+
+### Blocks & Rendering
+* **Full Minecraft Block Support**: All blocks and variants loaded from the blockstate registry using `.zip` resource packs (models + textures)
+* **Non-Full Block Rendering**: Stairs, slabs, fences, walls, gates, glass panes, doors, buttons, cactus, flowers, tall grass, hanging signs, and more — all rendered with correct geometry
+* **Three Render Passes**: Opaque → Cutout (alpha test) → Transparent (alpha blend)
+* **View Frustum Culling**: Only visible chunks are submitted for rendering
+
+### HUD & In-Game UI
+* **Hotbar**: Scrollable item hotbar with block name display and item rendering
+* **HUD**: Health bar, hunger bar, experience bar, crosshair *(display and persistence only — not yet wired into gameplay)*
+* **WAILA** (What Am I Looking At): Displays the name and variant info of the block you are looking at
+* **In-Game FPS Counter**
 
 ### User Interface
 * **Custom UI Framework**: Fully custom immediate-mode UI system built from scratch with advanced controls
@@ -259,13 +297,15 @@ Central coordinators for subsystems:
     * Clipboard operations (Ctrl+C, Ctrl+X, Ctrl+V)
     * Delete keys (Backspace, Delete)
     * Selection highlighting with custom background
-    * Focus management (Escape to unfocus)
+    * Focus management (Escape to unfocus, right-click to clear)
   
   * **Slider**: Integer value slider with custom styling
   
   * **Scroller**: Scrolling container with vertical offset and visible area clipping
   
   * **Sprite**: Image rendering from PNG or raw texture data
+
+  * **Tooltip**: Hover tooltip with correct Z-ordering
 
   #### Base Components
   * **NineSliceSprite**: Minecraft-style 9-slice texture rendering (used for Button, Checkbox, Scroller, Slider borders)
@@ -280,16 +320,32 @@ Central coordinators for subsystems:
   * **Singleplayer Menu**: World selection, World Creation, World Deletion, Filter
   * **Multiplayer Menu**: Server selection, Register server, Delete registered server, Direct Connection
   * **Options Menu**: FOV, Video Settings, Controls, ResourcePacks
-    * **Video Settings**: Max Framerate, VSync, Render Distance
+    * **Video Settings**: Max Framerate, VSync, Render Distance, WAILA toggle
     * **Resource Packs**: Filter, ResourcePack selection, Open Pack Folder
     * **Controls**: Mouse Settings, Key Binds
       * **Mouse Settings**: Sensitivity, Scroll Sensitivity
       * **Key Binds**: Bind every Action to any Key
   * **Pause Menu**: Back to game, Options, Save and quit to title
+  * **Creative Inventory**: Full block browser with search, item rendering, pick & move (no crafting)
   </details>
 
 ### Customization
 * **Resource Packs**: Support for loading textures from *Minecraft* .zip resource packs
+
+  > **Partial support — read before using**:
+  > - Resource pack support is incomplete and may cause crashes.
+  > - Packs **>= 128x** are not supported — they exceed the maximum texture atlas size on most GPUs.
+  > - Packs **< 128x** may also fail depending on your graphics card's maximum texture size. 64x is confirmed working.
+  >
+  > **Recommended packs** (all confirmed working or close to it):
+  >
+  > | Pack | Resolution | Link |
+  > |------|-----------|------|
+  > | Faithful 32x | 32x | [CurseForge](https://www.curseforge.com/minecraft/texture-packs/faithful-32x) |
+  > | Ashen 16x | 16x | [CurseForge](https://www.curseforge.com/minecraft/texture-packs/ashen-16x) |
+  > | Forager 16x | 16x | [CurseForge](https://www.curseforge.com/minecraft/texture-packs/forager) |
+  > | PureBDcraft 32x | 32x | [bdcraft.net](https://bdcraft.net/downloads/purebdcraft-minecraft/) |
+  > | PureBDcraft 64x | 64x | [bdcraft.net](https://bdcraft.net/downloads/purebdcraft-minecraft/) |
 * **Skin Rendering**: Render the official Minecraft's player Skin depending on PlayerName
 * **Configurable Settings**: All graphics, controls, and gameplay settings are saved and persistent
 
@@ -297,28 +353,60 @@ Central coordinators for subsystems:
 
 ## 🔨 Building
 
+> **Platform note**: The project is developed and tested primarily on **Windows with MSVC**. Linux (Ubuntu) is supported but experimental — see the [Platform Support](#platform-support) section above.
+
 ### Prerequisites
 * CMake 3.15+
-* C++20 compatible compiler (MSVC, GCC, or Clang)
+* C++20 compatible compiler (MSVC recommended; GCC/Clang on Linux)
 * Git (for submodules)
+* **Windows**: Visual Studio 2026 (the CMake integration is the supported workflow)
 
-### Build Steps
-```bash
-git clone --recursive https://github.com/your-repo/onion-voxel.git
-cd onion-voxel
-cmake -B build
-cmake --build build --config Release
-```
+### Steps (Windows — Visual Studio)
+
+1. Clone with submodules:
+   ```bash
+   git clone --recurse-submodules https://github.com/your-repo/onion-voxel.git
+   ```
+2. Open the folder in **Visual Studio** — it will detect `CMakeSettings.json` automatically and configure the project (`x64-Debug`, `x64-Release`, `x64-Release-Deploy` configs are available).
+3. Build via **Build → Build All** (or select the desired configuration from the toolbar).
+4. **Install** — this step is required. `AssetsManager` resolves asset paths relative to the executable directory; running the binary directly from the build output directory will fail to find assets.
+
+   Open a **Developer Command Prompt for VS 2022** (x64) and run:
+   ```bat
+   cmake --install out/build/x64-Release --prefix install
+   ```
+   This copies the client and server executables together with the full `assets/` tree into `install/`.
 
 ### Running
-* **Client**: `./build/Release/OnionVoxelClient`
-* **Server**: `./build/Release/OnionVoxelServer`
+
+After the install step:
+
+* **Client**: `install/bin/OnionVoxel.exe`
+* **Server**: `install/bin/OnionVoxelServer.exe`
+
+> Do **not** run the executables directly from `out/build/` — assets will not be found and the game will not start correctly.
+
+### Steps (Linux — VSCode)
+
+1. Clone with submodules:
+   ```bash
+   git clone --recurse-submodules https://github.com/your-repo/onion-voxel.git
+   ```
+2. Install system dependencies (e.g. on Ubuntu): `sudo apt install libcurl4-openssl-dev`
+3. Open the folder in **VSCode** with the CMake Tools extension. Configure and build.
+4. Install to a local prefix:
+   ```bash
+   cmake --install build --prefix install
+   ```
+5. Run from the install prefix: `./install/bin/OnionVoxel`
+
+> **Known issue on Linux**: The camera does not move, most likely due to a Wayland mouse capture bug. Running under XWayland (`DISPLAY=:0`) or a pure X11 session may help, but this has not been confirmed.
 
 ---
 
 ## 🗺 Roadmap
 
-*Last updated: 16/04/2026*
+*Last updated: 09/05/2026*
 
 ### Planned Enhancements
 
@@ -327,38 +415,45 @@ cmake --build build --config Release
 - Background music
 
 #### Rendering Improvements
-- Non-full block rendering (water surface, cactus, slabs, stairs)
 - Animated textures (water, lava, portal)
 - First-person arm/hand rendering with held item
 - Walking animation for first-person view
 - Particle effects (breaking blocks, footsteps)
 
 #### Gameplay Features
-- Creative mode with block selection UI and inventory management
-- Sneaking state
 - Chat system for multiplayer
 - Player list display (Tab key)
+- Health, hunger, and experience gameplay (damage, healing, hunger drain — currently display + save only)
 
 #### Multiplayer Enhancements
 - Player name display above heads
 - Player position interpolation for smoother movement
 
-#### UI/UX
-- Tooltips on hover
-- Fix Z-ordering issue in GUI system
+### Completed
 
-#### Physics & Collision
-- Swept AABB collision detection for better accuracy
-
-#### Completed
 - ~~Update GitHub README.md~~
 - ~~View frustum culling for better performance~~
 - ~~FOV change when sprinting~~
+- ~~Non-full block rendering~~ (stairs, slabs, fences, walls, gates, glass panes, doors, buttons, flowers, ...)
+- ~~Sneaking state~~ (with coyote time and edge-walk detection)
+- ~~Swept AABB collision detection~~ (against actual block model geometry)
+- ~~Tooltips on hover~~ (in inventory)
+- ~~Creative inventory~~ (block browser, search, pick & move — no crafting)
+- ~~Block placement variants~~ (orientation-aware placement for logs, stairs, slabs, fences, buttons, ...)
+- ~~Block updates~~ (neighbour-aware state propagation)
+- ~~Dropped item system~~ (Q-key drop, BlockEntity, world persistence)
+- ~~HUD~~ (health, hunger, experience bar, crosshair — display + save only, not wired into gameplay yet)
+- ~~WAILA~~ (What Am I Looking At — block name on crosshair)
+- ~~In-game FPS display~~
+- ~~Hotbar~~ (scrollable, item rendering, block name display)
+- ~~Item stack sizes~~
 
-### Known Issues
+### Known Issues / Weaknesses
 - Z-ordering issue in GUI (temporary workaround in TextField)
 - Client doesn't return to main menu when server closes
 - Random crashes when loading worlds (suspected port binding issue)
+- **Linux / Wayland**: Camera does not move — mouse capture likely broken under Wayland
+- **No server authority**: The server trusts the client blindly for player movement and actions. Implementing proper server-side validation is deferred indefinitely — it is a significant architectural undertaking.
 
 ---
 
