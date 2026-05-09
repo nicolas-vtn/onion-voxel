@@ -119,6 +119,14 @@ namespace onion::voxel
 		static bool AreKeyInputsValid();
 		static bool IsBackPressed();
 
+		// Convert logical GUI coordinates to physical screen coordinates.
+		// The logical canvas (k_LogicalWidth x k_LogicalHeight) is scaled by the
+		// active integer GUI scale and centered inside the physical framebuffer.
+		static float Lx(float logicalX);               // logical X → physical X
+		static float Ly(float logicalY);               // logical Y → physical Y
+		static glm::vec2 L(float logicalX, float logicalY); // combined
+		static float Ls(float logicalSize);            // logical size → physical size
+
 		static inline std::atomic<uint64_t> s_KeyInputsValidFromFrame{0};
 
 		// ----- Static Methods ----- (for Initialization and Unload)
@@ -142,12 +150,19 @@ namespace onion::voxel
 		Visibility m_Visibility{true, true};
 
 		// ----- Static Resources ----- (shared across all GUI elements)
-	  protected:
+	protected:
 		static Shader s_ShaderSprites;
 		static Shader s_ShaderNineSliceSprites;
 		static glm::mat4 s_ProjectionMatrix;
 		static int s_ScreenWidth;
 		static int s_ScreenHeight;
+
+		// Logical GUI canvas — all UI coordinates are authored in this space.
+		// The canvas is scaled by s_GuiScale (integer) and centered in the framebuffer.
+		static constexpr int k_LogicalWidth  = 320;
+		static constexpr int k_LogicalHeight = 240;
+		static float s_CanvasOffsetX; // physical X of canvas top-left corner
+		static float s_CanvasOffsetY; // physical Y of canvas top-left corner
 
 		static float s_TextHeight;
 		static int s_ControlHeight;
@@ -157,7 +172,11 @@ namespace onion::voxel
 		static inline Font::eColor s_ColorSecondaryText{Font::eColor::Gray};
 		static inline Font::eColor s_ColorTertiaryText{Font::eColor::DarkGray};
 
-		static inline std::atomic_int s_GuiScale = 4;
+		// 0 = Auto (largest integer scale that fits the window), 1–N = fixed scale.
+		static inline std::atomic_int s_GuiScale = 0;
+
+		// The resolved integer scale actually in use (recomputed on every resize).
+		static inline std::atomic_int s_ActiveGuiScale = 1;
 
 		static std::shared_ptr<InputsSnapshot> s_InputsSnapshot;
 

@@ -52,6 +52,9 @@ namespace onion::voxel
 	int GuiElement::s_ScreenWidth = 800;
 	int GuiElement::s_ScreenHeight = 600;
 
+	float GuiElement::s_CanvasOffsetX = 0.f;
+	float GuiElement::s_CanvasOffsetY = 0.f;
+
 	float GuiElement::s_TextHeight = 16.0f;
 	int GuiElement::s_ControlHeight = 20;
 	int GuiElement::s_CenterX = 400;
@@ -109,9 +112,21 @@ namespace onion::voxel
 		s_ProjectionMatrix =
 			glm::ortho(0.0f, static_cast<float>(screenWidth), static_cast<float>(screenHeight), 0.0f, -1.0f, 1.0f);
 
-		s_TextHeight = 32.f / 1009.f * static_cast<float>(screenHeight);
-		s_ControlHeight = static_cast<int>(round(80.f / 1009.f * static_cast<float>(screenHeight)));
-		s_CenterX = static_cast<int>(std::round(screenWidth / 2.0));
+		// Resolve active scale: 0 = auto (largest integer that fits the canvas).
+		int userScale = s_GuiScale.load();
+		int activeScale = (userScale > 0)
+			? userScale
+			: std::max(1, std::min(screenWidth / k_LogicalWidth, screenHeight / k_LogicalHeight));
+		s_ActiveGuiScale = activeScale;
+
+		// Center the logical canvas inside the physical framebuffer.
+		s_CanvasOffsetX = (screenWidth  - k_LogicalWidth  * activeScale) / 2.f;
+		s_CanvasOffsetY = (screenHeight - k_LogicalHeight * activeScale) / 2.f;
+
+		// Derived helpers — fixed multiples of the active scale, never fractional.
+		s_TextHeight    = 8.f * activeScale;
+		s_ControlHeight = 20  * activeScale;
+		s_CenterX       = screenWidth / 2;
 
 		Font::SetProjectionMatrix(s_ProjectionMatrix);
 		ColoredBackground::SetProjectionMatrix(s_ProjectionMatrix);
@@ -121,6 +136,26 @@ namespace onion::voxel
 
 		s_ShaderNineSliceSprites.Use();
 		s_ShaderNineSliceSprites.setMat4("uProjection", s_ProjectionMatrix);
+	}
+
+	float GuiElement::Lx(float logicalX)
+	{
+		return s_CanvasOffsetX + logicalX * s_ActiveGuiScale.load();
+	}
+
+	float GuiElement::Ly(float logicalY)
+	{
+		return s_CanvasOffsetY + logicalY * s_ActiveGuiScale.load();
+	}
+
+	glm::vec2 GuiElement::L(float logicalX, float logicalY)
+	{
+		return {Lx(logicalX), Ly(logicalY)};
+	}
+
+	float GuiElement::Ls(float logicalSize)
+	{
+		return logicalSize * s_ActiveGuiScale.load();
 	}
 
 	void GuiElement::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)

@@ -48,105 +48,82 @@ namespace onion::voxel
 
 	void MainMenuPanel::Render()
 	{
-		// ---- Constants for Layout ----
 		float glfwTime = (float) glfwGetTime();
-		float buttonWidthRatio = 800.f / 1920.f;
-		glm::vec2 buttonSize{buttonWidthRatio * s_ScreenWidth, s_ControlHeight};
-		float buttonYSpacingRatio = 96.f / 1009.f;
-		float firstButtonYPosRatio = 484.f / 1009.f;
 
-		// ---- Render Title Sprite ----
-		float spriteXScaleFacor = 0.55f;
-		float spriteXRatio = 0.5f;
-		float spriteYRatio = 0.25f;
-		float aspectRatio = (float) m_Title_Sprite.GetTextureHeight() / m_Title_Sprite.GetTextureWidth();
+		// ---- Title Sprite ----
+		// Centered horizontally at x=160, vertically at y=48 (logical).
+		// Width is 176 logical px; height preserves texture aspect ratio.
+		constexpr float kTitleLogicalWidth = 280.f;
+		float spriteAspectRatio = (float) m_Title_Sprite.GetTextureHeight() / m_Title_Sprite.GetTextureWidth();
+		float spriteSizeX = Ls(kTitleLogicalWidth);
+		float spriteSizeY = spriteSizeX * spriteAspectRatio;
 
-		const glm::vec2 spritePos{s_ScreenWidth * spriteXRatio, s_ScreenHeight * spriteYRatio};
-		float spriteSizeX = s_ScreenWidth * spriteXScaleFacor;
-		float spriteSizeY = spriteSizeX * aspectRatio;
-		const glm::vec2 spriteSize{spriteSizeX, spriteSizeY};
-
-		m_Title_Sprite.SetPosition(spritePos);
-		m_Title_Sprite.SetSize(spriteSize);
+		m_Title_Sprite.SetPosition(L(160.f, 48.f));
+		m_Title_Sprite.SetSize({spriteSizeX, spriteSizeY});
 		m_Title_Sprite.Render();
 
-		// ---- Render Singleplayer Button ----
-		glm::vec2 buttonPos{s_CenterX, s_ScreenHeight * firstButtonYPosRatio};
-		m_Singleplayer_Button.SetPosition(buttonPos);
+		// ---- Buttons — 200×20 logical px, stacked from y=116 with 24 spacing ----
+		constexpr float kButtonW   = 200.f;
+		constexpr float kButtonH   = 20.f;
+		constexpr float kFirstBtnY = 116.f;
+		constexpr float kSpacing   = 24.f;
+		glm::vec2 buttonSize{Ls(kButtonW), Ls(kButtonH)};
+
+		m_Singleplayer_Button.SetPosition(L(160.f, kFirstBtnY));
 		m_Singleplayer_Button.SetSize(buttonSize);
 		m_Singleplayer_Button.Render();
 
-		// ---- Render Multiplayer Button ----
-		buttonPos = {s_CenterX, s_ScreenHeight * (firstButtonYPosRatio + buttonYSpacingRatio)};
-		m_Multiplayer_Button.SetPosition(buttonPos);
+		m_Multiplayer_Button.SetPosition(L(160.f, kFirstBtnY + kSpacing));
 		m_Multiplayer_Button.SetSize(buttonSize);
 		m_Multiplayer_Button.Render();
 
-		// ---- Render Demo Panel Button ----
-		buttonPos = {s_CenterX, s_ScreenHeight * (firstButtonYPosRatio + buttonYSpacingRatio * 2)};
-		m_DemoPanel_Button.SetPosition(buttonPos);
+		m_DemoPanel_Button.SetPosition(L(160.f, kFirstBtnY + kSpacing * 2.f));
 		m_DemoPanel_Button.SetSize(buttonSize);
 		m_DemoPanel_Button.Render();
 
-		// ---- Build Layout for Options Button and Quit Game Button ----
-		float tableWidth = buttonSize.x;
-		float tableHeight = buttonSize.y;
-		float horizontalSpacing = 0.02f * tableWidth;
-		float verticalSpacing = 0;
+		// ---- Options + Quit Game — side-by-side, same total width ----
+		constexpr float kTableBtnY = kFirstBtnY + kSpacing * 3.f + 4.f;
+		float tableWidth = Ls(kButtonW);
+		float tableHeight = Ls(kButtonH);
+		float horizontalSpacing = Ls(2.f);
 
-		constexpr float tableButtonYPosRatio = 780.f / 1009.f;
-
-		glm::ivec2 topLeftOfTable{s_ScreenWidth * 0.5 - (tableWidth / 2), s_ScreenHeight * tableButtonYPosRatio};
+		glm::ivec2 topLeftOfTable{(int) Lx(160.f - kButtonW / 2.f), (int) Ly(kTableBtnY)};
 
 		TableLayout tableLayout = LayoutHelper::CreateTableLayout(
-			1, 2, glm::ivec2(tableWidth, tableHeight), (int) horizontalSpacing, (int) verticalSpacing);
+			1, 2, glm::ivec2(tableWidth, tableHeight), (int) horizontalSpacing, 0);
 		const glm::ivec2 cellSize = tableLayout.GetCellSize();
 
-		// ---- Render Options Button ----
-		glm::ivec2 relativeButtonPos = tableLayout.GetElementPosition(0, 0);
-		m_Options_Button.SetPosition(topLeftOfTable + relativeButtonPos);
+		m_Options_Button.SetPosition(topLeftOfTable + tableLayout.GetElementPosition(0, 0));
 		m_Options_Button.SetSize(cellSize);
 		m_Options_Button.Render();
 
-		// ---- Render Quit Game Button ----
-		relativeButtonPos = tableLayout.GetElementPosition(0, 1);
-		m_QuitGame_Button.SetPosition(topLeftOfTable + relativeButtonPos);
+		m_QuitGame_Button.SetPosition(topLeftOfTable + tableLayout.GetElementPosition(0, 1));
 		m_QuitGame_Button.SetSize(cellSize);
 		m_QuitGame_Button.Render();
 
-		// ---- Render Version Label ----
-		float LabelY = s_ScreenHeight * 0.98f;
+		// ---- Bottom labels ----
+		// Anchored to physical screen edges with a 1-scale-unit margin, independent of canvas.
+		float margin = (float) s_ActiveGuiScale.load();
+		float labelY = (float) s_ScreenHeight - margin - s_TextHeight * 0.5f;
 
-		float versionLabelX = s_ScreenHeight * 0.01f;
-		glm::vec2 versionLabelPos{versionLabelX, LabelY};
-
-		m_Version_Label.SetPosition(versionLabelPos);
+		m_Version_Label.SetPosition({margin, labelY});
 		m_Version_Label.SetTextHeight(s_TextHeight);
 		m_Version_Label.Render();
 
-		// ---- Render Copyright Label ----
-		float copyrightLabelX = s_ScreenWidth - (s_ScreenWidth * 0.01f);
-		glm::vec2 copyrightLabelPos{copyrightLabelX, LabelY};
-
-		m_Copyright_Label.SetPosition(copyrightLabelPos);
+		m_Copyright_Label.SetPosition({(float) s_ScreenWidth - margin, labelY});
 		m_Copyright_Label.SetTextHeight(s_TextHeight);
 		m_Copyright_Label.Render();
 
-		// ---- Render Splash Label ----
+		// ---- Splash text — anchored top-right of title sprite ----
 		if (!m_Splashes.empty())
 		{
 			const std::string& splashText = m_Splashes[m_CurrentSplashIndex];
 			float pulse = m_SplashTextPulse.GetValueSmoothPulse(glfwTime);
 			float splashTextHeight = s_TextHeight * pulse;
-			glm::ivec2 splashTextSize = s_TextFont.MeasureText(splashText, splashTextHeight);
-			constexpr float splashTextXratioCenter = 1420.f / 1920.f;
-			constexpr float splashTextYratioCenter = 267.f / 1009.f;
-			glm::vec2 splashLabelCenter = {s_ScreenWidth * splashTextXratioCenter,
-										   s_ScreenHeight * splashTextYratioCenter};
 
 			m_SplashText_Label.SetText(splashText);
 			m_SplashText_Label.SetTextHeight(splashTextHeight);
-			m_SplashText_Label.SetPosition(splashLabelCenter);
+		m_SplashText_Label.SetPosition(L(240.f, 56.f));
 			m_SplashText_Label.Render();
 		}
 	}
