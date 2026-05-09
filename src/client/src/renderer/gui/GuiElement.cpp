@@ -120,13 +120,13 @@ namespace onion::voxel
 		s_ActiveGuiScale = activeScale;
 
 		// Center the logical canvas inside the physical framebuffer.
-		s_CanvasOffsetX = (screenWidth  - k_LogicalWidth  * activeScale) / 2.f;
+		s_CanvasOffsetX = (screenWidth - k_LogicalWidth * activeScale) / 2.f;
 		s_CanvasOffsetY = (screenHeight - k_LogicalHeight * activeScale) / 2.f;
 
 		// Derived helpers — fixed multiples of the active scale, never fractional.
-		s_TextHeight    = 8.f * activeScale;
-		s_ControlHeight = 20  * activeScale;
-		s_CenterX       = screenWidth / 2;
+		s_TextHeight = 8.f * activeScale;
+		s_ControlHeight = 20 * activeScale;
+		s_CenterX = screenWidth / 2;
 
 		Font::SetProjectionMatrix(s_ProjectionMatrix);
 		ColoredBackground::SetProjectionMatrix(s_ProjectionMatrix);
@@ -145,7 +145,7 @@ namespace onion::voxel
 
 	float GuiElement::Ly(float logicalY)
 	{
-		return s_CanvasOffsetY + logicalY * s_ActiveGuiScale.load();
+		return logicalY * s_ActiveGuiScale.load();
 	}
 
 	glm::vec2 GuiElement::L(float logicalX, float logicalY)

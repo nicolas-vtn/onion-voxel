@@ -229,52 +229,40 @@ namespace onion::voxel
 			return;
 		}
 
-		// Constants for Layout
-		glm::vec2 controlsSizeRatio{800.f / 1920.f, 0.08f};
-		glm::vec2 controlsSize{controlsSizeRatio.x * s_ScreenWidth, s_ControlHeight};
-
 		// ---- Render Title ----
-		float titleYOffsetRatio = (71.f - 23.f) / 1009.f;
-		m_LabelTitle.SetPosition({s_CenterX, s_ScreenHeight * titleYOffsetRatio});
+		m_LabelTitle.SetPosition(L(160.f, 12.f));
 		m_LabelTitle.SetTextHeight(s_TextHeight);
 		m_LabelTitle.Render();
 
 		// ---- Render Filter Text Field ----
-		float filterYOffsetRatio = (147.f - 23.f) / 1009.f;
-		m_TextFieldFilter.SetPosition({s_CenterX, s_ScreenHeight * filterYOffsetRatio});
-		m_TextFieldFilter.SetSize(controlsSize);
+		m_TextFieldFilter.SetPosition(L(160.f, 28.f));
+		m_TextFieldFilter.SetSize({Ls(200.f), (float) s_ControlHeight});
 		m_TextFieldFilter.Render();
 
 		// ---- Render Scroller ----
-		float scrollerWidthRatio = 1.f;
-		float scrollerHeightRatio = 574.f / 1009.f;
-		glm::ivec2 scrollerSize{static_cast<int>(s_ScreenWidth * scrollerWidthRatio),
-								static_cast<int>(s_ScreenHeight * scrollerHeightRatio)};
-		float scrollCenterYratio = (508.f - 23.f) / 1009.f;
-		glm::ivec2 scrollCenter{s_CenterX, static_cast<int>(s_ScreenHeight * scrollCenterYratio)};
+		// Full physical screen width; no vertical padding — runs directly from filter to buttons.
+		glm::ivec2 scrollerTopLeftCorner{0, (int) Ly(38.f)};
+		glm::ivec2 scrollerBottomRightCorner{s_ScreenWidth, (int) Ly(196.f)};
 
-		glm::ivec2 scrollerTopLeftCorner{scrollCenter.x - scrollerSize.x / 2, scrollCenter.y - scrollerSize.y / 2};
-		glm::ivec2 scrollerBottomRightCorner{scrollCenter.x + scrollerSize.x / 2, scrollCenter.y + scrollerSize.y / 2};
-
-		// Create a Layout for the World Tiles
-		const int rows = static_cast<int>(m_WorldTiles.size());
-		const int worldTileHeight = static_cast<int>(round(144.f / 1009.f * s_ScreenHeight));
-		const int worldTileWidth = static_cast<int>(round(1080.f / 1920.f * s_ScreenWidth));
+		const int worldTileWidth  = (int) Ls(256.f);
+		const int worldTileHeight = (int) Ls(36.f);
 		const glm::ivec2 worldTileSize{worldTileWidth, worldTileHeight};
-		const int totalHeight = rows * worldTileHeight;
+		const int totalHeight = static_cast<int>(m_WorldTiles.size()) * worldTileHeight;
 
 		m_Scroller.SetScrollAreaHeight(totalHeight);
 		m_Scroller.SetTopLeftCorner(scrollerTopLeftCorner);
 		m_Scroller.SetBottomRightCorner(scrollerBottomRightCorner);
-
 		m_Scroller.Render();
 
-		// ---- Start Cissoring for Scroller ----
+		// ---- Start Scissoring for Scroller ----
 		m_Scroller.StartCissoring();
 
 		// ---- Render World Tiles ----
-		const glm::ivec2 firstTilePos{scrollCenter.x,
-									  scrollerTopLeftCorner.y + (worldTileSize.y / 2) + (worldTileSize.y / 20) -
+		glm::ivec2 scrollerCenter{(scrollerTopLeftCorner.x + scrollerBottomRightCorner.x) / 2,
+								  (scrollerTopLeftCorner.y + scrollerBottomRightCorner.y) / 2};
+
+		const glm::ivec2 firstTilePos{scrollerCenter.x,
+									  scrollerTopLeftCorner.y + (worldTileSize.y / 2) -
 										  m_Scroller.GetContentYOffset()};
 
 		int drawnTileIndex = 0;
@@ -283,7 +271,6 @@ namespace onion::voxel
 		{
 			WorldTile& worldTile = *m_WorldTiles[i];
 
-			// Checks if the world tile should be rendered based on the filter text
 			const WorldInfos worldInfos = worldTile.GetWorldInfos();
 			const std::string name = worldInfos.Name;
 			const std::string description = worldTile.FormatDescription();
@@ -292,12 +279,9 @@ namespace onion::voxel
 				description.find(filterText) != std::string::npos || details.find(filterText) != std::string::npos;
 
 			if (!filterText.empty() && !matchesFilter)
-			{
 				continue;
-			}
 
-			glm::ivec2 tilePosition =
-				firstTilePos + glm::ivec2{0, static_cast<int>(drawnTileIndex * worldTileSize.y - drawnTileIndex)};
+			glm::ivec2 tilePosition = firstTilePos + glm::ivec2{0, drawnTileIndex * worldTileSize.y};
 			Visibility visibility = m_Scroller.GetControlVisibleArea(tilePosition, worldTileSize);
 
 			worldTile.SetPosition(tilePosition);
@@ -308,61 +292,57 @@ namespace onion::voxel
 			drawnTileIndex++;
 		}
 
-		// ---- Stop Cissoring for Scroller ----
+		// ---- Stop Scissoring for Scroller ----
 		m_Scroller.StopCissoring();
 
-		// Create Layouts for buttons
-		glm::ivec2 tableSize{static_cast<int>(1232.f / 1920.f * s_ScreenWidth), s_ControlHeight};
-		int horizontalSpacing = static_cast<int>(std::round(32.f / 1920.f * s_ScreenWidth));
+		// ---- Button rows ----
+		constexpr float kBtnW = 200.f;
+		constexpr float kBtnH = 20.f;
+		constexpr float kSpacing = 4.f;
+		glm::ivec2 tableSize{(int) Ls(kBtnW), (int) Ls(kBtnH)};
+		int horizontalSpacing = (int) Ls(kSpacing);
 
+		// Top row starts immediately after scroller (Ly(196)), bottom row follows with a 2px gap.
 		TableLayout layoutButtonsTop = LayoutHelper::CreateTableLayout(1, 2, tableSize, horizontalSpacing, 0);
-		glm::ivec2 layoutButtonsTop_TopLeftCorner{s_CenterX - (tableSize.x / 2),
-												  static_cast<int>((827.f - 23.f) / 1009.f * s_ScreenHeight)};
+		glm::ivec2 layoutButtonsTop_TopLeftCorner{(int) Lx(160.f - kBtnW / 2.f), (int) Ly(196.f)};
 
-		TableLayout layoutButtonsBottom = LayoutHelper::CreateTableLayout(1, 4, tableSize, horizontalSpacing, 0);
-		glm::ivec2 layoutButtonsBottom_TopLeftCorner{s_CenterX - (tableSize.x / 2),
-													 static_cast<int>((923.f - 23.f) / 1009.f * s_ScreenHeight)};
-		// ---- Render Play Selected World Button ----
+		bool isAnyWorldTileSelected = m_SelectedWorldIndex != -1;
+
 		glm::ivec2 buttonPos = layoutButtonsTop_TopLeftCorner + layoutButtonsTop.GetElementPosition(0, 0);
 		glm::ivec2 buttonSize = layoutButtonsTop.GetCellSize();
-		bool isAnyWorldTileSelected = m_SelectedWorldIndex != -1;
 		m_ButtonPlaySelectedWorld.SetEnabled(isAnyWorldTileSelected);
 		m_ButtonPlaySelectedWorld.SetPosition(buttonPos);
 		m_ButtonPlaySelectedWorld.SetSize(buttonSize);
 		m_ButtonPlaySelectedWorld.Render();
 
-		// ---- Render Create New World Button ----
 		buttonPos = layoutButtonsTop_TopLeftCorner + layoutButtonsTop.GetElementPosition(0, 1);
-		buttonSize = layoutButtonsTop.GetCellSize();
 		m_ButtonCreateNewWorld.SetPosition(buttonPos);
 		m_ButtonCreateNewWorld.SetSize(buttonSize);
 		m_ButtonCreateNewWorld.Render();
 
-		// ---- Render Edit Selected World Button ----
+		// Bottom row: Edit, Delete, Refresh, Back
+		TableLayout layoutButtonsBottom = LayoutHelper::CreateTableLayout(1, 4, tableSize, horizontalSpacing, 0);
+		glm::ivec2 layoutButtonsBottom_TopLeftCorner{(int) Lx(160.f - kBtnW / 2.f), (int) Ly(218.f)};
+
 		buttonPos = layoutButtonsBottom_TopLeftCorner + layoutButtonsBottom.GetElementPosition(0, 0);
 		buttonSize = layoutButtonsBottom.GetCellSize();
+		m_ButtonEdit.SetEnabled(isAnyWorldTileSelected);
 		m_ButtonEdit.SetPosition(buttonPos);
 		m_ButtonEdit.SetSize(buttonSize);
 		m_ButtonEdit.Render();
 
-		// ---- Render Delete Selected World Button ----
 		buttonPos = layoutButtonsBottom_TopLeftCorner + layoutButtonsBottom.GetElementPosition(0, 1);
-		buttonSize = layoutButtonsBottom.GetCellSize();
 		m_ButtonDeleteSelectedWorld.SetEnabled(isAnyWorldTileSelected);
 		m_ButtonDeleteSelectedWorld.SetPosition(buttonPos);
 		m_ButtonDeleteSelectedWorld.SetSize(buttonSize);
 		m_ButtonDeleteSelectedWorld.Render();
 
-		// ---- Render Refresh World Tiles Button ----
 		buttonPos = layoutButtonsBottom_TopLeftCorner + layoutButtonsBottom.GetElementPosition(0, 2);
-		buttonSize = layoutButtonsBottom.GetCellSize();
 		m_ButtonRefreshWorldTiles.SetPosition(buttonPos);
 		m_ButtonRefreshWorldTiles.SetSize(buttonSize);
 		m_ButtonRefreshWorldTiles.Render();
 
-		// ---- Render Back Button ----
 		buttonPos = layoutButtonsBottom_TopLeftCorner + layoutButtonsBottom.GetElementPosition(0, 3);
-		buttonSize = layoutButtonsBottom.GetCellSize();
 		m_ButtonBack.SetPosition(buttonPos);
 		m_ButtonBack.SetSize(buttonSize);
 		m_ButtonBack.Render();
@@ -377,50 +357,36 @@ namespace onion::voxel
 		}
 
 		WorldInfos selectedWorldInfos = m_WorldTiles[m_SelectedWorldIndex]->GetWorldInfos();
-		int centerX = s_ScreenWidth / 2;
-		float textHeight = s_ScreenHeight * (28.f / 1009.f);
 
 		// ---- Render Warning Text ----
 		const std::string warningText = "Are you sure you want to delete this world?";
-		float warningTextYOffsetRatio = (400.f - 23.f) / 1009.f;
-		glm::ivec2 warningTextPos{centerX, static_cast<int>(s_ScreenHeight * warningTextYOffsetRatio)};
-		m_LabelDeleteWarning.SetPosition(warningTextPos);
+		m_LabelDeleteWarning.SetPosition(L(160.f, 100.f));
 		m_LabelDeleteWarning.SetText(warningText);
-		m_LabelDeleteWarning.SetTextHeight(textHeight);
+		m_LabelDeleteWarning.SetTextHeight(s_TextHeight);
 		m_LabelDeleteWarning.Render();
 
 		// ---- Render Details Text ----
 		const std::string detailsText = "'" + selectedWorldInfos.Name + "' will be lost forever! (A long time!)";
-		float detailsTextYOffsetRatio = (475.f - 23.f) / 1009.f;
-		glm::ivec2 detailsTextPos{centerX, static_cast<int>(s_ScreenHeight * detailsTextYOffsetRatio)};
-		m_LabelDeleteDetails.SetPosition(detailsTextPos);
+		m_LabelDeleteDetails.SetPosition(L(160.f, 120.f));
 		m_LabelDeleteDetails.SetText(detailsText);
-		m_LabelDeleteDetails.SetTextHeight(textHeight);
+		m_LabelDeleteDetails.SetTextHeight(s_TextHeight);
 		m_LabelDeleteDetails.Render();
 
-		// Create Layout for buttons
-		float tableWidthRatio = 1216.f / 1920.f;
-		float tableHeightRatio = 82.f / 1009.f;
-		float horizontalSpacingRatio = 20.f / 1920.f;
-		int horizontalSpacing = static_cast<int>(std::round(horizontalSpacingRatio * s_ScreenWidth));
-		glm::ivec2 tableSize{static_cast<int>(s_ScreenWidth * tableWidthRatio),
-							 static_cast<int>(s_ScreenHeight * tableHeightRatio)};
+		// ---- Buttons ----
+		constexpr float kBtnW = 200.f;
+		constexpr float kBtnH = 20.f;
+		glm::ivec2 tableSize{(int) Ls(kBtnW), (int) Ls(kBtnH)};
+		int horizontalSpacing = (int) Ls(4.f);
 		TableLayout layoutButtons = LayoutHelper::CreateTableLayout(1, 2, tableSize, horizontalSpacing, 0);
+		glm::ivec2 tableTopLeftCorner{(int) Lx(160.f - kBtnW / 2.f), (int) Ly(155.f)};
 
-		float tableYOffsetRatio = 625.f / 1009.f;
-		int tableY = static_cast<int>(s_ScreenHeight * tableYOffsetRatio);
-		glm::ivec2 tableTopLeftCorner{centerX - (tableSize.x / 2), tableY - (tableSize.y / 2)};
-
-		// ---- Render Delete Confirm Button ----
 		glm::ivec2 buttonPos = tableTopLeftCorner + layoutButtons.GetElementPosition(0, 0);
 		glm::ivec2 buttonSize = layoutButtons.GetCellSize();
 		m_ButtonDeleteConfirm.SetPosition(buttonPos);
 		m_ButtonDeleteConfirm.SetSize(buttonSize);
 		m_ButtonDeleteConfirm.Render();
 
-		// ---- Render Delete Cancel Button ----
 		buttonPos = tableTopLeftCorner + layoutButtons.GetElementPosition(0, 1);
-		buttonSize = layoutButtons.GetCellSize();
 		m_ButtonDeleteCancel.SetPosition(buttonPos);
 		m_ButtonDeleteCancel.SetSize(buttonSize);
 		m_ButtonDeleteCancel.Render();
@@ -436,95 +402,63 @@ namespace onion::voxel
 			return;
 		}
 
-		// Constants
-		int centerX = static_cast<int>(std::round(s_ScreenWidth / 2.0));
-		float controlsWidthRatio = 840.f / 1920.f;
-		float controlsHeightRatio = 80.f / 1009.f;
-		glm::ivec2 controlsSize{static_cast<int>(std::round(s_ScreenWidth * controlsWidthRatio)),
-								static_cast<int>(std::round(s_ScreenHeight * controlsHeightRatio))};
-		int textStartX = centerX - static_cast<int>(controlsSize.x / 2) + static_cast<int>(controlsSize.x * 0.05f);
-		float normalTextHeight = std::round(s_ScreenHeight * 28.f / 1009.f);
+		constexpr float kCtrlW = 200.f;
+		constexpr float kCtrlH = 20.f;
+		glm::ivec2 controlsSize{(int) Ls(kCtrlW), (int) Ls(kCtrlH)};
+		// Label text starts at the left edge of the controls
+		int textStartX = (int) Lx(160.f - kCtrlW / 2.f);
 
 		// ---- Render Title ----
-		float titleYOffsetRatio = (120.f - 23.f) / 1009.f;
-		float titleTextHeight = std::round(s_ScreenHeight * 38.f / 1009.f);
-		glm::ivec2 titlePos{centerX, static_cast<int>(s_ScreenHeight * titleYOffsetRatio)};
-		m_LabelCreateNewWorldTitle.SetPosition(titlePos);
-		m_LabelCreateNewWorldTitle.SetTextHeight(titleTextHeight);
+		m_LabelCreateNewWorldTitle.SetPosition(L(160.f, 20.f));
+		m_LabelCreateNewWorldTitle.SetTextHeight(s_TextHeight);
 		m_LabelCreateNewWorldTitle.Render();
 
 		// ---- Render Scroller ----
-		float scrollerWidthRatio = 1.f;
-		float scrollerHeightRatio = 580.f / 1009.f;
-		glm::ivec2 scrollerSize{static_cast<int>(s_ScreenWidth * scrollerWidthRatio),
-								static_cast<int>(s_ScreenHeight * scrollerHeightRatio)};
-		float scrollCenterYratio = (503.f - 23.f) / 1009.f;
-		glm::ivec2 scrollCenter{centerX, static_cast<int>(s_ScreenHeight * scrollCenterYratio)};
-
-		glm::ivec2 scrollerTopLeftCorner{scrollCenter.x - scrollerSize.x / 2, scrollCenter.y - scrollerSize.y / 2};
-		glm::ivec2 scrollerBottomRightCorner{scrollCenter.x + scrollerSize.x / 2, scrollCenter.y + scrollerSize.y / 2};
-
+		glm::ivec2 scrollerTopLeftCorner{(int) Lx(0.f), (int) Ly(35.f)};
+		glm::ivec2 scrollerBottomRightCorner{(int) Lx(320.f), (int) Ly(210.f)};
 		m_ScrollerCreateNewWorld.SetTopLeftCorner(scrollerTopLeftCorner);
 		m_ScrollerCreateNewWorld.SetBottomRightCorner(scrollerBottomRightCorner);
-
 		m_ScrollerCreateNewWorld.Render();
 
-		// ---- Render Label Create New World Name ----
-		float nameLabelYOffsetRatio = (300.f - 23.f) / 1009.f;
-		glm::ivec2 nameLabelPos{textStartX, static_cast<int>(s_ScreenHeight * nameLabelYOffsetRatio)};
-		m_LabelCreateNewWorldName.SetPosition(nameLabelPos);
-		m_LabelCreateNewWorldName.SetTextHeight(normalTextHeight);
+		// ---- World Name Label ----
+		m_LabelCreateNewWorldName.SetPosition({(float) textStartX, Ly(70.f)});
+		m_LabelCreateNewWorldName.SetTextHeight(s_TextHeight);
 		m_LabelCreateNewWorldName.Render();
 
-		// ---- Render Text Field Create New World Name ----
-		float nameTextFieldYOffsetRatio = nameLabelYOffsetRatio + (controlsHeightRatio / 1.3f);
-		glm::ivec2 nameTextFieldPos{centerX, static_cast<int>(s_ScreenHeight * nameTextFieldYOffsetRatio)};
-		m_TextFieldCreateNewWorldName.SetPosition(nameTextFieldPos);
+		// ---- World Name Text Field ----
+		m_TextFieldCreateNewWorldName.SetPosition(L(160.f, 86.f));
 		m_TextFieldCreateNewWorldName.SetSize(controlsSize);
 		m_TextFieldCreateNewWorldName.Render();
 
-		// ---- Render Button Create New World Select Type ----
-		float selectTypeButtonYOffsetRatio = nameTextFieldYOffsetRatio + (controlsHeightRatio * 1.2f);
-		glm::ivec2 selectTypeButtonPos{centerX, static_cast<int>(s_ScreenHeight * selectTypeButtonYOffsetRatio)};
-		std::string text =
+		// ---- World Type Button ----
+		std::string typeText =
 			"Type: " + WorldGenerator::WorldGenerationTypeToString(m_WorldInfosToCreate.WorldGenerationType);
-		m_ButtonCreateNewWorldSelectType.SetText(text);
-		m_ButtonCreateNewWorldSelectType.SetPosition(selectTypeButtonPos);
+		m_ButtonCreateNewWorldSelectType.SetText(typeText);
+		m_ButtonCreateNewWorldSelectType.SetPosition(L(160.f, 110.f));
 		m_ButtonCreateNewWorldSelectType.SetSize(controlsSize);
 		m_ButtonCreateNewWorldSelectType.Render();
 
-		// ---- Render Label Create New World Seed ----
-		float seedLabelYOffsetRatio = selectTypeButtonYOffsetRatio + (controlsHeightRatio * 1.2f);
-		glm::ivec2 seedLabelPos{textStartX, static_cast<int>(s_ScreenHeight * seedLabelYOffsetRatio)};
-		m_LabelCreateNewWorldSeed.SetPosition(seedLabelPos);
-		m_LabelCreateNewWorldSeed.SetTextHeight(normalTextHeight);
+		// ---- Seed Label ----
+		m_LabelCreateNewWorldSeed.SetPosition({(float) textStartX, Ly(132.f)});
+		m_LabelCreateNewWorldSeed.SetTextHeight(s_TextHeight);
 		m_LabelCreateNewWorldSeed.Render();
 
-		// ---- Render Text Field Create New World Seed ----
-		float seedTextFieldYOffsetRatio = seedLabelYOffsetRatio + (controlsHeightRatio / 1.3f);
-		glm::ivec2 seedTextFieldPos{centerX, static_cast<int>(s_ScreenHeight * seedTextFieldYOffsetRatio)};
-		m_TextFieldCreateNewWorldSeed.SetPosition(seedTextFieldPos);
+		// ---- Seed Text Field ----
+		m_TextFieldCreateNewWorldSeed.SetPosition(L(160.f, 148.f));
 		m_TextFieldCreateNewWorldSeed.SetSize(controlsSize);
 		m_TextFieldCreateNewWorldSeed.Render();
 
-		// Create Layout for buttons
-		float tableWidthRatio = 1230.f / 1920.f;
-		float tableHeightRatio = 80.f / 1009.f;
-		int horizontalSpacing = static_cast<int>(std::round(30.f / 1920.f * s_ScreenWidth));
-		glm::ivec2 tableSize{static_cast<int>(s_ScreenWidth * tableWidthRatio),
-							 static_cast<int>(s_ScreenHeight * tableHeightRatio)};
+		// ---- Confirm / Cancel Buttons ----
+		glm::ivec2 tableSize{(int) Ls(kCtrlW), (int) Ls(kCtrlH)};
+		int horizontalSpacing = (int) Ls(4.f);
 		TableLayout layoutButtons = LayoutHelper::CreateTableLayout(1, 2, tableSize, horizontalSpacing, 0);
-		float tableYOffsetRatio = (915.f - 23.f) / 1009.f;
-		glm::ivec2 tableTopLeftCorner{centerX - (tableSize.x / 2),
-									  static_cast<int>(s_ScreenHeight * tableYOffsetRatio) - (tableSize.y / 2)};
+		glm::ivec2 tableTopLeftCorner{(int) Lx(160.f - kCtrlW / 2.f), (int) Ly(218.f)};
 
-		// ---- Render Button Create New World Confirm ----
 		glm::ivec2 buttonPos = tableTopLeftCorner + layoutButtons.GetElementPosition(0, 0);
 		m_ButtonCreateNewWorldConfirm.SetPosition(buttonPos);
 		m_ButtonCreateNewWorldConfirm.SetSize(layoutButtons.GetCellSize());
 		m_ButtonCreateNewWorldConfirm.Render();
 
-		// ---- Render Button Create New World Cancel ----
 		buttonPos = tableTopLeftCorner + layoutButtons.GetElementPosition(0, 1);
 		m_ButtonCreateNewWorldCancel.SetPosition(buttonPos);
 		m_ButtonCreateNewWorldCancel.SetSize(layoutButtons.GetCellSize());
