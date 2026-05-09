@@ -73,6 +73,7 @@ jobs:
           ninja-build \
           libcurl4-openssl-dev \
           libwayland-dev \
+          libxkbcommon-dev \
           libx11-dev \
           libxrandr-dev \
           libxinerama-dev \
