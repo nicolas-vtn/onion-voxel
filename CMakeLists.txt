@@ -8,23 +8,36 @@ project(onion_voxel
 
 # Deploy Build
 if(DEPLOY_BUILD)
-    # Compiler
-    add_compile_options(
-        $<$<CONFIG:Release>:/O2>
-        $<$<CONFIG:Release>:/DNDEBUG>
-    )
+    if(MSVC)
+        # Compiler
+        add_compile_options(
+            $<$<CONFIG:Release>:/O2>
+            $<$<CONFIG:Release>:/DNDEBUG>
+        )
 
-    # Remove debug info
-    string(REPLACE "/Zi" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-    string(REPLACE "/ZI" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+        # Remove debug info
+        string(REPLACE "/Zi" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+        string(REPLACE "/ZI" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 
-    # Linker
-    add_link_options(
-        $<$<CONFIG:Release>:/INCREMENTAL:NO>  # removes .ilk
-        $<$<CONFIG:Release>:/DEBUG:NONE>      # no pdb
-        $<$<CONFIG:Release>:/OPT:REF>
-        $<$<CONFIG:Release>:/OPT:ICF>
-    )
+        # Linker
+        add_link_options(
+            $<$<CONFIG:Release>:/INCREMENTAL:NO>  # removes .ilk
+            $<$<CONFIG:Release>:/DEBUG:NONE>      # no pdb
+            $<$<CONFIG:Release>:/OPT:REF>
+            $<$<CONFIG:Release>:/OPT:ICF>
+        )
+    else()
+        # GCC/Clang equivalent optimizations
+        add_compile_options(
+            $<$<CONFIG:Release>:-O2>
+            $<$<CONFIG:Release>:-DNDEBUG>
+        )
+
+        # Strip debug info from binaries
+        add_link_options(
+            $<$<CONFIG:Release>:-s>
+        )
+    endif()
 endif()
 
 # Standalone executable (static MSVC runtime)
