@@ -14,7 +14,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: recursive
 
@@ -22,7 +22,7 @@ jobs:
       uses: ilammy/msvc-dev-cmd@v1
 
     - name: Setup Ninja
-      uses: seanmiddleditch/gha-setup-ninja@v4
+      run: choco install ninja -y
 
     - name: Configure CMake
       run: >
@@ -32,7 +32,7 @@ jobs:
         -DDEPLOY_BUILD=ON
 
     - name: Build
-      run: cmake --build build
+      run: cmake --build build --parallel
 
     - name: Install
       run: cmake --install build --prefix install
@@ -51,7 +51,7 @@ jobs:
         Compress-Archive -Path package/OnionVoxel -DestinationPath OnionVoxel-${{ github.ref_name }}-win64.zip
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: release-windows
         path: OnionVoxel-${{ github.ref_name }}-win64.zip
@@ -61,7 +61,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: recursive
 
@@ -72,6 +72,7 @@ jobs:
           cmake \
           ninja-build \
           libcurl4-openssl-dev \
+          libwayland-dev \
           libx11-dev \
           libxrandr-dev \
           libxinerama-dev \
@@ -87,7 +88,7 @@ jobs:
         -DDEPLOY_BUILD=ON
 
     - name: Build
-      run: cmake --build build
+      run: cmake --build build --parallel
 
     - name: Install
       run: cmake --install build --prefix install
@@ -104,7 +105,7 @@ jobs:
         tar -czf OnionVoxel-${{ github.ref_name }}-linux-x64.tar.gz -C package OnionVoxel
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: release-linux
         path: OnionVoxel-${{ github.ref_name }}-linux-x64.tar.gz
@@ -115,12 +116,12 @@ jobs:
 
     steps:
     - name: Download Windows artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: release-windows
 
     - name: Download Linux artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: release-linux
 
