@@ -4,6 +4,7 @@
 #include <unordered_set>
 
 #include <shared/data_transfer_objects/serializer/SerializerDTO.hpp>
+#include <shared/network_messages/chat_msg/ChatMsg.hpp>
 #include <shared/network_messages/item_dropped_msg/ItemDroppedMsg.hpp>
 #include <shared/network_messages/item_picked_up_msg/ItemPickedUpMsg.hpp>
 #include <shared/utils/Utils.hpp>
@@ -255,6 +256,9 @@ namespace onion::voxel
 
 		m_RendererEventHandles.push_back(
 			m_Renderer.EvtItemDropped.Subscribe([this](const Slot& slot) { Handle_ItemDropped(slot); }));
+
+		m_RendererEventHandles.push_back(m_Renderer.EvtChatMessageSent.Subscribe(
+			[this](const std::string& message) { Handle_ChatMessageSent(message); }));
 	}
 
 	void Client::Handle_RenderDistanceChanged(uint8_t renderDistance)
@@ -273,6 +277,18 @@ namespace onion::voxel
 		ItemDroppedMsg msg;
 		msg.BlockId = static_cast<uint16_t>(slot.Id);
 		msg.Count = slot.Count;
+		m_NetworkClient.Send(std::move(msg), true);
+	}
+
+	void Client::Handle_ChatMessageSent(const std::string& message)
+	{
+		if (!m_NetworkClient.IsRunning())
+			return;
+
+		ChatMsg msg;
+		msg.Message = message;
+		// PlayerName and UUID are left empty: the server resolves them from its own registry.
+		// They will be populated by the server when broadcasting the message to all clients.
 		m_NetworkClient.Send(std::move(msg), true);
 	}
 

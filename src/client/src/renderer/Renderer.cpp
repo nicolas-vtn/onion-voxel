@@ -1351,6 +1351,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(
 			m_Gui.EvtItemDropped.Subscribe([this](const Slot& slot) { EvtItemDropped.Trigger(slot); }));
+
+		m_EventHandles.push_back(m_Gui.EvtChatMessageSent.Subscribe(
+			[this](const std::string& message) { EvtChatMessageSent.Trigger(message); }));
 	}
 
 	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)

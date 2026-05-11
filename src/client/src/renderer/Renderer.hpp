@@ -80,6 +80,7 @@ namespace onion::voxel
 		Event<uint8_t> EvtRenderDistanceChanged;
 		Event<bool> EvtRequestQuitToMainMenu;
 		Event<Slot> EvtItemDropped;
+		Event<const std::string&> EvtChatMessageSent;
 
 		// ----- Internal Methods -----
 	  private:

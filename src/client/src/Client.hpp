@@ -97,6 +97,7 @@ namespace onion::voxel
 
 		void Handle_RenderDistanceChanged(uint8_t renderDistance);
 		void Handle_ItemDropped(const Slot& slot);
+		void Handle_ChatMessageSent(const std::string& message);
 
 		// ----- Logger -----
 	  private:

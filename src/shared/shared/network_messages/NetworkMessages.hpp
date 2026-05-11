@@ -5,6 +5,7 @@
 #include "MessageHeader.hpp"
 
 #include "blocks_changed_msg/BlocksChangedMsg.hpp"
+#include "chat_msg/ChatMsg.hpp"
 #include "chunk_data_msg/ChunkDataMsg.hpp"
 #include "client_info_msg/ClientInfoMsg.hpp"
 #include "entity_snapshot_msg/EntitySnapshotMsg.hpp"
@@ -30,7 +31,8 @@ namespace onion::voxel
 										ServerMotdMsg,
 										RequestMotdMsg,
 										ItemDroppedMsg,
-										ItemPickedUpMsg>;
+										ItemPickedUpMsg,
+										ChatMsg>;
 
 	inline NetworkMessage DeserializeMessage(cereal::BinaryInputArchive& archive, MessageHeader::eType type)
 	{
@@ -99,21 +101,28 @@ namespace onion::voxel
 					return msg;
 				}
 
-		case MessageHeader::eType::ItemDropped:
-			{
-				ItemDroppedMsg msg;
-				archive(msg);
-				return msg;
-			}
+			case MessageHeader::eType::ItemDropped:
+				{
+					ItemDroppedMsg msg;
+					archive(msg);
+					return msg;
+				}
 
-		case MessageHeader::eType::ItemPickedUp:
-			{
-				ItemPickedUpMsg msg;
-				archive(msg);
-				return msg;
-			}
+			case MessageHeader::eType::ItemPickedUp:
+				{
+					ItemPickedUpMsg msg;
+					archive(msg);
+					return msg;
+				}
 
-		default:
+			case MessageHeader::eType::Chat:
+				{
+					ChatMsg msg;
+					archive(msg);
+					return msg;
+				}
+
+			default:
 				throw std::runtime_error("Unknown message type");
 		}
 	}
