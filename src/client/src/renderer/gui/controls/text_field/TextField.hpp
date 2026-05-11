@@ -61,6 +61,9 @@ namespace onion::voxel
 		bool IsActive() const;
 		void SetActive(bool active);
 
+		void SetZOffset(float zOffset);
+		float GetZOffset() const;
+
 		bool DoesValidateOnlyOnEnter() const;
 		void SetValidateOnlyOnEnter(bool validateOnlyOnEnter);
 
@@ -131,6 +134,7 @@ namespace onion::voxel
 		bool m_ClearOnRightClick = false;
 		bool m_ValidateOnlyOnEnter = false;
 
+		float m_ZOffset = 0.5f;
 		float m_TextScaleFactor = 0.4f;
 		float m_TextStartXratio = 2.078f;
 		int m_CursorWidth = 4;

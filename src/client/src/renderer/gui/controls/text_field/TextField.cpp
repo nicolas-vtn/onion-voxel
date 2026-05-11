@@ -17,7 +17,8 @@ namespace onion::voxel
 		SubscribeToSpriteEvents();
 
 		m_Label.SetTextAlignment(Font::eTextAlignment::Left);
-		m_Label.SetZOffset(0.8f);
+
+		SetZOffset(m_ZOffset);
 	}
 
 	TextField::~TextField()
@@ -101,7 +102,7 @@ namespace onion::voxel
 				options.TopLeftCorner = topLeftCursor;
 				options.BottomRightCorner = bottomRightCursor;
 				options.Color = glm::vec4(s_TextColor, 1.f);
-				options.ZOffset = 0.9f; // Render on top of text
+				options.ZOffset = m_ZOffset + 0.03f; // Render on top of text
 				ColoredBackground::Render(options);
 			}
 		}
@@ -176,7 +177,7 @@ namespace onion::voxel
 				options.TopLeftCorner = topLeftCursor;
 				options.BottomRightCorner = bottomRightCursor;
 				options.Color = glm::vec4(1.f);
-				options.ZOffset = 0.5f; // Render behind text
+				options.ZOffset = m_ZOffset + 0.01f; // Render behind text
 				ColoredBackground::Render(options);
 
 				// Render selected text with highlight
@@ -231,7 +232,7 @@ namespace onion::voxel
 				options.TopLeftCorner = topLeftCursor;
 				options.BottomRightCorner = bottomRightCursor;
 				options.Color = glm::vec4(s_TextColor, 1.f);
-				options.ZOffset = 0.9f; // Render on top of text
+				options.ZOffset = m_ZOffset + 0.03f; // Render on top of text
 				ColoredBackground::Render(options);
 			}
 		}
@@ -340,6 +341,20 @@ namespace onion::voxel
 	void TextField::SetActive(bool active)
 	{
 		m_IsActive = active;
+	}
+
+	void TextField::SetZOffset(float zOffset)
+	{
+		m_ZOffset = zOffset;
+		m_NineSliceSprite_TextField.SetZOffset(m_ZOffset);
+		m_NineSliceSprite_TextFieldHighlighted.SetZOffset(m_ZOffset);
+
+		m_Label.SetZOffset(m_ZOffset + 0.02f);
+	}
+
+	float TextField::GetZOffset() const
+	{
+		return m_ZOffset;
 	}
 
 	bool TextField::DoesValidateOnlyOnEnter() const
