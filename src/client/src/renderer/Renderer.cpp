@@ -546,6 +546,8 @@ namespace onion::voxel
 		m_KeyBinds.RemapAction(eAction::ToggleDebugMenus, actionToKey.at(eAction::ToggleDebugMenus), noRepeat);
 		m_KeyBinds.RemapAction(eAction::PickBlock, actionToKey.at(eAction::PickBlock), noRepeat);
 		m_KeyBinds.RemapAction(eAction::OpenInventory, actionToKey.at(eAction::OpenInventory), noRepeat);
+		m_KeyBinds.RemapAction(eAction::OpenChat, actionToKey.at(eAction::OpenChat), noRepeat);
+		m_KeyBinds.RemapAction(eAction::ListPlayers, actionToKey.at(eAction::ListPlayers), noRepeat);
 		m_KeyBinds.RemapAction(eAction::HotbarSlot1, actionToKey.at(eAction::HotbarSlot1), noRepeat);
 		m_KeyBinds.RemapAction(eAction::HotbarSlot2, actionToKey.at(eAction::HotbarSlot2), noRepeat);
 		m_KeyBinds.RemapAction(eAction::HotbarSlot3, actionToKey.at(eAction::HotbarSlot3), noRepeat);

@@ -40,6 +40,7 @@ namespace onion::voxel
 		Label m_TitleGameplay_Label;
 		Label m_TitleInventory_Label;
 		Label m_TitleDebug_Label;
+		Label m_TitleMultiplayer_Label;
 		std::unordered_map<eAction, std::unique_ptr<KeyBindsTile>> m_ActionToKeyBindTileMap;
 
 		Button m_ResetAll_Button;

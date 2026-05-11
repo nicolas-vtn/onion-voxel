@@ -38,7 +38,10 @@ namespace onion::voxel
 														{eAction::HotbarSlot8, Key::Num8},
 														{eAction::HotbarSlot9, Key::Num9},
 
-														{eAction::ToggleFlyMode, Key::Space}};
+														{eAction::ToggleFlyMode, Key::Space},
+
+														{eAction::OpenChat, Key::T},
+														{eAction::ListPlayers, Key::Tab}};
 	};
 
 	// ----- Utilities -----
@@ -84,6 +87,8 @@ namespace onion::voxel
 	{
 		for (auto it = j.begin(); it != j.end(); ++it)
 		{
+			if (!StringToActionMap.contains(it.key()))
+				continue;
 			eAction action = StringToAction(it.key());
 			Key key = StringToKey(it.value().template get<std::string>());
 			s.ActionToKey[action] = key;

@@ -34,7 +34,9 @@ namespace onion::voxel
 		HotbarSlot8,
 		HotbarSlot9,
 		CloseMenu,
-		ToggleDebugMenus
+		ToggleDebugMenus,
+		OpenChat,
+		ListPlayers
 	};
 
 	class KeyBinds
@@ -85,6 +87,8 @@ namespace onion::voxel
 		{eAction::HotbarSlot9, "Hotbar Slot 9"},
 		{eAction::CloseMenu, "Close Menu"},
 		{eAction::ToggleDebugMenus, "Toggle Debug Menus"},
+		{eAction::OpenChat, "Open Chat"},
+		{eAction::ListPlayers, "List Players"},
 	};
 
 	static std::unordered_map<std::string, eAction> StringToActionMap = []()
