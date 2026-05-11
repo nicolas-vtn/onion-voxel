@@ -291,7 +291,8 @@ namespace onion::voxel
 			bool isMainMenu = activeMenu == eMenu::MainMenu;
 			bool isInGameplay = activeMenu == eMenu::Gameplay;
 			bool isInInventory = activeMenu == eMenu::Inventory;
-			bool blurry = (!isMainMenu && !isInGameplay && !isInInventory);
+			bool isInChat = activeMenu == eMenu::Chat;
+			bool blurry = (!isMainMenu && !isInGameplay && !isInInventory && !isInChat);
 			if (blurry)
 			{
 				finalTexture = ApplyBlur(m_SceneColorTexture);
@@ -582,8 +583,10 @@ namespace onion::voxel
 
 		KeyState pauseKeyState = m_KeyBinds.GetKeyState(eAction::Pause);
 		bool inGame = GetRenderState() == eRenderState::InGame;
-		bool inInventory = m_Gui.GetActiveMenu() == eMenu::Inventory;
-		if (pauseKeyState.IsPressed && inGame && !inInventory)
+		eMenu activeMenu = m_Gui.GetActiveMenu();
+		bool inInventory = activeMenu == eMenu::Inventory;
+		bool inChat = activeMenu == eMenu::Chat;
+		if (pauseKeyState.IsPressed && inGame && !inInventory && !inChat)
 		{
 			PauseGame(true);
 		}
@@ -627,14 +630,27 @@ namespace onion::voxel
 		if (!player)
 			return;
 
-		// ----- INVENTORY ------
-		if (m_Gui.GetActiveMenu() == eMenu::Inventory)
+		// ---- Early Returns if in a menu ----
+		eMenu activeMenu = m_Gui.GetActiveMenu();
+		bool isInInventory = activeMenu == eMenu::Inventory;
+		bool isInChat = activeMenu == eMenu::Chat;
+
+		if (isInInventory || isInChat)
 			return;
 
+		// ----- INVENTORY ------
 		KeyState toggleInventoryKeyState = m_KeyBinds.GetKeyState(eAction::OpenInventory);
 		if (toggleInventoryKeyState.IsPressed)
 		{
 			m_Gui.SetActiveMenu(eMenu::Inventory);
+			return;
+		}
+
+		// ----- CHAT -----
+		KeyState openChatKeyState = m_KeyBinds.GetKeyState(eAction::OpenChat);
+		if (openChatKeyState.IsPressed)
+		{
+			m_Gui.SetActiveMenu(eMenu::Chat);
 			return;
 		}
 

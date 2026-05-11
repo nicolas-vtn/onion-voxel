@@ -59,10 +59,14 @@ namespace onion::voxel
 		void SetClearOnRightClick(bool clearOnRightClick);
 
 		bool IsActive() const { return m_IsActive; }
+		void SetActive(bool active);
+
+		bool DoesValidateOnlyOnEnter() const;
+		void SetValidateOnlyOnEnter(bool validateOnlyOnEnter);
 
 		// ----- Events -----
 	  public:
-		Event<const TextField&> EvtTextChanged;
+		Event<const TextField&> EvtTextValidated;
 
 	  private:
 		void SubscribeToSpriteEvents();
@@ -122,6 +126,7 @@ namespace onion::voxel
 		glm::ivec2 m_Size{1, 1};
 		bool m_IsPressed = false;
 		bool m_ClearOnRightClick = false;
+		bool m_ValidateOnlyOnEnter = false;
 
 		float m_TextScaleFactor = 0.4f;
 		float m_TextStartXratio = 2.078f;

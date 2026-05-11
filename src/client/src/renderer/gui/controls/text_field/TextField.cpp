@@ -256,6 +256,8 @@ namespace onion::voxel
 	{
 		m_Text = Utf8ToUtf32(text);
 
+		m_LastCharInput = 0; // Reset last char input to avoid processing it in the next Handle_CharInputs() call
+
 		// Reset States
 		m_CursorPosition = std::min(m_CursorPosition, m_Text.size());
 		if (m_SelectionStart != SIZE_MAX)
@@ -327,6 +329,21 @@ namespace onion::voxel
 	void TextField::SetReadOnly(bool readOnly)
 	{
 		m_ReadOnly = readOnly;
+	}
+
+	void TextField::SetActive(bool active)
+	{
+		m_IsActive = active;
+	}
+
+	bool TextField::DoesValidateOnlyOnEnter() const
+	{
+		return m_ValidateOnlyOnEnter;
+	}
+
+	void TextField::SetValidateOnlyOnEnter(bool validateOnlyOnEnter)
+	{
+		m_ValidateOnlyOnEnter = validateOnlyOnEnter;
 	}
 
 	bool TextField::IsHovered() const
@@ -483,7 +500,6 @@ namespace onion::voxel
 		{
 			// Revert to the text at activation if Escape is pressed
 			m_Text = m_TextAtActivation;
-			ValidateText();
 			return;
 		}
 
@@ -491,7 +507,8 @@ namespace onion::voxel
 		{
 			// Validate text and deactivate if there's a mouse click outside the text field while it's active
 			m_IsActive = false;
-			ValidateText();
+			if (!m_ValidateOnlyOnEnter)
+				ValidateText();
 			return;
 		}
 		m_WasClickDown = clickPressed;
@@ -712,7 +729,7 @@ namespace onion::voxel
 	{
 		m_IsActive = false;
 		ResetSelection();
-		EvtTextChanged.Trigger(*this);
+		EvtTextValidated.Trigger(*this);
 	}
 
 	bool TextField::HasSelection() const

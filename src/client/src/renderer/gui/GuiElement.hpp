@@ -36,6 +36,7 @@ namespace onion::voxel
 		KeyBinds,
 		Inventory,
 		Gameplay,
+		Chat,
 		Pause,
 		MusicAndSounds,
 		ResourcePacks,

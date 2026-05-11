@@ -34,7 +34,7 @@ namespace onion::voxel
 		  m_VideoSettingsPanel("VideoSettingsPanel"), m_ControlsPanel("ControlsPanel"),
 		  m_MouseSettingsPanel("MouseSettingsPanel"), m_KeyBindsPanel("KeyBindsPanel"),
 		  m_DemoTextsPanel("DemoTextsPanel"), m_MultiplayerPanel("MultiplayerPanel"), m_HudPanel("HudPanel"),
-		  m_InventoryPanel("InventoryPanel")
+		  m_InventoryPanel("InventoryPanel"), m_ChatPanel("ChatPanel")
 	{
 		SubscribeToPanelsEvents();
 	}
@@ -162,6 +162,12 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(
 			m_InventoryPanel.EvtItemDropped.Subscribe([this](const Slot& slot) { EvtItemDropped.Trigger(slot); }));
+
+		m_EventHandles.push_back(m_ChatPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
+																				{ Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_ChatPanel.EvtChatMessageSent.Subscribe([this](const std::string& message)
+																		  { Handle_ChatMessageSent(message); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -218,6 +224,12 @@ namespace onion::voxel
 				  << serverInfos.Port << std::endl;
 
 		EvtRequestStartMultiplayerGame.Trigger(serverInfos);
+	}
+
+	void Gui::Handle_ChatMessageSent(const std::string& message)
+	{
+		std::cout << "[Chat] " << message << std::endl;
+		EvtChatMessageSent.Trigger(message);
 	}
 
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)
@@ -312,6 +324,11 @@ namespace onion::voxel
 			m_MultiplayerPanel.RefreshServerTilesAsync();
 		}
 
+		if (m_ActiveMenu == eMenu::Chat)
+		{
+			m_ChatPanel.FocusTextField();
+		}
+
 		// Handle the MouseCapture state
 		bool inGame = m_ActiveMenu == eMenu::Gameplay;
 		const auto& inputsManager = EngineContext::Get().Inputs;
@@ -384,6 +401,7 @@ namespace onion::voxel
 		m_MultiplayerPanel.Initialize();
 		m_HudPanel.Initialize();
 		m_InventoryPanel.Initialize();
+		m_ChatPanel.Initialize();
 
 		ReloadSkyboxTextures();
 	}
@@ -448,6 +466,9 @@ namespace onion::voxel
 			case eMenu::Inventory:
 				m_InventoryPanel.Render();
 				break;
+			case eMenu::Chat:
+				m_ChatPanel.Render();
+				break;
 			default:
 				break;
 		}
@@ -502,6 +523,7 @@ namespace onion::voxel
 		m_MultiplayerPanel.Delete();
 		m_HudPanel.Delete();
 		m_InventoryPanel.Delete();
+		m_ChatPanel.Delete();
 
 		m_Skybox.Unload();
 	}
@@ -525,6 +547,7 @@ namespace onion::voxel
 		m_MultiplayerPanel.ReloadTextures();
 		m_HudPanel.ReloadTextures();
 		m_InventoryPanel.ReloadTextures();
+		m_ChatPanel.ReloadTextures();
 
 		ReloadSkyboxTextures();
 	}

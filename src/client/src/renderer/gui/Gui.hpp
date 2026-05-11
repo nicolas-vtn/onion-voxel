@@ -9,6 +9,7 @@
 #include <renderer/camera/Camera.hpp>
 #include <renderer/skybox/Skybox.hpp>
 
+#include "panels/chat_panel/ChatPanel.hpp"
 #include "panels/controls_panel/ControlsPanel.hpp"
 #include "panels/demo_panel/DemoPanel.hpp"
 #include "panels/demo_scrolling_panel/DemoScrollingPanel.hpp"
@@ -68,6 +69,7 @@ namespace onion::voxel
 		Event<bool> EvtRequestBack;
 		Event<const UserSettingsChangedEventArgs&> EvtUserSettingsChanged;
 		Event<Slot> EvtItemDropped;
+		Event<const std::string&> EvtChatMessageSent;
 
 		// ----- Panels -----
 	  private:
@@ -85,6 +87,7 @@ namespace onion::voxel
 		MouseSettingsPanel m_MouseSettingsPanel;
 		KeyBindsPanel m_KeyBindsPanel;
 		InventoryPanel m_InventoryPanel;
+		ChatPanel m_ChatPanel;
 		HudPanel m_HudPanel;
 
 		// ---- Private Members -----
@@ -109,6 +112,7 @@ namespace onion::voxel
 		void Handle_BackRequest(const GuiElement* sender);
 		void Handle_UserSettingsChanged(const UserSettingsChangedEventArgs& eventArgs);
 		void Handle_ConnectToServerRequest(const ServerInfos& serverInfos);
+		void Handle_ChatMessageSent(const std::string& message);
 
 		// ----- Set Static States -----
 	  public:
