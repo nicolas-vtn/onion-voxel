@@ -58,11 +58,14 @@ namespace onion::voxel
 		bool DoesClearOnRightClick() const;
 		void SetClearOnRightClick(bool clearOnRightClick);
 
-		bool IsActive() const { return m_IsActive; }
+		bool IsActive() const;
 		void SetActive(bool active);
 
 		bool DoesValidateOnlyOnEnter() const;
 		void SetValidateOnlyOnEnter(bool validateOnlyOnEnter);
+
+		bool DoesRenderSprites() const;
+		void SetRenderSprites(bool renderSprites);
 
 		// ----- Events -----
 	  public:
@@ -138,6 +141,8 @@ namespace onion::voxel
 		bool m_IsSelecting = false;
 		glm::ivec2 m_DoubleClickPosition{0, 0};
 		bool m_WasClickDown = false;
+
+		bool m_RenderSprites = true;
 
 		// ----- Label -----
 	  private:

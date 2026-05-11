@@ -8,6 +8,8 @@ namespace onion::voxel
 
 		m_Chat_TextField.SetPlaceholderText("");
 		m_Chat_TextField.SetValidateOnlyOnEnter(true);
+		m_Chat_TextField.SetClearOnRightClick(false);
+		m_Chat_TextField.SetRenderSprites(false);
 	}
 
 	ChatPanel::~ChatPanel()

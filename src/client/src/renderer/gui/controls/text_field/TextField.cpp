@@ -106,10 +106,11 @@ namespace onion::voxel
 			}
 		}
 
-		if (m_IsActive)
-			m_NineSliceSprite_TextFieldHighlighted.Render();
-		else
-			m_NineSliceSprite_TextField.Render();
+		if (m_RenderSprites)
+		{
+			NineSliceSprite& sprite = m_IsActive ? m_NineSliceSprite_TextFieldHighlighted : m_NineSliceSprite_TextField;
+			sprite.Render();
+		}
 
 		// ----- Render Label -----
 		m_Label.SetTextHeight(textHeight);
@@ -331,6 +332,11 @@ namespace onion::voxel
 		m_ReadOnly = readOnly;
 	}
 
+	bool TextField::IsActive() const
+	{
+		return m_IsActive;
+	}
+
 	void TextField::SetActive(bool active)
 	{
 		m_IsActive = active;
@@ -344,6 +350,16 @@ namespace onion::voxel
 	void TextField::SetValidateOnlyOnEnter(bool validateOnlyOnEnter)
 	{
 		m_ValidateOnlyOnEnter = validateOnlyOnEnter;
+	}
+
+	bool TextField::DoesRenderSprites() const
+	{
+		return m_RenderSprites;
+	}
+
+	void TextField::SetRenderSprites(bool renderSprites)
+	{
+		m_RenderSprites = renderSprites;
 	}
 
 	bool TextField::IsHovered() const
