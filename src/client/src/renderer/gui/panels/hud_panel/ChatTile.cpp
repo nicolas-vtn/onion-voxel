@@ -1,5 +1,7 @@
 #include "ChatTile.hpp"
 
+#include <stdexcept>
+
 #include <GLFW/glfw3.h>
 
 #include <renderer/gui/colored_background/ColoredBackground.hpp>
@@ -33,14 +35,26 @@ namespace onion::voxel
 
 	void ChatTile::Render()
 	{
+		throw std::logic_error("Use Render(bool shouldFade) instead of Render() for ChatTile.");
+	}
+
+	void ChatTile::Render(bool shouldFade)
+	{
 		// ---- Compute fading alpha from tile age ----
-		const double age = glfwGetTime() - m_SpawnTime;
-		if (age >= k_OpaqueSeconds + k_FadeSeconds)
-			m_FadingAlpha = 0.f;
-		else if (age > k_OpaqueSeconds)
-			m_FadingAlpha = 1.f - static_cast<float>((age - k_OpaqueSeconds) / k_FadeSeconds);
-		else
+		if (!shouldFade)
+		{
 			m_FadingAlpha = 1.f;
+		}
+		else
+		{
+			const double age = glfwGetTime() - m_SpawnTime;
+			if (age >= k_OpaqueSeconds + k_FadeSeconds)
+				m_FadingAlpha = 0.f;
+			else if (age > k_OpaqueSeconds)
+				m_FadingAlpha = 1.f - static_cast<float>((age - k_OpaqueSeconds) / k_FadeSeconds);
+			else
+				m_FadingAlpha = 1.f;
+		}
 
 		m_Label.SetTextHeight(s_TextHeight);
 		const glm::ivec2 textSize = m_Label.GetTextSize();

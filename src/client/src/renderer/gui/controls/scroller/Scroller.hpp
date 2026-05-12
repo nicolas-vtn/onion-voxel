@@ -51,6 +51,9 @@ namespace onion::voxel
 		void SetRenderBorders(bool renderBorders);
 		bool GetRenderBorders() const;
 
+		void SetRenderBackground(bool renderBackground);
+		bool GetRenderBackground() const;
+
 		bool IsCissoring() const;
 
 		void SetHandleXPositionRatio(float scrollXPositionRatio);
@@ -89,6 +92,7 @@ namespace onion::voxel
 		int m_ClickOffsetInsideHandle;
 
 		bool m_RenderBorders = true;
+		bool m_RenderBackground = true;
 
 		bool m_DebugRenderScrollArea = false;
 

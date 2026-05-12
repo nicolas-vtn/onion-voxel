@@ -1,9 +1,13 @@
 #pragma once
 
+#include <memory>
+#include <vector>
+
 #include <renderer/gui/GuiElement.hpp>
-#include <renderer/gui/controls/label/Label.hpp>
 #include <renderer/gui/controls/scroller/Scroller.hpp>
 #include <renderer/gui/controls/text_field/TextField.hpp>
+#include <renderer/gui/panels/hud_panel/ChatTile.hpp>
+#include <shared/chat_history/ChatMessage.hpp>
 
 namespace onion::voxel
 {
@@ -32,7 +36,11 @@ namespace onion::voxel
 	  private:
 		TextField m_Chat_TextField;
 		Scroller m_Chat_Scroller;
-		Label m_ChatHistory_Label;
+
+		// ----- Chat Tiles -----
+	  private:
+		std::vector<std::unique_ptr<ChatTile>> m_ChatTiles;
+		std::shared_ptr<const ChatMessage> m_LastChatMessage;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:

@@ -113,9 +113,12 @@ namespace onion::voxel
 		glm::ivec2 scrollPosition{scrollPosX, scrollPosY};
 
 		// ---- Render Background ----
-		m_SpriteBackground.SetPosition(centerPos);
-		m_SpriteBackground.SetSize(scrollerAreaSize);
-		m_SpriteBackground.Render();
+		if (m_RenderBackground)
+		{
+			m_SpriteBackground.SetPosition(centerPos);
+			m_SpriteBackground.SetSize(scrollerAreaSize);
+			m_SpriteBackground.Render();
+		}
 
 		if (m_RenderBorders)
 		{
@@ -282,6 +285,16 @@ namespace onion::voxel
 	bool Scroller::GetRenderBorders() const
 	{
 		return m_RenderBorders;
+	}
+
+	void Scroller::SetRenderBackground(bool renderBackground)
+	{
+		m_RenderBackground = renderBackground;
+	}
+
+	bool Scroller::GetRenderBackground() const
+	{
+		return m_RenderBackground;
 	}
 
 	bool Scroller::IsCissoring() const

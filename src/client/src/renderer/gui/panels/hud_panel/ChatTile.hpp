@@ -21,6 +21,7 @@ namespace onion::voxel
 		// ----- Public API -----
 	  public:
 		void Render() override;
+		void Render(bool shouldFade);
 		void Initialize() override;
 		void Delete() override;
 		void ReloadTextures() override;

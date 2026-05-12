@@ -439,7 +439,7 @@ namespace onion::voxel
 				for (const auto& tile : m_ChatTiles)
 				{
 					tile->SetPosition({0, tileY});
-					tile->Render();
+					tile->Render(true);
 
 					tileY -= static_cast<float>(tile->GetSize().y);
 				}
