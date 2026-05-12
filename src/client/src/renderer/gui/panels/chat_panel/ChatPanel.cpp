@@ -89,7 +89,7 @@ namespace onion::voxel
 		const int scrollerWidth = static_cast<int>(round(s_ScreenWidth * 0.6f));
 		const int scrollerHeight = static_cast<int>(round(s_ScreenHeight * 0.7f));
 		const int scrollerLeftX = leftTxtFieldX;
-		const int scrollerBottomY = topTxtFieldY - (2 * marginX);
+		const int scrollerBottomY = topTxtFieldY - (12 * marginX);
 
 		const glm::vec2 topLeftScroller{scrollerLeftX, scrollerBottomY - scrollerHeight};
 		const glm::vec2 bottomRightScroller{scrollerLeftX + scrollerWidth, scrollerBottomY};

@@ -37,9 +37,15 @@ namespace onion::voxel
 		// Returns the glfwGetTime() value captured when this tile was created.
 		double GetSpawnTime() const;
 
-		// Sets the opacity of the tile (text and background). Range [0, 1].
-		void SetFadingAlpha(float alpha);
+		// Returns the current opacity of the tile. 0 means fully faded (safe to destroy).
 		float GetFadingAlpha() const;
+
+		// ----- Private Helpers -----
+	  private:
+		// Seconds before the tile starts fading out.
+		static constexpr double k_OpaqueSeconds = 10.0;
+		// Duration of the fade-out transition in seconds.
+		static constexpr double k_FadeSeconds = 1.0;
 
 		// ----- Properties -----
 	  private:

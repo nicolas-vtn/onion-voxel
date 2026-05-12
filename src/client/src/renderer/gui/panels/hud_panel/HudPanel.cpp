@@ -1,5 +1,7 @@
 #include "HudPanel.hpp"
 
+#include <algorithm>
+
 #include <renderer/debug_draws/DebugDraws.hpp>
 #include <renderer/world_renderer/WorldRenderer.hpp>
 
@@ -374,6 +376,75 @@ namespace onion::voxel
 
 		// Update States
 		m_PreviousSelectedHotbarIndex = playerHotbar.SelectedIndex();
+
+		// ---- Chat Tiles ----
+		{
+			std::lock_guard lock(m_ChatTilesMutex);
+
+			// Cull fully faded tiles (fading is computed inside each tile's own Render).
+			auto expired =
+				std::remove_if(m_ChatTiles.begin(),
+							   m_ChatTiles.end(),
+							   [](const std::unique_ptr<ChatTile>& t) { return t->GetFadingAlpha() <= 0.f; });
+			for (auto it = expired; it != m_ChatTiles.end(); ++it)
+				(*it)->Delete();
+			m_ChatTiles.erase(expired, m_ChatTiles.end());
+
+			// Detect new messages and push a tile for each.
+			// history[0] is the newest entry; history[N-1] is the oldest.
+			if (EngineContext::Get().Chat != nullptr)
+			{
+				const auto history = EngineContext::Get().Chat->GetReceivedHistory();
+
+				// Find how many new messages sit before m_LastChatMessage in the history.
+				// If m_LastChatMessage is null (first frame) all messages are new.
+				size_t newCount = history.size();
+				if (m_LastChatMessage != nullptr)
+				{
+					for (size_t i = 0; i < history.size(); ++i)
+					{
+						if (history[i] == m_LastChatMessage)
+						{
+							newCount = i; // history[0..i-1] are newer than what we last saw
+							break;
+						}
+					}
+				}
+
+				// Insert tiles newest-first (history[0..newCount-1]) so
+				// m_ChatTiles stays ordered newest-at-front, oldest-at-back.
+				// Iterate from oldest to newest so successive insert(begin()) ends with [0]=newest.
+				for (size_t i = newCount; i > 0; i--)
+				{
+					auto tile =
+						std::make_unique<ChatTile>("ChatTile_" + std::to_string(m_ChatTiles.size()), history[i - 1]);
+					tile->Initialize();
+					m_ChatTiles.insert(m_ChatTiles.begin(), std::move(tile));
+				}
+
+				if (!history.empty())
+					m_LastChatMessage = history.front();
+			}
+
+			// Render (bottom-left, newest at the bottom); hidden while a menu is open.
+			if (!ignoreKeys)
+			{
+				const int marginX = static_cast<int>(round(s_ScreenWidth * (8.f / 1920.f)));
+
+				const float cursorY = static_cast<float>(0.80f * s_ScreenHeight);
+
+				// m_ChatTiles[0] is the newest tile; it sits lowest on screen.
+				// Subsequent tiles are placed progressively higher.
+				float tileY = cursorY;
+				for (const auto& tile : m_ChatTiles)
+				{
+					tile->SetPosition({static_cast<float>(marginX), tileY});
+					tile->Render();
+
+					tileY -= static_cast<float>(tile->GetSize().y);
+				}
+			}
+		}
 	}
 
 	void HudPanel::Render()
@@ -419,6 +490,13 @@ namespace onion::voxel
 		m_WailaTooltip.Delete();
 		m_WailaBlockMesh->Delete();
 
+		{
+			std::lock_guard lock(m_ChatTilesMutex);
+			for (auto& tile : m_ChatTiles)
+				tile->Delete();
+			m_ChatTiles.clear();
+		}
+
 		SetDeletedState(true);
 	}
 
@@ -438,6 +516,12 @@ namespace onion::voxel
 		m_Fps_Label.ReloadTextures();
 		m_WailaTooltip.ReloadTextures();
 		m_WailaBlockMesh->SetDirty(true);
+
+		{
+			std::lock_guard lock(m_ChatTilesMutex);
+			for (auto& tile : m_ChatTiles)
+				tile->ReloadTextures();
+		}
 	}
 
 	float HudPanel::GetSelectedBlockNameFadeInFactor() const
