@@ -27,7 +27,6 @@ namespace onion::voxel
 		InputsManager* Inputs;
 		KeyBinds* Keys;
 		WorldRenderer* WrldRenderer;
-		std::atomic_bool ShowDebugMenus{true};
 		std::atomic<uint64_t> FrameCount{0};
 
 		/// @brief The block the local player is currently looking at. Written by Renderer each frame.
@@ -38,6 +37,12 @@ namespace onion::voxel
 		{
 			std::shared_lock lock(m_MutexSettings);
 			return m_Settings;
+		}
+
+		bool ShowDebugMenus() const
+		{
+			std::shared_lock lock(m_MutexSettings);
+			return m_Settings.Controls.ShowDebugMenus;
 		}
 
 		void UpdateSettings(const UserSettings& newSettings)

@@ -200,6 +200,7 @@ namespace onion::voxel
 				MouseSensitivity_Changed = true;
 				MouseScrollSensitivity_Changed = true;
 				KeyBinds_Changed = true;
+				ShowDebugMenus_Changed = true;
 			}
 		}
 
@@ -222,5 +223,7 @@ namespace onion::voxel
 
 		bool KeyBinds_Changed = false;
 		std::unordered_map<eAction, Key> ChangedKeyBinds; // Action -> NewKey
+
+		bool ShowDebugMenus_Changed = false;
 	};
 } // namespace onion::voxel

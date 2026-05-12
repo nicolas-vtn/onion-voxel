@@ -54,7 +54,7 @@ namespace onion::voxel
 		Handle_KeyInputs();
 
 		// DEBUG
-		//if (EngineContext::Get().ShowDebugMenus)
+		//if (EngineContext::Get().ShowDebugMenus())
 		//	RenderImGuiDebug();
 
 		// Calculate text position

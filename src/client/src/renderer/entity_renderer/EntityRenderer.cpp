@@ -75,7 +75,7 @@ namespace onion::voxel
 
 		// Render DEBUG
 
-		if (EngineContext::Get().ShowDebugMenus)
+		if (EngineContext::Get().ShowDebugMenus())
 			RenderEntityRendererPanel();
 
 		if (m_RenderPlayerBoundingBoxes)
@@ -256,8 +256,8 @@ namespace onion::voxel
 			uint32_t uuidHash = 0;
 			for (const char c : blockEntity->UUID)
 				uuidHash = uuidHash * 31u + static_cast<unsigned char>(c);
-			const float phase = static_cast<float>(uuidHash) / static_cast<float>(std::numeric_limits<uint32_t>::max())
-								* std::numbers::pi_v<float> * 2.0f;
+			const float phase = static_cast<float>(uuidHash) /
+				static_cast<float>(std::numeric_limits<uint32_t>::max()) * std::numbers::pi_v<float> * 2.0f;
 
 			// Animation: 5 rotations/31 s spin, 10 bounces/31 s bob.
 			// Hover height is measured from the entity Transform position to the bottom face
@@ -267,11 +267,11 @@ namespace onion::voxel
 			//   highest bottom = 0.3125  → origin at 0.3125 + 0.125 = 0.4375
 			//   HOVER_HEIGHT  = midpoint   = (0.25 + 0.4375) / 2   = 0.34375
 			//   BOB_AMPLITUDE = half-range = (0.4375 - 0.25) / 2   = 0.09375
-			constexpr float BOB_AMPLITUDE  = 0.09375f;
-			constexpr float BOB_FREQUENCY  = 10.0f / 31.0f;
+			constexpr float BOB_AMPLITUDE = 0.09375f;
+			constexpr float BOB_FREQUENCY = 10.0f / 31.0f;
 			constexpr float SPIN_SPEED_DEG = 5.0f / 31.0f * 360.0f;
-			constexpr float HOVER_HEIGHT   = 0.34375f;
-			constexpr float BLOCK_SCALE    = 0.25f; // matches BlockEntity::Size
+			constexpr float HOVER_HEIGHT = 0.34375f;
+			constexpr float BLOCK_SCALE = 0.25f; // matches BlockEntity::Size
 
 			const float bob = BOB_AMPLITUDE * std::sin(t * BOB_FREQUENCY * std::numbers::pi_v<float> * 2.0f + phase);
 			const float yawDeg = std::fmod(t * SPIN_SPEED_DEG + glm::degrees(phase), 360.0f);

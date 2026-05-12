@@ -305,7 +305,7 @@ namespace onion::voxel
 			m_Gui.Render();
 
 			// Render Debug Panels
-			if (EngineContext::Get().ShowDebugMenus)
+			if (EngineContext::Get().ShowDebugMenus())
 			{
 				RenderDebugPanel();
 				RenderPhysicsDebugPanel();
@@ -577,8 +577,11 @@ namespace onion::voxel
 		KeyState toggleDebugMenusKeyState = m_KeyBinds.GetKeyState(eAction::ToggleDebugMenus);
 		if (toggleDebugMenusKeyState.IsPressed)
 		{
-			auto& engineContext = EngineContext::Get();
-			engineContext.ShowDebugMenus = !engineContext.ShowDebugMenus;
+			auto settings = EngineContext::Get().Settings();
+			settings.Controls.ShowDebugMenus = !settings.Controls.ShowDebugMenus;
+			UserSettingsChangedEventArgs args(settings);
+			args.ShowDebugMenus_Changed = true;
+			ApplyUserSettings(args);
 		}
 
 		KeyState pauseKeyState = m_KeyBinds.GetKeyState(eAction::Pause);

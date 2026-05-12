@@ -37,7 +37,7 @@ namespace onion::voxel
 		}
 
 		// DEBUG
-		//if (EngineContext::Get().ShowDebugMenus)
+		//if (EngineContext::Get().ShowDebugMenus())
 		//	RenderImGuiDebug();
 
 		// Pulls events

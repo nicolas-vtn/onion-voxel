@@ -43,7 +43,7 @@ namespace onion::voxel
 	void Scroller::Render()
 	{
 		// DEBUG
-		//if (EngineContext::Get().ShowDebugMenus)
+		//if (EngineContext::Get().ShowDebugMenus())
 		//	RenderImGuiDebug();
 
 		bool wasCissoring = m_Cissoring;
@@ -289,10 +289,10 @@ namespace onion::voxel
 	void Scroller::SubscribeToSpriteEvents()
 	{
 		m_EventHandles.push_back(m_NineSliceSprite_Scroller.EvtMouseDown.Subscribe([this](const NineSliceSprite& sprite)
-																				  { Handle_MouseDown(sprite); }));
+																				   { Handle_MouseDown(sprite); }));
 
 		m_EventHandles.push_back(m_NineSliceSprite_Scroller.EvtMouseUp.Subscribe([this](const NineSliceSprite& sprite)
-																				{ Handle_MouseUp(sprite); }));
+																				 { Handle_MouseUp(sprite); }));
 
 		m_EventHandles.push_back(m_NineSliceSprite_ScrollerBackground.EvtHoverEnter.Subscribe(
 			[this](const NineSliceSprite& sprite) { Handle_HoverEnter(sprite); }));

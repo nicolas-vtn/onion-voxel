@@ -407,7 +407,7 @@ namespace onion::voxel
 
 	void Gui::Render()
 	{
-		if (EngineContext::Get().ShowDebugMenus)
+		if (EngineContext::Get().ShowDebugMenus())
 			RenderDebugPanel();
 
 		{
