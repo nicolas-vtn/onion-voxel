@@ -44,7 +44,7 @@ namespace onion::voxel
 		m_WailaBlockMesh->SetSlotBorder(0.f);
 	}
 
-	void HudPanel::Render(bool ignoreKeys)
+	void HudPanel::Render(bool ignoreKeys, bool isChatOpen)
 	{
 		// Retreve Player State
 		std::shared_ptr<Player> player = EngineContext::Get().GetLocalPlayer();
@@ -382,13 +382,14 @@ namespace onion::voxel
 			std::lock_guard lock(m_ChatTilesMutex);
 
 			// Cull fully faded tiles (fading is computed inside each tile's own Render).
-			auto expired =
-				std::remove_if(m_ChatTiles.begin(),
-							   m_ChatTiles.end(),
-							   [](const std::unique_ptr<ChatTile>& t) { return t->GetFadingAlpha() <= 0.f; });
-			for (auto it = expired; it != m_ChatTiles.end(); ++it)
-				(*it)->Delete();
-			m_ChatTiles.erase(expired, m_ChatTiles.end());
+			const auto isExpired = [](const std::unique_ptr<ChatTile>& tile) { return tile->GetFadingAlpha() <= 0.f; };
+			auto firstExpiredTile = std::remove_if(m_ChatTiles.begin(), m_ChatTiles.end(), isExpired);
+			for (auto it = firstExpiredTile; it != m_ChatTiles.end(); it++)
+			{
+				ChatTile* tile = it->get();
+				tile->Delete();
+			}
+			m_ChatTiles.erase(firstExpiredTile, m_ChatTiles.end());
 
 			// Detect new messages and push a tile for each.
 			// history[0] is the newest entry; history[N-1] is the oldest.
@@ -427,18 +428,17 @@ namespace onion::voxel
 			}
 
 			// Render (bottom-left, newest at the bottom); hidden while a menu is open.
-			if (!ignoreKeys)
+			if (!isChatOpen)
 			{
-				const int marginX = static_cast<int>(round(s_ScreenWidth * (8.f / 1920.f)));
-
-				const float cursorY = static_cast<float>(0.80f * s_ScreenHeight);
+				const float cursorYRatio = (875.f - 23.f) / 1009.f;
+				const float cursorY = static_cast<float>(cursorYRatio * s_ScreenHeight);
 
 				// m_ChatTiles[0] is the newest tile; it sits lowest on screen.
 				// Subsequent tiles are placed progressively higher.
 				float tileY = cursorY;
 				for (const auto& tile : m_ChatTiles)
 				{
-					tile->SetPosition({static_cast<float>(marginX), tileY});
+					tile->SetPosition({0, tileY});
 					tile->Render();
 
 					tileY -= static_cast<float>(tile->GetSize().y);

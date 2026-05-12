@@ -478,8 +478,10 @@ namespace onion::voxel
 
 	void Gui::RenderGameHUD()
 	{
-		bool ignoreKeys = GetActiveMenu() != eMenu::Gameplay; // Ignore keys if NOT in Gameplay
-		m_HudPanel.Render(ignoreKeys);
+		eMenu activeMenu = GetActiveMenu();
+		bool ignoreKeys = activeMenu != eMenu::Gameplay; // Ignore keys if NOT in Gameplay
+		bool isChatOpen = activeMenu == eMenu::Chat;
+		m_HudPanel.Render(ignoreKeys, isChatOpen);
 	}
 
 	void Gui::RenderBackground()

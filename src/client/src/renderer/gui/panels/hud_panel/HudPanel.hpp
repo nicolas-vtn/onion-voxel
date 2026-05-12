@@ -23,7 +23,7 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		void Render(bool ignoreKeys);
+		void Render(bool ignoreKeys, bool isChatOpen);
 		void Render();
 		void Initialize() override;
 		void Delete() override;

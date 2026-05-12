@@ -46,19 +46,29 @@ namespace onion::voxel
 		const glm::ivec2 textSize = m_Label.GetTextSize();
 		const int bgPaddingTop = static_cast<int>(s_ScreenHeight * (4.f / 1009.f));
 
+		const float bgWidthRatio = 1328.f / 1920.f;
+		const int bgWidth = static_cast<int>(s_ScreenWidth * bgWidthRatio);
+
 		// Draw background first, behind the text.
 		// m_Position is the bottom-left corner; Y increases downward, so top is at (y - textSize.y).
 		// bgPaddingTop extends the background upward; bgPaddingBottom extends it downward.
-		ColoredBackground::Render(ColoredBackground::CornerOptions{
-			.TopLeftCorner = {static_cast<int>(m_Position.x),
-							  static_cast<int>(m_Position.y) - textSize.y - bgPaddingTop},
-			.BottomRightCorner = {static_cast<int>(m_Position.x) + textSize.x, static_cast<int>(m_Position.y)},
-			.Color = {0.f, 0.f, 0.f, 0.5f * m_FadingAlpha},
-		});
+		const int leftX = static_cast<int>(m_Position.x);
+		const int rightX = leftX + bgWidth;
+		const int tileTopY = static_cast<int>(m_Position.y) - textSize.y - bgPaddingTop;
+		const int tileBottomY = static_cast<int>(m_Position.y);
+
+		ColoredBackground::CornerOptions options;
+		options.TopLeftCorner = {leftX, tileTopY};
+		options.BottomRightCorner = {rightX, tileBottomY};
+		options.Color = glm::vec4{0.f, 0.f, 0.f, 0.5f * m_FadingAlpha};
+		ColoredBackground::Render(options);
+
+		const float textPaddingXratio = 16.f / 1920.f;
+		const int textPaddingX = static_cast<int>(s_ScreenWidth * textPaddingXratio);
 
 		// Label position is its center; derive it from the bottom-left corner and the text size.
 		m_Label.SetCustomTextColor({1.f, 1.f, 1.f, m_FadingAlpha});
-		m_Label.SetPosition({m_Position.x, m_Position.y - textSize.y / 2.f});
+		m_Label.SetPosition({m_Position.x + textPaddingX, m_Position.y - textSize.y / 2.f});
 		m_Label.Render();
 	}
 
