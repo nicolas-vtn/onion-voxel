@@ -1,5 +1,7 @@
 #include "ChatPanel.hpp"
 
+#include <renderer/gui/colored_background/ColoredBackground.hpp>
+
 namespace onion::voxel
 {
 	ChatPanel::ChatPanel(const std::string& name, ChatHistory& chatHistory)
@@ -11,6 +13,7 @@ namespace onion::voxel
 		m_Chat_TextField.SetValidateOnlyOnEnter(true);
 		m_Chat_TextField.SetClearOnRightClick(false);
 		m_Chat_TextField.SetRenderSprites(false);
+		m_Chat_TextField.SetZOffset(0.6f);
 	}
 
 	ChatPanel::~ChatPanel()
@@ -44,17 +47,30 @@ namespace onion::voxel
 
 		// ----- Constants -----
 		const float marginXRatio = 8.f / 1920.f;
-		const float marginYRatio = 8.f / 1009.f;
-		const float fieldWidthRatio = 680.f / 1920.f;
 
 		const int marginX = static_cast<int>(round(s_ScreenWidth * marginXRatio));
-		const int marginY = static_cast<int>(round(s_ScreenHeight * marginYRatio));
-		const int fieldWidth = static_cast<int>(round(s_ScreenWidth * fieldWidthRatio));
+		const int fieldWidth = static_cast<int>(round(s_ScreenWidth + (4 * marginX)));
+
+		const int fieldX = fieldWidth / 2;
+		const int fieldY = s_ScreenHeight - (s_ControlHeight / 2);
+
+		// ----- Chat TextField Background -----
+		int topTxtFieldY = fieldY - (s_ControlHeight / 3);	  // Smaller than TextField
+		int bottomTxtFieldY = fieldY + (s_ControlHeight / 3); // Smaller than TextField
+		int leftTxtFieldX = fieldX - (fieldWidth / 2) + (3 * marginX);
+		int rightTxtFieldX = fieldX + (fieldWidth / 2) - (3 * marginX);
+		glm::vec2 topLeftTxtField{leftTxtFieldX, topTxtFieldY};
+		glm::vec2 bottomRightTxtField{rightTxtFieldX, bottomTxtFieldY};
+
+		ColoredBackground::CornerOptions bgOptions;
+		bgOptions.TopLeftCorner = topLeftTxtField;
+		bgOptions.BottomRightCorner = bottomRightTxtField;
+		bgOptions.Color = glm::vec4(0, 0, 0, 0.5f);
+		bgOptions.ZOffset = 0.5f; // Beheind m_Chat_TextField
+
+		ColoredBackground::Render(bgOptions);
 
 		// ----- Render Chat TextField (bottom-left) -----
-		const int fieldX = marginX + (fieldWidth / 2);
-		const int fieldY = s_ScreenHeight - marginY - (s_ControlHeight / 2);
-
 		m_Chat_TextField.SetPosition({fieldX, fieldY});
 		m_Chat_TextField.SetSize({fieldWidth, s_ControlHeight});
 		m_Chat_TextField.Render();

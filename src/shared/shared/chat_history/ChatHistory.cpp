@@ -2,6 +2,15 @@
 
 namespace onion::voxel
 {
+	ChatHistory::~ChatHistory()
+	{
+		std::unique_lock lockReceived(m_MutexReceived);
+		m_Received.clear();
+
+		std::unique_lock lockSent(m_MutexSent);
+		m_Sent.clear();
+	}
+
 	void ChatHistory::AddReceived(std::shared_ptr<const ChatMessage> message)
 	{
 		std::unique_lock lock(m_MutexReceived);

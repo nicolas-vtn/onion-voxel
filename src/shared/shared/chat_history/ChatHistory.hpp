@@ -10,6 +10,11 @@ namespace onion::voxel
 {
 	class ChatHistory
 	{
+		// ----- Constructor / Destructor -----
+	  public:
+		ChatHistory() = default;
+		~ChatHistory();
+
 		// ----- Public API -----
 	  public:
 		static constexpr size_t MaxMessages = 1000;
