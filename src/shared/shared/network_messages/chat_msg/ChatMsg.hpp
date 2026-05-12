@@ -18,9 +18,9 @@ namespace onion::voxel
 		static constexpr MessageHeader::eType StaticType = MessageHeader::eType::Chat;
 
 		std::string PlayerName;
-		std::string UUID;
+		std::string PlayerUUID;
 		std::string Message;
 
-		template <class Archive> void serialize(Archive& ar) { ar(PlayerName, UUID, Message); }
+		template <class Archive> void serialize(Archive& ar) { ar(PlayerName, PlayerUUID, Message); }
 	};
 } // namespace onion::voxel

@@ -92,6 +92,7 @@ namespace onion::voxel
 
 		// ----- Renderer -----
 	  private:
+		ChatHistory m_ChatHistory;
 		Renderer m_Renderer;
 		std::vector<EventHandle> m_RendererEventHandles;
 		void SubscribeToRendererEvents();

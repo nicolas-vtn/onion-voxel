@@ -38,7 +38,7 @@ namespace onion::voxel
 
 		// ----- Constructor / Destructor -----
 	  public:
-		Gui();
+		Gui(ChatHistory& chatHistory);
 		~Gui();
 
 		// ----- Public API -----

@@ -48,7 +48,7 @@ namespace onion::voxel
 
 		// ----- Constructor / Destructor -----
 	  public:
-		Renderer(std::shared_ptr<WorldManager> worldManager);
+		Renderer(std::shared_ptr<WorldManager> worldManager, ChatHistory& chatHistory);
 		~Renderer();
 
 		// ----- Public API -----

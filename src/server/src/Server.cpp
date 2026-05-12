@@ -348,9 +348,13 @@ namespace onion::voxel
 
 		std::cout << "[Chat] " << player->GetName() << ": " << msg.Message << "\n";
 
+		// Add Chat to history
+		m_ChatHistory.AddReceived(
+			std::make_shared<const ChatMessage>(DateTime::UtcNow(), player->GetName(), player->UUID, msg.Message));
+
 		ChatMsg broadcast;
 		broadcast.PlayerName = player->GetName();
-		broadcast.UUID = player->UUID;
+		broadcast.PlayerUUID = player->UUID;
 		broadcast.Message = msg.Message;
 		m_NetworkServer.Broadcast(std::move(broadcast), true);
 	}

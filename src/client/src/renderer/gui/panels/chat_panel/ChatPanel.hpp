@@ -1,5 +1,7 @@
 #pragma once
 
+#include <shared/chat_history/ChatHistory.hpp>
+
 #include <renderer/gui/GuiElement.hpp>
 #include <renderer/gui/controls/text_field/TextField.hpp>
 
@@ -9,7 +11,7 @@ namespace onion::voxel
 	{
 		// ----- Constructor / Destructor -----
 	  public:
-		ChatPanel(const std::string& name);
+		ChatPanel(const std::string& name, ChatHistory& chatHistory);
 		~ChatPanel() override;
 
 		// ----- Public API -----
@@ -29,6 +31,10 @@ namespace onion::voxel
 		// ----- Controls -----
 	  private:
 		TextField m_Chat_TextField;
+
+		// ----- Members -----
+	  private:
+		ChatHistory& m_ChatHistory;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:

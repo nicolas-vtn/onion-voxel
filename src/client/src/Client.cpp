@@ -11,7 +11,7 @@
 
 namespace onion::voxel
 {
-	Client::Client() : m_Logger(m_LogFile.string()), m_Renderer(m_WorldManager)
+	Client::Client() : m_Logger(m_LogFile.string()), m_Renderer(m_WorldManager, m_ChatHistory)
 	{
 		LoadConfiguration();
 
@@ -257,8 +257,8 @@ namespace onion::voxel
 		m_RendererEventHandles.push_back(
 			m_Renderer.EvtItemDropped.Subscribe([this](const Slot& slot) { Handle_ItemDropped(slot); }));
 
-		m_RendererEventHandles.push_back(m_Renderer.EvtChatMessageSent.Subscribe(
-			[this](const std::string& message) { Handle_ChatMessageSent(message); }));
+		m_RendererEventHandles.push_back(m_Renderer.EvtChatMessageSent.Subscribe([this](const std::string& message)
+																				 { Handle_ChatMessageSent(message); }));
 	}
 
 	void Client::Handle_RenderDistanceChanged(uint8_t renderDistance)
@@ -285,11 +285,29 @@ namespace onion::voxel
 		if (!m_NetworkClient.IsRunning())
 			return;
 
+		std::shared_ptr<Player> player = m_Renderer.GetPlayer();
+		if (!player)
+		{
+			std::cerr << "Cannot send chat message: player is null\n";
+			return;
+		}
+
 		ChatMsg msg;
 		msg.Message = message;
 		// PlayerName and UUID are left empty: the server resolves them from its own registry.
 		// They will be populated by the server when broadcasting the message to all clients.
 		m_NetworkClient.Send(std::move(msg), true);
+
+		m_ChatHistory.AddSent(
+			std::make_shared<const ChatMessage>(DateTime::UtcNow(), player->GetName(), player->UUID, message));
+	}
+
+	void Client::Handle_ChatMsgReceived(const ChatMsg& msg)
+	{
+		std::cout << "[Chat] " << msg.PlayerName << ": " << msg.Message << "\n";
+
+		m_ChatHistory.AddSent(
+			std::make_shared<const ChatMessage>(DateTime::UtcNow(), msg.PlayerName, msg.PlayerUUID, msg.Message));
 	}
 
 	void Client::SubscribeToNetworkClientEvents()
@@ -512,11 +530,6 @@ namespace onion::voxel
 			inventory.At(msg.Index) = newSlot;
 			player->SetPlayerInventory(inventory);
 		}
-	}
-
-	void Client::Handle_ChatMsgReceived(const ChatMsg& msg)
-	{
-		std::cout << "[Chat] " << msg.PlayerName << ": " << msg.Message << "\n";
 	}
 
 } // namespace onion::voxel

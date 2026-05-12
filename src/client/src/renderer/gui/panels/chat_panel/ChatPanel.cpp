@@ -2,7 +2,8 @@
 
 namespace onion::voxel
 {
-	ChatPanel::ChatPanel(const std::string& name) : GuiElement(name), m_Chat_TextField(name + "_Chat_TextField")
+	ChatPanel::ChatPanel(const std::string& name, ChatHistory& chatHistory)
+		: GuiElement(name), m_Chat_TextField(name + "_Chat_TextField"), m_ChatHistory(chatHistory)
 	{
 		SubscribeToControlEvents();
 
