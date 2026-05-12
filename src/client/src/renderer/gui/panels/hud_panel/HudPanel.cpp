@@ -42,7 +42,7 @@ namespace onion::voxel
 		m_WailaBlockMesh->SetSlotBorder(0.f);
 	}
 
-	void HudPanel::Render()
+	void HudPanel::Render(bool ignoreKeys)
 	{
 		// Retreve Player State
 		std::shared_ptr<Player> player = EngineContext::Get().GetLocalPlayer();
@@ -69,7 +69,7 @@ namespace onion::voxel
 			EngineContext::Get().Inputs->IsKeyPressed(Key::RightShift);
 
 		// This combinaison is used to lock the hotbar scroll when Accelerating Fly Speed.
-		bool bypassScroll = spacePressed && shiftPressed;
+		bool bypassScroll = spacePressed && shiftPressed || ignoreKeys;
 
 		if (scroll != 0 && !bypassScroll)
 		{
@@ -289,10 +289,10 @@ namespace onion::voxel
 		float textFadeStrength = GetSelectedBlockNameFadeInFactor();
 		if (textFadeStrength > 0.f)
 		{
-		BlockId selectedBlockId = playerHotbar.At(playerHotbar.SelectedIndex()).Id;
-		if (selectedBlockId != BlockId::Air)
-		{
-			std::string blockName = BlockIds::GetName(playerHotbar.At(playerHotbar.SelectedIndex()).Id);
+			BlockId selectedBlockId = playerHotbar.At(playerHotbar.SelectedIndex()).Id;
+			if (selectedBlockId != BlockId::Air)
+			{
+				std::string blockName = BlockIds::GetName(playerHotbar.At(playerHotbar.SelectedIndex()).Id);
 				const float labelYposRatio = (812.f - 23.f) / 1009.f;
 				const float labelPosY = std::round(s_ScreenHeight * labelYposRatio);
 				m_SelectedBlockName_Label.SetText(blockName);
@@ -340,8 +340,8 @@ namespace onion::voxel
 				const glm::vec2 blockTopLeft = {(float) innerTopLeft.x, blockTopY};
 
 				// Update block mesh inventory.
-			Inventory wailaInv{1, 1};
-			wailaInv.Content()[0] = Slot{wailaBlockId, 1};
+				Inventory wailaInv{1, 1};
+				wailaInv.Content()[0] = Slot{wailaBlockId, 1};
 				m_WailaBlockMesh->SetInventory(wailaInv, wailaSlotSize, {0.f, 0.f});
 				if (m_WailaBlockMesh->IsDirty())
 				{
@@ -374,6 +374,12 @@ namespace onion::voxel
 
 		// Update States
 		m_PreviousSelectedHotbarIndex = playerHotbar.SelectedIndex();
+	}
+
+	void HudPanel::Render()
+	{
+		throw std::logic_error(
+			"Use Render(bool ignoreKeys) instead of Render() for HudPanel to control hotbar scrolling input.");
 	}
 
 	void HudPanel::Initialize()

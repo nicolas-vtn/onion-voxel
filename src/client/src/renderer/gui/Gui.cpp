@@ -478,7 +478,8 @@ namespace onion::voxel
 
 	void Gui::RenderGameHUD()
 	{
-		m_HudPanel.Render();
+		bool ignoreKeys = GetActiveMenu() != eMenu::Gameplay; // Ignore keys if NOT in Gameplay
+		m_HudPanel.Render(ignoreKeys);
 	}
 
 	void Gui::RenderBackground()

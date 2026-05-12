@@ -3,6 +3,8 @@
 #include <shared/chat_history/ChatHistory.hpp>
 
 #include <renderer/gui/GuiElement.hpp>
+#include <renderer/gui/controls/label/Label.hpp>
+#include <renderer/gui/controls/scroller/Scroller.hpp>
 #include <renderer/gui/controls/text_field/TextField.hpp>
 
 namespace onion::voxel
@@ -31,6 +33,8 @@ namespace onion::voxel
 		// ----- Controls -----
 	  private:
 		TextField m_Chat_TextField;
+		Scroller m_Chat_Scroller;
+		Label m_ChatHistory_Label;
 
 		// ----- Members -----
 	  private:

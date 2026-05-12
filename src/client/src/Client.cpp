@@ -306,7 +306,7 @@ namespace onion::voxel
 	{
 		std::cout << "[Chat] " << msg.PlayerName << ": " << msg.Message << "\n";
 
-		m_ChatHistory.AddSent(
+		m_ChatHistory.AddReceived(
 			std::make_shared<const ChatMessage>(DateTime::UtcNow(), msg.PlayerName, msg.PlayerUUID, msg.Message));
 	}
 

@@ -48,7 +48,13 @@ namespace onion::voxel
 		glm::ivec2 ProjectContentPosition(const glm::ivec2& contentPosition) const;
 		Visibility GetControlVisibleArea(const glm::ivec2& controlCenter, const glm::ivec2& controlSize) const;
 
+		void SetRenderBorders(bool renderBorders);
+		bool GetRenderBorders() const;
+
 		bool IsCissoring() const;
+
+		void SetHandleXPositionRatio(float scrollXPositionRatio);
+		float GetHandleXPositionRatio() const;
 
 		void SetScrollRatio(float scrollRatio);
 		float GetScrollRatio() const;
@@ -81,6 +87,8 @@ namespace onion::voxel
 		int m_MouseOffsetInHandle;
 		float m_ScrollRatioOnDragStart = 0.f;
 		int m_ClickOffsetInsideHandle;
+
+		bool m_RenderBorders = true;
 
 		bool m_DebugRenderScrollArea = false;
 
