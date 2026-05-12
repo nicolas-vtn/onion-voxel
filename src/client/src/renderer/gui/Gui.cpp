@@ -27,14 +27,14 @@ namespace onion::voxel
 		UiBlockMesh::s_Shader.Delete();
 	}
 
-	Gui::Gui(ChatHistory& chatHistory)
+	Gui::Gui()
 		: m_DemoPanel("DemoPanel"), m_MainMenuPanel("MainMenuPanel"), m_PausePanel("PausePanel"),
 		  m_OptionsPanel("OptionsPanel"), m_ResourcePacksPanel("ResourcePacksPanel"),
 		  m_DemoScrollingPanel("DemoScrollingPanel"), m_SingleplayerPanel("SingleplayerPanel"),
 		  m_VideoSettingsPanel("VideoSettingsPanel"), m_ControlsPanel("ControlsPanel"),
 		  m_MouseSettingsPanel("MouseSettingsPanel"), m_KeyBindsPanel("KeyBindsPanel"),
 		  m_DemoTextsPanel("DemoTextsPanel"), m_MultiplayerPanel("MultiplayerPanel"), m_HudPanel("HudPanel"),
-		  m_InventoryPanel("InventoryPanel"), m_ChatPanel("ChatPanel", chatHistory)
+		  m_InventoryPanel("InventoryPanel"), m_ChatPanel("ChatPanel")
 	{
 		SubscribeToPanelsEvents();
 	}

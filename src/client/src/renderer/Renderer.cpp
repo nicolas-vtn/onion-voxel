@@ -27,7 +27,7 @@ namespace onion::voxel
 		: m_WorldManager(worldManager),
 		  m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), m_WindowWidth, m_WindowHeight)),
 		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager),
-		  m_EntityRenderer(m_Camera, m_WorldRenderer.GetMeshBuilder()), m_FovSmoother(m_Camera), m_Gui(chatHistory)
+		  m_EntityRenderer(m_Camera, m_WorldRenderer.GetMeshBuilder()), m_FovSmoother(m_Camera), m_Gui()
 	{
 		// Setup Timer Save UserSettings
 		m_TimerDelayedSaveUserSettings.setTimeoutFunction([this]() { SaveUserSettings(); });
@@ -46,8 +46,13 @@ namespace onion::voxel
 		}
 
 		// Sets the Engine Context
-		EngineContext::Initialize(
-			worldManager.get(), &m_AssetsManager, &m_InputsManager, &m_KeyBinds, settings, &m_WorldRenderer);
+		EngineContext::Initialize(worldManager.get(),
+								  &m_AssetsManager,
+								  &m_InputsManager,
+								  &m_KeyBinds,
+								  settings,
+								  &m_WorldRenderer,
+								  &chatHistory);
 
 		UserSettingsChangedEventArgs args(settings, true);
 

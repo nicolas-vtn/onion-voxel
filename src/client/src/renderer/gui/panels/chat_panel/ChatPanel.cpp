@@ -2,13 +2,14 @@
 
 #include <ranges>
 
+#include <renderer/EngineContext.hpp>
 #include <renderer/gui/colored_background/ColoredBackground.hpp>
 
 namespace onion::voxel
 {
-	ChatPanel::ChatPanel(const std::string& name, ChatHistory& chatHistory)
+	ChatPanel::ChatPanel(const std::string& name)
 		: GuiElement(name), m_Chat_TextField(name + "_Chat_TextField"), m_Chat_Scroller(name + "_Chat_Scroller"),
-		  m_ChatHistory_Label(name + "_ChatHistory_Label"), m_ChatHistory(chatHistory)
+		  m_ChatHistory_Label(name + "_ChatHistory_Label")
 	{
 		SubscribeToControlEvents();
 
@@ -100,7 +101,7 @@ namespace onion::voxel
 		// ----- Render Chat Messages -----
 		m_Chat_Scroller.StartCissoring();
 
-		const auto messages = m_ChatHistory.GetReceivedHistory();
+		const auto messages = EngineContext::Get().Chat->GetReceivedHistory();
 		std::string fullChat;
 
 		for (const auto& message : std::views::reverse(messages))

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <shared/chat_history/ChatHistory.hpp>
-
 #include <renderer/gui/GuiElement.hpp>
 #include <renderer/gui/controls/label/Label.hpp>
 #include <renderer/gui/controls/scroller/Scroller.hpp>
@@ -13,7 +11,7 @@ namespace onion::voxel
 	{
 		// ----- Constructor / Destructor -----
 	  public:
-		ChatPanel(const std::string& name, ChatHistory& chatHistory);
+		ChatPanel(const std::string& name);
 		~ChatPanel() override;
 
 		// ----- Public API -----
@@ -35,10 +33,6 @@ namespace onion::voxel
 		TextField m_Chat_TextField;
 		Scroller m_Chat_Scroller;
 		Label m_ChatHistory_Label;
-
-		// ----- Members -----
-	  private:
-		ChatHistory& m_ChatHistory;
 
 		// ----- Internal Event Subscription and Handlers -----
 	  private:
