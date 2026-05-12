@@ -347,6 +347,12 @@ namespace onion::voxel
 			return;
 
 		std::cout << "[Chat] " << player->GetName() << ": " << msg.Message << "\n";
+
+		ChatMsg broadcast;
+		broadcast.PlayerName = player->GetName();
+		broadcast.UUID = player->UUID;
+		broadcast.Message = msg.Message;
+		m_NetworkServer.Broadcast(std::move(broadcast), true);
 	}
 
 	void Server::Handle_TimerPhysicsTick()

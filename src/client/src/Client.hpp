@@ -66,6 +66,7 @@ namespace onion::voxel
 		void Handle_BlocksChangedMessageReceived(const BlocksChangedMsg& msg);
 		void Handle_EntitySnapshotMessageReceived(const EntitySnapshotMsg& msg);
 		void Handle_ItemPickedUpMsgReceived(const ItemPickedUpMsg& msg);
+		void Handle_ChatMsgReceived(const ChatMsg& msg);
 
 		Timer m_TimerSendPlayerInfos;
 		void SendPlayerInfosToServer();

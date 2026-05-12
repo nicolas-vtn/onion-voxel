@@ -341,6 +341,10 @@ namespace onion::voxel
 				{
 					Handle_ItemPickedUpMsgReceived(msg);
 				}
+				else if constexpr (std::is_same_v<T, ChatMsg>)
+				{
+					Handle_ChatMsgReceived(msg);
+				}
 				else
 				{
 					std::cout << "Received unhandled message type from server\n";
@@ -508,6 +512,11 @@ namespace onion::voxel
 			inventory.At(msg.Index) = newSlot;
 			player->SetPlayerInventory(inventory);
 		}
+	}
+
+	void Client::Handle_ChatMsgReceived(const ChatMsg& msg)
+	{
+		std::cout << "[Chat] " << msg.PlayerName << ": " << msg.Message << "\n";
 	}
 
 } // namespace onion::voxel
