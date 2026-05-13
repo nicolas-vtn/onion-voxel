@@ -768,7 +768,6 @@ namespace onion::voxel
 				glm::ivec3 localPos = Utils::WorldToLocalPosition(block.Position);
 				chunk->SetBlock(localPos, block.State);
 
-				const glm::ivec3 worldPos = Utils::LocalToWorldPosition(localPos, chunkPos);
 				blocksPlaced.push_back(block);
 			}
 		}

@@ -347,8 +347,6 @@ namespace onion::voxel
 		uint8_t nbrZneg[SY][SX] = {}, nbrZpos[SY][SX] = {};
 		uint8_t nbrYneg[SZ][SX] = {}, nbrYpos[SZ][SX] = {};
 
-		const glm::ivec2 chunkPos = chunk->GetPosition();
-
 		// X- (x = -1) and X+ (x = SX)
 		for (int ly = 0; ly < SY; ly++)
 		{

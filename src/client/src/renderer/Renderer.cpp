@@ -281,8 +281,6 @@ namespace onion::voxel
 			m_DeltaTime = currentFrame - m_LastFrame;
 			m_LastFrame = currentFrame;
 
-			const glm::mat4 viewMatrix = m_Camera->GetViewMatrix();
-			const glm::mat4 projectionMatrix = m_Camera->GetProjectionMatrix();
 			const glm::mat4 viewProjectionMatrix = m_Camera->GetViewProjectionMatrix();
 
 			// DEBUG : Sets DebugDraws ViewProj Matrix

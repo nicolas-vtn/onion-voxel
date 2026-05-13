@@ -86,11 +86,6 @@ namespace onion::voxel
 
 	void WorldRenderer::PrepareForRendering()
 	{
-		// Get Camera projection, view and ProjView Matix
-		glm::mat4 projectionMatrix = m_Camera->GetProjectionMatrix();
-		glm::mat4 viewMatrix = m_Camera->GetViewMatrix();
-		glm::mat4 viewProjMatrix = projectionMatrix * viewMatrix;
-
 		// Bind Texture Atlas
 		m_TextureAtlas->Bind();
 
