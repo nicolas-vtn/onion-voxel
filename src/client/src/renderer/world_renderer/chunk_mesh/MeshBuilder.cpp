@@ -145,7 +145,7 @@ namespace onion::voxel
 
 						// ------ Calculate World Position -----
 						//int wx = chunkPos.x * SIZE + x;
-						int wy = SIZE * sub + y;
+						int wy = static_cast<int>(SIZE * sub + y);
 						//int wz = chunkPos.y * SIZE + z;
 
 						// ------ Get Neighboring Blocks ------
@@ -274,7 +274,7 @@ namespace onion::voxel
 	}
 
 	void MeshBuilder::BuildOcclusionMap(const std::shared_ptr<SubChunkMesh> subMesh,
-										const int subChunkIndex,
+										const size_t subChunkIndex,
 										const std::shared_ptr<Chunk>& chunk,
 										const std::shared_ptr<Chunk>& adjacentPosX,
 										const std::shared_ptr<Chunk>& adjacentNegX,
@@ -291,7 +291,7 @@ namespace onion::voxel
 		constexpr int SY = WorldConstants::CHUNK_SIZE;
 		constexpr int SZ = WorldConstants::CHUNK_SIZE;
 
-		const int yMini = subChunkIndex * SY;
+		const int yMini = static_cast<int>(subChunkIndex * SY);
 
 		// 1) Build solid masks from subchunk (fast local reads, no locks)
 		using Row = uint64_t;	 // bits along X or Z or Y (16 wide)
@@ -935,7 +935,7 @@ namespace onion::voxel
 			vert.texX = uv.x;
 			vert.texY = uv.y;
 
-			vert.facing = vert.facing = static_cast<uint8_t>(faceTexture.shade ? f.face : Face::Up);
+			vert.facing = static_cast<uint8_t>(faceTexture.shade ? f.face : Face::Up);
 			vert.occlusion = occlusion;
 
 			vert.tintR = static_cast<uint8_t>(tint.r);

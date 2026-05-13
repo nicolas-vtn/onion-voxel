@@ -259,7 +259,7 @@ namespace onion::voxel
 			{
 				const BlockId nid = cardinals[i]->ID;
 				newProps[kCardinalKeys[i]] =
-					(IsConnectableBlock(nid) && !IsWall(nid) && !IsPane(nid) ||
+					((IsConnectableBlock(nid) && !IsWall(nid) && !IsPane(nid)) ||
 					 (IsFenceGate(nid) && FenceGateConnectsFrom(*cardinals[i], kCardinalKeys[i])))
 					? "true"
 					: "false";

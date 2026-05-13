@@ -71,7 +71,7 @@ namespace onion::voxel
 			EngineContext::Get().Inputs->IsKeyPressed(Key::RightShift);
 
 		// This combinaison is used to lock the hotbar scroll when Accelerating Fly Speed.
-		bool bypassScroll = spacePressed && shiftPressed || ignoreKeys;
+		bool bypassScroll = (spacePressed && shiftPressed) || ignoreKeys;
 
 		if (scroll != 0 && !bypassScroll)
 		{
