@@ -7,9 +7,9 @@ namespace onion::voxel
 	{
 		// Create as many subchunk meshes as there are subchunks in the chunk
 		std::unique_lock lock(m_MutexSubChunkMeshes);
-		const int subChunkCount = chunk->GetSubChunkCount();
+		const size_t subChunkCount = chunk->GetSubChunkCount();
 		m_SubChunkMeshes.reserve(subChunkCount);
-		for (int i = 0; i < subChunkCount; i++)
+		for (size_t i = 0; i < subChunkCount; i++)
 		{
 			m_SubChunkMeshes.emplace_back(std::make_shared<SubChunkMesh>());
 		}
@@ -122,9 +122,9 @@ namespace onion::voxel
 		return m_IsDirty;
 	}
 
-	void ChunkMesh::SetSubChunkMeshDirty(int subChunkIndex, bool isDirty)
+	void ChunkMesh::SetSubChunkMeshDirty(size_t subChunkIndex, bool isDirty)
 	{
-		assert(subChunkIndex >= 0 && "SubChunk index cannot be negative");
+		assert(subChunkIndex < m_SubChunkMeshes.size() && "SubChunk index out of range");
 
 		// If the subchunk index is out of range, we need to add new subchunk meshes until we have enough subchunk meshes to fit the index
 		if (subChunkIndex >= m_SubChunkMeshes.size())

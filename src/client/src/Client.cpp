@@ -11,7 +11,7 @@
 
 namespace onion::voxel
 {
-	Client::Client() : m_Logger(m_LogFile.string()), m_Renderer(m_WorldManager, m_ChatHistory)
+	Client::Client() : m_Renderer(m_WorldManager, m_ChatHistory), m_Logger(m_LogFile.string())
 	{
 		LoadConfiguration();
 

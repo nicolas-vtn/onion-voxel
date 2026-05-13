@@ -149,8 +149,6 @@ namespace onion::voxel
 				// Measure text sizes for positioning
 				glm::vec2 textBeforeSelectionSize = s_TextFont.MeasureText(textBeforeSelection, textHeight);
 				glm::vec2 selectedTextSize = s_TextFont.MeasureText(selectedText, textHeight);
-				glm::vec2 textAfterSelectionSize = s_TextFont.MeasureText(textAfterSelection, textHeight);
-
 				// Calculate positions
 				glm::ivec2 selectedTextPos = textPos + glm::ivec2(textBeforeSelectionSize.x, 0);
 				glm::ivec2 textAfterSelectionPos = selectedTextPos + glm::ivec2(selectedTextSize.x, 0);

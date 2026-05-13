@@ -46,11 +46,11 @@ namespace onion::voxel
 		/// palette index. Handles spanning multiple SubChunks. No locking — caller must ensure thread safety.
 		void FillColumn_Unsafe(uint8_t x, uint16_t yMin, uint16_t yMax, uint8_t z, uint16_t paletteIndex);
 
-		int GetSubChunkCount() const;
+		size_t GetSubChunkCount() const;
 		int GetChunkHeight() const;
 		int GetHeightAt(int x, int z) const; // Get the height at (x, z) in local , or -1
 
-		bool IsSubchunkMonoBlock(const int subChunkIndex) const;
+		bool IsSubchunkMonoBlock(const size_t subChunkIndex) const;
 
 		// ----- Members -----
 	  protected:

@@ -24,10 +24,10 @@ namespace
 namespace onion::voxel
 {
 	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager, ChatHistory& chatHistory)
-		: m_WorldManager(worldManager),
+		: m_KeyBinds(m_InputsManager), m_WorldManager(worldManager),
 		  m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), m_WindowWidth, m_WindowHeight)),
-		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager),
-		  m_EntityRenderer(m_Camera, m_WorldRenderer.GetMeshBuilder()), m_FovSmoother(m_Camera), m_Gui()
+		  m_FovSmoother(m_Camera), m_WorldRenderer(worldManager, m_Camera),
+		  m_EntityRenderer(m_Camera, m_WorldRenderer.GetMeshBuilder()), m_PhysicsEngine(*worldManager), m_Gui()
 	{
 		// Setup Timer Save UserSettings
 		m_TimerDelayedSaveUserSettings.setTimeoutFunction([this]() { SaveUserSettings(); });
@@ -281,8 +281,6 @@ namespace onion::voxel
 			m_DeltaTime = currentFrame - m_LastFrame;
 			m_LastFrame = currentFrame;
 
-			const glm::mat4 viewMatrix = m_Camera->GetViewMatrix();
-			const glm::mat4 projectionMatrix = m_Camera->GetProjectionMatrix();
 			const glm::mat4 viewProjectionMatrix = m_Camera->GetViewProjectionMatrix();
 
 			// DEBUG : Sets DebugDraws ViewProj Matrix
@@ -1556,7 +1554,7 @@ namespace onion::voxel
 				const Block& hitBlock = m_CurrentRaycastHit->HitBlock;
 				ImGui::Text(
 					"Hit Block Position: %d, %d, %d", hitBlock.Position.x, hitBlock.Position.y, hitBlock.Position.z);
-				ImGui::Text("Hit Block ID: %d", hitBlock.ID());
+				ImGui::Text("Hit Block ID: %u", static_cast<unsigned int>(hitBlock.ID()));
 				ImGui::Text("Name: %s", BlockIds::GetName(hitBlock.ID()).c_str());
 				int variantIndex = hitBlock.State.VariantIndex;
 				ImGui::Text("Variant Index: %d", variantIndex);

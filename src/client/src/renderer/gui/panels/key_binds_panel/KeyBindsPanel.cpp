@@ -6,10 +6,10 @@ namespace onion::voxel
 {
 	KeyBindsPanel::KeyBindsPanel(const std::string& name)
 		: GuiElement(name), m_Title_Label(name + "_Title_Label"), m_Scroller(name + "_Scroller"),
-		  m_Done_Button(name + "_Done_Button"), m_ResetAll_Button(name + "_ResetAll_Button"),
 		  m_TitleMovement_Label(name + "_TitleMovement_Label"), m_TitleGameplay_Label(name + "_TitleGameplay_Label"),
-		  m_TitleDebug_Label(name + "_TitleDebug_Label"), m_TitleInventory_Label(name + "_TitleInventory_Label"),
-		  m_TitleMultiplayer_Label(name + "_TitleMultiplayer_Label")
+		  m_TitleInventory_Label(name + "_TitleInventory_Label"), m_TitleDebug_Label(name + "_TitleDebug_Label"),
+		  m_TitleMultiplayer_Label(name + "_TitleMultiplayer_Label"), m_ResetAll_Button(name + "_ResetAll_Button"),
+		  m_Done_Button(name + "_Done_Button")
 	{
 		SubscribeToControlEvents();
 

@@ -86,11 +86,6 @@ namespace onion::voxel
 
 	void WorldRenderer::PrepareForRendering()
 	{
-		// Get Camera projection, view and ProjView Matix
-		glm::mat4 projectionMatrix = m_Camera->GetProjectionMatrix();
-		glm::mat4 viewMatrix = m_Camera->GetViewMatrix();
-		glm::mat4 viewProjMatrix = projectionMatrix * viewMatrix;
-
 		// Bind Texture Atlas
 		m_TextureAtlas->Bind();
 
@@ -506,12 +501,11 @@ namespace onion::voxel
 	{
 		const glm::ivec2 chunkPos = Utils::WorldToChunkPosition(blockPosition);
 
-		std::unordered_map<glm::ivec2, std::vector<uint8_t>> subChunkIndicesToMarkDirty;
+		std::unordered_map<glm::ivec2, std::vector<size_t>> subChunkIndicesToMarkDirty;
 
 		// Mark the subchunk mesh of the chunk that contains the block dirty
-		int value = blockPosition.y / WorldConstants::CHUNK_SIZE;
-		assert(value >= 0 && value <= UINT8_MAX);
-		uint8_t subChunkIndex = static_cast<uint8_t>(blockPosition.y / WorldConstants::CHUNK_SIZE);
+		assert(blockPosition.y >= 0 && "Block position Y must be non-negative");
+		size_t subChunkIndex = static_cast<size_t>(blockPosition.y / WorldConstants::CHUNK_SIZE);
 
 		subChunkIndicesToMarkDirty[chunkPos].push_back(subChunkIndex);
 
@@ -551,7 +545,7 @@ namespace onion::voxel
 			auto it = m_ChunkMeshes.find(neighborChunkPos);
 			if (it != m_ChunkMeshes.end())
 			{
-				for (uint8_t neighborSubChunkIndex : neighborSubChunkIndexes)
+				for (size_t neighborSubChunkIndex : neighborSubChunkIndexes)
 				{
 					it->second->SetSubChunkMeshDirty(neighborSubChunkIndex, true);
 				}

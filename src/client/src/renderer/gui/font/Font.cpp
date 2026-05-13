@@ -425,12 +425,12 @@ namespace onion::voxel
 		float maxLineWidth = 0.f;
 
 		float width = 0.f;
-		for (int i = 0; i < text.size(); i++)
+		for (size_t i = 0; i < text.size(); i++)
 		{
 			float scale = textHeightPx / refGlyphHeight;
 			char32_t c = text[i];
 
-			if (c == U'\u00A7' && i + 1 < (int) text.size())
+			if (c == U'\u00A7' && i + 1 < text.size())
 			{
 				i++; // skip the code character following § (e.g. §9, §o, §r)
 				continue;

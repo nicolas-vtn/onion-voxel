@@ -138,7 +138,6 @@ namespace onion::voxel
 			const std::string& splashText = m_Splashes[m_CurrentSplashIndex];
 			float pulse = m_SplashTextPulse.GetValueSmoothPulse(glfwTime);
 			float splashTextHeight = s_TextHeight * pulse;
-			glm::ivec2 splashTextSize = s_TextFont.MeasureText(splashText, splashTextHeight);
 			constexpr float splashTextXratioCenter = 1420.f / 1920.f;
 			constexpr float splashTextYratioCenter = 267.f / 1009.f;
 			glm::vec2 splashLabelCenter = {s_ScreenWidth * splashTextXratioCenter,

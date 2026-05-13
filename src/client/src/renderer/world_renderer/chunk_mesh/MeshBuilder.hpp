@@ -11,8 +11,8 @@
 #include <shared/world/chunk/Chunk.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
-#include <renderer/item_mesh/ItemMesh.hpp>
 #include <renderer/gui/ui_block_mesh/UiBlockMesh.hpp>
+#include <renderer/item_mesh/ItemMesh.hpp>
 #include <renderer/world_renderer/block_render_registry/BlockRenderRegistry.hpp>
 
 #include "ChunkMesh.hpp"
@@ -96,7 +96,7 @@ namespace onion::voxel
 		void UpdateChunkMesh(const std::shared_ptr<ChunkMesh> chunkMesh);
 
 		void BuildOcclusionMap(const std::shared_ptr<SubChunkMesh> subMesh,
-							   const int subChunkIndex,
+							   const size_t subChunkIndex,
 							   const std::shared_ptr<Chunk>& chunk,
 							   const std::shared_ptr<Chunk>& adjacentPosX,
 							   const std::shared_ptr<Chunk>& adjacentNegX,

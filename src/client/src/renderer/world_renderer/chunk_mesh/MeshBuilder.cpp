@@ -73,7 +73,7 @@ namespace onion::voxel
 
 		const glm::ivec2 chunkPos = chunk->GetPosition();
 
-		const int subChunkCount = chunk->GetSubChunkCount();
+		const size_t subChunkCount = chunk->GetSubChunkCount();
 
 		// If the chunk mesh is already being rebuilt, we should stop the existing rebuild and start a new one
 		if (chunkMesh->m_IsRebuilding)
@@ -112,7 +112,7 @@ namespace onion::voxel
 		std::shared_ptr<Chunk> adjacentPosZ = m_WorldManager->GetChunk(glm::ivec2(chunkPos.x, chunkPos.y + 1));
 		std::shared_ptr<Chunk> adjacentNegZ = m_WorldManager->GetChunk(glm::ivec2(chunkPos.x, chunkPos.y - 1));
 
-		for (int sub = 0; sub < subChunkCount; sub++)
+		for (size_t sub = 0; sub < subChunkCount; sub++)
 		{
 			// If a stop has been requested for this rebuild, we should stop building the mesh
 			if (stopToken.stop_requested())
@@ -145,14 +145,14 @@ namespace onion::voxel
 
 						// ------ Calculate World Position -----
 						//int wx = chunkPos.x * SIZE + x;
-						int wy = SIZE * sub + y;
+						int wy = static_cast<int>(SIZE * sub + y);
 						//int wz = chunkPos.y * SIZE + z;
 
 						// ------ Get Neighboring Blocks ------
 						std::array<BlockState, 6> neighbors;
 
 						// Up (+y)
-						if (localPos.y + 1 < subChunkCount * SIZE)
+						if (static_cast<size_t>(localPos.y + 1) < subChunkCount * SIZE)
 							neighbors[(int) Face::Up] = chunk->GetBlock(glm::ivec3(x, localPos.y + 1, z));
 						else
 							neighbors[(int) Face::Up] = BlockState(BlockId::Air); // Air block if above the world
@@ -274,7 +274,7 @@ namespace onion::voxel
 	}
 
 	void MeshBuilder::BuildOcclusionMap(const std::shared_ptr<SubChunkMesh> subMesh,
-										const int subChunkIndex,
+										const size_t subChunkIndex,
 										const std::shared_ptr<Chunk>& chunk,
 										const std::shared_ptr<Chunk>& adjacentPosX,
 										const std::shared_ptr<Chunk>& adjacentNegX,
@@ -291,7 +291,7 @@ namespace onion::voxel
 		constexpr int SY = WorldConstants::CHUNK_SIZE;
 		constexpr int SZ = WorldConstants::CHUNK_SIZE;
 
-		const int yMini = subChunkIndex * SY;
+		const int yMini = static_cast<int>(subChunkIndex * SY);
 
 		// 1) Build solid masks from subchunk (fast local reads, no locks)
 		using Row = uint64_t;	 // bits along X or Z or Y (16 wide)
@@ -346,8 +346,6 @@ namespace onion::voxel
 		uint8_t nbrXneg[SY][SZ] = {}, nbrXpos[SY][SZ] = {};
 		uint8_t nbrZneg[SY][SX] = {}, nbrZpos[SY][SX] = {};
 		uint8_t nbrYneg[SZ][SX] = {}, nbrYpos[SZ][SX] = {};
-
-		const glm::ivec2 chunkPos = chunk->GetPosition();
 
 		// X- (x = -1) and X+ (x = SX)
 		for (int ly = 0; ly < SY; ly++)
@@ -596,9 +594,9 @@ namespace onion::voxel
 		{
 			for (int col = 0; col < cols; ++col)
 			{
-			const BlockId blockId = inventory.At(row, col).Id;
-			if (blockId == BlockId::Air)
-				continue;
+				const BlockId blockId = inventory.At(row, col).Id;
+				if (blockId == BlockId::Air)
+					continue;
 
 				// Slot top-left in normalized screen space
 				const float slotX = col * (slotSize.x + slotPadding.x);
@@ -836,7 +834,8 @@ namespace onion::voxel
 		mesh.BuffersUpdated();
 	}
 
-	void MeshBuilder::RecordExecution()	{
+	void MeshBuilder::RecordExecution()
+	{
 		auto now = std::chrono::steady_clock::now();
 
 		std::lock_guard lock(m_ExecutionTimesMutex);
@@ -936,7 +935,7 @@ namespace onion::voxel
 			vert.texX = uv.x;
 			vert.texY = uv.y;
 
-			vert.facing = vert.facing = static_cast<uint8_t>(faceTexture.shade ? f.face : Face::Up);
+			vert.facing = static_cast<uint8_t>(faceTexture.shade ? f.face : Face::Up);
 			vert.occlusion = occlusion;
 
 			vert.tintR = static_cast<uint8_t>(tint.r);

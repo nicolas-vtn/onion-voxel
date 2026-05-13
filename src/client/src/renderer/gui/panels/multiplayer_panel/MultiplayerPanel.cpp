@@ -9,11 +9,11 @@ namespace onion::voxel
 		  m_Button_DirectConnect("Direct Connect"), m_Button_AddServer("Add Server"),
 		  m_Button_EditServer("Edit Server"), m_Button_DeleteServer("Delete Server"),
 		  m_Button_RefreshServerTiles("Refresh Server Tiles"), m_Button_Back("Back"),
+		  m_LabelDeleteWarning("Delete Warning"), m_LabelDeleteDetails("Delete Details"),
+		  m_ButtonDeleteConfirm("Delete Confirm"), m_ButtonDeleteCancel("Delete Cancel"),
 		  m_LabelAddEditTitle("AddEditTitle"), m_LabelAddEditName("AddEditName"), m_TextFieldAddEditName("AddEditName"),
 		  m_LabelAddEditAddress("AddEditAddress"), m_TextFieldAddEditAddress("AddEditAddress"),
 		  m_ButtonAddEditDone("AddEditDone"), m_ButtonAddEditCancel("AddEditCancel"),
-		  m_LabelDeleteWarning("Delete Warning"), m_LabelDeleteDetails("Delete Details"),
-		  m_ButtonDeleteConfirm("Delete Confirm"), m_ButtonDeleteCancel("Delete Cancel"),
 		  m_LabelDirectConnectTitle("DirectConnectTitle"), m_LabelDirectConnectAddress("DirectConnectAddress"),
 		  m_TextFieldDirectConnectAddress("DirectConnectAddress"), m_ButtonDirectConnectJoin("DirectConnectJoin"),
 		  m_ButtonDirectConnectCancel("DirectConnectCancel")
@@ -985,7 +985,7 @@ namespace onion::voxel
 		(void) button;
 
 		// Retreves and Deletes the selected tile
-		for (int i = 0; i < m_ServerTiles.size(); i++)
+		for (size_t i = 0; i < m_ServerTiles.size(); i++)
 		{
 			if (m_ServerTiles[i]->IsSelected())
 			{

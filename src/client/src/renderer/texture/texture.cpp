@@ -31,7 +31,7 @@ namespace onion::voxel
 					 int height,
 					 int channels,
 					 bool flipVertically)
-		: m_Width(width), m_Height(height), m_NbrChannels(channels), m_FlipVertically(flipVertically)
+		: m_FlipVertically(flipVertically), m_Width(width), m_Height(height), m_NbrChannels(channels)
 	{
 		if (data.empty())
 		{

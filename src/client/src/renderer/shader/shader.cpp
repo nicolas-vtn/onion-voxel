@@ -10,7 +10,7 @@
 using namespace onion::voxel;
 
 Shader::Shader(const std::filesystem::path& vertexPath, const std::filesystem::path& fragmentPath)
-	: m_FragmentPath(fragmentPath), m_VertexPath(vertexPath)
+	: m_VertexPath(vertexPath), m_FragmentPath(fragmentPath)
 {
 	if (!std::filesystem::exists(vertexPath))
 	{

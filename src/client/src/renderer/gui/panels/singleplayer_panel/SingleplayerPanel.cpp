@@ -8,9 +8,9 @@ namespace onion::voxel
 {
 	SingleplayerPanel::SingleplayerPanel(const std::string& name)
 		: GuiElement(name), m_LabelTitle("Title"), m_TextFieldFilter("Search..."), m_Scroller("Scroller"),
-		  m_ButtonBack("Back"), m_ButtonCreateNewWorld("Create New World"),
-		  m_ButtonPlaySelectedWorld("Play Selected World"), m_ButtonDeleteSelectedWorld("Delete Selected World"),
-		  m_ButtonEdit("Edit"), m_ButtonRefreshWorldTiles("Re-Create Selected World"),
+		  m_ButtonPlaySelectedWorld("Play Selected World"), m_ButtonCreateNewWorld("Create New World"),
+		  m_ButtonEdit("Edit"), m_ButtonDeleteSelectedWorld("Delete Selected World"),
+		  m_ButtonRefreshWorldTiles("Re-Create Selected World"), m_ButtonBack("Back"),
 		  m_LabelDeleteWarning("Delete Warning"), m_LabelDeleteDetails("Delete Details"),
 		  m_ButtonDeleteConfirm("Delete Confirm"), m_ButtonDeleteCancel("Delete Cancel"),
 		  m_LabelCreateNewWorldTitle("Create New World Title"), m_LabelCreateNewWorldName("Create New World Name"),
@@ -676,7 +676,7 @@ namespace onion::voxel
 	void SingleplayerPanel::Handle_WorldTileSelected(const WorldTile& worldTile)
 	{
 		// Deselect all other tiles
-		for (int i = 0; i < m_WorldTiles.size(); i++)
+		for (size_t i = 0; i < m_WorldTiles.size(); i++)
 		{
 			if (m_WorldTiles[i].get() != &worldTile)
 			{
@@ -684,7 +684,7 @@ namespace onion::voxel
 			}
 			else
 			{
-				m_SelectedWorldIndex = i;
+				m_SelectedWorldIndex = static_cast<int>(i);
 			}
 		}
 	}

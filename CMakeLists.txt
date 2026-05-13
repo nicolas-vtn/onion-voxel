@@ -1,5 +1,20 @@
 cmake_minimum_required(VERSION 3.20)
 
+# Default install prefix to out/install/<config> relative to the source tree, mirroring the Visual Studio CMakeSettings.json installRoot convention.
+if(NOT DEFINED CMAKE_INSTALL_PREFIX OR
+   CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR
+   CMAKE_INSTALL_PREFIX STREQUAL "/usr/local")
+    if(CMAKE_BUILD_TYPE)
+        set(_install_config "${CMAKE_BUILD_TYPE}")
+    else()
+        set(_install_config "Debug")
+    endif()
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/out/install/${_install_config}"
+        CACHE PATH "Install path prefix" FORCE)
+    unset(_install_config)
+endif()
+
+
 project(onion_voxel
     VERSION 0.1.0
     DESCRIPTION "A C++ Minecraft clone, (almost) from scratch."

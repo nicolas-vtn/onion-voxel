@@ -9,8 +9,8 @@ namespace onion::voxel
 	  public:
 		TableLayout() = default;
 		TableLayout(int rows, int columns, const glm::ivec2& tableSize, int horizontalSpacing, int verticalSpacing)
-			: Rows(rows), Columns(columns), m_TableSize(tableSize), m_HorizontalSpacing(horizontalSpacing),
-			  m_VerticalSpacing(verticalSpacing)
+			: Rows(rows), Columns(columns), m_TableSize(tableSize), m_VerticalSpacing(verticalSpacing),
+			  m_HorizontalSpacing(horizontalSpacing)
 		{
 		}
 

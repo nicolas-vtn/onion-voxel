@@ -1,5 +1,7 @@
 #include "ChatHistory.hpp"
 
+#include <mutex>
+
 namespace onion::voxel
 {
 	ChatHistory::~ChatHistory()

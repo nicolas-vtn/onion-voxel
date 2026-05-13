@@ -5,7 +5,7 @@
 namespace onion::voxel
 {
 	ResourcePackTile::ResourcePackTile(const std::string& name, Texture texture)
-		: GuiElement(name), m_Thumbnail(name + "_Thumbnail", std::move(texture)), m_Checkbox(name + "_Checkbox"),
+		: GuiElement(name), m_Checkbox(name + "_Checkbox"), m_Thumbnail(name + "_Thumbnail", std::move(texture)),
 		  m_NameLabel(name + "_NameLabel"), m_DescriptionLabel(name + "_DescriptionLabel")
 	{
 		SubscribeToControlEvents();
@@ -208,7 +208,7 @@ namespace onion::voxel
 	void ResourcePackTile::SubscribeToControlEvents()
 	{
 		m_EventHandles.push_back(m_Checkbox.EvtCheckedChanged.Subscribe([this](const Checkbox& sender)
-																	   { Handle_CheckboxCheckedChanged(sender); }));
+																		{ Handle_CheckboxCheckedChanged(sender); }));
 	}
 
 	void ResourcePackTile::Handle_CheckboxCheckedChanged(const Checkbox& sender)
