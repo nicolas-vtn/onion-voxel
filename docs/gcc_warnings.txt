@@ -1,0 +1,389 @@
+GCC Warnings -- OnionVoxel (Linux GCC build, deduplicated)
+Generated: 2026-05-13
+Total unique warnings: 113
+
+================================================================================
+SUMMARY
+================================================================================
+    1  deps/onion-datetime/onion/TimeSpan.hpp
+    1  src/client/src/Client.cpp
+    2  src/client/src/Client.hpp
+    3  src/client/src/renderer/EngineContext.hpp
+    1  src/client/src/renderer/gui/controls/button/Button.cpp
+    2  src/client/src/renderer/gui/controls/button/Button.hpp
+    1  src/client/src/renderer/gui/controls/sprite/Sprite.cpp
+    2  src/client/src/renderer/gui/controls/sprite/Sprite.hpp
+    1  src/client/src/renderer/gui/controls/text_field/TextField.cpp
+    1  src/client/src/renderer/gui/font/Font.cpp
+    1  src/client/src/renderer/gui/Gui.cpp
+    8  src/client/src/renderer/gui/Gui.hpp
+    3  src/client/src/renderer/gui/LayoutHelper.hpp
+    1  src/client/src/renderer/gui/panels/controls_panel/ControlsPanel.cpp
+    2  src/client/src/renderer/gui/panels/controls_panel/ControlsPanel.hpp
+    1  src/client/src/renderer/gui/panels/demo_panel/DemoPanel.cpp
+    4  src/client/src/renderer/gui/panels/demo_panel/DemoPanel.hpp
+    1  src/client/src/renderer/gui/panels/demo_texts_panel/DemoTextsPanel.cpp
+    2  src/client/src/renderer/gui/panels/demo_texts_panel/DemoTextsPanel.hpp
+    1  src/client/src/renderer/gui/panels/hud_panel/ChatTile.cpp
+    2  src/client/src/renderer/gui/panels/hud_panel/ChatTile.hpp
+    2  src/client/src/renderer/gui/panels/hud_panel/HudPanel.cpp
+    2  src/client/src/renderer/gui/panels/hud_panel/HudPanel.hpp
+    1  src/client/src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.cpp
+    6  src/client/src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.hpp
+    1  src/client/src/renderer/gui/panels/main_menu_panel/MainMenuPanel.cpp
+    1  src/client/src/renderer/gui/panels/mouse_settings_panel/MouseSettingsPanel.cpp
+    2  src/client/src/renderer/gui/panels/mouse_settings_panel/MouseSettingsPanel.hpp
+    2  src/client/src/renderer/gui/panels/multiplayer_panel/MultiplayerPanel.cpp
+    2  src/client/src/renderer/gui/panels/multiplayer_panel/MultiplayerPanel.hpp
+    1  src/client/src/renderer/gui/panels/multiplayer_panel/ServerTile.cpp
+    4  src/client/src/renderer/gui/panels/multiplayer_panel/ServerTile.hpp
+    1  src/client/src/renderer/gui/panels/pause_panel/PausePanel.cpp
+    2  src/client/src/renderer/gui/panels/pause_panel/PausePanel.hpp
+    1  src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePacksPanel.cpp
+    4  src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePacksPanel.hpp
+    1  src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePackTile.cpp
+    2  src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePackTile.hpp
+    2  src/client/src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.cpp
+    6  src/client/src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.hpp
+    4  src/client/src/renderer/Renderer.cpp
+    6  src/client/src/renderer/Renderer.hpp
+    1  src/client/src/renderer/shader/shader.cpp
+    2  src/client/src/renderer/shader/shader.hpp
+    1  src/client/src/renderer/texture/texture.cpp
+    2  src/client/src/renderer/texture/texture.hpp
+    1  src/client/src/renderer/world_renderer/block_render_registry/BlockRenderRegistry.cpp
+    2  src/client/src/renderer/world_renderer/chunk_mesh/ChunkMesh.cpp
+    4  src/client/src/renderer/world_renderer/chunk_mesh/MeshBuilder.cpp
+    1  src/client/src/renderer/world_renderer/WorldRenderer.cpp
+    1  src/shared/shared/world/block/BlockUpdater.cpp
+    3  src/shared/shared/world/chunk/Chunk.cpp
+    1  src/shared/shared/world/world_manager/WorldManager.cpp
+
+================================================================================
+DETAILS
+================================================================================
+
+--------------------------------------------------------------------------------
+FILE: deps/onion-datetime/onion/TimeSpan.hpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    deps/onion-datetime/onion/TimeSpan.hpp:93:23: warning: typedef 'using Rep = int64_t' locally defined but not used [-Wunused-local-typedefs]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/Client.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/Client.cpp:14:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/Client.hpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/Client.hpp:96:26: warning:   'onion::voxel::Renderer onion::voxel::Client::m_Renderer' [-Wreorder]
+    src/client/src/Client.hpp:108:24: warning: 'onion::voxel::Client::m_Logger' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/EngineContext.hpp  (3 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/EngineContext.hpp:30:32: warning:   'onion::voxel::WorldRenderer* onion::voxel::EngineContext::WrldRenderer' [-Wreorder]
+    src/client/src/renderer/EngineContext.hpp:92:17: warning:   when initialized here [-Wreorder]
+    src/client/src/renderer/EngineContext.hpp:107:30: warning: 'onion::voxel::EngineContext::m_Settings' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/controls/button/Button.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/controls/button/Button.cpp:12:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/controls/button/Button.hpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/controls/button/Button.hpp:83:23: warning:   'onion::voxel::Label onion::voxel::Button::m_Label' [-Wreorder]
+    src/client/src/renderer/gui/controls/button/Button.hpp:89:33: warning: 'onion::voxel::Button::m_NineSliceSprite_Highlighted' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/controls/sprite/Sprite.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/controls/sprite/Sprite.cpp:12:1: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/controls/sprite/Sprite.hpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/controls/sprite/Sprite.hpp:74:39: warning:   'std::filesystem::__cxx11::path onion::voxel::Sprite::m_SpritePath' [-Wreorder]
+    src/client/src/renderer/gui/controls/sprite/Sprite.hpp:77:25: warning: 'onion::voxel::Sprite::m_Origin' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/controls/text_field/TextField.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/controls/text_field/TextField.cpp:152:43: warning: variable 'textAfterSelectionSize' set but not used [-Wunused-but-set-variable]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/font/Font.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/font/Font.cpp:428:35: warning: comparison of integer expressions of different signedness: 'int' and 'std::__cxx11::basic_string<char32_t>::size_type' {aka 'long unsigned int'} [-Wsign-compare]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/Gui.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/Gui.cpp:30:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/Gui.hpp  (8 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/Gui.hpp:77:36: warning:   'onion::voxel::DemoScrollingPanel onion::voxel::Gui::m_DemoScrollingPanel' [-Wreorder]
+    src/client/src/renderer/gui/Gui.hpp:78:32: warning:   'onion::voxel::DemoTextsPanel onion::voxel::Gui::m_DemoTextsPanel' [-Wreorder]
+    src/client/src/renderer/gui/Gui.hpp:82:36: warning:   'onion::voxel::VideoSettingsPanel onion::voxel::Gui::m_VideoSettingsPanel' [-Wreorder]
+    src/client/src/renderer/gui/Gui.hpp:83:36: warning: 'onion::voxel::Gui::m_ResourcePacksPanel' will be initialized after [-Wreorder]
+    src/client/src/renderer/gui/Gui.hpp:84:35: warning: 'onion::voxel::Gui::m_SingleplayerPanel' will be initialized after [-Wreorder]
+    src/client/src/renderer/gui/Gui.hpp:88:31: warning: 'onion::voxel::Gui::m_KeyBindsPanel' will be initialized after [-Wreorder]
+    src/client/src/renderer/gui/Gui.hpp:89:32: warning:   'onion::voxel::InventoryPanel onion::voxel::Gui::m_InventoryPanel' [-Wreorder]
+    src/client/src/renderer/gui/Gui.hpp:91:26: warning: 'onion::voxel::Gui::m_HudPanel' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/LayoutHelper.hpp  (3 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/LayoutHelper.hpp:11:17: warning:   when initialized here [-Wreorder]
+    src/client/src/renderer/gui/LayoutHelper.hpp:54:21: warning:   'int onion::voxel::TableLayout::m_VerticalSpacing' [-Wreorder]
+    src/client/src/renderer/gui/LayoutHelper.hpp:55:21: warning: 'onion::voxel::TableLayout::m_HorizontalSpacing' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/controls_panel/ControlsPanel.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/controls_panel/ControlsPanel.cpp:7:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/controls_panel/ControlsPanel.hpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/controls_panel/ControlsPanel.hpp:36:24: warning:   'onion::voxel::Button onion::voxel::ControlsPanel::m_MouseSettings_Button' [-Wreorder]
+    src/client/src/renderer/gui/panels/controls_panel/ControlsPanel.hpp:46:24: warning: 'onion::voxel::ControlsPanel::m_Done_Button' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/demo_panel/DemoPanel.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/demo_panel/DemoPanel.cpp:6:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/demo_panel/DemoPanel.hpp  (4 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/demo_panel/DemoPanel.hpp:38:24: warning:   'onion::voxel::Button onion::voxel::DemoPanel::m_Button2' [-Wreorder]
+    src/client/src/renderer/gui/panels/demo_panel/DemoPanel.hpp:40:24: warning:   'onion::voxel::Button onion::voxel::DemoPanel::m_ButtonScrollingPanel' [-Wreorder]
+    src/client/src/renderer/gui/panels/demo_panel/DemoPanel.hpp:42:24: warning: 'onion::voxel::DemoPanel::m_Sprite' will be initialized after [-Wreorder]
+    src/client/src/renderer/gui/panels/demo_panel/DemoPanel.hpp:45:24: warning: 'onion::voxel::DemoPanel::m_Slider' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/demo_texts_panel/DemoTextsPanel.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/demo_texts_panel/DemoTextsPanel.cpp:7:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/demo_texts_panel/DemoTextsPanel.hpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/demo_texts_panel/DemoTextsPanel.hpp:42:23: warning:   'onion::voxel::Label onion::voxel::DemoTextsPanel::m_LabelAllStyles_1' [-Wreorder]
+    src/client/src/renderer/gui/panels/demo_texts_panel/DemoTextsPanel.hpp:47:24: warning: 'onion::voxel::DemoTextsPanel::m_BackButton' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/hud_panel/ChatTile.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/hud_panel/ChatTile.cpp:11:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/hud_panel/ChatTile.hpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/hud_panel/ChatTile.hpp:54:24: warning:   'double onion::voxel::ChatTile::m_SpawnTime' [-Wreorder]
+    src/client/src/renderer/gui/panels/hud_panel/ChatTile.hpp:56:52: warning: 'onion::voxel::ChatTile::m_Message' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/hud_panel/HudPanel.cpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/hud_panel/HudPanel.cpp:10:9: warning:   when initialized here [-Wreorder]
+    src/client/src/renderer/gui/panels/hud_panel/HudPanel.cpp:74:50: warning: suggest parentheses around '&&' within '||' [-Wparentheses]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/hud_panel/HudPanel.hpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/hud_panel/HudPanel.hpp:36:24: warning:   'onion::voxel::Sprite onion::voxel::HudPanel::m_HeartContainer_Sprite' [-Wreorder]
+    src/client/src/renderer/gui/panels/hud_panel/HudPanel.hpp:43:24: warning: 'onion::voxel::HudPanel::m_ExperienceBarProgress_Sprite' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.cpp:7:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.hpp  (6 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.hpp:39:23: warning:   'onion::voxel::Label onion::voxel::KeyBindsPanel::m_TitleMovement_Label' [-Wreorder]
+    src/client/src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.hpp:41:23: warning:   'onion::voxel::Label onion::voxel::KeyBindsPanel::m_TitleInventory_Label' [-Wreorder]
+    src/client/src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.hpp:42:23: warning: 'onion::voxel::KeyBindsPanel::m_TitleDebug_Label' will be initialized after [-Wreorder]
+    src/client/src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.hpp:46:24: warning:   'onion::voxel::Button onion::voxel::KeyBindsPanel::m_ResetAll_Button' [-Wreorder]
+    src/client/src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.hpp:46:24: warning: 'onion::voxel::KeyBindsPanel::m_ResetAll_Button' will be initialized after [-Wreorder]
+    src/client/src/renderer/gui/panels/key_binds_panel/KeyBindsPanel.hpp:47:24: warning: 'onion::voxel::KeyBindsPanel::m_Done_Button' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/main_menu_panel/MainMenuPanel.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/main_menu_panel/MainMenuPanel.cpp:141:36: warning: variable 'splashTextSize' set but not used [-Wunused-but-set-variable]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/mouse_settings_panel/MouseSettingsPanel.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/mouse_settings_panel/MouseSettingsPanel.cpp:9:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/mouse_settings_panel/MouseSettingsPanel.hpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/mouse_settings_panel/MouseSettingsPanel.hpp:35:24: warning:   'onion::voxel::Slider onion::voxel::MouseSettingsPanel::m_MouseSensitivity_Slider' [-Wreorder]
+    src/client/src/renderer/gui/panels/mouse_settings_panel/MouseSettingsPanel.hpp:44:24: warning: 'onion::voxel::MouseSettingsPanel::m_Done_Button' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/multiplayer_panel/MultiplayerPanel.cpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/multiplayer_panel/MultiplayerPanel.cpp:7:9: warning:   when initialized here [-Wreorder]
+    src/client/src/renderer/gui/panels/multiplayer_panel/MultiplayerPanel.cpp:988:35: warning: comparison of integer expressions of different signedness: 'int' and 'std::vector<std::unique_ptr<onion::voxel::ServerTile> >::size_type' {aka 'long unsigned int'} [-Wsign-compare]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/multiplayer_panel/MultiplayerPanel.hpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/multiplayer_panel/MultiplayerPanel.hpp:81:23: warning:   'onion::voxel::Label onion::voxel::MultiplayerPanel::m_LabelDeleteWarning' [-Wreorder]
+    src/client/src/renderer/gui/panels/multiplayer_panel/MultiplayerPanel.hpp:104:24: warning: 'onion::voxel::MultiplayerPanel::m_ButtonAddEditCancel' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/multiplayer_panel/ServerTile.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/multiplayer_panel/ServerTile.cpp:7:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/multiplayer_panel/ServerTile.hpp  (4 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/multiplayer_panel/ServerTile.hpp:107:24: warning:   'onion::voxel::Sprite onion::voxel::ServerTile::m_ThumbnailSprite' [-Wreorder]
+    src/client/src/renderer/gui/panels/multiplayer_panel/ServerTile.hpp:109:39: warning:   'std::array<onion::voxel::Sprite, 5> onion::voxel::ServerTile::m_PingSprites' [-Wreorder]
+    src/client/src/renderer/gui/panels/multiplayer_panel/ServerTile.hpp:110:39: warning: 'onion::voxel::ServerTile::m_PingingSprites' will be initialized after [-Wreorder]
+    src/client/src/renderer/gui/panels/multiplayer_panel/ServerTile.hpp:111:24: warning: 'onion::voxel::ServerTile::m_UnreachableSprite' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/pause_panel/PausePanel.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/pause_panel/PausePanel.cpp:7:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/pause_panel/PausePanel.hpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/pause_panel/PausePanel.hpp:33:24: warning:   'onion::voxel::Button onion::voxel::PausePanel::m_Advancements_Button' [-Wreorder]
+    src/client/src/renderer/gui/panels/pause_panel/PausePanel.hpp:39:24: warning: 'onion::voxel::PausePanel::m_MainMenu_Button' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePacksPanel.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePacksPanel.cpp:14:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePacksPanel.hpp  (4 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePacksPanel.hpp:49:27: warning:   'onion::voxel::TextField onion::voxel::ResourcePacksPanel::m_Search_TextField' [-Wreorder]
+    src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePacksPanel.hpp:52:34: warning: 'onion::voxel::ResourcePacksPanel::m_DefaultResourcePack_Tile' will be initialized after [-Wreorder]
+    src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePacksPanel.hpp:52:34: warning:   'onion::voxel::ResourcePackTile onion::voxel::ResourcePacksPanel::m_DefaultResourcePack_Tile' [-Wreorder]
+    src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePacksPanel.hpp:55:24: warning: 'onion::voxel::ResourcePacksPanel::m_Done_Button' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePackTile.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePackTile.cpp:7:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePackTile.hpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePackTile.hpp:73:26: warning:   'onion::voxel::Checkbox onion::voxel::ResourcePackTile::m_Checkbox' [-Wreorder]
+    src/client/src/renderer/gui/panels/resource_packs_panel/ResourcePackTile.hpp:74:24: warning: 'onion::voxel::ResourcePackTile::m_Thumbnail' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.cpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.cpp:9:9: warning:   when initialized here [-Wreorder]
+    src/client/src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.cpp:679:35: warning: comparison of integer expressions of different signedness: 'int' and 'std::vector<std::unique_ptr<onion::voxel::WorldTile> >::size_type' {aka 'long unsigned int'} [-Wsign-compare]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.hpp  (6 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.hpp:62:24: warning:   'onion::voxel::Button onion::voxel::SingleplayerPanel::m_ButtonPlaySelectedWorld' [-Wreorder]
+    src/client/src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.hpp:63:24: warning: 'onion::voxel::SingleplayerPanel::m_ButtonCreateNewWorld' will be initialized after [-Wreorder]
+    src/client/src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.hpp:63:24: warning:   'onion::voxel::Button onion::voxel::SingleplayerPanel::m_ButtonCreateNewWorld' [-Wreorder]
+    src/client/src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.hpp:64:24: warning:   'onion::voxel::Button onion::voxel::SingleplayerPanel::m_ButtonEdit' [-Wreorder]
+    src/client/src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.hpp:65:24: warning: 'onion::voxel::SingleplayerPanel::m_ButtonDeleteSelectedWorld' will be initialized after [-Wreorder]
+    src/client/src/renderer/gui/panels/singleplayer_panel/SingleplayerPanel.hpp:67:24: warning: 'onion::voxel::SingleplayerPanel::m_ButtonBack' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/Renderer.cpp  (4 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/Renderer.cpp:26:9: warning:   when initialized here [-Wreorder]
+    src/client/src/renderer/Renderer.cpp:284:41: warning: variable 'viewMatrix' set but not used [-Wunused-but-set-variable]
+    src/client/src/renderer/Renderer.cpp:285:41: warning: variable 'projectionMatrix' set but not used [-Wunused-but-set-variable]
+    src/client/src/renderer/Renderer.cpp:1559:61: warning: format '%d' expects argument of type 'int', but argument 2 has type 'onion::voxel::BlockId' [-Wformat=]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/Renderer.hpp  (6 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/Renderer.hpp:154:26: warning:   'onion::voxel::KeyBinds onion::voxel::Renderer::m_KeyBinds' [-Wreorder]
+    src/client/src/renderer/Renderer.hpp:194:29: warning:   'onion::voxel::FovSmoother onion::voxel::Renderer::m_FovSmoother' [-Wreorder]
+    src/client/src/renderer/Renderer.hpp:197:31: warning: 'onion::voxel::Renderer::m_WorldRenderer' will be initialized after [-Wreorder]
+    src/client/src/renderer/Renderer.hpp:207:32: warning: 'onion::voxel::Renderer::m_EntityRenderer' will be initialized after [-Wreorder]
+    src/client/src/renderer/Renderer.hpp:207:32: warning:   'onion::voxel::EntityRenderer onion::voxel::Renderer::m_EntityRenderer' [-Wreorder]
+    src/client/src/renderer/Renderer.hpp:211:31: warning: 'onion::voxel::Renderer::m_PhysicsEngine' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/shader/shader.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/shader/shader.cpp:12:1: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/shader/shader.hpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/shader/shader.hpp:70:39: warning:   'std::filesystem::__cxx11::path onion::voxel::Shader::m_VertexPath' [-Wreorder]
+    src/client/src/renderer/shader/shader.hpp:72:39: warning: 'onion::voxel::Shader::m_FragmentPath' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/texture/texture.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/texture/texture.cpp:28:9: warning:   when initialized here [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/texture/texture.hpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/texture/texture.hpp:113:22: warning:   'bool onion::voxel::Texture::m_FlipVertically' [-Wreorder]
+    src/client/src/renderer/texture/texture.hpp:132:21: warning: 'onion::voxel::Texture::m_NbrChannels' will be initialized after [-Wreorder]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/world_renderer/block_render_registry/BlockRenderRegistry.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/world_renderer/block_render_registry/BlockRenderRegistry.cpp:207:35: warning: comparison of integer expressions of different signedness: 'int' and 'std::vector<onion::voxel::VariantModel>::size_type' {aka 'long unsigned int'} [-Wsign-compare]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/world_renderer/chunk_mesh/ChunkMesh.cpp  (2 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/world_renderer/chunk_mesh/ChunkMesh.cpp:130:35: warning: comparison of integer expressions of different signedness: 'int' and 'std::vector<std::shared_ptr<onion::voxel::SubChunkMesh> >::size_type' {aka 'long unsigned int'} [-Wsign-compare]
+    src/client/src/renderer/world_renderer/chunk_mesh/ChunkMesh.cpp:133:56: warning: comparison of integer expressions of different signedness: 'std::vector<std::shared_ptr<onion::voxel::SubChunkMesh> >::size_type' {aka 'long unsigned int'} and 'int' [-Wsign-compare]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/world_renderer/chunk_mesh/MeshBuilder.cpp  (4 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/world_renderer/chunk_mesh/MeshBuilder.cpp:102:49: warning: comparison of integer expressions of different signedness: 'std::vector<std::shared_ptr<onion::voxel::SubChunkMesh> >::size_type' {aka 'long unsigned int'} and 'const int' [-Wsign-compare]
+    src/client/src/renderer/world_renderer/chunk_mesh/MeshBuilder.cpp:350:34: warning: variable 'chunkPos' set but not used [-Wunused-but-set-variable]
+    src/client/src/renderer/world_renderer/chunk_mesh/MeshBuilder.cpp:600:25: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+    src/client/src/renderer/world_renderer/chunk_mesh/MeshBuilder.cpp:939:37: warning: operation on 'vert.onion::voxel::SubChunkMesh::Vertex::facing' may be undefined [-Wsequence-point]
+
+--------------------------------------------------------------------------------
+FILE: src/client/src/renderer/world_renderer/WorldRenderer.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/client/src/renderer/world_renderer/WorldRenderer.cpp:92:27: warning: variable 'viewProjMatrix' set but not used [-Wunused-but-set-variable]
+
+--------------------------------------------------------------------------------
+FILE: src/shared/shared/world/block/BlockUpdater.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/shared/shared/world/block/BlockUpdater.cpp:262:82: warning: suggest parentheses around '&&' within '||' [-Wparentheses]
+
+--------------------------------------------------------------------------------
+FILE: src/shared/shared/world/chunk/Chunk.cpp  (3 warning(s))
+--------------------------------------------------------------------------------
+    src/shared/shared/world/chunk/Chunk.cpp:56:58: warning: comparison of integer expressions of different signedness: 'const int' and 'std::vector<onion::voxel::SubChunk>::size_type' {aka 'long unsigned int'} [-Wsign-compare]
+    src/shared/shared/world/chunk/Chunk.cpp:84:43: warning: comparison of integer expressions of different signedness: 'std::vector<onion::voxel::SubChunk>::size_type' {aka 'long unsigned int'} and 'int' [-Wsign-compare]
+    src/shared/shared/world/chunk/Chunk.cpp:145:56: warning: comparison of integer expressions of different signedness: 'const int' and 'std::vector<onion::voxel::SubChunk>::size_type' {aka 'long unsigned int'} [-Wsign-compare]
+
+--------------------------------------------------------------------------------
+FILE: src/shared/shared/world/world_manager/WorldManager.cpp  (1 warning(s))
+--------------------------------------------------------------------------------
+    src/shared/shared/world/world_manager/WorldManager.cpp:771:50: warning: variable 'worldPos' set but not used [-Wunused-but-set-variable]
