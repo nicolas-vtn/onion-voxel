@@ -1554,7 +1554,7 @@ namespace onion::voxel
 				const Block& hitBlock = m_CurrentRaycastHit->HitBlock;
 				ImGui::Text(
 					"Hit Block Position: %d, %d, %d", hitBlock.Position.x, hitBlock.Position.y, hitBlock.Position.z);
-				ImGui::Text("Hit Block ID: %u", hitBlock.ID());
+				ImGui::Text("Hit Block ID: %u", static_cast<unsigned int>(hitBlock.ID()));
 				ImGui::Text("Name: %s", BlockIds::GetName(hitBlock.ID()).c_str());
 				int variantIndex = hitBlock.State.VariantIndex;
 				ImGui::Text("Variant Index: %d", variantIndex);

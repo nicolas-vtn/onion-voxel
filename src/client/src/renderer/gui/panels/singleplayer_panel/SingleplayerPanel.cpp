@@ -684,7 +684,7 @@ namespace onion::voxel
 			}
 			else
 			{
-				m_SelectedWorldIndex = i;
+				m_SelectedWorldIndex = static_cast<int>(i);
 			}
 		}
 	}

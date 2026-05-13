@@ -16,6 +16,8 @@ FetchContent_Declare(
   GIT_TAG 1.0.1  # or any newer stable tag
 )
 
+set(GLM_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+
 # Automatically fetch and add it
 FetchContent_MakeAvailable(glm)
 

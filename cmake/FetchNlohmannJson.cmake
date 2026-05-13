@@ -16,6 +16,8 @@ FetchContent_Declare(
   GIT_TAG v3.11.3  # Use latest stable release if needed
 )
 
+set(JSON_Install OFF CACHE BOOL "" FORCE)
+
 # Automatically fetch and add it
 FetchContent_MakeAvailable(nlohmann_json)
 
