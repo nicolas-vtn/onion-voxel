@@ -261,7 +261,7 @@ namespace onion::voxel
 		m_LastCharInput = 0; // Reset last char input to avoid processing it in the next Handle_CharInputs() call
 
 		// Reset States
-		m_CursorPosition = std::min(m_CursorPosition, m_Text.size());
+		m_CursorPosition = m_Text.size(); // Move cursor to the end of the text
 		if (m_SelectionStart != SIZE_MAX)
 		{
 			m_SelectionStart = std::min(m_SelectionStart, m_Text.size());

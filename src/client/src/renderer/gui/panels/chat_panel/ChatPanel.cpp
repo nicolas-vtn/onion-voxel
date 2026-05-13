@@ -60,6 +60,38 @@ namespace onion::voxel
 			return;
 		}
 
+		// ----- Usefull Variables -----
+		const auto history = EngineContext::Get().Chat->GetReceivedHistory();
+
+		// ----- Handle History Browsing -----
+		InputsManager* inputs = EngineContext::Get().Inputs;
+		std::shared_ptr<InputsSnapshot> inputsSnapshot = inputs->GetInputsSnapshot();
+		KeyState keyStateHistoUp = inputsSnapshot->GetKeyState(m_InputIdBrowsingHistoryUp);
+		KeyState keyStateHistoDown = inputsSnapshot->GetKeyState(m_InputIdBrowsingHistoryDown);
+
+		if (IsFirstFrameAfterPanelChange())
+			m_HistoryIndex = -1; // Reset history browsing on panel open
+
+		if (keyStateHistoUp.IsPressed)
+		{
+			m_HistoryIndex++;
+			if (m_HistoryIndex > static_cast<int>(history.size()) - 1)
+				m_HistoryIndex = static_cast<int>(history.size()) - 1;
+
+			std::string hystoryContent = (m_HistoryIndex >= 0) ? history[m_HistoryIndex]->Content : "";
+			m_Chat_TextField.SetText(hystoryContent);
+		}
+
+		if (keyStateHistoDown.IsPressed)
+		{
+			m_HistoryIndex--;
+			if (m_HistoryIndex < -1)
+				m_HistoryIndex = -1;
+
+			std::string hystoryContent = (m_HistoryIndex >= 0) ? history[m_HistoryIndex]->Content : "";
+			m_Chat_TextField.SetText(hystoryContent);
+		}
+
 		// Force focus even when clicked outside
 		m_Chat_TextField.SetActive(true);
 
@@ -119,34 +151,29 @@ namespace onion::voxel
 		m_Chat_TextField.Render();
 
 		// ----- Sync tiles with history (same algorithm as HudPanel) -----
-		if (EngineContext::Get().Chat != nullptr)
+		size_t newCount = history.size();
+		if (m_LastChatMessage != nullptr)
 		{
-			const auto history = EngineContext::Get().Chat->GetReceivedHistory();
-
-			size_t newCount = history.size();
-			if (m_LastChatMessage != nullptr)
+			for (size_t i = 0; i < history.size(); ++i)
 			{
-				for (size_t i = 0; i < history.size(); ++i)
+				if (history[i] == m_LastChatMessage)
 				{
-					if (history[i] == m_LastChatMessage)
-					{
-						newCount = i;
-						break;
-					}
+					newCount = i;
+					break;
 				}
 			}
-
-			for (size_t i = newCount; i > 0; i--)
-			{
-				auto tile =
-					std::make_unique<ChatTile>("ChatPanelTile_" + std::to_string(m_ChatTiles.size()), history[i - 1]);
-				tile->Initialize();
-				m_ChatTiles.insert(m_ChatTiles.begin(), std::move(tile));
-			}
-
-			if (!history.empty())
-				m_LastChatMessage = history.front();
 		}
+
+		for (size_t i = newCount; i > 0; i--)
+		{
+			auto tile =
+				std::make_unique<ChatTile>("ChatPanelTile_" + std::to_string(m_ChatTiles.size()), history[i - 1]);
+			tile->Initialize();
+			m_ChatTiles.insert(m_ChatTiles.begin(), std::move(tile));
+		}
+
+		if (!history.empty())
+			m_LastChatMessage = history.front();
 
 		// ----- Render Scroller -----
 		m_Chat_Scroller.SetTopLeftCorner(topLeftScroller);
@@ -185,6 +212,13 @@ namespace onion::voxel
 	{
 		m_Chat_TextField.Initialize();
 		m_Chat_Scroller.Initialize();
+
+		// ----- Register Inputs -----
+		InputConfig repeatWithDelay(true, 0.6f, 0.4f, 0.5f);
+		auto inputs = EngineContext::Get().Inputs;
+
+		m_InputIdBrowsingHistoryUp = inputs->RegisterInput(m_KeyBrowsingHistoryUp, repeatWithDelay);
+		m_InputIdBrowsingHistoryDown = inputs->RegisterInput(m_KeyBrowsingHistoryDown, repeatWithDelay);
 
 		SetInitState(true);
 	}

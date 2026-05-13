@@ -42,6 +42,14 @@ namespace onion::voxel
 		std::vector<std::unique_ptr<ChatTile>> m_ChatTiles;
 		std::shared_ptr<const ChatMessage> m_LastChatMessage;
 
+		// ----- Members -----
+	  private:
+		int m_HistoryIndex = -1; // -1 means not browsing history, 0 means the most recent message, etc.
+		const Key m_KeyBrowsingHistoryUp = Key::Up;
+		int m_InputIdBrowsingHistoryUp;
+		const Key m_KeyBrowsingHistoryDown = Key::Down;
+		int m_InputIdBrowsingHistoryDown;
+
 		// ----- Internal Event Subscription and Handlers -----
 	  private:
 		std::vector<EventHandle> m_EventHandles;
