@@ -92,7 +92,7 @@ namespace onion::voxel
 			return;
 		}
 
-		if (AreKeyInputsValid() && !m_Search_TextField.IsActive())
+		if (!IsFirstFrameAfterPanelChange() && !m_Search_TextField.IsActive())
 		{
 			if (EngineContext::Get().Keys->GetKeyState(eAction::OpenInventory).IsPressed)
 			{
@@ -684,7 +684,7 @@ namespace onion::voxel
 		// ---- Key Drop Input Handling ----
 		bool dropKeyPressed = EngineContext::Get().Keys->GetKeyState(eAction::DropItem).IsPressed;
 		const bool ctrlHeld = EngineContext::Get().Inputs->IsKeyPressed(Key::LeftControl) ||
-							  EngineContext::Get().Inputs->IsKeyPressed(Key::RightControl);
+			EngineContext::Get().Inputs->IsKeyPressed(Key::RightControl);
 
 		// ---- Tooltip Rendering for Hotbar (if needed) ----
 		if (hoveredHotbarSlotIndex != -1)

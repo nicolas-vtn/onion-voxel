@@ -411,12 +411,12 @@ namespace onion::voxel
 			RenderDebugPanel();
 
 		{
-			// Block key inputs for one frame after a menu transition.
-			// Prevents the key that triggered a menu change from being read by the new panel on the same frame.
+			// Record the frame boundary when a panel transition occurs.
+			// Panels use IsFirstFrameAfterPanelChange() to detect their first Render() call.
 			std::lock_guard lock(m_MutexState);
 			if (m_ActiveMenu != m_MenuPreviousFrame)
 			{
-				GuiElement::s_KeyInputsValidFromFrame = EngineContext::Get().FrameCount + 1;
+				GuiElement::s_PanelChangeFrame = EngineContext::Get().FrameCount.load();
 			}
 		}
 

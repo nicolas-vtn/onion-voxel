@@ -85,7 +85,7 @@ namespace onion::voxel
 			m_Chat_Scroller.SetScrollAreaHeight(static_cast<uint32_t>(std::max(scrollerHeight, totalTilesHeight)));
 		}
 
-		if (!AreKeyInputsValid())
+		if (IsFirstFrameAfterPanelChange())
 		{
 			// Reset text, prevents inserting 't'.
 			m_Chat_TextField.SetText("");
