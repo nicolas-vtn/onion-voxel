@@ -17,10 +17,12 @@ FetchContent_Declare(
 
 set(ENET_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ENET_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(ENET_INSTALL OFF CACHE BOOL "" FORCE)
 set(ENET_SHARED OFF CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(enet)
+
+# ENet has unconditional install() rules with no opt-out — exclude the directory
+set_property(DIRECTORY ${enet_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL TRUE)
 
 # ENet creates target "enet"
 # Force include directories to be PUBLIC (important)
