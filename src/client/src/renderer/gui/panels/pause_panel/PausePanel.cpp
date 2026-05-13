@@ -6,10 +6,10 @@ namespace onion::voxel
 {
 	PausePanel::PausePanel(const std::string& name)
 		: GuiElement(name), m_Title_Label("PauseTitle_Label"), m_BackToGame_Button("BackToGame_Button"),
-		  m_Options_Button("Options_Button"), m_MainMenu_Button("MainMenu_Button"),
 		  m_Advancements_Button("Advancements_Button"), m_Statistics_Button("Statistics_Button"),
 		  m_GiveFeedback_Button("GiveFeedback_Button"), m_ReportBugs_Button("ReportBugs_Button"),
-		  m_OpenToLan_Button("OpenToLan_Button")
+		  m_Options_Button("Options_Button"), m_OpenToLan_Button("OpenToLan_Button"),
+		  m_MainMenu_Button("MainMenu_Button")
 	{
 		SubscribeToControlEvents();
 

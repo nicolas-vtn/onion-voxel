@@ -9,7 +9,7 @@
 namespace onion::voxel
 {
 	ChatTile::ChatTile(const std::string& name, std::shared_ptr<const ChatMessage> message)
-		: GuiElement(name), m_Message(message), m_SpawnTime(glfwGetTime()), m_Label(name + "_Label")
+		: GuiElement(name), m_SpawnTime(glfwGetTime()), m_Message(message), m_Label(name + "_Label")
 	{
 		const std::string labelText = "<" + message->PlayerName + "> " + message->Content;
 		m_Label.SetText(labelText);

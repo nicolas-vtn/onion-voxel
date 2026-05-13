@@ -4,10 +4,10 @@ namespace onion::voxel
 {
 
 	DemoPanel::DemoPanel(const std::string& name)
-		: GuiElement(name), m_Button("DemoButton"), m_Sprite("DemoSprite", m_SpritePath, Sprite::eOrigin::Asset),
-		  m_Button2("DemoButton2"), m_ButtonMainMenu("MainMenuButton"), m_Checkbox("DemoCheckbox"),
-		  m_TextField("DemoTextField"), m_Slider("DemoSlider"), m_ButtonScrollingPanel("DemoScrollingPanelButton"),
-		  m_ButtonTextsPanel("DemoTextsPanelButton"), m_Tooltip("DemoTooltip")
+		: GuiElement(name), m_Button("DemoButton"), m_Button2("DemoButton2"), m_ButtonMainMenu("MainMenuButton"),
+		  m_ButtonScrollingPanel("DemoScrollingPanelButton"), m_ButtonTextsPanel("DemoTextsPanelButton"),
+		  m_Sprite("DemoSprite", m_SpritePath, Sprite::eOrigin::Asset), m_Checkbox("DemoCheckbox"),
+		  m_TextField("DemoTextField"), m_Slider("DemoSlider"), m_Tooltip("DemoTooltip")
 	{
 
 		SubscribeToControlEvents();

@@ -10,7 +10,7 @@ std::vector<Sprite::Vertex> Sprite::s_Vertices = {
 std::vector<unsigned int> Sprite::s_Indices = {0, 1, 2, 2, 3, 0};
 
 Sprite::Sprite(const std::string& name, const std::filesystem::path& spritePath, eOrigin origin)
-	: GuiElement(name), m_Origin(origin), m_SpritePath(spritePath)
+	: GuiElement(name), m_SpritePath(spritePath), m_Origin(origin)
 {
 }
 

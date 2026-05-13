@@ -10,10 +10,10 @@ namespace onion::voxel
 	// -------- Constructor --------
 
 	Button::Button(const std::string& name)
-		: GuiElement(name), m_NineSliceSprite_Basic(name + "_9Slice_Basic", s_SpritePathFromGui),
+		: GuiElement(name), m_Label(name + "_Label"),
+		  m_NineSliceSprite_Basic(name + "_9Slice_Basic", s_SpritePathFromGui),
 		  m_NineSliceSprite_Disabled(name + "_9Slice_Disabled", s_SpritePathFromGui_Disabled),
-		  m_NineSliceSprite_Highlighted(name + "_9Slice_Highlighted", s_SpritePathFromGui_Highlighted),
-		  m_Label(name + "_Label")
+		  m_NineSliceSprite_Highlighted(name + "_9Slice_Highlighted", s_SpritePathFromGui_Highlighted)
 	{
 		SubscribeToSpriteEvents();
 

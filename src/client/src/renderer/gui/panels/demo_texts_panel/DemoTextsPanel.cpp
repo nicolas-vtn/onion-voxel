@@ -5,8 +5,8 @@
 namespace onion::voxel
 {
 	DemoTextsPanel::DemoTextsPanel(const std::string& name)
-		: GuiElement(name), m_BackButton("Back Button"), m_LabelAllStyles_1("All Styles Label 1"),
-		  m_LabelAllStyles_2("All Styles Label 2"), m_LabelUnicodes("Unicodes Label")
+		: GuiElement(name), m_LabelAllStyles_1("All Styles Label 1"), m_LabelAllStyles_2("All Styles Label 2"),
+		  m_LabelUnicodes("Unicodes Label"), m_BackButton("Back Button")
 	{
 		SubscribeToControlEvents();
 

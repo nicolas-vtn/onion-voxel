@@ -6,12 +6,11 @@ namespace onion::voxel
 {
 	ControlsPanel::ControlsPanel(const std::string& name)
 		: GuiElement(name), m_Title_Label(name + "_Title_Label"), m_Scroller(name + "_Scroller"),
-		  m_Done_Button(name + "_Done_Button"), m_MouseSettings_Button(name + "_MouseSettings_Button"),
-		  m_KeyBinds_Button(name + "_KeyBinds_Button"), m_Sneak_Button(name + "_Sneak_Button"),
-		  m_Sprint_Button(name + "_Sprint_Button"), m_AtkDestroy_Button(name + "_AtkDestroy_Button"),
-		  m_Use_Button(name + "_Use_Button"), m_AutoJump_Button(name + "_AutoJump_Button"),
-		  m_SprintWindow_Slider(name + "_SprintWindow_Slider"),
-		  m_OperatorItemTabs_Button(name + "_OperatorItemTabs_Button")
+		  m_MouseSettings_Button(name + "_MouseSettings_Button"), m_KeyBinds_Button(name + "_KeyBinds_Button"),
+		  m_Sneak_Button(name + "_Sneak_Button"), m_Sprint_Button(name + "_Sprint_Button"),
+		  m_AtkDestroy_Button(name + "_AtkDestroy_Button"), m_Use_Button(name + "_Use_Button"),
+		  m_AutoJump_Button(name + "_AutoJump_Button"), m_SprintWindow_Slider(name + "_SprintWindow_Slider"),
+		  m_OperatorItemTabs_Button(name + "_OperatorItemTabs_Button"), m_Done_Button(name + "_Done_Button")
 	{
 		SubscribeToControlEvents();
 

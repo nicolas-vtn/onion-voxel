@@ -8,12 +8,13 @@ namespace onion::voxel
 {
 	MouseSettingsPanel::MouseSettingsPanel(const std::string& name)
 		: GuiElement(name), m_Title_Label(name + "_Title_Label"), m_Scroller(name + "_Scroller"),
-		  m_Done_Button(name + "_Done_Button"), m_MouseSensitivity_Slider(name + "_MouseSensitivity_Slider"),
+		  m_MouseSensitivity_Slider(name + "_MouseSensitivity_Slider"),
 		  m_TouchscreenMode_Button(name + "_TouchscreenMode_Button"),
 		  m_MouseScrollSensitivity_Slider(name + "_MouseScrollSensitivity_Slider"),
 		  m_DiscreteScroll_Button(name + "_DiscreteScroll_Button"),
 		  m_InvertMouseX_Button(name + "_InvertMouseX_Button"), m_InvertMouseY_Button(name + "_InvertMouseY_Button"),
-		  m_AllowCursorChanges_Button(name + "_AllowCursorChanges_Button"), m_RawInput_Button(name + "_RawInput_Button")
+		  m_AllowCursorChanges_Button(name + "_AllowCursorChanges_Button"),
+		  m_RawInput_Button(name + "_RawInput_Button"), m_Done_Button(name + "_Done_Button")
 	{
 		SubscribeToControlEvents();
 

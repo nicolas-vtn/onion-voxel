@@ -13,9 +13,9 @@ namespace onion::voxel
 {
 	ResourcePacksPanel::ResourcePacksPanel(const std::string& name)
 		: GuiElement(name), m_Title_Label("ResourcePacksTitle_Label"),
-		  m_Description_Label("ResourcePacksDescription_Label"), m_OpenPackFolder_Button("OpenPackFolder_Button"),
-		  m_Done_Button("Done_Button"), m_DefaultResourcePack_Tile("DefaultResourcePack_Tile"),
-		  m_Search_TextField("Search_TextField"), m_ResourcePacks_Scroller("ResourcePacks_Scroller")
+		  m_Description_Label("ResourcePacksDescription_Label"), m_Search_TextField("Search_TextField"),
+		  m_ResourcePacks_Scroller("ResourcePacks_Scroller"), m_DefaultResourcePack_Tile("DefaultResourcePack_Tile"),
+		  m_OpenPackFolder_Button("OpenPackFolder_Button"), m_Done_Button("Done_Button")
 	{
 		SubscribeToControlEvents();
 

@@ -7,7 +7,7 @@ namespace onion::voxel
 	ServerTile::ServerTile(const std::string& name, const ServerInfos& serverInfos)
 		: GuiElement(name), m_ServerInfos(serverInfos), m_LabelName(name + "_LabelTitle"),
 		  m_LabelDescription(name + "_LabelDescription"), m_LabelPlayerCount(name + "_LabelPlayerCount"),
-		  m_UnreachableSprite(name + "_UnreachableSprite", s_UnreachableSpritePath, Sprite::eOrigin::ResourcePack),
+		  m_ThumbnailSprite(name + "_ThumbnailSprite", Texture()),
 		  m_PingSprites{Sprite(name + "_PingSprite1", s_PingSpritesPaths[0], Sprite::eOrigin::ResourcePack),
 						Sprite(name + "_PingSprite2", s_PingSpritesPaths[1], Sprite::eOrigin::ResourcePack),
 						Sprite(name + "_PingSprite3", s_PingSpritesPaths[2], Sprite::eOrigin::ResourcePack),
@@ -18,7 +18,7 @@ namespace onion::voxel
 						   Sprite(name + "_PingingSprite3", s_PingingSpritesPaths[2], Sprite::eOrigin::ResourcePack),
 						   Sprite(name + "_PingingSprite4", s_PingingSpritesPaths[3], Sprite::eOrigin::ResourcePack),
 						   Sprite(name + "_PingingSprite5", s_PingingSpritesPaths[4], Sprite::eOrigin::ResourcePack)},
-		  m_ThumbnailSprite(name + "_ThumbnailSprite", Texture())
+		  m_UnreachableSprite(name + "_UnreachableSprite", s_UnreachableSpritePath, Sprite::eOrigin::ResourcePack)
 	{
 		m_LabelName.SetTextAlignment(Font::eTextAlignment::Left);
 		m_LabelDescription.SetTextAlignment(Font::eTextAlignment::Left);

@@ -96,8 +96,8 @@ namespace onion::voxel
 					  const UserSettings& settings,
 					  WorldRenderer* worldRenderer,
 					  ChatHistory* chatHistory)
-			: World(world), Assets(assets), Inputs(inputs), Keys(keyBinds), m_Settings(settings),
-			  WrldRenderer(worldRenderer), Chat(chatHistory)
+			: World(world), Assets(assets), Inputs(inputs), Keys(keyBinds), WrldRenderer(worldRenderer),
+			  Chat(chatHistory), m_Settings(settings)
 		{
 		}
 
