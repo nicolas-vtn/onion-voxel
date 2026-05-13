@@ -73,7 +73,7 @@ namespace onion::voxel
 
 		const glm::ivec2 chunkPos = chunk->GetPosition();
 
-		const int subChunkCount = chunk->GetSubChunkCount();
+		const size_t subChunkCount = chunk->GetSubChunkCount();
 
 		// If the chunk mesh is already being rebuilt, we should stop the existing rebuild and start a new one
 		if (chunkMesh->m_IsRebuilding)
@@ -596,9 +596,9 @@ namespace onion::voxel
 		{
 			for (int col = 0; col < cols; ++col)
 			{
-			const BlockId blockId = inventory.At(row, col).Id;
-			if (blockId == BlockId::Air)
-				continue;
+				const BlockId blockId = inventory.At(row, col).Id;
+				if (blockId == BlockId::Air)
+					continue;
 
 				// Slot top-left in normalized screen space
 				const float slotX = col * (slotSize.x + slotPadding.x);
@@ -836,7 +836,8 @@ namespace onion::voxel
 		mesh.BuffersUpdated();
 	}
 
-	void MeshBuilder::RecordExecution()	{
+	void MeshBuilder::RecordExecution()
+	{
 		auto now = std::chrono::steady_clock::now();
 
 		std::lock_guard lock(m_ExecutionTimesMutex);

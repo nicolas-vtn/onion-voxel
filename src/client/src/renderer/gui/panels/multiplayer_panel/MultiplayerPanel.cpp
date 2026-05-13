@@ -985,7 +985,7 @@ namespace onion::voxel
 		(void) button;
 
 		// Retreves and Deletes the selected tile
-		for (int i = 0; i < m_ServerTiles.size(); i++)
+		for (size_t i = 0; i < m_ServerTiles.size(); i++)
 		{
 			if (m_ServerTiles[i]->IsSelected())
 			{

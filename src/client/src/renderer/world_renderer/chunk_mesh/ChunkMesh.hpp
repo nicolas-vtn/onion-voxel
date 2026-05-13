@@ -46,7 +46,7 @@ namespace onion::voxel
 		uint64_t GetVertexCount() const;
 
 		bool IsDirty() const;
-		void SetSubChunkMeshDirty(int subChunkIndex, bool isDirty);
+		void SetSubChunkMeshDirty(size_t subChunkIndex, bool isDirty);
 		void SetAllSubChunkMeshesDirty(bool isDirty);
 
 		// ----- States -----

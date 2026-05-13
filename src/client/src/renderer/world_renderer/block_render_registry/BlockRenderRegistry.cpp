@@ -204,7 +204,7 @@ namespace onion::voxel
 
 		const auto& variants = it->second;
 
-		for (int i = 0; i < variants.size(); i++)
+		for (size_t i = 0; i < variants.size(); i++)
 			LoadVariant(id, variants[i], i);
 	}
 

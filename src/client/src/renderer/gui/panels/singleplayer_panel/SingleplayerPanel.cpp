@@ -676,7 +676,7 @@ namespace onion::voxel
 	void SingleplayerPanel::Handle_WorldTileSelected(const WorldTile& worldTile)
 	{
 		// Deselect all other tiles
-		for (int i = 0; i < m_WorldTiles.size(); i++)
+		for (size_t i = 0; i < m_WorldTiles.size(); i++)
 		{
 			if (m_WorldTiles[i].get() != &worldTile)
 			{

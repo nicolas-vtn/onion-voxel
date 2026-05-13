@@ -425,7 +425,7 @@ namespace onion::voxel
 		float maxLineWidth = 0.f;
 
 		float width = 0.f;
-		for (int i = 0; i < text.size(); i++)
+		for (size_t i = 0; i < text.size(); i++)
 		{
 			float scale = textHeightPx / refGlyphHeight;
 			char32_t c = text[i];

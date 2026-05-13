@@ -50,7 +50,7 @@ namespace onion::voxel
 
 		std::shared_lock lock(m_Mutex);
 
-		const int subChunkIndex = localPosition.y / WorldConstants::CHUNK_SIZE;
+		const size_t subChunkIndex = localPosition.y / WorldConstants::CHUNK_SIZE;
 
 		// Checks subChunkIndex < 0 AND subChunkIndex >= size
 		if (localPosition.y < 0 || subChunkIndex >= m_SubChunks.size())
@@ -78,7 +78,7 @@ namespace onion::voxel
 		std::unique_lock lock(m_Mutex);
 
 		// Calculate which subchunk the local position is in
-		int subChunkIndex = localPosition.y / WorldConstants::CHUNK_SIZE;
+		size_t subChunkIndex = localPosition.y / WorldConstants::CHUNK_SIZE;
 
 		// Fill the subchunks vector with empty subchunks until we have enough subchunks to fit the local position
 		while (m_SubChunks.size() <= subChunkIndex)
@@ -113,10 +113,10 @@ namespace onion::voxel
 		m_SubChunks[subChunkIndex].SetBlockIndexInPalette_Unsafe(x, y % WorldConstants::CHUNK_SIZE, z, indexInPalette);
 	}
 
-	int Chunk::GetSubChunkCount() const
+	size_t Chunk::GetSubChunkCount() const
 	{
 		std::shared_lock lock(m_Mutex);
-		return static_cast<int>(m_SubChunks.size());
+		return m_SubChunks.size();
 	}
 
 	int Chunk::GetChunkHeight() const
@@ -138,11 +138,13 @@ namespace onion::voxel
 		return 0;
 	}
 
-	bool Chunk::IsSubchunkMonoBlock(const int subChunkIndex) const
+	bool Chunk::IsSubchunkMonoBlock(const size_t subChunkIndex) const
 	{
 		std::shared_lock lock(m_Mutex);
 
-		if (subChunkIndex < 0 || subChunkIndex >= m_SubChunks.size())
+		assert(subChunkIndex < m_SubChunks.size() && "Subchunk index is out of bounds");
+
+		if (subChunkIndex >= m_SubChunks.size())
 		{
 			throw std::out_of_range("Subchunk index is out of bounds");
 		}
