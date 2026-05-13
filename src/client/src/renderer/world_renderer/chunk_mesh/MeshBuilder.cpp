@@ -112,7 +112,7 @@ namespace onion::voxel
 		std::shared_ptr<Chunk> adjacentPosZ = m_WorldManager->GetChunk(glm::ivec2(chunkPos.x, chunkPos.y + 1));
 		std::shared_ptr<Chunk> adjacentNegZ = m_WorldManager->GetChunk(glm::ivec2(chunkPos.x, chunkPos.y - 1));
 
-		for (int sub = 0; sub < subChunkCount; sub++)
+		for (size_t sub = 0; sub < subChunkCount; sub++)
 		{
 			// If a stop has been requested for this rebuild, we should stop building the mesh
 			if (stopToken.stop_requested())
@@ -152,7 +152,7 @@ namespace onion::voxel
 						std::array<BlockState, 6> neighbors;
 
 						// Up (+y)
-						if (localPos.y + 1 < subChunkCount * SIZE)
+						if (static_cast<size_t>(localPos.y + 1) < subChunkCount * SIZE)
 							neighbors[(int) Face::Up] = chunk->GetBlock(glm::ivec3(x, localPos.y + 1, z));
 						else
 							neighbors[(int) Face::Up] = BlockState(BlockId::Air); // Air block if above the world

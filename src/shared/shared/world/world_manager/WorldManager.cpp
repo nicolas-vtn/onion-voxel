@@ -753,8 +753,6 @@ namespace onion::voxel
 
 		for (auto& [chunk, blocks] : work)
 		{
-			glm::ivec2 chunkPos = chunk->GetPosition();
-
 			for (auto& block : blocks)
 			{
 				BlockId currentBlockId = chunk->GetBlock(Utils::WorldToLocalPosition(block.Position)).ID;

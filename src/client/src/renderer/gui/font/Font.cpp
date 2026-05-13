@@ -430,7 +430,7 @@ namespace onion::voxel
 			float scale = textHeightPx / refGlyphHeight;
 			char32_t c = text[i];
 
-			if (c == U'\u00A7' && i + 1 < (int) text.size())
+			if (c == U'\u00A7' && i + 1 < text.size())
 			{
 				i++; // skip the code character following § (e.g. §9, §o, §r)
 				continue;
