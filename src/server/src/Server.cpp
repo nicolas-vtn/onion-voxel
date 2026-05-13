@@ -10,6 +10,7 @@
 
 #include <shared/data_transfer_objects/serializer/SerializerDTO.hpp>
 #include <shared/entities/entity/block_entity/BlockEntity.hpp>
+#include <shared/network_messages/chat_msg/ChatMsg.hpp>
 #include <shared/network_messages/item_picked_up_msg/ItemPickedUpMsg.hpp>
 #include <shared/utils/Utils.hpp>
 
@@ -199,6 +200,10 @@ namespace onion::voxel
 				{
 					Handle_ItemDroppedMsgReceived(args, msg);
 				}
+				else if constexpr (std::is_same_v<T, ChatMsg>)
+				{
+					Handle_ChatMsgReceived(args, msg);
+				}
 				else
 				{
 					std::cout << "Received unhandled message type from client " << args.Sender << "\n";
@@ -305,17 +310,8 @@ namespace onion::voxel
 	void Server::Handle_ItemDroppedMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
 											   const ItemDroppedMsg& msg)
 	{
-		// Resolve sender's player
-		std::string playerUUID;
-		{
-			std::shared_lock lock(m_MutexPlayers);
-			auto it = m_ClientHandleToPlayerInfo.find(args.Sender);
-			if (it == m_ClientHandleToPlayerInfo.end())
-				return;
-			playerUUID = it->second.UUID;
-		}
+		std::shared_ptr<Player> player = GetPlayer(args.Sender);
 
-		std::shared_ptr<Player> player = m_WorldManager->GetPlayer(playerUUID);
 		if (!player)
 			return;
 
@@ -340,7 +336,27 @@ namespace onion::voxel
 
 		m_WorldManager->AddEntity(blockEntity);
 
-		std::cout << "Spawned BlockEntity UUID=" << blockEntity->UUID << " for player " << playerUUID << "\n";
+		std::cout << "Spawned BlockEntity UUID=" << blockEntity->UUID << " for player " << player->GetName() << "\n";
+	}
+
+	void Server::Handle_ChatMsgReceived(const NetworkServer::MessageReceivedEventArgs& args, const ChatMsg& msg)
+	{
+		auto player = GetPlayer(args.Sender);
+
+		if (!player)
+			return;
+
+		std::cout << "[Chat] " << player->GetName() << ": " << msg.Message << "\n";
+
+		// Add Chat to history
+		m_ChatHistory.AddReceived(
+			std::make_shared<const ChatMessage>(DateTime::UtcNow(), player->GetName(), player->UUID, msg.Message));
+
+		ChatMsg broadcast;
+		broadcast.PlayerName = player->GetName();
+		broadcast.PlayerUUID = player->UUID;
+		broadcast.Message = msg.Message;
+		m_NetworkServer.Broadcast(std::move(broadcast), true);
 	}
 
 	void Server::Handle_TimerPhysicsTick()
@@ -420,9 +436,8 @@ namespace onion::voxel
 				const glm::vec3 beMax = beCenter + beHalf;
 
 				// AABB overlap test
-				const bool overlaps = playerMax.x > beMin.x && playerMin.x < beMax.x &&
-									  playerMax.y > beMin.y && playerMin.y < beMax.y &&
-									  playerMax.z > beMin.z && playerMin.z < beMax.z;
+				const bool overlaps = playerMax.x > beMin.x && playerMin.x < beMax.x && playerMax.y > beMin.y &&
+					playerMin.y < beMax.y && playerMax.z > beMin.z && playerMin.z < beMax.z;
 				if (!overlaps)
 					continue;
 
@@ -609,20 +624,9 @@ namespace onion::voxel
 
 			for (const auto& playerUUID : nearbyPlayers)
 			{
-				uint32_t clientHandle;
-				{
-					std::shared_lock lock(m_MutexPlayers);
-					auto it = m_UUIDToPlayerInfo.find(playerUUID);
-					if (it != m_UUIDToPlayerInfo.end())
-					{
-						clientHandle = it->second.ClientHandle;
-					}
-					else
-					{
-						continue; // Player not found, skip sending chunk
-					}
-				}
-				m_NetworkServer.Send(clientHandle, chunkDataMsg);
+				std::optional<PlayerInfo> playerInfo = GetPlayerInfo(playerUUID);
+				if (playerInfo)
+					m_NetworkServer.Send(playerInfo->ClientHandle, chunkDataMsg);
 			}
 		}
 	}
@@ -683,6 +687,38 @@ namespace onion::voxel
 				m_UUIDToPlayerInfo.erase(it);
 			}
 		}
+	}
+
+	std::shared_ptr<Player> Server::GetPlayer(const uint32_t clientHandle)
+	{
+		// Resolve sender's player
+		std::string playerUUID;
+
+		{
+			std::shared_lock lock(m_MutexPlayers);
+			auto it = m_ClientHandleToPlayerInfo.find(clientHandle);
+
+			if (it == m_ClientHandleToPlayerInfo.end())
+				return nullptr;
+
+			playerUUID = it->second.UUID;
+		}
+
+		return m_WorldManager->GetPlayer(playerUUID);
+	}
+
+	std::optional<Server::PlayerInfo> Server::GetPlayerInfo(const std::string uuid)
+	{
+		std::shared_lock lock(m_MutexPlayers);
+
+		auto it = m_UUIDToPlayerInfo.find(uuid);
+
+		if (it == m_UUIDToPlayerInfo.end())
+		{
+			return std::nullopt; // Player not found
+		}
+
+		return it->second;
 	}
 
 	void Server::SubscribeToWorldManagerEvents()

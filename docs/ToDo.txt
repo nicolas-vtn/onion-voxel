@@ -5,7 +5,7 @@
 - Add Sounds / Musics
 - Animated textures (water, lava, ...) and lower texture
 - Add Player position interpolation in multiplayer
-- Add a Chat system
+- Implement Commands in the chat (ex: /tp, /fly, ...)
 - Add Player Names display on top of head in Multiplayer
 - Add Player list display (tab)
 - Particules (breaking blocks, footsteps, ...)

@@ -50,7 +50,7 @@ namespace onion::voxel
 		}
 
 		// DEBUG
-		//if (EngineContext::Get().ShowDebugMenus)
+		//if (EngineContext::Get().ShowDebugMenus())
 		//	RenderImGuiDebug();
 
 		m_NineSliceSprite_SliderBasic.PullEvents();
@@ -198,8 +198,8 @@ namespace onion::voxel
 		m_EventHandles.push_back(m_NineSliceSprite_SliderBasic.EvtMouseDown.Subscribe(
 			[this](const NineSliceSprite& sprite) { Handle_MouseDown(sprite); }));
 
-		m_EventHandles.push_back(m_NineSliceSprite_SliderBasic.EvtMouseUp.Subscribe([this](const NineSliceSprite& sprite)
-																				   { Handle_MouseUp(sprite); }));
+		m_EventHandles.push_back(m_NineSliceSprite_SliderBasic.EvtMouseUp.Subscribe(
+			[this](const NineSliceSprite& sprite) { Handle_MouseUp(sprite); }));
 
 		m_EventHandles.push_back(m_NineSliceSprite_SliderBasic.EvtHoverEnter.Subscribe(
 			[this](const NineSliceSprite& sprite) { Handle_HoverEnter(sprite); }));

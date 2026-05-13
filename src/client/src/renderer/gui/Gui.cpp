@@ -34,7 +34,7 @@ namespace onion::voxel
 		  m_VideoSettingsPanel("VideoSettingsPanel"), m_ControlsPanel("ControlsPanel"),
 		  m_MouseSettingsPanel("MouseSettingsPanel"), m_KeyBindsPanel("KeyBindsPanel"),
 		  m_DemoTextsPanel("DemoTextsPanel"), m_MultiplayerPanel("MultiplayerPanel"), m_HudPanel("HudPanel"),
-		  m_InventoryPanel("InventoryPanel")
+		  m_InventoryPanel("InventoryPanel"), m_ChatPanel("ChatPanel")
 	{
 		SubscribeToPanelsEvents();
 	}
@@ -162,6 +162,12 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(
 			m_InventoryPanel.EvtItemDropped.Subscribe([this](const Slot& slot) { EvtItemDropped.Trigger(slot); }));
+
+		m_EventHandles.push_back(m_ChatPanel.EvtRequestBackNavigation.Subscribe([this](const GuiElement* sender)
+																				{ Handle_BackRequest(sender); }));
+
+		m_EventHandles.push_back(m_ChatPanel.EvtChatMessageSent.Subscribe([this](const std::string& message)
+																		  { Handle_ChatMessageSent(message); }));
 	}
 
 	void Gui::Handle_MenuNavigationRequest(const std::pair<const GuiElement*, eMenu>& request)
@@ -218,6 +224,11 @@ namespace onion::voxel
 				  << serverInfos.Port << std::endl;
 
 		EvtRequestStartMultiplayerGame.Trigger(serverInfos);
+	}
+
+	void Gui::Handle_ChatMessageSent(const std::string& message)
+	{
+		EvtChatMessageSent.Trigger(message);
 	}
 
 	void Gui::SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot)
@@ -312,6 +323,11 @@ namespace onion::voxel
 			m_MultiplayerPanel.RefreshServerTilesAsync();
 		}
 
+		if (m_ActiveMenu == eMenu::Chat)
+		{
+			m_ChatPanel.FocusTextField();
+		}
+
 		// Handle the MouseCapture state
 		bool inGame = m_ActiveMenu == eMenu::Gameplay;
 		const auto& inputsManager = EngineContext::Get().Inputs;
@@ -384,22 +400,23 @@ namespace onion::voxel
 		m_MultiplayerPanel.Initialize();
 		m_HudPanel.Initialize();
 		m_InventoryPanel.Initialize();
+		m_ChatPanel.Initialize();
 
 		ReloadSkyboxTextures();
 	}
 
 	void Gui::Render()
 	{
-		if (EngineContext::Get().ShowDebugMenus)
+		if (EngineContext::Get().ShowDebugMenus())
 			RenderDebugPanel();
 
 		{
-			// Block key inputs for one frame after a menu transition.
-			// Prevents the key that triggered a menu change from being read by the new panel on the same frame.
+			// Record the frame boundary when a panel transition occurs.
+			// Panels use IsFirstFrameAfterPanelChange() to detect their first Render() call.
 			std::lock_guard lock(m_MutexState);
 			if (m_ActiveMenu != m_MenuPreviousFrame)
 			{
-				GuiElement::s_KeyInputsValidFromFrame = EngineContext::Get().FrameCount + 1;
+				GuiElement::s_PanelChangeFrame = EngineContext::Get().FrameCount.load();
 			}
 		}
 
@@ -448,6 +465,9 @@ namespace onion::voxel
 			case eMenu::Inventory:
 				m_InventoryPanel.Render();
 				break;
+			case eMenu::Chat:
+				m_ChatPanel.Render();
+				break;
 			default:
 				break;
 		}
@@ -458,7 +478,10 @@ namespace onion::voxel
 
 	void Gui::RenderGameHUD()
 	{
-		m_HudPanel.Render();
+		eMenu activeMenu = GetActiveMenu();
+		bool ignoreKeys = activeMenu != eMenu::Gameplay; // Ignore keys if NOT in Gameplay
+		bool isChatOpen = activeMenu == eMenu::Chat;
+		m_HudPanel.Render(ignoreKeys, isChatOpen);
 	}
 
 	void Gui::RenderBackground()
@@ -502,6 +525,7 @@ namespace onion::voxel
 		m_MultiplayerPanel.Delete();
 		m_HudPanel.Delete();
 		m_InventoryPanel.Delete();
+		m_ChatPanel.Delete();
 
 		m_Skybox.Unload();
 	}
@@ -525,6 +549,7 @@ namespace onion::voxel
 		m_MultiplayerPanel.ReloadTextures();
 		m_HudPanel.ReloadTextures();
 		m_InventoryPanel.ReloadTextures();
+		m_ChatPanel.ReloadTextures();
 
 		ReloadSkyboxTextures();
 	}

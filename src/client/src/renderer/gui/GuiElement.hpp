@@ -36,6 +36,7 @@ namespace onion::voxel
 		KeyBinds,
 		Inventory,
 		Gameplay,
+		Chat,
 		Pause,
 		MusicAndSounds,
 		ResourcePacks,
@@ -116,10 +117,10 @@ namespace onion::voxel
 	  public:
 		static void SetScreenSize(int screenWidth, int screenHeight);
 		static void SetInputsSnapshot(std::shared_ptr<InputsSnapshot> inputsSnapshot);
-		static bool AreKeyInputsValid();
+		static bool IsFirstFrameAfterPanelChange();
 		static bool IsBackPressed();
 
-		static inline std::atomic<uint64_t> s_KeyInputsValidFromFrame{0};
+		static inline std::atomic<uint64_t> s_PanelChangeFrame{0};
 
 		// ----- Static Methods ----- (for Initialization and Unload)
 	  public:
@@ -199,6 +200,7 @@ namespace onion::voxel
 				MouseSensitivity_Changed = true;
 				MouseScrollSensitivity_Changed = true;
 				KeyBinds_Changed = true;
+				ShowDebugMenus_Changed = true;
 			}
 		}
 
@@ -221,5 +223,7 @@ namespace onion::voxel
 
 		bool KeyBinds_Changed = false;
 		std::unordered_map<eAction, Key> ChangedKeyBinds; // Action -> NewKey
+
+		bool ShowDebugMenus_Changed = false;
 	};
 } // namespace onion::voxel

@@ -23,11 +23,11 @@ namespace
 
 namespace onion::voxel
 {
-	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager)
+	Renderer::Renderer(std::shared_ptr<WorldManager> worldManager, ChatHistory& chatHistory)
 		: m_WorldManager(worldManager),
 		  m_Camera(std::make_shared<Camera>(glm::vec3(1.0f, 120.0f, 1.0f), m_WindowWidth, m_WindowHeight)),
 		  m_WorldRenderer(worldManager, m_Camera), m_KeyBinds(m_InputsManager), m_PhysicsEngine(*worldManager),
-		  m_EntityRenderer(m_Camera, m_WorldRenderer.GetMeshBuilder()), m_FovSmoother(m_Camera)
+		  m_EntityRenderer(m_Camera, m_WorldRenderer.GetMeshBuilder()), m_FovSmoother(m_Camera), m_Gui()
 	{
 		// Setup Timer Save UserSettings
 		m_TimerDelayedSaveUserSettings.setTimeoutFunction([this]() { SaveUserSettings(); });
@@ -46,8 +46,13 @@ namespace onion::voxel
 		}
 
 		// Sets the Engine Context
-		EngineContext::Initialize(
-			worldManager.get(), &m_AssetsManager, &m_InputsManager, &m_KeyBinds, settings, &m_WorldRenderer);
+		EngineContext::Initialize(worldManager.get(),
+								  &m_AssetsManager,
+								  &m_InputsManager,
+								  &m_KeyBinds,
+								  settings,
+								  &m_WorldRenderer,
+								  &chatHistory);
 
 		UserSettingsChangedEventArgs args(settings, true);
 
@@ -291,7 +296,8 @@ namespace onion::voxel
 			bool isMainMenu = activeMenu == eMenu::MainMenu;
 			bool isInGameplay = activeMenu == eMenu::Gameplay;
 			bool isInInventory = activeMenu == eMenu::Inventory;
-			bool blurry = (!isMainMenu && !isInGameplay && !isInInventory);
+			bool isInChat = activeMenu == eMenu::Chat;
+			bool blurry = (!isMainMenu && !isInGameplay && !isInInventory && !isInChat);
 			if (blurry)
 			{
 				finalTexture = ApplyBlur(m_SceneColorTexture);
@@ -304,7 +310,7 @@ namespace onion::voxel
 			m_Gui.Render();
 
 			// Render Debug Panels
-			if (EngineContext::Get().ShowDebugMenus)
+			if (EngineContext::Get().ShowDebugMenus())
 			{
 				RenderDebugPanel();
 				RenderPhysicsDebugPanel();
@@ -546,6 +552,8 @@ namespace onion::voxel
 		m_KeyBinds.RemapAction(eAction::ToggleDebugMenus, actionToKey.at(eAction::ToggleDebugMenus), noRepeat);
 		m_KeyBinds.RemapAction(eAction::PickBlock, actionToKey.at(eAction::PickBlock), noRepeat);
 		m_KeyBinds.RemapAction(eAction::OpenInventory, actionToKey.at(eAction::OpenInventory), noRepeat);
+		m_KeyBinds.RemapAction(eAction::OpenChat, actionToKey.at(eAction::OpenChat), noRepeat);
+		m_KeyBinds.RemapAction(eAction::ListPlayers, actionToKey.at(eAction::ListPlayers), noRepeat);
 		m_KeyBinds.RemapAction(eAction::HotbarSlot1, actionToKey.at(eAction::HotbarSlot1), noRepeat);
 		m_KeyBinds.RemapAction(eAction::HotbarSlot2, actionToKey.at(eAction::HotbarSlot2), noRepeat);
 		m_KeyBinds.RemapAction(eAction::HotbarSlot3, actionToKey.at(eAction::HotbarSlot3), noRepeat);
@@ -574,14 +582,19 @@ namespace onion::voxel
 		KeyState toggleDebugMenusKeyState = m_KeyBinds.GetKeyState(eAction::ToggleDebugMenus);
 		if (toggleDebugMenusKeyState.IsPressed)
 		{
-			auto& engineContext = EngineContext::Get();
-			engineContext.ShowDebugMenus = !engineContext.ShowDebugMenus;
+			auto settings = EngineContext::Get().Settings();
+			settings.Controls.ShowDebugMenus = !settings.Controls.ShowDebugMenus;
+			UserSettingsChangedEventArgs args(settings);
+			args.ShowDebugMenus_Changed = true;
+			ApplyUserSettings(args);
 		}
 
 		KeyState pauseKeyState = m_KeyBinds.GetKeyState(eAction::Pause);
 		bool inGame = GetRenderState() == eRenderState::InGame;
-		bool inInventory = m_Gui.GetActiveMenu() == eMenu::Inventory;
-		if (pauseKeyState.IsPressed && inGame && !inInventory)
+		eMenu activeMenu = m_Gui.GetActiveMenu();
+		bool inInventory = activeMenu == eMenu::Inventory;
+		bool inChat = activeMenu == eMenu::Chat;
+		if (pauseKeyState.IsPressed && inGame && !inInventory && !inChat)
 		{
 			PauseGame(true);
 		}
@@ -625,14 +638,27 @@ namespace onion::voxel
 		if (!player)
 			return;
 
-		// ----- INVENTORY ------
-		if (m_Gui.GetActiveMenu() == eMenu::Inventory)
+		// ---- Early Returns if in a menu ----
+		eMenu activeMenu = m_Gui.GetActiveMenu();
+		bool isInInventory = activeMenu == eMenu::Inventory;
+		bool isInChat = activeMenu == eMenu::Chat;
+
+		if (isInInventory || isInChat)
 			return;
 
+		// ----- INVENTORY ------
 		KeyState toggleInventoryKeyState = m_KeyBinds.GetKeyState(eAction::OpenInventory);
 		if (toggleInventoryKeyState.IsPressed)
 		{
 			m_Gui.SetActiveMenu(eMenu::Inventory);
+			return;
+		}
+
+		// ----- CHAT -----
+		KeyState openChatKeyState = m_KeyBinds.GetKeyState(eAction::OpenChat);
+		if (openChatKeyState.IsPressed)
+		{
+			m_Gui.SetActiveMenu(eMenu::Chat);
 			return;
 		}
 
@@ -1333,6 +1359,9 @@ namespace onion::voxel
 
 		m_EventHandles.push_back(
 			m_Gui.EvtItemDropped.Subscribe([this](const Slot& slot) { EvtItemDropped.Trigger(slot); }));
+
+		m_EventHandles.push_back(m_Gui.EvtChatMessageSent.Subscribe([this](const std::string& message)
+																	{ EvtChatMessageSent.Trigger(message); }));
 	}
 
 	void Renderer::Handle_CursorStyleChangeRequest(const CursorStyle& style)

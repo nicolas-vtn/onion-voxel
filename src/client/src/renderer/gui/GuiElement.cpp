@@ -128,14 +128,14 @@ namespace onion::voxel
 		s_InputsSnapshot = inputsSnapshot;
 	}
 
-	bool GuiElement::AreKeyInputsValid()
+	bool GuiElement::IsFirstFrameAfterPanelChange()
 	{
-		return EngineContext::Get().FrameCount >= s_KeyInputsValidFromFrame;
+		return EngineContext::Get().FrameCount <= s_PanelChangeFrame;
 	}
 
 	bool GuiElement::IsBackPressed()
 	{
-		return AreKeyInputsValid() && EngineContext::Get().Keys->GetKeyState(eAction::CloseMenu).IsPressed;
+		return !IsFirstFrameAfterPanelChange() && EngineContext::Get().Keys->GetKeyState(eAction::CloseMenu).IsPressed;
 	}
 
 	void GuiElement::Load()

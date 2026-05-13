@@ -6,6 +6,7 @@
 #include <renderer/assets_manager/AssetsManager.hpp>
 #include <renderer/inputs_manager/inputs_manager.hpp>
 #include <renderer/key_binds/KeyBinds.hpp>
+#include <shared/chat_history/ChatHistory.hpp>
 #include <shared/world/raycast/Raycast.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 #include <user_settings/UserSettings.hpp>
@@ -27,7 +28,7 @@ namespace onion::voxel
 		InputsManager* Inputs;
 		KeyBinds* Keys;
 		WorldRenderer* WrldRenderer;
-		std::atomic_bool ShowDebugMenus{true};
+		ChatHistory* Chat;
 		std::atomic<uint64_t> FrameCount{0};
 
 		/// @brief The block the local player is currently looking at. Written by Renderer each frame.
@@ -38,6 +39,12 @@ namespace onion::voxel
 		{
 			std::shared_lock lock(m_MutexSettings);
 			return m_Settings;
+		}
+
+		bool ShowDebugMenus() const
+		{
+			std::shared_lock lock(m_MutexSettings);
+			return m_Settings.Controls.ShowDebugMenus;
 		}
 
 		void UpdateSettings(const UserSettings& newSettings)
@@ -59,12 +66,13 @@ namespace onion::voxel
 							   InputsManager* inputs,
 							   onion::voxel::KeyBinds* keyBinds,
 							   const UserSettings& settings,
-							   WorldRenderer* worldRenderer)
+							   WorldRenderer* worldRenderer,
+							   ChatHistory* chatHistory)
 		{
 			if (s_Instance)
 				throw std::runtime_error("EngineContext already initialized");
 
-			s_Instance = new EngineContext(world, assets, inputs, keyBinds, settings, worldRenderer);
+			s_Instance = new EngineContext(world, assets, inputs, keyBinds, settings, worldRenderer, chatHistory);
 		}
 
 		static EngineContext& Get()
@@ -86,9 +94,10 @@ namespace onion::voxel
 					  InputsManager* inputs,
 					  onion::voxel::KeyBinds* keyBinds,
 					  const UserSettings& settings,
-					  WorldRenderer* worldRenderer)
+					  WorldRenderer* worldRenderer,
+					  ChatHistory* chatHistory)
 			: World(world), Assets(assets), Inputs(inputs), Keys(keyBinds), m_Settings(settings),
-			  WrldRenderer(worldRenderer)
+			  WrldRenderer(worldRenderer), Chat(chatHistory)
 		{
 		}
 

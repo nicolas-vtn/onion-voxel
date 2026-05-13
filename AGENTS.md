@@ -67,7 +67,7 @@ Verification workflow: **build → run manually**.
 
 ## Code style (enforced by `.clang-format`)
 
-Run `clang-format` before submitting changes to C++ files.
+Run `clang-format` after **every edit** to a C++ file (`.cpp` or `.hpp`), immediately before moving on to the next task step.
 
 - BasedOnStyle: LLVM, Language: C++20
 - **Allman braces** — every `{` on its own line

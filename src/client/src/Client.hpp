@@ -66,6 +66,7 @@ namespace onion::voxel
 		void Handle_BlocksChangedMessageReceived(const BlocksChangedMsg& msg);
 		void Handle_EntitySnapshotMessageReceived(const EntitySnapshotMsg& msg);
 		void Handle_ItemPickedUpMsgReceived(const ItemPickedUpMsg& msg);
+		void Handle_ChatMsgReceived(const ChatMsg& msg);
 
 		Timer m_TimerSendPlayerInfos;
 		void SendPlayerInfosToServer();
@@ -91,12 +92,14 @@ namespace onion::voxel
 
 		// ----- Renderer -----
 	  private:
+		ChatHistory m_ChatHistory;
 		Renderer m_Renderer;
 		std::vector<EventHandle> m_RendererEventHandles;
 		void SubscribeToRendererEvents();
 
 		void Handle_RenderDistanceChanged(uint8_t renderDistance);
 		void Handle_ItemDropped(const Slot& slot);
+		void Handle_ChatMessageSent(const std::string& message);
 
 		// ----- Logger -----
 	  private:

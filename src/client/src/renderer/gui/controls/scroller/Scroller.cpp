@@ -43,7 +43,7 @@ namespace onion::voxel
 	void Scroller::Render()
 	{
 		// DEBUG
-		//if (EngineContext::Get().ShowDebugMenus)
+		//if (EngineContext::Get().ShowDebugMenus())
 		//	RenderImGuiDebug();
 
 		bool wasCissoring = m_Cissoring;
@@ -113,23 +113,29 @@ namespace onion::voxel
 		glm::ivec2 scrollPosition{scrollPosX, scrollPosY};
 
 		// ---- Render Background ----
-		m_SpriteBackground.SetPosition(centerPos);
-		m_SpriteBackground.SetSize(scrollerAreaSize);
-		m_SpriteBackground.Render();
+		if (m_RenderBackground)
+		{
+			m_SpriteBackground.SetPosition(centerPos);
+			m_SpriteBackground.SetSize(scrollerAreaSize);
+			m_SpriteBackground.Render();
+		}
 
-		// ---- Render Header ----
-		glm::ivec2 headerSize{scrollerAreaSize.x, headerHeight};
-		glm::ivec2 headerPos{centerPos.x, m_TopLeftCorner.y - headerSize.y / 2};
-		m_SpriteHeader.SetPosition(headerPos);
-		m_SpriteHeader.SetSize(headerSize);
-		m_SpriteHeader.Render();
+		if (m_RenderBorders)
+		{
+			// ---- Render Header ----
+			glm::ivec2 headerSize{scrollerAreaSize.x, headerHeight};
+			glm::ivec2 headerPos{centerPos.x, m_TopLeftCorner.y - headerSize.y / 2};
+			m_SpriteHeader.SetPosition(headerPos);
+			m_SpriteHeader.SetSize(headerSize);
+			m_SpriteHeader.Render();
 
-		// ---- Render Footer ----
-		glm::ivec2 footerSize{scrollerAreaSize.x, headerHeight};
-		glm::ivec2 footerPos{centerPos.x, m_BottomRightCorner.y + footerSize.y / 2};
-		m_SpriteFooter.SetPosition(footerPos);
-		m_SpriteFooter.SetSize(footerSize);
-		m_SpriteFooter.Render();
+			// ---- Render Footer ----
+			glm::ivec2 footerSize{scrollerAreaSize.x, headerHeight};
+			glm::ivec2 footerPos{centerPos.x, m_BottomRightCorner.y + footerSize.y / 2};
+			m_SpriteFooter.SetPosition(footerPos);
+			m_SpriteFooter.SetSize(footerSize);
+			m_SpriteFooter.Render();
+		}
 
 		if (shouldScrollerBeVisible)
 		{
@@ -271,9 +277,39 @@ namespace onion::voxel
 		return {true, isFullyVisible, visibleTopLeft, visibleBottomRight};
 	}
 
+	void Scroller::SetRenderBorders(bool renderBorders)
+	{
+		m_RenderBorders = renderBorders;
+	}
+
+	bool Scroller::GetRenderBorders() const
+	{
+		return m_RenderBorders;
+	}
+
+	void Scroller::SetRenderBackground(bool renderBackground)
+	{
+		m_RenderBackground = renderBackground;
+	}
+
+	bool Scroller::GetRenderBackground() const
+	{
+		return m_RenderBackground;
+	}
+
 	bool Scroller::IsCissoring() const
 	{
 		return m_IsScrolling;
+	}
+
+	void Scroller::SetHandleXPositionRatio(float scrollXPositionRatio)
+	{
+		m_HandleXPositionRatio = scrollXPositionRatio;
+	}
+
+	float Scroller::GetHandleXPositionRatio() const
+	{
+		return m_HandleXPositionRatio;
 	}
 
 	void Scroller::SetScrollRatio(float scrollRatio)
@@ -289,10 +325,10 @@ namespace onion::voxel
 	void Scroller::SubscribeToSpriteEvents()
 	{
 		m_EventHandles.push_back(m_NineSliceSprite_Scroller.EvtMouseDown.Subscribe([this](const NineSliceSprite& sprite)
-																				  { Handle_MouseDown(sprite); }));
+																				   { Handle_MouseDown(sprite); }));
 
 		m_EventHandles.push_back(m_NineSliceSprite_Scroller.EvtMouseUp.Subscribe([this](const NineSliceSprite& sprite)
-																				{ Handle_MouseUp(sprite); }));
+																				 { Handle_MouseUp(sprite); }));
 
 		m_EventHandles.push_back(m_NineSliceSprite_ScrollerBackground.EvtHoverEnter.Subscribe(
 			[this](const NineSliceSprite& sprite) { Handle_HoverEnter(sprite); }));

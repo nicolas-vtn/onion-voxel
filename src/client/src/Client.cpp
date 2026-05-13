@@ -4,13 +4,14 @@
 #include <unordered_set>
 
 #include <shared/data_transfer_objects/serializer/SerializerDTO.hpp>
+#include <shared/network_messages/chat_msg/ChatMsg.hpp>
 #include <shared/network_messages/item_dropped_msg/ItemDroppedMsg.hpp>
 #include <shared/network_messages/item_picked_up_msg/ItemPickedUpMsg.hpp>
 #include <shared/utils/Utils.hpp>
 
 namespace onion::voxel
 {
-	Client::Client() : m_Logger(m_LogFile.string()), m_Renderer(m_WorldManager)
+	Client::Client() : m_Logger(m_LogFile.string()), m_Renderer(m_WorldManager, m_ChatHistory)
 	{
 		LoadConfiguration();
 
@@ -255,6 +256,9 @@ namespace onion::voxel
 
 		m_RendererEventHandles.push_back(
 			m_Renderer.EvtItemDropped.Subscribe([this](const Slot& slot) { Handle_ItemDropped(slot); }));
+
+		m_RendererEventHandles.push_back(m_Renderer.EvtChatMessageSent.Subscribe([this](const std::string& message)
+																				 { Handle_ChatMessageSent(message); }));
 	}
 
 	void Client::Handle_RenderDistanceChanged(uint8_t renderDistance)
@@ -274,6 +278,36 @@ namespace onion::voxel
 		msg.BlockId = static_cast<uint16_t>(slot.Id);
 		msg.Count = slot.Count;
 		m_NetworkClient.Send(std::move(msg), true);
+	}
+
+	void Client::Handle_ChatMessageSent(const std::string& message)
+	{
+		if (!m_NetworkClient.IsRunning())
+			return;
+
+		std::shared_ptr<Player> player = m_Renderer.GetPlayer();
+		if (!player)
+		{
+			std::cerr << "Cannot send chat message: player is null\n";
+			return;
+		}
+
+		ChatMsg msg;
+		msg.Message = message;
+		// PlayerName and UUID are left empty: the server resolves them from its own registry.
+		// They will be populated by the server when broadcasting the message to all clients.
+		m_NetworkClient.Send(std::move(msg), true);
+
+		m_ChatHistory.AddSent(
+			std::make_shared<const ChatMessage>(DateTime::UtcNow(), player->GetName(), player->UUID, message));
+	}
+
+	void Client::Handle_ChatMsgReceived(const ChatMsg& msg)
+	{
+		std::cout << "[Chat] " << msg.PlayerName << ": " << msg.Message << "\n";
+
+		m_ChatHistory.AddReceived(
+			std::make_shared<const ChatMessage>(DateTime::UtcNow(), msg.PlayerName, msg.PlayerUUID, msg.Message));
 	}
 
 	void Client::SubscribeToNetworkClientEvents()
@@ -324,6 +358,10 @@ namespace onion::voxel
 				else if constexpr (std::is_same_v<T, ItemPickedUpMsg>)
 				{
 					Handle_ItemPickedUpMsgReceived(msg);
+				}
+				else if constexpr (std::is_same_v<T, ChatMsg>)
+				{
+					Handle_ChatMsgReceived(msg);
 				}
 				else
 				{

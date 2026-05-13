@@ -23,6 +23,8 @@ add_library(onion_voxel_shared
 
  "shared/zip_archive/ZipArchive.cpp"
 
+ "shared/chat_history/ChatHistory.cpp"
+
  "shared/entities/entity_manager/EntityManager.cpp"
  "shared/entities/entity/Entity.cpp"
  "shared/entities/entity/player/Player.cpp"

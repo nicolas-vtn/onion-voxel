@@ -1,5 +1,7 @@
 #include "HudPanel.hpp"
 
+#include <algorithm>
+
 #include <renderer/debug_draws/DebugDraws.hpp>
 #include <renderer/world_renderer/WorldRenderer.hpp>
 
@@ -42,7 +44,7 @@ namespace onion::voxel
 		m_WailaBlockMesh->SetSlotBorder(0.f);
 	}
 
-	void HudPanel::Render()
+	void HudPanel::Render(bool ignoreKeys, bool isChatOpen)
 	{
 		// Retreve Player State
 		std::shared_ptr<Player> player = EngineContext::Get().GetLocalPlayer();
@@ -69,7 +71,7 @@ namespace onion::voxel
 			EngineContext::Get().Inputs->IsKeyPressed(Key::RightShift);
 
 		// This combinaison is used to lock the hotbar scroll when Accelerating Fly Speed.
-		bool bypassScroll = spacePressed && shiftPressed;
+		bool bypassScroll = spacePressed && shiftPressed || ignoreKeys;
 
 		if (scroll != 0 && !bypassScroll)
 		{
@@ -289,10 +291,10 @@ namespace onion::voxel
 		float textFadeStrength = GetSelectedBlockNameFadeInFactor();
 		if (textFadeStrength > 0.f)
 		{
-		BlockId selectedBlockId = playerHotbar.At(playerHotbar.SelectedIndex()).Id;
-		if (selectedBlockId != BlockId::Air)
-		{
-			std::string blockName = BlockIds::GetName(playerHotbar.At(playerHotbar.SelectedIndex()).Id);
+			BlockId selectedBlockId = playerHotbar.At(playerHotbar.SelectedIndex()).Id;
+			if (selectedBlockId != BlockId::Air)
+			{
+				std::string blockName = BlockIds::GetName(playerHotbar.At(playerHotbar.SelectedIndex()).Id);
 				const float labelYposRatio = (812.f - 23.f) / 1009.f;
 				const float labelPosY = std::round(s_ScreenHeight * labelYposRatio);
 				m_SelectedBlockName_Label.SetText(blockName);
@@ -340,8 +342,8 @@ namespace onion::voxel
 				const glm::vec2 blockTopLeft = {(float) innerTopLeft.x, blockTopY};
 
 				// Update block mesh inventory.
-			Inventory wailaInv{1, 1};
-			wailaInv.Content()[0] = Slot{wailaBlockId, 1};
+				Inventory wailaInv{1, 1};
+				wailaInv.Content()[0] = Slot{wailaBlockId, 1};
 				m_WailaBlockMesh->SetInventory(wailaInv, wailaSlotSize, {0.f, 0.f});
 				if (m_WailaBlockMesh->IsDirty())
 				{
@@ -374,6 +376,81 @@ namespace onion::voxel
 
 		// Update States
 		m_PreviousSelectedHotbarIndex = playerHotbar.SelectedIndex();
+
+		// ---- Chat Tiles ----
+		{
+			std::lock_guard lock(m_ChatTilesMutex);
+
+			// Cull fully faded tiles (fading is computed inside each tile's own Render).
+			const auto isExpired = [](const std::unique_ptr<ChatTile>& tile) { return tile->GetFadingAlpha() <= 0.f; };
+			auto firstExpiredTile = std::remove_if(m_ChatTiles.begin(), m_ChatTiles.end(), isExpired);
+			for (auto it = firstExpiredTile; it != m_ChatTiles.end(); it++)
+			{
+				ChatTile* tile = it->get();
+				tile->Delete();
+			}
+			m_ChatTiles.erase(firstExpiredTile, m_ChatTiles.end());
+
+			// Detect new messages and push a tile for each.
+			// history[0] is the newest entry; history[N-1] is the oldest.
+			if (EngineContext::Get().Chat != nullptr)
+			{
+				const auto history = EngineContext::Get().Chat->GetReceivedHistory();
+
+				// Find how many new messages sit before m_LastChatMessage in the history.
+				// If m_LastChatMessage is null (first frame) all messages are new.
+				size_t newCount = history.size();
+				if (m_LastChatMessage != nullptr)
+				{
+					for (size_t i = 0; i < history.size(); ++i)
+					{
+						if (history[i] == m_LastChatMessage)
+						{
+							newCount = i; // history[0..i-1] are newer than what we last saw
+							break;
+						}
+					}
+				}
+
+				// Insert tiles newest-first (history[0..newCount-1]) so
+				// m_ChatTiles stays ordered newest-at-front, oldest-at-back.
+				// Iterate from oldest to newest so successive insert(begin()) ends with [0]=newest.
+				for (size_t i = newCount; i > 0; i--)
+				{
+					auto tile =
+						std::make_unique<ChatTile>("ChatTile_" + std::to_string(m_ChatTiles.size()), history[i - 1]);
+					tile->Initialize();
+					m_ChatTiles.insert(m_ChatTiles.begin(), std::move(tile));
+				}
+
+				if (!history.empty())
+					m_LastChatMessage = history.front();
+			}
+
+			// Render (bottom-left, newest at the bottom); hidden while a menu is open.
+			if (!isChatOpen)
+			{
+				const float cursorYRatio = (875.f - 23.f) / 1009.f;
+				const float cursorY = static_cast<float>(cursorYRatio * s_ScreenHeight);
+
+				// m_ChatTiles[0] is the newest tile; it sits lowest on screen.
+				// Subsequent tiles are placed progressively higher.
+				float tileY = cursorY;
+				for (const auto& tile : m_ChatTiles)
+				{
+					tile->SetPosition({0, tileY});
+					tile->Render(true);
+
+					tileY -= static_cast<float>(tile->GetSize().y);
+				}
+			}
+		}
+	}
+
+	void HudPanel::Render()
+	{
+		throw std::logic_error(
+			"Use Render(bool ignoreKeys) instead of Render() for HudPanel to control hotbar scrolling input.");
 	}
 
 	void HudPanel::Initialize()
@@ -413,6 +490,13 @@ namespace onion::voxel
 		m_WailaTooltip.Delete();
 		m_WailaBlockMesh->Delete();
 
+		{
+			std::lock_guard lock(m_ChatTilesMutex);
+			for (auto& tile : m_ChatTiles)
+				tile->Delete();
+			m_ChatTiles.clear();
+		}
+
 		SetDeletedState(true);
 	}
 
@@ -432,6 +516,12 @@ namespace onion::voxel
 		m_Fps_Label.ReloadTextures();
 		m_WailaTooltip.ReloadTextures();
 		m_WailaBlockMesh->SetDirty(true);
+
+		{
+			std::lock_guard lock(m_ChatTilesMutex);
+			for (auto& tile : m_ChatTiles)
+				tile->ReloadTextures();
+		}
 	}
 
 	float HudPanel::GetSelectedBlockNameFadeInFactor() const

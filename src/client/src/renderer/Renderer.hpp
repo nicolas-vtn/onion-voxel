@@ -48,7 +48,7 @@ namespace onion::voxel
 
 		// ----- Constructor / Destructor -----
 	  public:
-		Renderer(std::shared_ptr<WorldManager> worldManager);
+		Renderer(std::shared_ptr<WorldManager> worldManager, ChatHistory& chatHistory);
 		~Renderer();
 
 		// ----- Public API -----
@@ -80,6 +80,7 @@ namespace onion::voxel
 		Event<uint8_t> EvtRenderDistanceChanged;
 		Event<bool> EvtRequestQuitToMainMenu;
 		Event<Slot> EvtItemDropped;
+		Event<const std::string&> EvtChatMessageSent;
 
 		// ----- Internal Methods -----
 	  private:

@@ -58,11 +58,21 @@ namespace onion::voxel
 		bool DoesClearOnRightClick() const;
 		void SetClearOnRightClick(bool clearOnRightClick);
 
-		bool IsActive() const { return m_IsActive; }
+		bool IsActive() const;
+		void SetActive(bool active);
+
+		void SetZOffset(float zOffset);
+		float GetZOffset() const;
+
+		bool DoesValidateOnlyOnEnter() const;
+		void SetValidateOnlyOnEnter(bool validateOnlyOnEnter);
+
+		bool DoesRenderSprites() const;
+		void SetRenderSprites(bool renderSprites);
 
 		// ----- Events -----
 	  public:
-		Event<const TextField&> EvtTextChanged;
+		Event<const TextField&> EvtTextValidated;
 
 	  private:
 		void SubscribeToSpriteEvents();
@@ -122,7 +132,9 @@ namespace onion::voxel
 		glm::ivec2 m_Size{1, 1};
 		bool m_IsPressed = false;
 		bool m_ClearOnRightClick = false;
+		bool m_ValidateOnlyOnEnter = false;
 
+		float m_ZOffset = 0.5f;
 		float m_TextScaleFactor = 0.4f;
 		float m_TextStartXratio = 2.078f;
 		int m_CursorWidth = 4;
@@ -133,6 +145,8 @@ namespace onion::voxel
 		bool m_IsSelecting = false;
 		glm::ivec2 m_DoubleClickPosition{0, 0};
 		bool m_WasClickDown = false;
+
+		bool m_RenderSprites = true;
 
 		// ----- Label -----
 	  private:

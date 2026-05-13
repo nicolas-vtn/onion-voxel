@@ -12,6 +12,7 @@
 #include "ServerConfiguration.hpp"
 #include "network_server/NetworkServer.hpp"
 
+#include <shared/chat_history/ChatHistory.hpp>
 #include <shared/physics/PhysicsEngine.hpp>
 #include <shared/world/world_manager/WorldManager.hpp>
 
@@ -70,6 +71,7 @@ namespace onion::voxel
 											 const BlocksChangedMsg& msg);
 		void Handle_ItemDroppedMsgReceived(const NetworkServer::MessageReceivedEventArgs& args,
 										   const ItemDroppedMsg& msg);
+		void Handle_ChatMsgReceived(const NetworkServer::MessageReceivedEventArgs& args, const ChatMsg& msg);
 
 		// ----- World Manager / Generation -----
 	  private:
@@ -84,6 +86,10 @@ namespace onion::voxel
 		// ----- Physics Engine -----
 	  private:
 		std::unique_ptr<PhysicsEngine> m_PhysicsEngine;
+
+		// ----- Chat History -----
+	  private:
+		ChatHistory m_ChatHistory;
 
 		// ----- Timer Send Events -----
 	  private:
@@ -111,5 +117,7 @@ namespace onion::voxel
 
 		void AddPlayer(const PlayerInfo& playerInfo);
 		void RemovePlayer(const std::string& uuid);
+		std::shared_ptr<Player> GetPlayer(const uint32_t clientHandle);
+		std::optional<PlayerInfo> GetPlayerInfo(const std::string uuid);
 	};
 } // namespace onion::voxel

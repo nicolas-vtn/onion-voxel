@@ -1,11 +1,16 @@
 #pragma once
 
+#include <memory>
+#include <mutex>
+#include <vector>
+
 #include <renderer/gui/GuiElement.hpp>
 #include <renderer/gui/controls/label/Label.hpp>
 #include <renderer/gui/controls/sprite/Sprite.hpp>
 #include <renderer/gui/controls/tooltip/Tooltip.hpp>
-
+#include <renderer/gui/panels/hud_panel/ChatTile.hpp>
 #include <renderer/gui/ui_block_mesh/UiBlockMesh.hpp>
+#include <shared/chat_history/ChatMessage.hpp>
 
 namespace onion::voxel
 {
@@ -18,7 +23,8 @@ namespace onion::voxel
 
 		// ----- Public API -----
 	  public:
-		void Render() override;
+		void Render(bool ignoreKeys, bool isChatOpen);
+		void Render();
 		void Initialize() override;
 		void Delete() override;
 		void ReloadTextures() override;
@@ -51,6 +57,13 @@ namespace onion::voxel
 		double m_SelectedBlockTime = 0.0;		// Time in seconds that the currently selected block has been selected.
 		double m_LastFrameTime = 0.0;			// glfwGetTime() value at the previous frame, used to compute delta.
 		float m_SmoothedFps = 0.f;				// Exponentially smoothed FPS value.
+
+		// ----- Chat -----
+	  private:
+		mutable std::mutex m_ChatTilesMutex;
+		std::vector<std::unique_ptr<ChatTile>> m_ChatTiles;
+		// Pointer to the last ChatMessage for which a tile was created; null until the first message arrives.
+		std::shared_ptr<const ChatMessage> m_LastChatMessage;
 
 		// ----- Private Helpers -----
 	  private:

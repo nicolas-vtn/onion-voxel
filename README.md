@@ -225,7 +225,7 @@ Central coordinators for subsystems:
 
 #### Networking
 - **ENet Protocol**: Reliable UDP with custom message types
-- **Message Types**: Chunks, entities, block changes, player positions, server info
+- **Message Types**: Chunks, entities, block changes, player positions, server info, chat messages
 - **ThreadSafeQueue**: Producer-consumer pattern for cross-thread message passing
 - **Serialization**: Cereal library for binary serialization of messages and save files
 
@@ -327,6 +327,7 @@ Central coordinators for subsystems:
       * **Key Binds**: Bind every Action to any Key
   * **Pause Menu**: Back to game, Options, Save and quit to title
   * **Creative Inventory**: Full block browser with search, item rendering, pick & move (no crafting)
+  * **Chat Panel**: In-game chat with message history and scrollable view
   </details>
 
 ### Customization
@@ -421,7 +422,7 @@ After the install step:
 - Particle effects (breaking blocks, footsteps)
 
 #### Gameplay Features
-- Chat system for multiplayer
+- Chat commands (/tp, /fly, ...)
 - Player list display (Tab key)
 - Health, hunger, and experience gameplay (damage, healing, hunger drain — currently display + save only)
 
@@ -431,6 +432,7 @@ After the install step:
 
 ### Completed
 
+- ~~Chat system for multiplayer~~
 - ~~Update GitHub README.md~~
 - ~~View frustum culling for better performance~~
 - ~~FOV change when sprinting~~

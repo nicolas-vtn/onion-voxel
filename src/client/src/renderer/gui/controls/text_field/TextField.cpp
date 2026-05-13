@@ -17,7 +17,8 @@ namespace onion::voxel
 		SubscribeToSpriteEvents();
 
 		m_Label.SetTextAlignment(Font::eTextAlignment::Left);
-		m_Label.SetZOffset(0.8f);
+
+		SetZOffset(m_ZOffset);
 	}
 
 	TextField::~TextField()
@@ -53,7 +54,7 @@ namespace onion::voxel
 		Handle_KeyInputs();
 
 		// DEBUG
-		//if (EngineContext::Get().ShowDebugMenus)
+		//if (EngineContext::Get().ShowDebugMenus())
 		//	RenderImGuiDebug();
 
 		// Calculate text position
@@ -101,15 +102,16 @@ namespace onion::voxel
 				options.TopLeftCorner = topLeftCursor;
 				options.BottomRightCorner = bottomRightCursor;
 				options.Color = glm::vec4(s_TextColor, 1.f);
-				options.ZOffset = 0.9f; // Render on top of text
+				options.ZOffset = m_ZOffset + 0.03f; // Render on top of text
 				ColoredBackground::Render(options);
 			}
 		}
 
-		if (m_IsActive)
-			m_NineSliceSprite_TextFieldHighlighted.Render();
-		else
-			m_NineSliceSprite_TextField.Render();
+		if (m_RenderSprites)
+		{
+			NineSliceSprite& sprite = m_IsActive ? m_NineSliceSprite_TextFieldHighlighted : m_NineSliceSprite_TextField;
+			sprite.Render();
+		}
 
 		// ----- Render Label -----
 		m_Label.SetTextHeight(textHeight);
@@ -175,7 +177,7 @@ namespace onion::voxel
 				options.TopLeftCorner = topLeftCursor;
 				options.BottomRightCorner = bottomRightCursor;
 				options.Color = glm::vec4(1.f);
-				options.ZOffset = 0.5f; // Render behind text
+				options.ZOffset = m_ZOffset + 0.01f; // Render behind text
 				ColoredBackground::Render(options);
 
 				// Render selected text with highlight
@@ -230,7 +232,7 @@ namespace onion::voxel
 				options.TopLeftCorner = topLeftCursor;
 				options.BottomRightCorner = bottomRightCursor;
 				options.Color = glm::vec4(s_TextColor, 1.f);
-				options.ZOffset = 0.9f; // Render on top of text
+				options.ZOffset = m_ZOffset + 0.03f; // Render on top of text
 				ColoredBackground::Render(options);
 			}
 		}
@@ -256,8 +258,10 @@ namespace onion::voxel
 	{
 		m_Text = Utf8ToUtf32(text);
 
+		m_LastCharInput = 0; // Reset last char input to avoid processing it in the next Handle_CharInputs() call
+
 		// Reset States
-		m_CursorPosition = std::min(m_CursorPosition, m_Text.size());
+		m_CursorPosition = m_Text.size(); // Move cursor to the end of the text
 		if (m_SelectionStart != SIZE_MAX)
 		{
 			m_SelectionStart = std::min(m_SelectionStart, m_Text.size());
@@ -327,6 +331,50 @@ namespace onion::voxel
 	void TextField::SetReadOnly(bool readOnly)
 	{
 		m_ReadOnly = readOnly;
+	}
+
+	bool TextField::IsActive() const
+	{
+		return m_IsActive;
+	}
+
+	void TextField::SetActive(bool active)
+	{
+		m_IsActive = active;
+	}
+
+	void TextField::SetZOffset(float zOffset)
+	{
+		m_ZOffset = zOffset;
+		m_NineSliceSprite_TextField.SetZOffset(m_ZOffset);
+		m_NineSliceSprite_TextFieldHighlighted.SetZOffset(m_ZOffset);
+
+		m_Label.SetZOffset(m_ZOffset + 0.02f);
+	}
+
+	float TextField::GetZOffset() const
+	{
+		return m_ZOffset;
+	}
+
+	bool TextField::DoesValidateOnlyOnEnter() const
+	{
+		return m_ValidateOnlyOnEnter;
+	}
+
+	void TextField::SetValidateOnlyOnEnter(bool validateOnlyOnEnter)
+	{
+		m_ValidateOnlyOnEnter = validateOnlyOnEnter;
+	}
+
+	bool TextField::DoesRenderSprites() const
+	{
+		return m_RenderSprites;
+	}
+
+	void TextField::SetRenderSprites(bool renderSprites)
+	{
+		m_RenderSprites = renderSprites;
 	}
 
 	bool TextField::IsHovered() const
@@ -483,7 +531,6 @@ namespace onion::voxel
 		{
 			// Revert to the text at activation if Escape is pressed
 			m_Text = m_TextAtActivation;
-			ValidateText();
 			return;
 		}
 
@@ -491,7 +538,8 @@ namespace onion::voxel
 		{
 			// Validate text and deactivate if there's a mouse click outside the text field while it's active
 			m_IsActive = false;
-			ValidateText();
+			if (!m_ValidateOnlyOnEnter)
+				ValidateText();
 			return;
 		}
 		m_WasClickDown = clickPressed;
@@ -712,7 +760,7 @@ namespace onion::voxel
 	{
 		m_IsActive = false;
 		ResetSelection();
-		EvtTextChanged.Trigger(*this);
+		EvtTextValidated.Trigger(*this);
 	}
 
 	bool TextField::HasSelection() const

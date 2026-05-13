@@ -24,7 +24,8 @@ namespace onion::voxel
 			ServerMOTD,
 			RequestMotd,
 			ItemDropped,
-			ItemPickedUp
+			ItemPickedUp,
+			Chat
 		};
 
 		eType Type = eType::None;

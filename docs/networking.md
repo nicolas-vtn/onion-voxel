@@ -30,7 +30,8 @@ using NetworkMessage = std::variant<
     RequestChunksMsg,   // client → server: list of chunk positions needed
     EntitySnapshotMsg,  // server → client: all entity transforms
     ServerMotdMsg,      // server → client: MOTD data
-    RequestMotdMsg      // client → server: request MOTD
+    RequestMotdMsg,     // client → server: request MOTD
+    ChatMsg             // bidirectional: client sends message content; server broadcasts with player name + UUID
 >;
 ```
 

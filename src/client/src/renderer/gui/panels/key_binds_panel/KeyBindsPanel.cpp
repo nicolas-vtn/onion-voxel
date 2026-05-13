@@ -8,7 +8,8 @@ namespace onion::voxel
 		: GuiElement(name), m_Title_Label(name + "_Title_Label"), m_Scroller(name + "_Scroller"),
 		  m_Done_Button(name + "_Done_Button"), m_ResetAll_Button(name + "_ResetAll_Button"),
 		  m_TitleMovement_Label(name + "_TitleMovement_Label"), m_TitleGameplay_Label(name + "_TitleGameplay_Label"),
-		  m_TitleDebug_Label(name + "_TitleDebug_Label"), m_TitleInventory_Label(name + "_TitleInventory_Label")
+		  m_TitleDebug_Label(name + "_TitleDebug_Label"), m_TitleInventory_Label(name + "_TitleInventory_Label"),
+		  m_TitleMultiplayer_Label(name + "_TitleMultiplayer_Label")
 	{
 		SubscribeToControlEvents();
 
@@ -26,6 +27,9 @@ namespace onion::voxel
 
 		m_TitleDebug_Label.SetText("Debug");
 		m_TitleDebug_Label.SetTextAlignment(Font::eTextAlignment::Center);
+
+		m_TitleMultiplayer_Label.SetText("Multiplayer");
+		m_TitleMultiplayer_Label.SetTextAlignment(Font::eTextAlignment::Center);
 
 		m_ResetAll_Button.SetText("Reset Keys");
 		m_Done_Button.SetText("Done");
@@ -128,6 +132,31 @@ namespace onion::voxel
 		std::vector<eAction> gameplayActions = {eAction::Attack, eAction::PickBlock, eAction::Interact};
 
 		for (eAction action : gameplayActions)
+		{
+			auto it = m_ActionToKeyBindTileMap.find(action);
+			if (it != m_ActionToKeyBindTileMap.end())
+			{
+				KeyBindsTile* tilePtr = it->second.get();
+				const glm::ivec2 tilePosition(centerX, currentYPosition);
+				tilePtr->SetPosition(tilePosition + scrollerOffset);
+				tilePtr->SetSize(tileSize);
+				tilePtr->SetVisibility(m_Scroller.GetControlVisibleArea(tilePtr->GetPosition(), tileSize));
+				tilePtr->Render();
+				currentYPosition += tileSize.y;
+			}
+		}
+
+		// ----- Render Title Multiplayer -----
+		const glm::ivec2 titleMultiplayerPosition(centerX, currentYPosition);
+		m_TitleMultiplayer_Label.SetPosition(titleMultiplayerPosition + scrollerOffset);
+		m_TitleMultiplayer_Label.SetTextHeight(s_TextHeight);
+		m_TitleMultiplayer_Label.Render();
+		currentYPosition += otherElementsYOffset;
+
+		// ----- Render Multiplayer Tiles -----
+		std::vector<eAction> multiplayerActions = {eAction::OpenChat, eAction::ListPlayers};
+
+		for (eAction action : multiplayerActions)
 		{
 			auto it = m_ActionToKeyBindTileMap.find(action);
 			if (it != m_ActionToKeyBindTileMap.end())
@@ -252,6 +281,7 @@ namespace onion::voxel
 		m_TitleGameplay_Label.Initialize();
 		m_TitleDebug_Label.Initialize();
 		m_TitleInventory_Label.Initialize();
+		m_TitleMultiplayer_Label.Initialize();
 
 		InitializeKeyBindTiles();
 
@@ -268,6 +298,7 @@ namespace onion::voxel
 		m_TitleGameplay_Label.Delete();
 		m_TitleDebug_Label.Delete();
 		m_TitleInventory_Label.Delete();
+		m_TitleMultiplayer_Label.Delete();
 
 		for (auto& [action, tilePtr] : m_ActionToKeyBindTileMap)
 		{
@@ -287,6 +318,7 @@ namespace onion::voxel
 		m_TitleGameplay_Label.ReloadTextures();
 		m_TitleDebug_Label.ReloadTextures();
 		m_TitleInventory_Label.ReloadTextures();
+		m_TitleMultiplayer_Label.ReloadTextures();
 
 		for (auto& [action, tilePtr] : m_ActionToKeyBindTileMap)
 		{

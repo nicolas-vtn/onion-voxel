@@ -34,6 +34,8 @@ namespace onion::voxel
 		m_DefaultResourcePack_Tile.SetResourcePackName("Default");
 		m_DefaultResourcePack_Tile.SetResourcePackDescription("The default look of Onion::Voxel (built-in)");
 
+		m_ResourcePacks_Scroller.SetHandleXPositionRatio(1.f);
+
 		m_OpenPackFolder_Button.SetText("Open Pack Folder");
 
 		m_Done_Button.SetText("Done");
