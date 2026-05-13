@@ -294,10 +294,17 @@ namespace onion::voxel
 		const int yMini = static_cast<int>(subChunkIndex * SY);
 
 		// 1) Build solid masks from subchunk (fast local reads, no locks)
-		using Row = uint64_t;	 // bits along X or Z or Y (16 wide)
-		Row solidX[SY][SZ] = {}; // [y][z] bits along x
-		Row solidZ[SY][SX] = {}; // [y][x] bits along z
-		Row solidY[SZ][SX] = {}; // [z][x] bits along y
+		using Row = uint64_t; // bits along X or Z or Y (64 wide)
+		struct OcclusionMasks
+		{
+			Row solidX[SY][SZ] = {}; // [y][z] bits along x
+			Row solidZ[SY][SX] = {}; // [y][x] bits along z
+			Row solidY[SZ][SX] = {}; // [z][x] bits along y
+		};
+		auto masks = std::make_unique<OcclusionMasks>();
+		auto& solidX = masks->solidX;
+		auto& solidZ = masks->solidZ;
+		auto& solidY = masks->solidY;
 
 		if (isMonoBlock)
 		{
